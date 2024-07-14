@@ -6,6 +6,7 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  box-sizing: border-box;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -29,5 +30,243 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+.backdrop{
+  width: 100%;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: rgba(0,0,0, 0.7);
+  z-index: 25;
+  scroll-behavior: unset;
+}
+.modal{
+  width: 90%;
+  position: fixed;
+  top: 10vh;
+  left: 5%;
+  z-index: 30;
+  animation: slide-down 300ms ease-out forwards;
+}
+
+
+.leading-text{
+  animation: slide-up 300ms ease-out forwards;
+}
+
+#zoom-hint, #add-to-cart{
+  background-image: linear-gradient(to right, #6cdae7, rgb(255, 243, 232));
+
+}
+
+#zoom-hint.expand{
+  animation: expand 400ms ease-out forwards;
+}
+
+#plus-icon::before,#minus-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+
+}
+
+#plus-icon:hover::before, #minus-icon:hover::before{
+  animation: icon-expand 400ms ease-out forwards;
+}
+
+#plus-icon.mouseleave::before, #minus-icon.mouseleave::before {
+  animation: icon-collapse 400ms ease-out forwards;
+}
+
+#plus-icon:hover > i, #minus-icon:hover > i {
+  animation: change-color 400ms ease-out forwards;
+}
+
+#plus-icon.mouseleave > i, #minus-icon.mouseleave > i {
+  animation: change-color-reverse 400ms ease-out forwards;
+}
+
+.progress-bar {
+  width: 131.16px;
+  height: 48px;
+  background-color: white;
+  border: 1px solid  rgb(229 231 235 );
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar::before {
+  content: '';
+  width: 0;
+  height: 100%;
+  background-image: linear-gradient(to right, #6cdae7, rgb(255, 243, 232));
+  position: absolute;
+  left: 0;
+  top: 0;
+  animation: progress 2s linear forwards;
+}
+
+#toast-msg{
+    box-shadow: 4px 4px #a8e8e226, inset 3px 3px #fff;
+}
+
+@keyframes progress {
+  0% {
+      width: 0;
+  }
+  100% {
+      width: 100%;
+  }
+}
+
+@keyframes icon-expand {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    background-color: #000;
+  }
+}
+
+@keyframes icon-collapse {
+  from {
+    opacity: 1;
+    transform: scale(1);
+    background-color: #000;
+  }
+  to {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+@keyframes change-color {
+  from {
+    color: rgb(75, 85, 99);
+  }
+  to {
+    color: rgb(194, 194, 194);
+    font-weight: 800;
+  }
+}
+
+@keyframes change-color-reverse {
+  from {
+    color: rgb(194, 194, 194);
+    font-weight: 800;
+  }
+  to {
+    color: rgb(75, 85, 99);
+  }
+}
+
+@keyframes expand {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#go-to__ppage__section a{
+  margin: 0;
+  transition: margin-left 0.2s ease;
+  -webkit-transition: margin-left 0.2s ease;
+}
+
+#go-to__ppage__section a:hover{
+    margin-left: 8px;
+}
+
+
+#image-zoom img{
+  object-position: 0 0;
+}
+
+#image-zoom::after{
+  display: var(--display);
+  position: absolute;
+  left: 0;
+  top: 0;
+  content: '';
+  width: 100%;
+  height: 100%;
+  background-color: black;
+  background-image: var(--url);
+  background-size: 400%;
+  background-position: var(--zoom-x) var(--zoom-y);
+}
+
+#no-cart-items::after{
+  position: absolute;
+  display: var(--count-display);
+  left: 40px;
+  bottom: -5px;
+  content: '';
+  width: 100%;
+  height: 56px;
+  border: 2px solid #665d5d;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  color: rgb(0, 0, 0) !important; /* Change this to your desired color */
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 24px !important;
+  font-weight: bold !important;
+}
+
+
+.swiper-pagination-bullet {
+  background: rgba(112, 112, 112, 0.5) !important; /* Change to your desired color */
+  opacity: 1 !important;
+}
+
+.swiper-pagination-bullet-active {
+  background: #000 !important; /* Change to your desired active color */
+}
+
+@media all and (min-width: 768px){
+  .modal{
+      left: calc(50% - 35rem);
+      width: 70rem;
   }
 }
