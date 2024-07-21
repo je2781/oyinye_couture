@@ -5,6 +5,7 @@ import * as argon from "argon2";
 import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
 
+
 connect();
 
 export async function POST(req: NextRequest) {

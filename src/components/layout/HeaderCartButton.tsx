@@ -23,8 +23,8 @@ const HeaderCartButton = (props: any) => {
   return (
     <>
       <span className={`relative ${buttonIsHighlighted ? classes.bump : ``}`} onClick={props.onClick}>
-        <i className="fa-solid cursor-pointer fa-bag-shopping text-xl text-gray-600"></i>
-        <span className='bg-black px-[6px] py-[2px] text-[0.6rem] rounded-[50%] text-white font-sans absolute left-[3.2px] top-[8.5px] font-bold'>{numberOfCartItems}</span>
+        <i className="fa-solid cursor-pointer fa-bag-shopping text-gray-600 hover:text-[1.3rem] text-xl"></i>
+        {numberOfCartItems > 0 && <span className='bg-black px-[6px] py-[2px] text-[0.6rem] rounded-[50%] text-white font-sans absolute left-[3.2px] top-[8.5px] font-bold'>{numberOfCartItems}</span>}
       </span>
     </>
   );

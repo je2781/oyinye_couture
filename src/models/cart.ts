@@ -84,7 +84,7 @@ CartSchema.methods.deleteCartItem = function(prodId: mongoose.ObjectId){
     return this.save();
   }
 
-const Cart = mongoose.model('carts', CartSchema);
+const Cart = mongoose.models.carts || mongoose.model('carts', CartSchema);
 
 export default Cart;
 

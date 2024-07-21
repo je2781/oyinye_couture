@@ -29,8 +29,8 @@ const ProductSchema = new Schema({
                         type: Number,
                         required: true
                     },
-                    id: {
-                        type: Schema.Types.ObjectId,
+                    variantId: {
+                        type: String,
                         required: true
                     },
                     stock: {
@@ -60,13 +60,19 @@ const ProductSchema = new Schema({
     description: {
         type: String,
         required: true
-    }
+    },
+    noOfOrders: {
+        type: Number
+    },
+    noOfReviews: {
+        type: Number
+    },
     
     
 
 });
 
-const Product = mongoose.model('products', ProductSchema);
+const Product = mongoose.models.products || mongoose.model('products', ProductSchema);
 
 export default Product;
   

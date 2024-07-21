@@ -1,6 +1,5 @@
 import { SendMail } from "@/interfaces/send-mail-interface";
 import User from "@/models/user";
-import * as argon from "argon2";
 import { EmailType } from "@/interfaces/send-mail-interface";
 import nodemailer from "nodemailer";
 import crypto from "crypto";

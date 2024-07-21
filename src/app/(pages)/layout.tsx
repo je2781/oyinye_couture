@@ -5,8 +5,9 @@ import { useEffect, useReducer, useState } from "react";
 import { cartReducer, defaultCartState } from "@/helpers/getCartReducerData";
 import Header from "@/components/Header";
 import { CartContextProvider } from "@/store/cartContext";
-import Cart from "@/models/cart";
-import axios from "axios";
+import useProduct from "@/store/useProduct";
+import { ProductContextProvider } from "@/store/productContext";
+import { SearchResults } from "@/interfaces";
 
 export default function RootLayout({
   children,
@@ -14,11 +15,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const [authStatus, setAuthStatus] = useState(false);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
 
   const [cartState, dispatchCartAction] = useReducer(
     cartReducer,
     defaultCartState
   );
+
+  useEffect(() => {
+    async function fetchAllProducts() {
+      try {
+
+        const res = await fetch(`/api/products`);
+        const data = await res.json();
+
+        setAllProducts(data.products);
+      } catch (error) {
+      } 
+    }
+
+    fetchAllProducts();
+
+    
+  }, []);
+
+
 
   const removeItemHandler = (variantId: string) => {
     dispatchCartAction({ type: "REMOVE", variantId });
@@ -26,7 +47,6 @@ export default function RootLayout({
 
   const addItemHandler = async (item: any) => {
     dispatchCartAction({ type: "ADD", item: item });
-
   };
 
   const cartContext = {
@@ -39,8 +59,11 @@ export default function RootLayout({
   return (
     <AuthContextProvider value={{ authStatus, setAuthStatus }}>
       <CartContextProvider value={cartContext}>
-        <Header />
-        <main>{children}</main>
+        <ProductContextProvider
+          value={{ allProducts}}
+        >
+          {children}
+        </ProductContextProvider>
       </CartContextProvider>
     </AuthContextProvider>
   );

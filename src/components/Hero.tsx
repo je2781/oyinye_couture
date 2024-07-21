@@ -1,3 +1,4 @@
+'use client';
 
 import Image from "next/image";
 import heroImage from '../../public/next.svg';
@@ -11,7 +12,7 @@ const Hero = () => {
                     <h1 className="text-white lg:text-5xl text-3xl font-sans font-semibold">OYINYE</h1>
                     <h1 className="text-white/80 text-lg font-sans text-center">YOU DESERVE THE BEST DRESS ON YOU FOR EVERY OCCASSION</h1>
                     <div className="flex flex-col items-stretch">
-                        <button className="px-32 py-3 border border-white bg-transparent hover:ring-2 ring-white  text-white font-sans">Shop Now</button>
+                        <button className="lg:px-32 px-[120px] text-[.8rem] lg:text-[1rem] py-3 border border-white bg-transparent hover:ring-2 ring-white  text-white font-sans">Shop Now</button>
                     </div>
                 </section>
             </div>

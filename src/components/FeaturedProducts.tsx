@@ -1,15 +1,7 @@
 
 import ProductComponent from "./Product";
 
-async function getFeaturedProducts(){
-  const res = await fetch(`${process.env.DOMAIN}/api/products/featured`, { cache: 'no-store' });
-  const data = await res.json();
-
-  return data.products;
-}
-
-const FeaturedProducts = async () => {
-  const featuredProducts = await getFeaturedProducts();
+const FeaturedProducts = ({featuredProducts}: any) => {
 
   return (
     <div className="flex flex-col lg:gap-y-8 gap-y-4 bg-white">
@@ -23,9 +15,9 @@ const FeaturedProducts = async () => {
         </button>
       </section>
       <div className="flex flex-col lg:items-start items-center gap-y-5 font-sans container mx-auto">
-        <header className="lg:text-4xl text-3xl">Featured Products</header>
-        <section className="flex lg:flex-row flex-col items-center justify-evenly flex-wrap lg:gap-x-6 gap-y-12">
-          {featuredProducts.map((product: any, i: number) => <ProductComponent key={product._id.toString()} product={product}/>)}
+        <header className="lg:text-4xl text-3xl">FeaturedProducts</header>
+        <section className="flex md:flex-row flex-col items-center justify-evenly flex-wrap md:gap-x-5 gap-y-9">
+          {featuredProducts.slice(0, 4).map((product: any, i: number) => <ProductComponent key={i} product={product}/>)}
         </section>
       </div>
     </div>

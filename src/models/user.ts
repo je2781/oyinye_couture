@@ -32,11 +32,22 @@ const UserSchema = new Schema({
   resetTokenExpirationDate: Date,
   verifyToken: String,
   verifyTokenExpirationDate: Date,
+  reviews: [
+    {
+        content: {
+            type: String,
+        },
+        productId: {
+            ref: 'products',
+            type: Schema.Types.ObjectId
+        }
+    }
+  ]
 
 });
 
 
 
-const User = mongoose.model("users", UserSchema);
+const User = mongoose.models.users || mongoose.model("users", UserSchema);
 
 export default User;

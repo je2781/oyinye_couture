@@ -11,6 +11,6 @@ export const CartContext = React.createContext<
     removeItem: (variantId: string) => {},
     addItem: function(item: any){},
     totalAmount: 0
-})
+});
 
 export const CartContextProvider = CartContext.Provider;

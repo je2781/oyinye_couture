@@ -22,7 +22,8 @@ export default function RootLayout({
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
       </head>
       <body className={inter.className}>
-        <div id='modal-root'></div>
+        <div id='quick-view-modal'></div>
+        <div id='search-modal'></div>
         <div id='backdrop-root'></div>
         <Toaster position="bottom-center" />
         {children}

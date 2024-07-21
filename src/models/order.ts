@@ -5,8 +5,10 @@ const Schema = mongoose.Schema;
 const OrderSchema = new Schema({
     items: [
         {
-            product: {
-                type: Object,
+            productId: {
+                // type: Object,
+                ref: 'products',
+                type: Schema.Types.ObjectId,
                 required: true
             },
             quantity: {
@@ -26,7 +28,7 @@ const OrderSchema = new Schema({
     }
 });
 
-const Order = mongoose.model('orders', OrderSchema);
+const Order = mongoose.models.orders || mongoose.model('orders', OrderSchema);
 
 export default Order;
 

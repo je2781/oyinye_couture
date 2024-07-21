@@ -5,10 +5,13 @@ import Image from "next/image";
 import React from "react";
 import Link from "next/link";
 import ProductQuickView from "./ProductQuickView";
+import { useRouter } from "next/navigation";
 
-const ProductComponent = ({ product }: any) => {
+const ProductComponent = ({ product, isSearchProduct, imageH, imageW}: any) => {
     const[isModalOpen, setIsModalOpen] = React.useState(false);
+    const router = useRouter();
     //sorting out the sizes of the first dress
+    product.colors[0].sizes = product.colors[0].sizes.filter((size: any) => size.stock > 0);
     product.colors[0].sizes.sort((a: any, b: any) => a.number - b.number);
 
     const showModalHandler = (e: React.MouseEvent) => {
@@ -37,8 +40,9 @@ const ProductComponent = ({ product }: any) => {
     
   return (
     <div className="relative">
+      {isModalOpen && <ProductQuickView onHideModal={hideModalHandler} product={product}/>}
       <article
-        className="shadow-md flex flex-col gap-y-3 items-center cursor-pointer pb-6 relative"
+        className={`${isSearchProduct ? 'items-start': 'items-center'} flex flex-col gap-y-4 cursor-pointer pb-6 relative`}
         data-hover={product.colors[0].imageBackBase64}
         onMouseLeave={(e) => {
           if(!isModalOpen){
@@ -52,7 +56,7 @@ const ProductComponent = ({ product }: any) => {
           }
 
         }}
-        
+        onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variantId.toString()}`)}
         onMouseOver={(event) => {
           if (!isModalOpen) {
             const item = event.currentTarget;
@@ -66,25 +70,27 @@ const ProductComponent = ({ product }: any) => {
 
         }}
       >
-          {isModalOpen && <ProductQuickView onHideModal={hideModalHandler} product={product}/>}
           <Image
               src={product.colors[0].imageFrontBase64[0]}
               alt="featured-Image"
-              width={300}
-              height={450}
+              width={imageW ?? 300}
+              height={imageH ?? 450}
+              role="presentation"
           />
-          <h3 className="text-gray-500 font-sans text-lg">{product.title}</h3>
-          <h3 className="text-sm">
-              &#8358;{product.colors[0].sizes[0].price.toLocaleString("en-US")}
-          </h3>
-          {product.colors[0].sizes[0].stock === 0 && <section 
+          <section className={`${isSearchProduct ? 'items-start': 'items-center'} flex flex-col gap-y-1`}>
+            <h3 className="text-gray-500 font-sans text-sm">{product.title}</h3>
+            <h3 className="text-[1rem]">
+                &#8358;{product.colors[0].sizes[0].price.toLocaleString("en-US")}
+            </h3>
+          </section>
+          {product.colors[0].sizes.filter((size: any) => size.stock > 0).length === 0 && <section 
             className="absolute font-sans bg-black px-4 py-1 rounded-3xl cursor-pointer text-white bottom-[27%] left-[4%] text-sm"
           >
             Sold out
           </section>}
       </article>
       <section 
-          onClick={showModalHandler} className="opacity-0 rounded-md absolute left-[20%] flex h-6 px-2 py-4 w-[100px] flex-row items-center gap-x-1 top-[50%] font-serif  cursor-pointer text-blue-400" 
+          onClick={showModalHandler} className={`${isSearchProduct ? 'left-[15%]' : 'left-[20%]'} z-10 opacity-0 rounded-md absolute flex h-6 px-2 py-4 w-[100px] flex-row items-center gap-x-1 top-[50%] font-serif  cursor-pointer text-blue-400`} 
           id='zoom-hint'
           onMouseOut={(e) => {
             if(!isModalOpen){

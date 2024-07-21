@@ -1,4 +1,6 @@
 export * from './send-mail-interface';
 export * from './cart-state-interface';
-export * from './sizes-interface';
+export * from './dress-size-interface';
+export * from './dress-color-interface';
 export * from './base64-images-interface';
+export * from './search-results-interface';

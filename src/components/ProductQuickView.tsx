@@ -3,57 +3,62 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import React from "react";
-import Modal from "./ui/Modal";
+import { QuickViewModal } from "./ui/Modal";
 import { Swiper, SwiperSlide } from "swiper/react";
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 
-import { Pagination, Navigation } from 'swiper/modules';
+import {  Navigation } from 'swiper/modules';
 import useCart from "@/store/useCart";
 import Link from "next/link";
-import { Base64ImagesObj, SizesJsxObj, SizesObj } from "@/interfaces";
-import { useRouter } from "next/navigation";
 import useAuth from "@/store/useAuth";
+import { Base64ImagesObj, DressColorsObj, DressSizesJsxObj, DressSizesObj } from "@/interfaces";
+import { sizes } from "@/helpers/getHelpers";
 
-
-const sizes = [8, 10, 12, 14, 16, 18];
 
 const ProductQuickView = ({ product, onHideModal }: any) => {
     const {totalAmount, addItem, items} = useCart();
     const {authStatus} = useAuth();
     const [quantity, setQuantity] = React.useState('1');
-    const [selectedColor, setSelectedColor] = React.useState(product.colors[0].type);
-
-    //sorting extracted sizes for all dress colors
-    for(let color of product.colors){
-        color.sizes = color.sizes.filter((size: any) => size.stock > 0);
-        color.sizes.sort((a: any, b: any) => a.number - b.number);
-    }
-
-    const [selectedSize, setSelectedSize] = React.useState<string>(product.colors[0].sizes[0].number.toString());
+    const [zoomActivated, setZoomActivated] = React.useState(false);
     const [progressIndicator, setProgressIndicator] = React.useState(false);
     const [toastMsgVisible, setToastMsgVisible] = React.useState(false);
 
-    const router = useRouter();
 
-
-    let sizesJsxObj: SizesJsxObj  = {};
-    let sizesObj: SizesObj  = {};
+    let sizesJsxObj: DressSizesJsxObj  = {};
+    let sizesObj: DressSizesObj  = {};
+    let colorsObj: DressColorsObj  = {};
     let frontBase64ImagesObj: Base64ImagesObj = {};
+    
+    //sorting extracted sizes for all dress colors and storing them for later use
+    for(let color of product.colors){
+        color.sizes = color.sizes.filter((size: any) => size.stock > 0);
+        color.sizes.sort((a: any, b: any) => a.number - b.number);
+
+        for(let size of color.sizes){
+            colorsObj[color.type]
+            ? colorsObj[color.type].push(size.number)
+            : colorsObj[color.type] = [size.number];
+        }
+    }
+    
+    const [selectedColor, setSelectedColor] = React.useState(product.colors[0].type);
+
+    const [selectedSize, setSelectedSize] = React.useState<string>(product.colors[0].sizes[0].number.toString());
 
     function handleColorChange(e: React.MouseEvent){
         let activeColorEl = e.currentTarget as HTMLSpanElement;
 
         let colorNodeList = activeColorEl.parentNode!.querySelectorAll('span') as NodeListOf<HTMLSpanElement>;
         let otherColorEls = Array.from(colorNodeList);
-        let sizeNodeList = activeColorEl.closest('p')!.parentNode!.querySelectorAll('#size-list > div > span') as NodeListOf<HTMLSpanElement>;
+        let sizeNodeList = activeColorEl.closest('section')!.parentNode!.querySelectorAll('#size-list > div > span') as NodeListOf<HTMLSpanElement>;
         let sizeEls = Array.from(sizeNodeList);
 
         otherColorEls.forEach(el => {
-            if(el.classList.contains('bg-black')){
+            if(el.classList.contains('bg-black') || el.style.getPropertyValue('background-color') === 'black'){
                 el.style.setProperty('background-color', 'transparent');
-                el.style.setProperty('color', 'rgb(75 85 99 )');
+                el.style.setProperty('color', 'rgb(75, 85, 99 )');
                 el.classList.add('border', 'border-gray-600' , 'hover:ring-1', 'ring-gray-600');
                 el.classList.remove('bg-black');
             }
@@ -66,28 +71,28 @@ const ProductQuickView = ({ product, onHideModal }: any) => {
 
         /**updating active dress color ***/
         for(let color of product.colors){
-            if(color.type === activeColorEl.innerText && !color.sizes.some((size: any) => size.number === parseInt(selectedSize))){
-                //setting properties of size element not contained in active dress color to 'not in stock'
-                sizeEls.forEach(el => {
-                    if(el.classList.contains('bg-black')){
-                        el.style.setProperty('background-color', 'transparent');
-                        el.style.setProperty('color', 'rgb(156 163 175)');
-                        el.classList.add('border', 'border-gray-200');
+            for (let i = 0; i < sizes.length; i++) {
+                if (color.type === activeColorEl.innerText && !color.sizes.some((size: any) => size.number === colorsObj[selectedColor][i]) && colorsObj[selectedColor][i]) {
+                    // Setting properties of size element not contained in active dress color to 'not in stock'
+                    sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('background-color', 'transparent');
+                    sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('color', 'rgb(156, 163, 175)');
+                    sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].classList.add('border', 'border-gray-200');
+                    
+                    // Setting properties of first size element contained in active dress color to 'current selection'
+                    sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())].style.setProperty('background-color', 'black');
+                    sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())].style.setProperty('color', 'white');
+                    sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())].classList.remove('hover:ring-1', 'ring-gray-600');
+                    // Setting properties of other size elements contained in active dress color to 'available for selection'
+                    if (color.sizes.slice(1).length > 0) {
+                        for (let size of color.sizes.slice(1)) {
+                            sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === size.number.toString())].style.setProperty('color', 'rgb(75, 85, 99)');
+                        }
                     }
-                });
-
-                sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())].style.setProperty('background-color', 'black');
-                sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())].style.setProperty('color', 'white');
-                sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())].classList.add('border', 'none');
-
-                // for(let size of color.sizes.slice(1)){
-                //     sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === size.number.toString())].style.setProperty('color', 'rgb(75 85 99)');
-                // }
-                
-                setSelectedSize(color.sizes[0].number.toString());
-
-                
+            
+                    setSelectedSize(color.sizes[0].number.toString());
+                }
             }
+            
         }
         setSelectedColor(activeColorEl.innerText);
 
@@ -101,10 +106,11 @@ const ProductQuickView = ({ product, onHideModal }: any) => {
         let otherSizeEls = Array.from(nodeList);
 
         otherSizeEls.forEach(el => {
-            if(el.classList.contains('bg-black')){
+            if(el.classList.contains('bg-black') || el.style.getPropertyValue('background-color') === 'black'){
                 el.style.setProperty('background-color', 'transparent');
-                el.style.setProperty('color', 'rgb(75 85 99 )');
+                el.style.setProperty('color', 'rgb(75, 85, 99 )');
                 el.classList.add('border', 'border-gray-600' , 'hover:ring-1', 'ring-gray-600');
+                el.classList.remove('bg-black');
             }
         });
 
@@ -115,6 +121,8 @@ const ProductQuickView = ({ product, onHideModal }: any) => {
         //updating active dress size
         setSelectedSize(activeSizeEl.innerText.split(' ')[1]);
     }
+
+
 
     product.colors.forEach((color: any, i: number) => {
         sizesJsxObj[color.type] = sizes.map((size: number, i: number) => color.sizes[0] && color.sizes[0].number === size && color.sizes[0].stock === 0 && color.isAvailable ?
@@ -140,45 +148,67 @@ const ProductQuickView = ({ product, onHideModal }: any) => {
         color.sizes.forEach((size: any) => {
             sizesObj[`${color.type}-${size.number}`] =  {
                 price: size.price,
-                id: size.id.toString(),
-                stock: size.stock
+                variantId: size.variantId,
+                stock: size.stock,
+                color: color.type
             };
         });
         
     });
 
     return (
-        <Modal onClose={onHideModal}>
+        <QuickViewModal onClose={onHideModal}>
             <Swiper
-                modules={[Pagination, Navigation]}
+                modules={[Navigation]}
                 slidesPerView={1}
-                pagination={{ clickable: true}}
                 navigation
-                className="h-full lg:w-[40%] w-full "
+                className="lg:w-[40%] w-full h-[40%] lg:h-full"
 
                 >
-                {(frontBase64ImagesObj[selectedColor] ? frontBase64ImagesObj[selectedColor] : product.colors[0].imageFrontBase64).map((image: string) => <SwiperSlide>
-                    <div  id='image-zoom' className="relative cursor-zoom-in h-full"
+                {(frontBase64ImagesObj[selectedColor] ? frontBase64ImagesObj[selectedColor] : product.colors[0].imageFrontBase64).map((image: string, i: number) => <SwiperSlide key={i}>
+                    <div  id='image-zoom' className={`${zoomActivated ? 'cursor-zoom-out' : 'cursor-zoom-in'} relative h-full`}
                         style={{ "--url": `url(${image})`, "--zoom-x": "0%", "--zoom-y": "0%", "--display": "none" } as React.CSSProperties}
                         onMouseMove={(e) => {
-                            const item = e.currentTarget;
-                            item.style.setProperty('--display', 'block');
-                            let pointer = {
-                                x: (e.nativeEvent.offsetX * 100)/ e.currentTarget.offsetWidth,
-                                y: (e.nativeEvent.offsetY * 100)/ e.currentTarget.offsetHeight,
+                            if(zoomActivated){
+                                const item = e.currentTarget;
+                                item.style.setProperty('--display', 'block');
+                                let pointer = {
+                                    x: (e.nativeEvent.offsetX * 100)/ e.currentTarget.offsetWidth,
+                                    y: (e.nativeEvent.offsetY * 100)/ e.currentTarget.offsetHeight,
+                                }
+                        
+                                item.style.setProperty('--zoom-x', `${pointer.x}` + "%");
+                                item.style.setProperty('--zoom-y', `${pointer.y}` + "%");
                             }
-                    
-                            item.style.setProperty('--zoom-x', `${pointer.x}` + "%");
-                            item.style.setProperty('--zoom-y', `${pointer.y}` + "%");
+                        }}
+                        onClick={(e) => {
+                            const item = e.currentTarget;
+                            if(!zoomActivated){
+                                item.style.setProperty('--display', 'block');
+                                let pointer = {
+                                    x: (e.nativeEvent.offsetX * 100)/ e.currentTarget.offsetWidth,
+                                    y: (e.nativeEvent.offsetY * 100)/ e.currentTarget.offsetHeight,
+                                }
+                        
+                                item.style.setProperty('--zoom-x', `${pointer.x}` + "%");
+                                item.style.setProperty('--zoom-y', `${pointer.y}` + "%");
+                            }else{
+                                item.style.setProperty('--display', 'none');
+                            }
+                            setZoomActivated(prevState => !prevState);
                         }}
                         onMouseLeave={(e) => {
                             const item = e.currentTarget;
+                            if(zoomActivated){
+                                setZoomActivated(false);
+                            }
                             item.style.setProperty('--display', 'none');
 
                         }}
                     >
                         <img
                         src={image}
+                        role="presentation"
                         alt="featured-Image"
                         className="w-full h-full object-cover"
                         />
@@ -186,99 +216,38 @@ const ProductQuickView = ({ product, onHideModal }: any) => {
                 </SwiperSlide>)}
             </Swiper>
                 
-            <section className="lg:p-12 p-6 bg-white lg:w-[60%] h-full flex flex-col w-full gap-y-5 overflow-y-scroll">
+            <section className="lg:p-12 p-6 lg:w-[60%] flex flex-col w-full gap-y-5 lg:overflow-y-scroll h-[60%] lg:h-full">
                 <header className="flex flex-col items-start gap-y-0">
                     <h3 className="font-sans text-xs text-gray-400 font-thin">OYINYE COUTURE</h3>
                     <h1 className="font-medium font-sans lg:text-4xl text-2xl">{product.title}</h1>
                 </header>
-                <section className="border border-l-0 border-r-0 border-gray-300 w-full py-4 font-medium my-2 font-sans text-gray-600" id='go-to__ppage__section'>
-                    <Link href={`/products/${product.title}?variant=${sizesObj[`${selectedColor}-${selectedSize}`].id}`} className="cursor-pointer"><i className="fa-solid fa-arrow-right-long text-gray-600"></i>&nbsp;&nbsp;Go to product page</Link>
+                <section className="border border-l-0 border-r-0 border-gray-300 w-full py-4 font-medium my-2 font-sans text-gray-600" id='go-to-productpage__section'>
+                    <Link href={`/products/${product.title.replace(' ', '-').toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].color!.toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].variantId!}`} className="cursor-pointer"><i className="fa-solid fa-arrow-right-long text-gray-600"></i>&nbsp;&nbsp;Go to product page</Link>
                 </section>
-                <p className="text-lg text-gray-600 flex flex-row gap-x-4 font-sans items-center">
+                <section className="text-lg text-gray-600 flex flex-row gap-x-4 font-sans items-center">
                     <h1 className="font-sans font-bold text-black">&#8358;{sizesObj[`${selectedColor}-${selectedSize}`].price.toLocaleString("en-US")}</h1>
                     {sizesObj[`${selectedColor}-${selectedSize}`].stock === 0 && <h3 className="bg-red-600 text-white h-6 px-2 py-1 w-[70px] text-sm text-center font-semibold flex items-center justify-center">Sold out</h3>}
-                </p>
-                <p className="text-sm"><Link href='/policies/shipping-policy' className="underline text-gray-500 text-sm font-sans">Shipping</Link> calculated at checkout</p>
-                <p className="flex flex-col items-start gap-y-2" id='color-list'>
+                </section>
+                <section className="flex flex-col items-start gap-y-2" id='color-list'>
                     <h1 className="text-sm text-gray-500">Color</h1>
                     <div className="flex flex-row justify-start gap-x-2 flex-wrap gap-y-2">
                         {product.colors.map((color: any, i: number) => 
                         sizesObj[`${selectedColor}-${selectedSize}`].stock === 0 ?  
-                        <span key={i} onClick={handleColorChange} className={`cursor-pointer bg-transparent px-6 py-2 rounded-3xl text-gray-400 border border-gray-200 line-through`}>{color.type}</span>
-                        : <span key={i} onClick={handleColorChange} className={color.isAvailable && i === 0 ? `bg-black px-6 py-2 rounded-3xl text-white cursor-pointer` : color.isAvailable && i > 0 ? `cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600 px-6 py-2 rounded-3xl bg-transparent` : `cursor-pointer bg-transparent px-6 py-2 rounded-3xl text-gray-400 border border-gray-200 line-through`}>{color.type}</span>)}
+                        <span key={i} onClick={handleColorChange} className={color.isAvailable && i === 0 ? `cursor-pointer bg-black px-6 py-2 rounded-3xl text-gray-400 line-through` : `cursor-pointer bg-transparent border border-gray-200 px-6 py-2 rounded-3xl text-gray-400 line-through`}>{color.type}</span>
+                        : <span key={i} onClick={handleColorChange} className={color.isAvailable && i === 0 ? `bg-black px-6 py-2 rounded-3xl text-white cursor-pointer` : `cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600 px-6 py-2 rounded-3xl bg-transparent`}>{color.type}</span>)}
                     </div>
-                </p>
-                <p className="flex flex-col items-start gap-y-2" id="size-list">
+                </section>
+                <section className="flex flex-col items-start gap-y-2" id="size-list">
                     <h1 className="text-sm text-gray-500">Size</h1>
                     <div className="flex flex-row justify-start flex-wrap gap-x-2 gap-y-2">
                         {sizesJsxObj[selectedColor] ? sizesJsxObj[selectedColor] :
-                        sizes.map((size: number) => <span className={`font-sans bg-transparent px-6 py-2 rounded-3xl cursor-pointer text-gray-400 line-through border border-gray-200`}>UK {size}</span>)
+                        sizes.map((size: number, i: number) => <span key={i} className='font-sans bg-transparent px-6 py-2 rounded-3xl cursor-pointer text-gray-400 line-through border border-gray-200'>UK {size}</span>)
                     
                         } 
                     </div>
                 
-                </p>
-                {/* <p className="flex flex-col items-start gap-y-2 relative ">
-                    <h1 className="text-sm text-gray-500">Quantity</h1>
-                    <div className="flex flex-row gap-x-7 text-gray-600 border border-gray-600 px-5 py-2 w-36 h-12 items-center">
-                        <button onClick={() => {
-                            setQuantity((prevState) => {
-                                if(parseInt(prevState) === 1){
-                                    return prevState;
-                                }else{
-                                    return (parseInt(prevState) - 1) + '';
-                                }
-                            });
-                            
-                        }} disabled={totalquantity === 0 ? true : false} className={totalquantity === 0 ? `text-lg font-sans text-gray-400 cursor-not-allowed` : `text-lg font-sans text-gray-600 font-semibold`}>
-                        -</button>
-                        <div className="w-14"></div>
-                        <button className="text-lg font-sans cursor-pointer text-gray-600 font-semibold" onClick={() => {
-                            setQuantity((prevState) => (parseInt(prevState) + 1) + '');
-                            // addItem({
-                            //     price: product.price,
-                            //     quantity: parseInt(quantity),
-                            //     id: product._id.toString()
-                            // })
-                        }}>+</button>
-                    </div>
-                    <input 
-                        onBlur={(e) => {
-                            const el = e.currentTarget;
-                            el.classList.add('border-none');
-                            el.style.setProperty('height', '48px');
-                            el.classList.remove('shadow-4xl');
-                            el.style.setProperty('left', '42px');
-                            el.style.setProperty('bottom', '0');
-                            el.style.setProperty('background-color', 'transparent');
-                        }} 
-                        onFocus={(e) => {
-                            const el = e.currentTarget;
-                            el.classList.remove('border-none');
-                            el.style.setProperty('height', '58px');
-                            el.classList.add('shadow-4xl');
-                            el.classList.add('border-2');
-                            el.classList.add('border-[#665d5d]');
-                            el.style.setProperty('left', '42px');
-                            el.style.setProperty('bottom', '-5px');
-                            el.style.setProperty('background-color', 'white');
-                        }}
-                        onInput={(e) => {
-                            const input = e.currentTarget;
-                            const regex = /^[0-9]+$/;
-                            if(!regex.test(input.value)){
-                                input.value = '';
-                            }else{
-                                setQuantity(input.value);
-                            }
-                        }}
-                        className="
-                         bg-transparent w-14 absolute left-[42px] bottom-0 border-none h-12
-                          text-sm font-sans text-gray-600 focus:outline-none text-center z-10
-                         p-2" value={quantity}/>
-                    
-                </p> */}
-                <p className="flex flex-row items-center justify-start gap-x-6 relative w-full mt-2">
+                </section>
+                <section className="flex flex-row items-center justify-start gap-x-6 relative w-full mt-2">
                     <div className="flex flex-row">
                         <button onClick={() => {
                             setQuantity((prevState) => {
@@ -342,7 +311,10 @@ const ProductQuickView = ({ product, onHideModal }: any) => {
                         className="relative rounded-[50%] cursor-pointer px-[11px] py-[5px] bg-gray-100"><i className="fa-solid fa-plus text-gray-600 text-xs relative"></i></button>
                     </div>
                     { 
-                        progressIndicator ?  <div className="progress-bar"></div>:
+                        progressIndicator ?  <div className="progress-bar" 
+                        style={{ "--animate-duration": "3s" } as React.CSSProperties}
+
+                        ></div>:
                         <button 
                         onClick={(e) => {
                             setProgressIndicator(true);
@@ -354,19 +326,18 @@ const ProductQuickView = ({ product, onHideModal }: any) => {
                             addItem({
                                 price: sizesObj[`${selectedColor}-${selectedSize}`].price,
                                 quantity: parseInt(quantity),
-                                variantId: sizesObj[`${selectedColor}-${selectedSize}`].id,
-                                id: product._id.toString()
+                                variantId: sizesObj[`${selectedColor}-${selectedSize}`].variantId!,
                             });
                             
                         }} 
                         disabled={sizesObj[`${selectedColor}-${selectedSize}`].stock === 0 ? true : false} 
-                        className={`${sizesObj[`${selectedColor}-${selectedSize}`].stock === 0 ? 'cursor-not-allowed' : ''} hover:opacity-70 px-6 py-3
-                         text-blue-600 text-[1rem] font-sans`} id='add-to-cart'>Add To Cart</button>
+                        className={`${sizesObj[`${selectedColor}-${selectedSize}`].stock === 0 ? 'cursor-not-allowed' : ''} hover:opacity-70 md:px-6 px-8 md:py-3 py-2
+                         text-blue-600 lg:text-[1rem] font-sans text-[.9rem]`} id='add-to-cart'><span className="md:inline-block hidden">Add&nbsp;</span><span className="md:inline-block hidden">To&nbsp;</span><span>Cart</span></button>
                     }
-                </p>
+                </section>
                 {toastMsgVisible && <p className="border-[#a8e8e2] border bg-[#a8e8e226] px-4 py-3 font-sans text-[1rem] text-gray-500 font-light relative" id='toast-msg'>{product.title} has been added to your cart. <Link href='/cart' className="underline underline-offset-2">View Cart</Link></p>}
             </section>
-        </Modal>
+        </QuickViewModal>
   );
 };
 
