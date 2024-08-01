@@ -23,6 +23,19 @@
     border-color: #000 !important; /* Active border color */
   }
 
+  .hide-chart {
+    animation: hide-content 200ms ease-out forwards;
+    -webkit-animation: hide-content 200ms ease-out forwards;
+    display: none;
+  }
+  
+  .show-chart {
+    animation: show-content 200ms ease-out forwards;
+    -webkit-animation: show-content 200ms ease-out forwards;
+    display: flex;
+  }
+  
+
   @media all and (min-width: 768px){
     .swiper-pagination-bullet {
         width: 100px !important;

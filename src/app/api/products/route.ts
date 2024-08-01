@@ -1,4 +1,5 @@
 import { connect } from '@/db/config';
+import Cart from '@/models/cart';
 import Product from '@/models/product';
 import { NextResponse, type NextRequest } from 'next/server';
 

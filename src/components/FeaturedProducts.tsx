@@ -1,7 +1,7 @@
 
 import ProductComponent from "./Product";
 
-const FeaturedProducts = ({featuredProducts}: any) => {
+const FeaturedProducts = ({featuredProducts, cartItems}: any) => {
 
   return (
     <div className="flex flex-col lg:gap-y-8 gap-y-4 bg-white">
@@ -16,8 +16,8 @@ const FeaturedProducts = ({featuredProducts}: any) => {
       </section>
       <div className="flex flex-col lg:items-start items-center gap-y-5 font-sans container mx-auto">
         <header className="lg:text-4xl text-3xl">FeaturedProducts</header>
-        <section className="flex md:flex-row flex-col items-center justify-evenly flex-wrap md:gap-x-5 gap-y-9">
-          {featuredProducts.slice(0, 4).map((product: any, i: number) => <ProductComponent key={i} product={product}/>)}
+        <section className="flex flex-row items-center justify-evenly flex-wrap gap-x-5 gap-y-5">
+          {featuredProducts.slice(0, 4).map((product: any, i: number) => <ProductComponent key={i} product={product} cartItems={cartItems}/>)}
         </section>
       </div>
     </div>

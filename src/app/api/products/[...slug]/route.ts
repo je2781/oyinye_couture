@@ -51,7 +51,7 @@ export async function GET(req: NextRequest, {params}: {params: {  slug: string[]
         product: {
           productSizes: sizes,
           productFrontBase64Images: imageFrontBase64,
-          isAvailable,
+          productId: product._id.toString(),
           productColors: product.colors
         },
         relatedProducts,

@@ -1,6 +1,42 @@
-import { Base64ImagesObj, DressColorsObj, DressSizesJsxObj, DressSizesObj } from "@/interfaces";
+import {
+  Base64ImagesObj,
+  CartItemObj,
+  DressColorsObj,
+  DressSizesJsxObj,
+  DressSizesObj,
+} from "@/interfaces";
 
 export const sizes = [8, 10, 12, 14, 16, 18];
+
+export const regex = /^[0-9]+$/;
+
+export const extractProductDetails = (
+  cartItems: any[],
+  cartItemObj: CartItemObj,
+  frontBase64ImagesObj: Base64ImagesObj
+) => {
+
+
+    for (let item of cartItems) {
+        for (let color of item.product.colors) {
+        let size = color.sizes.find(
+            (size: any) => size.variantId.toString() === item.variantId
+        );
+
+        if (size) {
+            cartItemObj[color.type] = {
+            ...size,
+            variantId: size.variantId.toString(),
+            title: item.product.title,
+            color: color.type,
+            quantity: item.quantity,
+            id: item.product._id.toString(),
+            };
+            frontBase64ImagesObj[color.type] = color.imageFrontBase64;
+        }
+        }
+    }
+};
 
 // export let sizesJsxObj: DressSizesJsxObj  = {};
 // export let sizesObj: DressSizesObj  = {};
@@ -20,7 +56,6 @@ export const sizes = [8, 10, 12, 14, 16, 18];
 //         }
 //     }
 // }
-
 
 // export function handleColorChange(e: React.MouseEvent, colorsObj: DressColorsObj, selectedColor: string, setSelectedSize: React.Dispatch<React.SetStateAction<string>>, setSelectedColor: React.Dispatch<React.SetStateAction<string>>, sizes: number[], colors: any){
 //     let activeColorEl = e.currentTarget as HTMLSpanElement;
@@ -52,7 +87,7 @@ export const sizes = [8, 10, 12, 14, 16, 18];
 //                 sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('background-color', 'transparent');
 //                 sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('color', 'rgb(156, 163, 175)');
 //                 sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].classList.add('border', 'border-gray-200');
-                
+
 //                 // Setting properties of first size element contained in active dress color to 'current selection'
 //                 sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())].style.setProperty('background-color', 'black');
 //                 sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())].style.setProperty('color', 'white');
@@ -63,15 +98,14 @@ export const sizes = [8, 10, 12, 14, 16, 18];
 //                         sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === size.number.toString())].style.setProperty('color', 'rgb(75, 85, 99)');
 //                     }
 //                 }
-        
+
 //                 setSelectedSize(color.sizes[0].number.toString());
 //             }
 //         }
-        
+
 //     }
 //     setSelectedColor(activeColorEl.innerText);
 
-    
 // }
 
 // export function handleSizeChange(e: React.MouseEvent, setSelectedSize: React.Dispatch<React.SetStateAction<string>>){

@@ -14,26 +14,72 @@ import useCart from "@/store/useCart";
 import Link from "next/link";
 import useAuth from "@/store/useAuth";
 import { Base64ImagesObj, DressColorsObj, DressSizesJsxObj, DressSizesObj } from "@/interfaces";
-import { sizes } from "@/helpers/getHelpers";
+import { extractProductDetails, regex, sizes } from "@/helpers/getHelpers";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 
-const ProductQuickView = ({ product, onHideModal }: any) => {
+const ProductQuickView = ({ product, onHideModal, isSearchProduct, cartItems}: any) => {
     const {totalAmount, addItem, items} = useCart();
     const {authStatus} = useAuth();
     const [quantity, setQuantity] = React.useState('1');
     const [zoomActivated, setZoomActivated] = React.useState(false);
     const [progressIndicator, setProgressIndicator] = React.useState(false);
     const [toastMsgVisible, setToastMsgVisible] = React.useState(false);
-
+    const [isSavingCart, setIsSavingCart] = React.useState(false);
+    const [toastError, setToastError] = React.useState(false);
 
     let sizesJsxObj: DressSizesJsxObj  = {};
     let sizesObj: DressSizesObj  = {};
     let colorsObj: DressColorsObj  = {};
     let frontBase64ImagesObj: Base64ImagesObj = {};
+
+
+    React.useEffect(() => {
+        let timerId: NodeJS.Timeout;
+
+        async function sendCartData(){
+            if(isSavingCart){
+                let startTime = Date.now();
+                setProgressIndicator(true);
+                try {
+                    await axios.post('/api/products/cart', {
+                        price: sizesObj[`${selectedColor}-${selectedSize}`].price,
+                        quantity: parseInt(quantity),
+                        variantId: sizesObj[`${selectedColor}-${selectedSize}`].variantId!,
+                        id: product._id.toString(),
+                        totalAmount
+                    });
+                    
+                } catch (error: any) {
+                    toast.error(error.message);
+                }finally{
+                    let endTime = Date.now();
+                    let elapsedTime = endTime - startTime;
+                    let remainingTime = Math.max(3000, elapsedTime);
+                    timerId = setTimeout(() => {
+                        setProgressIndicator(false);
+                        setToastMsgVisible(true);
+                        setToastError(false);
+                        // Resetting isSavingCart to false
+                        setIsSavingCart(false);
+                    }, remainingTime);
+                }
+
+            }
+        }
+
+        sendCartData();
+
+        return () => clearTimeout(timerId);
+
+    }, [isSavingCart]);
     
     //sorting extracted sizes for all dress colors and storing them for later use
     for(let color of product.colors){
-        color.sizes = color.sizes.filter((size: any) => size.stock > 0);
+        if(!isSearchProduct){
+            color.sizes = color.sizes.filter((size: any) => size.stock > 0);
+        }
         color.sizes.sort((a: any, b: any) => a.number - b.number);
 
         for(let size of color.sizes){
@@ -148,7 +194,7 @@ const ProductQuickView = ({ product, onHideModal }: any) => {
         color.sizes.forEach((size: any) => {
             sizesObj[`${color.type}-${size.number}`] =  {
                 price: size.price,
-                variantId: size.variantId,
+                variantId: size.variantId.toString(),
                 stock: size.stock,
                 color: color.type
             };
@@ -282,15 +328,16 @@ const ProductQuickView = ({ product, onHideModal }: any) => {
                             el.classList.add('shadow-md');
                           
                         }}
-                        onInput={(e) => {
+
+                        onChange={(e) => {
                             const input = e.currentTarget;
-                            const regex = /^[0-9]+$/;
-                            if(!regex.test(input.value)){
+                            if (!regex.test(input.value)) {
                                 input.value = '';
-                            }else{
+                            } else {
                                 setQuantity(input.value);
                             }
                         }}
+
                         type="text"
                         className="
                          bg-transparent w-16
@@ -317,25 +364,28 @@ const ProductQuickView = ({ product, onHideModal }: any) => {
                         ></div>:
                         <button 
                         onClick={(e) => {
-                            setProgressIndicator(true);
-                            setTimeout(() => {
-                                setProgressIndicator(false);
-                                setToastMsgVisible(true);
-                            }, 2000);
-                            //adding item to cart
-                            addItem({
-                                price: sizesObj[`${selectedColor}-${selectedSize}`].price,
-                                quantity: parseInt(quantity),
-                                variantId: sizesObj[`${selectedColor}-${selectedSize}`].variantId!,
-                            });
-                            
+                            if(cartItems.some((item: any)=> item.product._id.toString() === product._id.toString())){
+                                setToastError(true);
+                                setToastMsgVisible(false);
+                            }else{
+                               //adding item to cart
+                                addItem({
+                                    price: sizesObj[`${selectedColor}-${selectedSize}`].price,
+                                    quantity: parseInt(quantity),
+                                    variantId: sizesObj[`${selectedColor}-${selectedSize}`].variantId!,
+                                    id: product._id.toString()
+                                });
+                                //sending cart data to data layer
+                                setIsSavingCart(true);
+                            }
                         }} 
                         disabled={sizesObj[`${selectedColor}-${selectedSize}`].stock === 0 ? true : false} 
                         className={`${sizesObj[`${selectedColor}-${selectedSize}`].stock === 0 ? 'cursor-not-allowed' : ''} hover:opacity-70 md:px-6 px-8 md:py-3 py-2
                          text-blue-600 lg:text-[1rem] font-sans text-[.9rem]`} id='add-to-cart'><span className="md:inline-block hidden">Add&nbsp;</span><span className="md:inline-block hidden">To&nbsp;</span><span>Cart</span></button>
                     }
                 </section>
-                {toastMsgVisible && <p className="border-[#a8e8e2] border bg-[#a8e8e226] px-4 py-3 font-sans text-[1rem] text-gray-500 font-light relative" id='toast-msg'>{product.title} has been added to your cart. <Link href='/cart' className="underline underline-offset-2">View Cart</Link></p>}
+                {toastMsgVisible && <p className="border-[#a8e8e2] border bg-[#a8e8e226] px-4 py-3 font-sans text-[1rem] text-gray-500 font-light relative" id='toast-msg'>{product.title} has been added to your cart. <Link href={`/cart`} className="underline underline-offset-2">View Cart</Link></p>}
+                {toastError && <p className="border-[#e8b7a8] border bg-[#e8b7a826] px-4 py-3 font-sans text-[1rem] text-gray-500 font-light relative" id='toast-error'>You can&apos;t add more {product.title} to the cart</p>}
             </section>
         </QuickViewModal>
   );

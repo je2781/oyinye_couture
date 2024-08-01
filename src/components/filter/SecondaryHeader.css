@@ -1,0 +1,48 @@
+
+#filter-settings.forward {
+    -webkit-animation: move-forward 0.3s linear forwards; /* Safari */
+    animation: move-forward 0.3s linear forwards;
+  }
+  
+  #filter-settings.backward {
+    -webkit-animation: move-backward 0.3s linear forwards; /* Safari */
+    animation: move-backward 0.3s linear forwards;
+  }
+  
+  /* Safari */
+  @-webkit-keyframes move-forward {
+    0% {
+      -webkit-transform: translateX(-100%);
+    }
+    100% {
+      -webkit-transform: translateX(0);
+    }
+  }
+  
+  @keyframes move-forward {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+  
+  /* Safari */
+  @-webkit-keyframes move-backward{
+    0% {
+      -webkit-transform: translateX(0);
+    }
+    100% {
+      -webkit-transform: translateX(-100%);
+    }
+  }
+  
+  @keyframes move-backward{
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }

@@ -3,11 +3,9 @@
 import { AuthContextProvider } from "@/store/authContext";
 import { useEffect, useReducer, useState } from "react";
 import { cartReducer, defaultCartState } from "@/helpers/getCartReducerData";
-import Header from "@/components/Header";
 import { CartContextProvider } from "@/store/cartContext";
-import useProduct from "@/store/useProduct";
 import { ProductContextProvider } from "@/store/productContext";
-import { SearchResults } from "@/interfaces";
+import Header from "@/components/Header";
 
 export default function RootLayout({
   children,
@@ -41,12 +39,20 @@ export default function RootLayout({
 
 
 
-  const removeItemHandler = (variantId: string) => {
-    dispatchCartAction({ type: "REMOVE", variantId });
+  const removeItemHandler = (variantId: string,  quantity: number, price: number) => {
+    dispatchCartAction({ type: "REMOVE", item: {
+      variantId,
+      quantity,
+      price
+    } });
   };
 
   const addItemHandler = async (item: any) => {
     dispatchCartAction({ type: "ADD", item: item });
+  };
+
+  const updateCartHandler = (items: any[]) => {
+    dispatchCartAction({ type: "UPDATE", cartData: {items} });
   };
 
   const cartContext = {
@@ -54,6 +60,7 @@ export default function RootLayout({
     totalAmount: cartState.totalAmount,
     addItem: addItemHandler,
     removeItem: removeItemHandler,
+    updateCart: updateCartHandler,
   };
 
   return (

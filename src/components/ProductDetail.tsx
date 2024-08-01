@@ -6,7 +6,6 @@ import {
   DressSize,
   DressSizesJsxObj,
   DressSizesObj,
-  Size,
 } from "@/interfaces";
 import axios from "axios";
 import React, { useState } from "react";
@@ -18,13 +17,14 @@ import "swiper/css/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import useCart from "@/store/useCart";
-import { sizes } from "@/helpers/getHelpers";
+import { regex, sizes } from "@/helpers/getHelpers";
 import Header from "@/components/Header";
 
 import Ruler from '../../public/ruler.svg';
 import Truck from '../../public/truck.svg';
 import Logo from '../../public/oyinye.png';
 import './ProductDetail.css';
+import toast from "react-hot-toast";
 
 {/* <main className="min-h-screen w-full flex flex-col items-center justify-center bg-white hide-scrollbar">
             <section className="flex flex-col items-center gap-y-2">
@@ -36,22 +36,66 @@ const ProductDetail = ({
     productSizes,
     productColors,
     productFrontBase64Images,
+    productId,
     paramsId,
     paramsColor,
-    paramsProduct
+    paramsProduct,
+    cartItems
 }: any) => {
-    const [sizeData, setSizeData] = useState<Size | undefined>();
-    const [sizesData, setSizesData] = useState<Size[]>(productSizes);
+    const [sizeData, setSizeData] = useState<DressSize | undefined>();
+    const [sizesData, setSizesData] = useState<DressSize[]>(productSizes);
     const [colorsData, setColorsData] = useState<any[]>(productColors);
     const [imageFrontBase64, setImageFrontBase64] = useState<string[]>(productFrontBase64Images);
     const [selectedColor, setSelectedColor] = useState<string>(paramsColor.charAt(0).toUpperCase() + paramsColor.slice(1));
     const [selectedSize, setSelectedSize] = useState<string>("");
     const [dragActivated, setDragActivated] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isOpen, setIsOpen] = useState(false);
+    const [loader, setLoader] = useState(false);
     const [quantity, setQuantity] = useState("1");
-    const { totalAmount, addItem, items } = useCart();
+    const { addItem, totalAmount, items} = useCart();
+    const [isSavingCart, setIsSavingCart] = React.useState(false);
+    const [toastError, setToastError] = React.useState(false);
 
+
+    React.useEffect(() => {
+        let timerId: NodeJS.Timeout;
+
+        async function sendCartData(){
+            if(isSavingCart){
+                let startTime = Date.now();
+                setLoader(true);
+                try {
+                    await axios.post('/api/products/cart', {
+                        price: sizesObj[`${selectedColor}-${selectedSize}`].price,
+                        quantity: parseInt(quantity),
+                        variantId: sizesObj[`${selectedColor}-${selectedSize}`].variantId!,
+                        id: productId,
+                        totalAmount
+                    });
+                    
+                } catch (error: any) {
+                    toast.error(error.message);
+                }finally{
+                    let endTime = Date.now();
+                    let elapsedTime = endTime - startTime;
+                    let remainingTime = Math.max(2000, elapsedTime);
+                    timerId = setTimeout(() => {
+                        setLoader(false);
+                        setToastError(false);
+                        toast.success('item added to cart', {
+                            position: 'top-right'
+                        });
+                        // Resetting isSavingCart to false
+                        setIsSavingCart(false);
+                    }, remainingTime);
+                }
+
+            }
+        }
+
+        sendCartData();
+
+        return () => clearTimeout(timerId);
+    }, [isSavingCart]);
     
     let sizesJsxObj: DressSizesJsxObj = {};
     let sizesObj: DressSizesObj = {};
@@ -66,36 +110,10 @@ const ProductDetail = ({
         );
         if (extractedSize) {
             setSizeData(extractedSize);
-            setSelectedSize(extractedSize.number.toString());
+            setSelectedSize(extractedSize.number!.toString());
         }
         
     }, []);
-
-    React.useEffect(() => {
-        const article = document.querySelector('article');
-        const section = document.querySelector('section-scroll');
-    
-        if (article && section) {
-          const handleScroll = (e: WheelEvent) => {
-            const articleRect = article.getBoundingClientRect();
-            const sectionRect = section.getBoundingClientRect();
-            
-            if (articleRect.bottom <= sectionRect.top) {
-              section.scrollBy({ top: e.deltaY });
-            } else if (articleRect.top <= sectionRect.bottom && section.scrollTop === 0) {
-              article.scrollBy({ top: e.deltaY });
-            } else if (articleRect.bottom > sectionRect.top) {
-              e.preventDefault();
-            }
-          };
-    
-          window.addEventListener('wheel', handleScroll, { passive: false });
-    
-          return () => {
-            window.removeEventListener('wheel', handleScroll);
-          };
-        }
-      }, []);
 
 
     function handleColorChange(e: React.MouseEvent){
@@ -143,7 +161,7 @@ const ProductDetail = ({
                         //updating active dress size and pathname of current route
                         const extractedColor = colorsData.find(color => color.type === activeColorEl.innerText);
                         const extractedSize = extractedColor.sizes.find((size: any) => size.number === color.sizes[0].number)
-                        history.pushState(null, '', `/products/summer-wear/${extractedColor.type.toLowerCase()}/${extractedSize?.variantId}`);
+                        history.pushState(null, '', `/products/${paramsProduct}/${extractedColor.type.toLowerCase()}/${extractedSize?.variantId}`);
                 
                         setSelectedSize(color.sizes[0].number.toString());
                     }
@@ -180,7 +198,7 @@ const ProductDetail = ({
         //updating active dress size and pathname of current route
         const extractedColor = colorsData!.find(color => color.type === selectedColor);
         const extractedSize = extractedColor.sizes.find((size: any) => size.number === parseInt(activeSizeEl.innerText.split(' ')[1]));
-        history.pushState(null, '', `/products/summer-wear/${selectedColor.toLowerCase()}/${extractedSize?.variantId}`);
+        history.pushState(null, '', `/products/${paramsProduct}/${selectedColor.toLowerCase()}/${extractedSize?.variantId}`);
         setSelectedSize(activeSizeEl.innerText.split(' ')[1]);
     }
 
@@ -287,7 +305,7 @@ const ProductDetail = ({
         color.sizes.forEach((size: any) => {
             sizesObj[`${color.type}-${size.number}`] = {
             price: size.price,
-            variantId: size.variantId,
+            variantId: size.variantId.toString(),
             stock: size.stock,
             color: color.type,
             };
@@ -298,9 +316,7 @@ const ProductDetail = ({
 
   const mainContent = (
     <>
-      <Header />
-      <main className="bg-white w-full min-h-screen pt-8">
-        <section className="flex lg:flex-row flex-col container mx-auto lg:h-screen w-full bg-white gap-y-7">
+        <main className="flex lg:flex-row flex-col container mx-auto lg:h-screen bg-white gap-y-7 w-full min-h-screen pt-8 px-7 max-w-7xl">
             <article id='article' className="flex flex-col gap-y-2 w-full lg:w-[46%]">
                 <Swiper
                 modules={[Pagination, Navigation]}
@@ -495,15 +511,8 @@ const ProductDetail = ({
                     <button
                         className="text-lg font-sans cursor-pointer text-gray-600 font-semibold"
                         onClick={() => {
-                        setQuantity((prevState) => parseInt(prevState) + 1 + "");
-                        //adding item to cart
-                        addItem({
-                            price:
-                            sizesObj[`${selectedColor}-${selectedSize}`]?.price ?? 0,
-                            quantity: parseInt(quantity),
-                            variantId:
-                            sizesObj[`${selectedColor}-${selectedSize}`]?.variantId ?? "",
-                        });
+                            setQuantity((prevState) => parseInt(prevState) + 1 + "");
+
                         }}
                     >
                         +
@@ -530,35 +539,77 @@ const ProductDetail = ({
                         el.style.setProperty("bottom", "-5px");
                         el.style.setProperty("background-color", "white");
                     }}
-                    onInput={(e) => {
+                    onChange={(e) => {
                         const input = e.currentTarget;
-                        const regex = /^[0-9]+$/;
                         if (!regex.test(input.value)) {
-                        input.value = "";
+                            input.value = '';
                         } else {
-                        setQuantity(input.value);
+                            setQuantity(input.value);
                         }
                     }}
+
                     className="bg-transparent w-14 absolute left-[42px] bottom-0 border-none h-12
                                 text-sm font-sans text-gray-600 focus:outline-none text-center z-10
                                 p-2"
                     value={quantity}
                     />
                 </section>
-                <section className="mt-2 flex flex-col gap-y-4 lg:w-[80%] w-full">
-                    <button className="font-sans lg:px-44 px-28 py-2 ring-gray-600 hover:ring-1 border border-gray-600 text-gray-600">Add to cart</button>
+                <section className="mt-2 flex flex-col gap-y-3 lg:w-[80%] w-full">
+                    {toastError && <div className="flex flex-row gap-x-2 text-sm font-sans items-center">
+                        <i className="fa-solid fa-circle-exclamation text-red-600"></i>
+                        <p className="text-gray-400">You can&apos;t add more {paramsProduct} to the cart</p>
+                    </div>}
+                    <button className="font-sans lg:px-44 px-28 py-2 ring-gray-600 hover:ring-1 border border-gray-600 text-gray-600 flex flex-row justify-center items-center"
+                        onClick={() => {
+                            if(cartItems.some((item: any) => item.product._id.toString() === productId)){
+                                setToastError(true);
+                            }else{
+                                //adding item to cart
+                                addItem({
+                                    price:
+                                    sizesObj[`${selectedColor}-${selectedSize}`].price,
+                                    quantity: parseInt(quantity),
+                                    variantId:
+                                    sizesObj[`${selectedColor}-${selectedSize}`].variantId,
+                                    id: productId,
+                                });
+                                //sending cart data to data layer
+                                setIsSavingCart(true);
+                            }
+                        }}
+                    >{loader ?  <div className="loader" ></div> : <span>Add to cart</span>}</button>
                     <button className="font-sans lg:px-44 px-28 py-2 ring-[#5a31f4] hover:bg-[#512bd8] hover:ring-1 bg-[#5a31f4] text-white">Buy it now</button>
                 </section>
-                <section className="gap-y-4 mt-3 w-full">
-                    <div className={`${isOpen ? 'pb-4' : ''}`}>
-                        <header onClick={() => setIsOpen(prevState => !prevState)} className="py-4 cursor-pointer flex flex-row justify-between items-center pr-4 border border-l-0 border-r-0 border-b-0 border-gray-200">
+                <section className="gap-y-3 mt-3 w-full flex flex-col">
+                    <div className="flex flex-col gap-y-2">
+                        <header 
+                            onClick={(e) => {
+                                let downAngle = e.currentTarget.querySelector("header i");
+                                let header = e.currentTarget;
+                                let content = header.parentNode?.querySelector("#sizes-content");
+
+                                if (downAngle && header) {
+                                if (!downAngle.classList.contains("ad-rotate")) {
+                                    downAngle.classList.add("ad-rotate");
+                                    downAngle.classList.remove("ad-rotate-anticlock");
+                                    content?.classList.add("show-chart");
+                                    content?.classList.remove("hide-chart");
+                                } else {
+                                    downAngle.classList.remove("ad-rotate");
+                                    downAngle.classList.add("ad-rotate-anticlock");
+                                    content?.classList.remove("show-chart");
+                                    content?.classList.add("hide-chart");
+                                }
+                                }
+                            }}
+                            className="py-4 cursor-pointer flex flex-row justify-between items-center pr-4 border border-l-0 border-r-0 border-b-0 border-gray-200">
                             <h1 className="flex flex-row gap-x-3">
                                 <Image src={Ruler} alt='ruler' role='presentation' className="w-6 lg:w-[28px]"/>
                                 <span className="text-gray-500 font-sans lg:text-lg text-[1rem]">Size Chart</span>
                             </h1>
-                            <i className={`${isOpen ? 'fa-angle-up' : 'fa-angle-down'} fa-solid text-sm text-gray-500`}></i>
+                            <i className={`fa-angle-down fa-solid text-sm text-gray-500`}></i>
                         </header>
-                        {isOpen && <div className="border border-gray-200 pt-3 pb-6 px-5 lg:ml-3 lg:mr-12 mr-5 flex flex-col gap-y-4">
+                        <div id='sizes-content' className="border border-gray-200 pt-3 pb-6 px-5 lg:ml-3 lg:mr-12 mr-5 flex-col gap-y-4 hidden">
                             <header className="flex flex-row justify-between">
                                 <div className="lg:w-[65%] w-[60%]"></div>
                                 <Image src={Logo} alt="logo" role='presentation' width={240} className="lg:w-[35%] w-[40%]"/>
@@ -640,24 +691,40 @@ const ProductDetail = ({
                                     </tbody>
                                 </table>
                             </section>
-                        </div>}
+                        </div>
                     </div>
                     <div>
-                        <header onClick={() => setIsOpen(prevState => !prevState)} className="py-4 cursor-pointer flex flex-row justify-between items-center pr-4 border border-l-0 border-r-0 border-b-0 border-gray-200">
+                        <header 
+                            onClick={(e) => {
+                                let downAngle = e.currentTarget.querySelector("header i");
+                                let header = e.currentTarget;
+                                let content = header.parentNode?.querySelector("#shipping-content");
+
+                                if (downAngle && header) {
+                                if (!downAngle.classList.contains("ad-rotate")) {
+                                    downAngle.classList.add("ad-rotate");
+                                    downAngle.classList.remove("ad-rotate-anticlock");
+                                    content?.classList.add("show-chart");
+                                    content?.classList.remove("hide-chart");
+                                } else {
+                                    downAngle.classList.remove("ad-rotate");
+                                    downAngle.classList.add("ad-rotate-anticlock");
+                                    content?.classList.remove("show-chart");
+                                    content?.classList.add("hide-chart");
+                                }
+                                }
+                            }} className="py-4 cursor-pointer flex flex-row justify-between items-center pr-4 border border-l-0 border-r-0 border-b-0 border-gray-200">
                             <h1 className="flex flex-row gap-x-3">
                                 <Image src={Truck} alt='delivery-truck' role='presentation' className="w-6 lg:w-[28px]"/>
                                 <span className="text-gray-500 font-sans lg:text-lg text-[1rem]">Shipping</span>
                             </h1>
-                            <i className={`${isOpen ? 'fa-angle-up' : 'fa-angle-down'} fa-solid text-sm text-gray-500`}></i>
+                            <i className={`fa-angle-down fa-solid text-sm text-gray-500`}></i>
                         </header>
-                        {/* {isOpen && <div className="border border-gray-200 pt-3 pb-6 px-5 ml-3 lg:mr-12 mr-5 flex flex-col gap-y-4">
-                            
-                        </div>} */}
+                        
                     </div>
                 </section>
             </section>
-        </section>
-      </main>
+        </main>
     </>
   );
 

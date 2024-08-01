@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 
 import "./globals.css";
+import Header from "@/components/Header";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
   title: "Oyinye Couture",
   description: "A bespoke tailoring outfit",
 };
+
 
 export default function RootLayout({
   children,
@@ -23,6 +25,8 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <div id='quick-view-modal'></div>
+        <div id='mobile-modal'></div>
+        <div id='filter-modal'></div>
         <div id='search-modal'></div>
         <div id='backdrop-root'></div>
         <Toaster position="bottom-center" />

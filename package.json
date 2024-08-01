@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.13.0",
+    "@emotion/styled": "^11.13.0",
+    "@mui/material": "^5.16.4",
     "argon2": "^0.40.3",
     "axios": "^1.7.2",
     "jsonwebtoken": "^9.0.2",

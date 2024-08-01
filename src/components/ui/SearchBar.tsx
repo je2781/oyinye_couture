@@ -13,12 +13,16 @@ const SearchBar = ({ onHideModal}: any) => {
   const {allProducts} = useProduct();
   const [isLoading, setIsLoading] = React.useState(false);
 
+  let currentUrl = `/search/products?q=${query}&options[prefix]=last&sort_by=relevance&page=1`;
+
   React.useEffect(() => {
     if(isLoading){
-      setTimeout(() => {
+      if(location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1] === currentUrl){
+        location.replace(currentUrl);
+      }else{
         router.push(`/search/products?q=${query}&options[prefix]=last&sort_by=relevance&page=1`);
+      }
 
-      }, 2000);
     }
 
   }, [isLoading]);
@@ -33,7 +37,10 @@ const SearchBar = ({ onHideModal}: any) => {
 
   return (
     <SearchModal onClose={onHideModal}>
-      <main className="mx-auto h-full border border-gray-500 max-w-7xl md:w-[55%] w-[80%] focus-within:border-2 focus-within:border-gray-600 relative">
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        setIsLoading(true);
+      }} className="mx-auto container h-full border border-gray-500 max-w-7xl md:w-[55%] w-[90%] focus-within:border-2 focus-within:border-gray-600 relative">
         <section className="flex flex-row items-center justify-between px-4 py-[6px]">
           <div className="flex flex-col items-start w-full">
             <h5 className="text-[.7rem] font-thin font-sans text-gray-600">
@@ -69,7 +76,7 @@ const SearchBar = ({ onHideModal}: any) => {
           </section>
         </section>
         {query.length > 0 && allProducts.length === 0 &&
-          <div className="flex items-center justify-center bg-white pt-1 h-[38px]">
+          <div className="flex items-center justify-center bg-white pt-1 h-[38px] absolute left-0 top-[55px] w-full">
               <span className="loader"></span>
           </div>
         }
@@ -77,7 +84,7 @@ const SearchBar = ({ onHideModal}: any) => {
           <div className="absolute left-0 top-[55px] bg-white pt-3 h-fit w-full flex flex-col">
             <section className="flex flex-row">
               { otherSearchResults &&
-                <section className="flex flex-col w-[30%] gap-y-5">
+                <section className="flex flex-col md:w-[30%] w-[35%] gap-y-5">
                   {productSuggestions && <section className="flex flex-col w-full">
                     <h4 className="font-sans text-gray-300 text-[.8rem] border border-t-0 border-l-0 border-r-0 pb-2 ml-5 mr-5">
                       SUGGESTIONS
@@ -129,7 +136,7 @@ const SearchBar = ({ onHideModal}: any) => {
                     </ul>
                   </section>}
                 </section>}
-                <section className={`flex flex-col ${otherSearchResults ? 'w-[70%]' : 'w-full'}`}>
+                <section className={`flex flex-col ${otherSearchResults ? 'md:w-[70%] w-[65%]' : 'w-full'}`}>
                   <h4 className="font-sans text-gray-300 text-[.8rem] border border-t-0 border-l-0 border-r-0 pb-2 ml-4 mr-4">
                     PRODUCTS
                   </h4>
@@ -168,7 +175,7 @@ const SearchBar = ({ onHideModal}: any) => {
             </footer>
           </div>
         }
-      </main>
+      </form>
     </SearchModal>
   );
 };

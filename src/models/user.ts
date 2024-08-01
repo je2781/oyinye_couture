@@ -22,11 +22,11 @@ const UserSchema = new Schema({
   },
   isVerified: {
     type: Boolean,
-    default: false,
+    required: true,
   },
   isAdmin: {
     type: Boolean,
-    default: false,
+    required: true,
   },
   resetToken: String,
   resetTokenExpirationDate: Date,
@@ -42,12 +42,16 @@ const UserSchema = new Schema({
             type: Schema.Types.ObjectId
         }
     }
-  ]
+  ],
+
 
 });
 
 
 
-const User = mongoose.models.users || mongoose.model("users", UserSchema);
+
+
+
+const User = mongoose.models.users ?? mongoose.model("users", UserSchema);
 
 export default User;

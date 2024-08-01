@@ -30,7 +30,7 @@ const ProductSchema = new Schema({
                         required: true
                     },
                     variantId: {
-                        type: String,
+                        type: Schema.Types.ObjectId,
                         required: true
                     },
                     stock: {
@@ -67,12 +67,16 @@ const ProductSchema = new Schema({
     noOfReviews: {
         type: Number
     },
+    type: {
+        type: String,
+        required: true
+    }
     
     
 
 });
 
-const Product = mongoose.models.products || mongoose.model('products', ProductSchema);
+const Product = mongoose.models.products ?? mongoose.model('products', ProductSchema);
 
 export default Product;
   

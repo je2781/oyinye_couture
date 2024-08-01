@@ -13,6 +13,25 @@ const QuickViewModalOverlay = (props: any) => {
   );
 };
 
+const FilterModalOverlay = (props: any) => {
+  return (
+    <main id='filter-settings' aria-orientation="vertical" aria-labelledby='toggle-settings' className="z-30 w-4/5 flex-col pb-12 pt-[70px] px-4 bg-white gap-y-6 h-screen flex fixed top-0 left-0">
+      {props.children}
+      <h3 className="font-serif text-lg text-gray-500 absolute left-4 top-5 italic font-extralight">Filter</h3>
+      <i className="fa-solid fa-xmark text-xl absolute right-4 top-5 cursor-pointer text-gray-500" onClick={props.onClick}></i>
+    </main>
+  );
+};
+
+const MobileModalOverlay = (props: any) => {
+  return (
+    <main id='mobile-nav' aria-orientation="vertical" aria-labelledby='toggle-button' className="z-30 w-4/5 flex-col pb-12 pt-[70px] px-4 bg-white gap-y-6 h-screen flex fixed top-0 left-0">
+      {props.children}
+      <i className="fa-solid fa-xmark text-xl absolute right-4 top-5 cursor-pointer text-gray-500" onClick={props.onClick}></i>
+    </main>
+  );
+};
+
 const SearchModalOverlay = (props: any) => {
   return (
     <main 
@@ -37,6 +56,35 @@ export const QuickViewModal = (props: any) => {
   );
 };
 
+export const MobileModal = (props: any) => {
+  return (
+    <>
+      {ReactDOM.createPortal(
+        <BackDrop onClick={props.onClose}/>,
+        document.getElementById("backdrop-root")!
+      )}
+      {ReactDOM.createPortal(
+        <MobileModalOverlay onClick={props.onClose}>{props.children}</MobileModalOverlay>,
+        document.getElementById("mobile-modal")!
+      )}
+    </>
+  );
+};
+
+export const FilterModal = (props: any) => {
+  return (
+    <>
+      {ReactDOM.createPortal(
+        <BackDrop onClick={props.onClose}/>,
+        document.getElementById("backdrop-root")!
+      )}
+      {ReactDOM.createPortal(
+        <FilterModalOverlay onClick={props.onClose}>{props.children}</FilterModalOverlay>,
+        document.getElementById("filter-modal")!
+      )}
+    </>
+  );
+};
 export const SearchModal = (props: any) => {
   return (
     <>

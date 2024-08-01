@@ -4,6 +4,7 @@ import mongoose, { Document, Model, Schema } from 'mongoose';
 interface CartItem {
   productId: mongoose.Types.ObjectId;
   quantity: number;
+  variantId: string
 }
 
 // Define the Cart document interface
@@ -14,7 +15,7 @@ interface ICart extends Document {
   },
   totalAmount: number;
   addToCart(product: any): Promise<void>,
-  deleteCartItem(prodId: mongoose.Types.ObjectId): Promise<void>,
+  removeFromCart(variantId: string, quantity: number): Promise<void>,
   clearCart(): Promise<void>
 }
 
@@ -28,7 +29,10 @@ const CartSchema = new Schema<ICart>({
             },
             quantity: {
                 type: Number,
-                required: true
+            },
+            variantId: {
+              type: String,
+
             }
             
         }
@@ -46,10 +50,25 @@ const CartSchema = new Schema<ICart>({
     
 });
 
-CartSchema.methods.deleteCartItem = function(prodId: mongoose.ObjectId){        
-    const updatedCartItems = this.items.filter((i: any) => i.productId.toString() !== prodId.toString());
+CartSchema.methods.removeFromCart = function(variantId: string, quantity: number, price: number){        
+    let updatedCartItems = this.items.slice();
+
+    const existingCartItemIndex = updatedCartItems.findIndex((item: any) => item.variantId === variantId);
+    const existingCartItem = updatedCartItems[existingCartItemIndex];
+    const updatedCartTotalAmount = this.totalAmount - (price * quantity);
+
+    if(existingCartItem.quantity - quantity <= 0){
+      updatedCartItems = updatedCartItems.filter((item: any) => item.variantId !== existingCartItem.variantId);
+    }else{
+      const updatedCartItem = {
+        ...existingCartItem, quantity: existingCartItem.quantity - quantity
+      }
+      updatedCartItems[existingCartItemIndex] = updatedCartItem;
+    }
   
     this.items = updatedCartItems;
+    this.totalAmount = updatedCartTotalAmount;
+
     
     return this.save();
     
@@ -58,22 +77,22 @@ CartSchema.methods.deleteCartItem = function(prodId: mongoose.ObjectId){
   
   CartSchema.methods.addToCart = function(product: any){
 
-    const updatedStateTotalAmount = this.totalAmount + (product.price * product.quantity);
+    const updatedCartTotalAmount = this.totalAmount + (product.price * product.quantity);
 
     const updatedCartItems = this.items.slice();
-    const existingCartItemIndex = updatedCartItems.findIndex((item: any) => item.productId.toString() === product.id.toString());
+    const existingCartItemIndex = updatedCartItems.findIndex((item: any) => item.productId.toString() === product.id);
     const existingCartItem = updatedCartItems[existingCartItemIndex];
     if(existingCartItem){
        const updatedCartItem = {
-        ...existingCartItem, amount: existingCartItem.quantity + product.quantity
+        ...existingCartItem, quantity: existingCartItem.quantity + product.quantity
       }
       updatedCartItems[existingCartItemIndex] = updatedCartItem;
     }else{
-        updatedCartItems.push({productId: product.id, quantity : product.quantity});
+        updatedCartItems.push({productId: product.id, quantity : product.quantity, variantId: product.variantId});
     }
   
     this.items = updatedCartItems;
-    this.totalAmount = updatedStateTotalAmount;
+    this.totalAmount = updatedCartTotalAmount;
     
     return this.save();
   }
@@ -84,7 +103,7 @@ CartSchema.methods.deleteCartItem = function(prodId: mongoose.ObjectId){
     return this.save();
   }
 
-const Cart = mongoose.models.carts || mongoose.model('carts', CartSchema);
+const Cart = mongoose.models.carts ?? mongoose.model('carts', CartSchema);
 
 export default Cart;
 
