@@ -10,7 +10,11 @@ export async function GET(req: NextRequest) {
 
     res.cookies.set('access_token', '', {
         httpOnly: true
-    })
+    });
+
+    res.cookies.set('admin_status', '', {
+        httpOnly: true
+    });
 
     return res;
   } catch (error: any) {

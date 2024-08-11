@@ -1,111 +1,75 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import React, { useEffect } from "react";
-import Logo from "../../../public/oyinye.png";
-import useProduct from "@/store/useProduct";
-import useCart from "@/store/useCart";
 import useWindowWidth from "../helpers/getWindowWidth";
 import Sidebar from "../layout/Sidebar";
-import { MobileModal } from "../ui/Modal";
 import SearchBar from "../ui/SearchBar";
 import useAuth from "@/store/useAuth";
-import HeaderCartButton from "../layout/HeaderCartButton";
+import Image from "next/image";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+
+export default function AdminHeader({sectionName, pathName, isModalOpen, setIsModalOpen}: any) {
+
+  let width = useWindowWidth();
 
 
-export default function Header({cartItems}: any) {
   const { authStatus } = useAuth();
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = React.useState(false);
-  const [prevScrollPos, setPrevScrollPos] = React.useState(0);
-  const [visible, setVisible] = React.useState(true);
-  const {updateCart} = useCart();
-  let windowWidth = useWindowWidth();
-  let pathName = location.pathname.split('/')[1];
+  const router = useRouter();
 
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [prevScrollPos, visible]);
-  
-  //updating local cart data with data from current public session
-  useEffect(() => {
-    if(cartItems){
-      updateCart(cartItems);
-    }
-  }, []);
-  
-  // Handling scroll
-  const handleScroll = () => {
-    const currentScrollPos = window.scrollY;
-
-    setVisible(prevScrollPos > currentScrollPos || currentScrollPos < 10);
-    if(!visible){
-      setIsModalOpen(false);
-    }
-    setPrevScrollPos(currentScrollPos);
-  };
-  
-  useEffect(() => {
-    let mobileNav = document.querySelector('#mobile-nav') as HTMLElement;
-    if (isModalOpen && mobileNav) {
-      mobileNav.classList.add('forward');
-      mobileNav.classList.remove('backward');
-    }
-    
-  }, [isModalOpen]);
-  
   const showSearchModalHandler = (e: React.MouseEvent) => {
     setIsSearchModalOpen(true);
   };
-  
+
   const hideSearchModalHandler = () => {
     setIsSearchModalOpen(false);
   };
 
-  const showModalHandler = (e: React.MouseEvent) => {
-    setIsModalOpen(true);
-  };
 
-  const hideModalHandler = () => {
-    let mobileNav = document.querySelector('#mobile-nav') as HTMLElement;
-    if (mobileNav) {
-      mobileNav.classList.remove('forward');
-      mobileNav.classList.add('backward');
-      setTimeout(() => {
-        setIsModalOpen(false);
-      }, 300); 
-    } else {
-      setIsModalOpen(false);
+
+  const onLogout = async () => {
+    try {
+      await axios.get("/api/users/logout");
+      router.replace("/login");
+    } catch (error: any) {
+      toast.error(error.message);
     }
   };
 
+
+  
+
+
   return (
-    <main className="flex flex-row w-full h-screen">
-      <Sidebar pathName={pathName}/>
+    <nav className="flex flex-row w-full ">
+      <Sidebar pathName={pathName} />
       <nav
-      id='main-nav'
-        className={`fixed top-0 w-full h-fit bg-primary-950 pl-60 pr-7 py-2`}
+        id="main-nav"
+        className={`fixed top-0 w-full h-[96px] bg-primary-950 lg:pl-64 pl-3 pr-3 z-20`}
       >
-        <div className="flex items-center justify-between lg:justify-start md:py-5 py-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="flex items-center justify-between lg:justify-start lg:py-4 py-2 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full border border-l-0 border-r-0 border-t-0 border-secondary/20">
           <button
             id="toggle-button"
             className="hover:bg-gray-600/10 focus:bg-gray-600/10  px-2 py-1 bg-transparent rounded-md lg:hidden inline-block"
             aria-haspopup="true"
             aria-expanded="false"
-            onClick={showModalHandler}
+            onClick={() => setIsModalOpen(true)}
           >
             <i className="fa-solid fa-bars text-white text-lg"></i>
             <span className="sr-only">Open dashboard mobile navbar</span>
           </button>
 
           <div className="grow items-start lg:inline-block hidden">
-            <h1 className="text-white text-xl">{pathName.charAt(0).toUpperCase() + pathName.slice(1)}</h1>
+            <h1 className="text-white text-xl">
+              {sectionName}
+            </h1>
           </div>
-          <div className="flex flex-row items-center gap-x-7">
-            <i className="fa-solid cursor-pointer fa-search text-lg text-white transition-all duration-300 ease-out transform hover:scale-110"
+          <div className="flex flex-row items-center lg:gap-x-7 gap-x-4">
+            <i
+              className="fa-solid cursor-pointer fa-search text-lg text-white transition-all duration-300 ease-out transform hover:scale-110"
               onClick={showSearchModalHandler}
             ></i>
             <Link
@@ -114,25 +78,46 @@ export default function Header({cartItems}: any) {
             >
               <i className="fa-solid cursor-pointer fa-user text-lg text-white transition-all duration-300 ease-out transform hover:scale-110"></i>
             </Link>
-            
+            <div className="relative">
+              <button 
+              onClick={(e) => {
+                let item = e.currentTarget;
+                let menu = item.parentNode?.querySelector('#dashboard-menu') as HTMLDivElement;
+                menu.classList.toggle('hidden');
+              }}
+              id="user-menu-button" aria-expanded="false" aria-haspopup="true" type="button" className="rounded-full bg-transparent p-1  focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-950">
+                  <span className="absolute -inset-1.5"></span>
+                  <span className="sr-only">Open admin menu</span>
+                  <Image width={30} height={30} className="rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="profile-pic"/>
+              </button>
+  
+              <div id='dashboard-menu' className="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md text-secondary bg-primary-800 shadow-lg ring-1 ring-black ring-opacity-5 py-3 px-2 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" >
+                  <div className="inline-flex flex-row items-center gap-x-3 px-4 py-2 hover:text-accent">
+                    <i className="fa-regular fa-user"></i>
+                    <Link href="#" className="text-[1rem] font-sans" role="menuitem"  id="user-menu-item-0">Profile</Link>
+                  </div>
+                  <div className="inline-flex flex-row items-center gap-x-3 px-4 py-2 hover:text-accent">
+                    <i className="fa-solid fa-gear"></i>
+                    <Link href="#" className="text-[1rem] font-sans" role="menuitem"  id="user-menu-item-1">Settings</Link>
+                  </div>
+                  <div className="px-4 py-2 hover:text-accent text-[1rem] font-sans inline-flex flex-row items-center gap-x-3">
+                    <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                    <button
+                      onClick={onLogout}
+                      role="menuitem"  id="user-menu-item-2"
+                    >
+                    Logout
+                    </button>
+                  </div>
+              </div>
+          </div>
           </div>
         </div>
-        {isSearchModalOpen && <SearchBar onHideModal={hideSearchModalHandler}/>}
-      {isModalOpen && <MobileModal onClose={hideModalHandler}>
-        {/* <ul className="inline-flex flex-col gap-y-6">
-                {menuItems.map((item) => (
-                  <li key={item.name}>
-                    <Link
-                      href={item.href}
-                      className="inline-flex items-center text-lg font-medium text-gray-500 font-sans"
-                    >
-                      {item.name}
-                    </Link>
-                  </li>
-                ))}
-        </ul> */}
-      </MobileModal>}
+        {isSearchModalOpen && (
+          <SearchBar onHideModal={hideSearchModalHandler} />
+        )}
+        
       </nav>
-    </main>
+    </nav>
   );
 }

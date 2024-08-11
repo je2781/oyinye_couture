@@ -13,7 +13,7 @@ import {  Navigation } from 'swiper/modules';
 import useCart from "@/store/useCart";
 import Link from "next/link";
 import useAuth from "@/store/useAuth";
-import { Base64ImagesObj, DressColorsObj, DressSizesJsxObj, DressSizesObj } from "@/interfaces";
+import { Base64ImagesObj, DressSizesJsxObj, DressSizesObj } from "@/interfaces";
 import { extractProductDetails, regex, sizes } from "@/helpers/getHelpers";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -31,7 +31,9 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, cartItems}: a
 
     let sizesJsxObj: DressSizesJsxObj  = {};
     let sizesObj: DressSizesObj  = {};
-    let colorsObj: DressColorsObj  = {};
+    let colorsObj: {
+        [key: string]: number[]
+    }  = {};
     let frontBase64ImagesObj: Base64ImagesObj = {};
 
 

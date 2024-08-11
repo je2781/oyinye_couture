@@ -19,7 +19,13 @@ const config: Config = {
           950: "#181821",
         },
         secondary: "#9a9cab",
-        active: '#20c997'
+        accent: "#20c997",
+        checkout: {
+          100: "#fef6f6",
+          200: "rgb(227, 192, 183)",
+          300: "rgb(216, 159, 142)",
+        },
+        action: "#0dcaf0",
       },
     },
   },

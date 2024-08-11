@@ -343,7 +343,7 @@ export default function FilterSettings({
                           setIsLoading(true);
                         }}
                         type="checkbox" className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-500 rounded-sm relative
-                            cursor-pointer outline-none checked:bg-gray-500 checked:after:absolute checked:after:content-[''] checked:after:top-[1px] checked:after:left-[3.5px] checked:after:w-[5px] checked:after:h-[8px]
+                            cursor-pointer outline-none checked:bg-gray-500 checked:after:absolute checked:after:content-[''] checked:after:top-[1.5px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
                             checked:after:border-white checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
                             checked:after:rotate-45" checked={filter.productType === item ? true : false}/>
                         <span

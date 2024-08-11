@@ -51,12 +51,6 @@ const ProductSchema = new Schema({
             }
         }
     ],
-    totalSizes: [
-        {
-            type: Number,
-            required: true
-        }
-    ],
     description: {
         type: String,
         required: true

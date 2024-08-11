@@ -21,6 +21,9 @@ const nextConfig = {
           },
         ];
       },
+      images: {
+        domains: ['images.unsplash.com', 'www.interswitchgroup.com'],
+      },
 };
 
 export default nextConfig;

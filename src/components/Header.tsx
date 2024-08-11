@@ -9,7 +9,6 @@ import HeaderCartButton from "./layout/HeaderCartButton";
 import SearchBar from "./ui/SearchBar";
 import useProduct from "@/store/useProduct";
 import useWindowWidth from "./helpers/getWindowWidth";
-import './Header.css';
 import { MobileModal } from "./ui/Modal";
 import useCart from "@/store/useCart";
 
@@ -28,7 +27,7 @@ const menuItems = [
   },
 ];
 
-export default function Header({cartItems}: any) {
+export default function Header({cartItems, isCheckout}: any) {
   const { authStatus } = useAuth();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = React.useState(false);
@@ -95,14 +94,20 @@ export default function Header({cartItems}: any) {
     }
   };
 
+  useEffect(() => {
+    if(windowWidth >= 1024){
+      setIsModalOpen(false);
+    }
+  }, [windowWidth]);
+
   return (
     <>
       <nav
-        className={`fixed top-0 w-full bg-white ${windowWidth > 768 ? 'transition-transform duration-300 shadow-md': ''} z-10 ${
+        className={isCheckout ? 'w-full h-[96px] bg-white border border-gray-300 border-t-0 border-l-0 border-r-0' : `z-20 shadow-md fixed top-0 w-full h-[96px] bg-white ${windowWidth > 768 ? 'transition-transform duration-300': ''}  ${
           visible && windowWidth > 768 ? "transform translate-y-0" : !visible && windowWidth > 768 ? "-translate-y-full" : ''
         }`}
       >
-        <div className="flex items-center justify-between md:py-5 py-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between md:py-5 py-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <button
             id="toggle-button"
             className="hover:bg-gray-600/10 focus:bg-gray-600/10  px-2 py-1 bg-transparent rounded-md lg:hidden inline-block"
@@ -114,10 +119,12 @@ export default function Header({cartItems}: any) {
             <span className="sr-only">Open dashboard mobile navbar</span>
           </button>
           <Link href={"/"} className="inline-block w-[150px] max-w-[170px]">
-            <Image src={logo} alt="logo" className="bg-cover" />
+            {isCheckout ?
+            <Image src={logo} alt="logo" className="bg-cover" width={1240}/>
+          : <Image src={logo} alt="logo" className="bg-cover" />}
           </Link>
           <div className="grow items-start lg:flex hidden">
-            <ul className="ml-12 inline-flex space-x-8">
+            {!isCheckout && <ul className="ml-12 inline-flex space-x-8">
               {menuItems.map((item) => (
                 <li key={item.name}>
                   <Link
@@ -128,21 +135,21 @@ export default function Header({cartItems}: any) {
                   </Link>
                 </li>
               ))}
-            </ul>
+            </ul>}
           </div>
           <div className="flex flex-row items-center gap-x-7">
-            <i
+            {!isCheckout && <i
               className="fa-solid cursor-pointer fa-search text-lg text-gray-600 transition-all duration-300 ease-out transform hover:scale-110"
               onClick={showSearchModalHandler}
-            ></i>
-            <Link
+            ></i>}
+            {!isCheckout && <Link
               href={authStatus ? "/profile" : "/login"}
               className="hidden lg:inline-block"
             >
               <i className="fa-solid cursor-pointer fa-user text-lg text-gray-600 transition-all duration-300 ease-out transform hover:scale-110"></i>
-            </Link>
+            </Link>}
             <Link href={`/cart`}>
-              <HeaderCartButton />
+              <HeaderCartButton isCheckout={isCheckout}/>
             </Link>
           </div>
         </div>

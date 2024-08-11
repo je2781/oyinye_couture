@@ -2,10 +2,10 @@
 
 import { AuthContextProvider } from "@/store/authContext";
 import { useEffect, useReducer, useState } from "react";
-import { cartReducer, defaultCartState } from "@/helpers/getCartReducerData";
 import { CartContextProvider } from "@/store/cartContext";
 import { ProductContextProvider } from "@/store/productContext";
 import Header from "@/components/Header";
+import { cartReducer, defaultCartState } from "@/helpers/getHelpers";
 
 export default function RootLayout({
   children,

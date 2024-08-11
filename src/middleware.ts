@@ -22,7 +22,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (isPublicPath && token && isAdmin && isAdmin === 'true') {
-    return NextResponse.redirect(new URL("/dashboard", request.nextUrl), {
+    return NextResponse.redirect(new URL("/admin/dashboard", request.nextUrl), {
       status: 302,
     });
   }
@@ -40,7 +40,7 @@ export const config = {
     "/",
     "/login",
     "/signup",
-    "/dashboard",
+    "/admin/dashboard",
     "/verifyemail",
   ],
 };

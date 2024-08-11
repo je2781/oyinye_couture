@@ -154,13 +154,18 @@ export default function CartInfo({
         }
     };
 
+    const handleCheckout = async () => {
+       const res = await axios.get('/api/products/checkout');
+
+       router.push(`/checkouts/cn/${res.data.checkout_session_token}`);
+    }
 
     return (
         <>
 
         {
             cartI.length > 0 ?
-            <main className="min-h-screen w-full container mx-auto md:px-16 px-8 md:pt-12 pt-5 flex flex-col gap-y-9">
+            <main className="min-h-screen w-full container mx-auto md:pl-16 px-8 md:pt-12 py-5 flex flex-col gap-y-9">
                 <header className="flex flex-row justify-between items-center pt-6">
                     <h1 className="font-sans md:text-4xl text-2xl text-gray-600">Your Cart</h1>
                     <p className="underline underline-offset-1 md:text-lg text-[1rem] font-sans">Continue shopping</p>
@@ -168,8 +173,8 @@ export default function CartInfo({
                 <section className="w-full">
                     <header className="w-full flex flex-row justify-between items-center font-sans text-xs text-gray-400 font-extralight
                     border-[0.7px] border-gray-300 border-l-0 border-r-0 border-t-0 py-5">
-                        <h3 className="tracking-widest">PRODUCT</h3>
-                        <div className="inline-flex flex-row justify-between items-center md:gap-x-[295px]">
+                        <h3 className="tracking-widest md:w-[65%] w-[90%]">PRODUCT</h3>
+                        <div className="inline-flex flex-row justify-between items-center md:gap-x-32 gap-x-8 md:w-[35%] w-[10%]">
                             <h3 className="tracking-widest md:inline-block hidden">QUANTITY</h3>
                             <h3 className="tracking-widest">TOTAL</h3>
                         </div>
@@ -314,7 +319,7 @@ export default function CartInfo({
                         <p className="md:text-[1rem] text-xs font-extralight">SUBTOTAL&nbsp;&nbsp;&nbsp;<span className="md:text-2xl text-xl font-normal">&#8358;{totalAmount.toLocaleString("en-US")}</span></p>
                         <p className="italic md:text-[1rem] text-xs font-light underline underline-offset-1 cursor-pointer">Shipping &#38; taxes calculated at checkout</p>
                     </div>
-                    <button disabled={loader} className={` text-white text-sm px-24 py-3 ${loader ? 'bg-gray-200 cursor-not-allowed': 'bg-gray-700 ring-gray-700 cursor-pointer hover:ring-2'}`}>CHECKOUT</button>
+                    <button onClick={handleCheckout} disabled={loader} className={` text-white text-sm px-24 py-3 ${loader ? 'bg-gray-200 cursor-not-allowed': 'bg-gray-700 ring-gray-700 cursor-pointer hover:ring-2'}`}>CHECKOUT</button>
                 </footer>
             </main>
             : <main className="min-h-screen w-full container mx-auto md:px-16 px-8 md:pt-12 pt-5 flex flex-col gap-y-5 justify-center items-center">

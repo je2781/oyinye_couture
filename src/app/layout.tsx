@@ -22,6 +22,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/hint.css/3.0.0/hint.css" />
       </head>
       <body className={inter.className}>
         <div id='quick-view-modal'></div>
@@ -31,6 +32,7 @@ export default function RootLayout({
         <div id='backdrop-root'></div>
         <Toaster position="bottom-center" />
         {children}
+        <script src="https://newwebpay.qa.interswitchng.com/inline-checkout.js"></script>
       </body>
     </html>
   );

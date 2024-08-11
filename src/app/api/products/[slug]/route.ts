@@ -159,3 +159,31 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       );
     }
 }
+ 
+export async function POST(request: NextRequest, { params }: { params: { slug: string } }) {
+    try {
+
+      const reqBody = await request.json();
+      
+      const newProduct = new Product({
+        ...reqBody
+      });    
+      
+      await newProduct.save();
+
+      return NextResponse.json({
+        message: 'New product created!',
+        success: true
+      }, {
+        status: 201
+      });
+       
+    } catch (error: any) {
+      return NextResponse.json(
+        {
+          error: error.message,
+        },
+        { status: 500 }
+      );
+    }
+}
