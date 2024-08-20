@@ -11,6 +11,8 @@ import useProduct from "@/store/useProduct";
 import useWindowWidth from "./helpers/getWindowWidth";
 import { MobileModal } from "./ui/Modal";
 import useCart from "@/store/useCart";
+import useGlobal from "@/store/useGlobal";
+import { time } from "console";
 
 const menuItems = [
   {
@@ -29,12 +31,13 @@ const menuItems = [
 
 export default function Header({cartItems, isCheckout}: any) {
   const { authStatus } = useAuth();
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = React.useState(false);
   const [prevScrollPos, setPrevScrollPos] = React.useState(0);
   const [visible, setVisible] = React.useState(true);
   const {updateCart} = useCart();
+  const {isMobileModalOpen, setIsMobileModalOpen} = useGlobal();
   let windowWidth = useWindowWidth();
+  let timerId: NodeJS.Timeout | null  = null;
 
   useEffect(() => {
     window.addEventListener("scroll", handleScroll);
@@ -47,6 +50,12 @@ export default function Header({cartItems, isCheckout}: any) {
     if(cartItems){
       updateCart(cartItems);
     }
+
+    return () => {
+      if(timerId){
+        clearTimeout(timerId);
+      }
+    };
   }, []);
   
   // Handling scroll
@@ -55,19 +64,19 @@ export default function Header({cartItems, isCheckout}: any) {
 
     setVisible(prevScrollPos > currentScrollPos || currentScrollPos < 10);
     if(!visible){
-      setIsModalOpen(false);
+      setIsMobileModalOpen(false);
     }
     setPrevScrollPos(currentScrollPos);
   };
   
   useEffect(() => {
     let mobileNav = document.querySelector('#mobile-nav') as HTMLElement;
-    if (isModalOpen && mobileNav) {
+    if (isMobileModalOpen && mobileNav) {
       mobileNav.classList.add('forward');
       mobileNav.classList.remove('backward');
     }
     
-  }, [isModalOpen]);
+  }, [isMobileModalOpen]);
   
   const showSearchModalHandler = (e: React.MouseEvent) => {
     setIsSearchModalOpen(true);
@@ -78,7 +87,7 @@ export default function Header({cartItems, isCheckout}: any) {
   };
 
   const showModalHandler = (e: React.MouseEvent) => {
-    setIsModalOpen(true);
+    setIsMobileModalOpen(true);
   };
 
   const hideModalHandler = () => {
@@ -86,17 +95,17 @@ export default function Header({cartItems, isCheckout}: any) {
     if (mobileNav) {
       mobileNav.classList.remove('forward');
       mobileNav.classList.add('backward');
-      setTimeout(() => {
-        setIsModalOpen(false);
+      timerId = setTimeout(() => {
+        setIsMobileModalOpen(false);
       }, 300); 
     } else {
-      setIsModalOpen(false);
+      setIsMobileModalOpen(false);
     }
   };
 
   useEffect(() => {
     if(windowWidth >= 1024){
-      setIsModalOpen(false);
+      setIsMobileModalOpen(false);
     }
   }, [windowWidth]);
 
@@ -154,7 +163,7 @@ export default function Header({cartItems, isCheckout}: any) {
           </div>
         </div>
         {isSearchModalOpen && <SearchBar onHideModal={hideSearchModalHandler}/>}
-      {isModalOpen && <MobileModal onClose={hideModalHandler}>
+      {isMobileModalOpen && <MobileModal onClose={hideModalHandler}>
         <ul className="inline-flex flex-col gap-y-6">
                 {menuItems.map((item) => (
                   <li key={item.name}>

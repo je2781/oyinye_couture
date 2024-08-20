@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
 const OrderSchema = new Schema({
+    _id: String,
     items: [
         {
             product: {
@@ -12,9 +13,30 @@ const OrderSchema = new Schema({
             quantity: {
                 type: Number,
                 required: true
+            },
+            variantId: {
+              type: String,
+
             }
         }
     ],
+    shippingInfo: {
+        type: Object
+    },
+    billingInfo: {
+        type: Object
+    },
+    paymentInfo: {
+        type: Object
+    },
+    status: {
+        type: String,
+        required: true
+    },
+    paymentType: String,
+    paymentStatus: String,
+    saveShippingInfo: Boolean,
+    saveBillingInfo: Boolean,
     user: {
         email: {
             type: String,

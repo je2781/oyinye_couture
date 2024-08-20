@@ -9,6 +9,7 @@ import { FilterModal} from "../ui/Modal";
 import { regex } from "@/helpers/getHelpers";
 import Slider from "@mui/material/Slider";
 import './SecondaryHeader.css';
+import { time } from "console";
 
 export default function SecondaryHeader({
     setFilter,
@@ -39,12 +40,19 @@ export default function SecondaryHeader({
     const [isFilterModalOpen, setIsFilterModalOpen] = React.useState(false);
     const lowerInputRef = useRef<HTMLInputElement>(null);
     const upperInputRef = useRef<HTMLInputElement>(null);
+    let timerId: NodeJS.Timeout | null = null;
 
     React.useEffect(() => {
         let filterSettings = document.querySelector('#filter-settings') as HTMLElement;
         if (isFilterModalOpen && filterSettings) {
             filterSettings.classList.add('forward');
             filterSettings.classList.remove('backward');
+        }
+
+        return () => {
+            if(timerId){
+                clearTimeout(timerId);
+            }
         }
         
     }, [isFilterModalOpen]);
@@ -59,7 +67,7 @@ export default function SecondaryHeader({
         if (filterSettings) {
         filterSettings.classList.remove('forward');
         filterSettings.classList.add('backward');
-        setTimeout(() => {
+        timerId = setTimeout(() => {
             setIsFilterModalOpen(false);
         }, 300); 
         } else {

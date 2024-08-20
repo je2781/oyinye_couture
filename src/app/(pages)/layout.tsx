@@ -6,6 +6,7 @@ import { CartContextProvider } from "@/store/cartContext";
 import { ProductContextProvider } from "@/store/productContext";
 import Header from "@/components/Header";
 import { cartReducer, defaultCartState } from "@/helpers/getHelpers";
+import { GlobalContextProvider } from "@/store/globalContext";
 
 export default function RootLayout({
   children,
@@ -14,6 +15,7 @@ export default function RootLayout({
 }) {
   const [authStatus, setAuthStatus] = useState(false);
   const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
 
   const [cartState, dispatchCartAction] = useReducer(
     cartReducer,
@@ -64,7 +66,8 @@ export default function RootLayout({
   };
 
   return (
-    <AuthContextProvider value={{ authStatus, setAuthStatus }}>
+    <GlobalContextProvider value={{isMobileModalOpen, setIsMobileModalOpen}}>
+      <AuthContextProvider value={{ authStatus, setAuthStatus }}>
       <CartContextProvider value={cartContext}>
         <ProductContextProvider
           value={{ allProducts}}
@@ -73,5 +76,6 @@ export default function RootLayout({
         </ProductContextProvider>
       </CartContextProvider>
     </AuthContextProvider>
+    </GlobalContextProvider>
   );
 }

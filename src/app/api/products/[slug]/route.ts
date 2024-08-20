@@ -28,17 +28,48 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         let products = await Product.find({title: new RegExp(`\\b${query}[^\\s]*$`, 'i')})
         .skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
 
-        if (!products) {
-          return NextResponse.json(
-            { error: "No products have been uploaded" },
-            { status: 404 }
-          );
-        }
-
-
         //filtering products by product type
         if(productType){
           products = products.filter(product => product.type === productType);
+        }
+
+        //getting prices of products to determine the most expensive
+        for(let product of products){
+          for(let color of product.colors){
+            color.sizes.forEach((size: any) => priceList.push(size.price));
+          }
+        }
+        
+        const highestPrice = Math.max(...priceList);
+
+        //retrieving filter settings
+        if(availability || lte || gte || productType){
+          filterSettings =  await Filter.find();
+        }
+
+        const currentPage = updatedPage;
+        const hasPreviousPage = currentPage > 1;
+        const hasNextPage =
+            totalItems > currentPage * ITEMS_PER_PAGE;
+        const lastPage = 
+             Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+        if (products.length === 0) {
+          return NextResponse.json(
+            {
+              products,
+              hasNextPage,
+              hasPreviousPage,
+              lastPage,
+              currentPage,
+              isActivePage: updatedPage,
+              nextPage: currentPage + 1,
+              previousPage: currentPage - 1,
+              filterSettings,
+              highestPrice
+            },
+            { status: 404 }
+          );
         }
         
         //filtering products to only show products whose prices fall within a range
@@ -95,7 +126,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
           default:
             for(let product of products){
               let noOfReviews = await User.find({'reviews.productId': product._id}).countDocuments();
-              let noOfOrders = await Order.find({'items.productId': product._id}).countDocuments();
+              let noOfOrders = await Order.find({'items.product._id': product._id}).countDocuments();
     
               product.set('noOfOrders', noOfOrders, { strict: false });
               product.set('noOfReviews', noOfReviews, { strict: false });
@@ -109,28 +140,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
             });
 
             break;
-        }
-
-        //getting prices of products to determine the most expensive
-        for(let product of products){
-          for(let color of product.colors){
-            color.sizes.forEach((size: any) => priceList.push(size.price));
-          }
-        }
-        
-        const highestPrice = Math.max(...priceList);
-
-        //retrieving filter settings
-        if(availability || lte || gte || productType){
-          filterSettings =  await Filter.find();
-        }
-        
-        const currentPage = updatedPage;
-        const hasPreviousPage = currentPage > 1;
-        const hasNextPage =
-            totalItems > currentPage * ITEMS_PER_PAGE;
-        const lastPage = 
-             Math.ceil(totalItems / ITEMS_PER_PAGE);
+        }        
       
         return NextResponse.json({
           products,

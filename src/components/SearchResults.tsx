@@ -213,7 +213,7 @@ export default function SearchResults({
       </section>
       <main
         className={`bg-white w-full min-h-screen md:pt-12 pt-5 pb-6 flex flex-col px-8 max-w-7xl relative ${
-          data.products.length === 0  && !lowerBoundary && !upperBoundary && !productType ? "space-y-36" : "space-y-6"
+          data.products.length === 0  && !lowerBoundary && !upperBoundary && !productType && filter.showOutOfStock ? "space-y-36" : "space-y-6"
         }`}
       >
         <header className="flex flex-col items-center gap-y-4 justify-center mb-7">
@@ -397,7 +397,7 @@ export default function SearchResults({
             )}
           </form>
         </header>
-        {(data.products.length > 0 || (data.products.length === 0 && (upperBoundary || lowerBoundary || productType) )) &&
+        {(data.products.length > 0 || (data.products.length === 0 && (upperBoundary || lowerBoundary || productType || !filter.showOutOfStock) )) &&
           <SecondaryHeader 
             setFilter={setFilter}
             filter={filter}
@@ -422,20 +422,20 @@ export default function SearchResults({
         }
         <section
           className={`${
-            data.products.length === 0 && !lowerBoundary && !upperBoundary && !productType
+            data.products.length === 0 && !lowerBoundary && !upperBoundary && !productType && filter.showOutOfStock 
               ? "justify-center flex-col"
               : "justify-evenly md:flex-row flex-col"
           } flex items-center w-full flex-wrap md:gap-x-5 gap-y-9`}
         >
-          {data.products.length === 0 && !lowerBoundary && !upperBoundary && !productType ? (
-            <section className="flex items-center flex-col no-products-section ">
+          {data.products.length === 0 && !lowerBoundary && !upperBoundary && !productType && filter.showOutOfStock ? (
+            <section className="flex items-center flex-col no-products-section">
               <h1 className="font-sans text-xl">No {searchCat} available!</h1>
               <h1 className="font-sans text-sm">
                 Try a different search parameter
               </h1>
             </section>
-          ) : data.products.length === 0 && (upperBoundary || lowerBoundary || productType)
-          ? <section className="flex flex-row pt-5 w-full gap-x-[40px]">
+          ) : data.products.length === 0 && (upperBoundary || lowerBoundary || productType || !filter.showOutOfStock)
+          ? <section className={`flex flex-row pt-5 w-full md:gap-x-[40px] md:justify-start justify-center`}>
             {filter.isVisible && <FilterSettings 
               setFilter={setFilter}
               filter={filter}
@@ -451,7 +451,7 @@ export default function SearchResults({
               sliderVal={sliderVal}
             
             />}
-            <section className={`${filter.isVisible ? 'md:w-[50%]': 'w-full'} flex items-center flex-col mt-24 no-products-section`}>
+            <section className={`${filter.isVisible ? 'md:w-[50%]': 'w-full'} flex items-center flex-col mt-24 no-products-section `}>
               <h1 className="font-sans text-xl">No {searchCat} available!</h1>
               <h1 className="font-sans text-sm">
                 Try a different search parameter

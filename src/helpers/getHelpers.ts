@@ -1,3 +1,4 @@
+
 import {
   Base64ImagesObj,
   CartItemObj,
@@ -8,9 +9,8 @@ import {
   SizeData,
 } from "@/interfaces";
 import axios from "axios";
-import mongoose from "mongoose";
+import crypto from "crypto";
 import toast from "react-hot-toast";
-
 import countries from "i18n-iso-countries";
 
 // Load the necessary locale data (for example, English)
@@ -23,43 +23,20 @@ export function convertToNumericCode(isoCode: string) {
 }
 
 export function randomReference() {
-  let length = 10;
-  let chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let length = 15;
+  let chars = "0123456789abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   let result = "";
   for (let i = length; i > 0; --i)
     result += chars[Math.floor(Math.random() * chars.length)];
   return result;
 }
 
-export function checkout(amount: string, currency: string, orderId: string, customerEmail: string) {
-  function paymentCallback(response: any) {
-    if (!response) {
-      alert(response.desc);
-    }
-  }
-
-  let merchantCode = "MX19329";
-  let payItemId = `${orderId}-${merchantCode}`;
-
-  let transRef = randomReference();
-  let paymentRequest = {
-    merchant_code: merchantCode,
-    pay_item_id: payItemId,
-    pay_item_name: orderId, 
-    txn_ref: transRef,
-    amount,
-    cust_email: customerEmail,
-    currency,
-    site_redirect_url: window.location.origin,
-    onComplete: paymentCallback,
-    mode: "TEST",
-  };
-  window.webpayCheckout(paymentRequest);
-}
 
 export const sizes = [8, 10, 12, 14, 16, 18];
 
 export const regex = /^[0-9]+$/;
+
+export const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export const extractProductDetails = (
   cartItems: any[],
@@ -69,19 +46,19 @@ export const extractProductDetails = (
   for (let item of cartItems) {
     for (let color of item.product.colors) {
       let size = color.sizes.find(
-        (size: any) => size.variantId.toString() === item.variantId
+        (size: any) => size.variantId === item.variantId
       );
 
       if (size) {
-        cartItemObj[color.type] = {
+        cartItemObj[`${color.type}-${size.number}`] = {
           ...size,
-          variantId: size.variantId.toString(),
+          variantId: size.variantId,
           title: item.product.title,
           color: color.type,
           quantity: item.quantity,
           id: item.product._id.toString(),
         };
-        frontBase64ImagesObj[color.type] = color.imageFrontBase64;
+        frontBase64ImagesObj[`${color.type}-${size.number}`] = color.imageFrontBase64;
       }
     }
   }
@@ -95,6 +72,8 @@ export const defaultCartState: CartState = {
   items: [],
   totalAmount: 0,
 };
+
+
 
 export const generateBase64FromImage = (
   imageFile: any
@@ -233,6 +212,8 @@ export async function handleSubmit(
     }
   }
 
+  const hashedId = await crypto.randomBytes(32);
+
   const Product = {
     title,
     description: desc,
@@ -255,7 +236,7 @@ export async function handleSubmit(
           number: datum.number!,
           price: parseFloat(datum.price!),
           stock: datum.stock ? datum.stock : 0,
-          variantId: new mongoose.Types.ObjectId(),
+          variantId: hashedId,
         })),
       };
     }),

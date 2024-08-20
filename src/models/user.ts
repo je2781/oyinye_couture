@@ -6,27 +6,21 @@ const Schema = mongoose.Schema;
 const UserSchema = new Schema({
   firstName: {
     type: String,
-    required: [true, "Please provide a firstname"],
   },
   lastName: {
     type: String,
-    required: [true, "Please provide a lastname"],
   },
   email: {
     type: String,
-    required: [true, "Please provide an email"],
   },
   password: {
     type: String,
-    required: [true, "Please provide a password"],
   },
   isVerified: {
     type: Boolean,
-    required: true,
   },
   isAdmin: {
     type: Boolean,
-    required: true,
   },
   resetToken: String,
   resetTokenExpirationDate: Date,
@@ -43,6 +37,10 @@ const UserSchema = new Schema({
         }
     }
   ],
+  enableEmailMarketing: {
+    type: Boolean,
+    default: false
+  }
 
 
 });

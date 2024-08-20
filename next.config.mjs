@@ -22,7 +22,18 @@ const nextConfig = {
         ];
       },
       images: {
-        domains: ['images.unsplash.com', 'www.interswitchgroup.com'],
+        remotePatterns: [
+          {
+            protocol: 'https',
+            hostname: 'images.unsplash.com',
+            pathname: '/**',
+          },
+          {
+            protocol: 'https',
+            hostname: 'interswitchgroup.com',
+            pathname: '/**',
+          },
+        ],
       },
 };
 

@@ -1,18 +1,25 @@
-'use client';
 
 import AdminHeader from "@/components/admin/AdminHeader";
 import Body from "@/components/admin/Body";
-import React from "react";
 
+export const dynamicParams = true;
+ 
+export async function generateStaticParams() {
+  return [];
+}
 
-export default function Dashboard({
-    params,
-  }: {
-    params: { section: string};
-  }){
+async function getOrders(page: string) {
+    const res = await fetch(`${process.env.DOMAIN}/api/orders/10?page=${page}`);
+    const data = await res.json();
+  
+    delete data.success;
+    return data;
+}
 
-    const [isModalOpen, setIsModalOpen] = React.useState(false);
-
+export default async function Admin({
+    params, searchParams
+  }: any){
+    const orderData = await getOrders(searchParams['page']);
 
     let pathName = params.section;
     let sectionName = '';
@@ -32,20 +39,14 @@ export default function Dashboard({
 
       const headerProps = {
         sectionName,
-        pathName,
-        setIsModalOpen,
-        isModalOpen
+        pathName
       };
 
-      const bodyProps = {
-        pathName,
-        setIsModalOpen,
-        isModalOpen
-      }
+
     return (
         <>
             <AdminHeader {...headerProps}/>
-            <Body {...bodyProps}/>
+            <Body pathName={pathName} extractedOrders={orderData.orders} data={orderData}/>
         </>
     );
 }

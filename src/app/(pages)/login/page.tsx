@@ -4,6 +4,12 @@ import Header from "@/components/Header";
 import Login from "@/components/auth/Login";
 import { cookies } from "next/headers";
 
+export const dynamicParams = true;
+ 
+export async function generateStaticParams() {
+  return [];
+}
+
 async function getCart() {
   const cookieStore = cookies();
   const cartId = cookieStore.get('cart')?.value;

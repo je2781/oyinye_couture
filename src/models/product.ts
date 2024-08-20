@@ -30,7 +30,7 @@ const ProductSchema = new Schema({
                         required: true
                     },
                     variantId: {
-                        type: Schema.Types.ObjectId,
+                        type: String,
                         required: true
                     },
                     stock: {

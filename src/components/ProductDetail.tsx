@@ -38,8 +38,7 @@ const ProductDetail = ({
     productId,
     paramsId,
     paramsColor,
-    paramsProduct,
-    cartItems
+    paramsProduct
 }: any) => {
     const [sizeData, setSizeData] = useState<DressSize | undefined>();
     const [sizesData, setSizesData] = useState<DressSize[]>(productSizes);
@@ -84,6 +83,7 @@ const ProductDetail = ({
         async function sendCartData(){
             if(isSavingCart){
                 let startTime = Date.now();
+                setToastError(false);
                 setLoader(true);
                 try {
                     await axios.post('/api/products/cart', {
@@ -102,7 +102,6 @@ const ProductDetail = ({
                     let remainingTime = Math.max(2000, elapsedTime);
                     timerId = setTimeout(() => {
                         setLoader(false);
-                        setToastError(false);
                         toast.success('item added to cart', {
                             position: 'top-right'
                         });
@@ -329,7 +328,7 @@ const ProductDetail = ({
         color.sizes.forEach((size: any) => {
             sizesObj[`${color.type}-${size.number}`] = {
             price: size.price,
-            variantId: size.variantId.toString(),
+            variantId: size.variantId,
             stock: size.stock,
             color: color.type,
             };
@@ -584,7 +583,7 @@ const ProductDetail = ({
                 </div>}
                 <button className="font-sans lg:px-44 px-28 py-2 ring-gray-600 hover:ring-1 border border-gray-600 text-gray-600 flex flex-row justify-center items-center"
                     onClick={() => {
-                        if(cartItems.some((item: any) => item.product._id.toString() === productId)){
+                        if(items.some((item: any) => item.variantId === sizesObj[`${selectedColor}-${selectedSize}`].variantId)){
                             setToastError(true);
                         }else{
                             //adding item to cart

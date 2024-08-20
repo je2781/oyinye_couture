@@ -26,17 +26,15 @@ export async function GET(req: NextRequest, {params}: {params: {  slug: string[]
     if(extractedColorObj){
       const sizes =  extractedColorObj.sizes;
       const imageFrontBase64 = extractedColorObj.imageFrontBase64;
-      const isAvailable = extractedColorObj.isAvailable;
 
       //finding related/grouped products of current product
-      let orders = await Order.find({'items.productId': product._id});
+      let orders = await Order.find({'items.product._id': product._id});
 
       if(orders){
         let orderItems: any[] = [];
         for(let order of orders){
-          let updatedOrder = await order.populate('items.productId');
-          orderItems.concat(updatedOrder.items.map((orderItem: any) => ({
-            product: {...orderItem.productId._doc}
+          orderItems.push(...order.items.map((orderItem: any) => ({
+            product: orderItem.product
           })));
         }
         //removing duplicates from order items and storing them

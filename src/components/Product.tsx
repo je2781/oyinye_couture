@@ -45,7 +45,7 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
     
   return (
     <div className="relative">
-      {isModalOpen && <ProductQuickView onHideModal={hideModalHandler} product={product} isSearchProduct cartItems={cartItems}/>}
+      {isModalOpen && <ProductQuickView onHideModal={hideModalHandler} product={product} isSearchProduc/>}
       <article
         className={`${isSearchProduct ? 'items-start': 'items-center'} flex flex-col gap-y-4 cursor-pointer pb-6 relative`}
         data-hover={product.colors[0].imageBackBase64}

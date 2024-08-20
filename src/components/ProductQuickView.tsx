@@ -19,7 +19,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 
-const ProductQuickView = ({ product, onHideModal, isSearchProduct, cartItems}: any) => {
+const ProductQuickView = ({ product, onHideModal, isSearchProduct}: any) => {
     const {totalAmount, addItem, items} = useCart();
     const {authStatus} = useAuth();
     const [quantity, setQuantity] = React.useState('1');
@@ -35,20 +35,22 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, cartItems}: a
         [key: string]: number[]
     }  = {};
     let frontBase64ImagesObj: Base64ImagesObj = {};
+    let timerId: NodeJS.Timeout | null = null;
 
 
     React.useEffect(() => {
-        let timerId: NodeJS.Timeout;
 
         async function sendCartData(){
             if(isSavingCart){
                 let startTime = Date.now();
+                setToastMsgVisible(false);
+                setToastError(false);
                 setProgressIndicator(true);
                 try {
                     await axios.post('/api/products/cart', {
                         price: sizesObj[`${selectedColor}-${selectedSize}`].price,
                         quantity: parseInt(quantity),
-                        variantId: sizesObj[`${selectedColor}-${selectedSize}`].variantId!,
+                        variantId: sizesObj[`${selectedColor}-${selectedSize}`].variantId,
                         id: product._id.toString(),
                         totalAmount
                     });
@@ -62,7 +64,6 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, cartItems}: a
                     timerId = setTimeout(() => {
                         setProgressIndicator(false);
                         setToastMsgVisible(true);
-                        setToastError(false);
                         // Resetting isSavingCart to false
                         setIsSavingCart(false);
                     }, remainingTime);
@@ -73,7 +74,11 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, cartItems}: a
 
         sendCartData();
 
-        return () => clearTimeout(timerId);
+        return () => {
+            if(timerId){
+                clearTimeout(timerId);
+            }
+        };
 
     }, [isSavingCart]);
     
@@ -170,8 +175,6 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, cartItems}: a
         setSelectedSize(activeSizeEl.innerText.split(' ')[1]);
     }
 
-
-
     product.colors.forEach((color: any, i: number) => {
         sizesJsxObj[color.type] = sizes.map((size: number, i: number) => color.sizes[0] && color.sizes[0].number === size && color.sizes[0].stock === 0 && color.isAvailable ?
         <span key={i} className='font-sans bg-black px-6 py-2 rounded-3xl cursor-pointer text-gray-400 line-through'>UK {size}</span>
@@ -196,7 +199,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, cartItems}: a
         color.sizes.forEach((size: any) => {
             sizesObj[`${color.type}-${size.number}`] =  {
                 price: size.price,
-                variantId: size.variantId.toString(),
+                variantId: size.variantId,
                 stock: size.stock,
                 color: color.type
             };
@@ -310,7 +313,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, cartItems}: a
                         onMouseLeave={(e) => {
                             const el = e.currentTarget;
                             el.classList.add('mouseleave');
-                            setTimeout(() => {
+                            timerId = setTimeout(() => {
                                 el.classList.remove('mouseleave');
                             }, 400); 
                         }}
@@ -352,7 +355,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, cartItems}: a
                         onMouseLeave={(e) => {
                             const el = e.currentTarget;
                             el.classList.add('mouseleave');
-                            setTimeout(() => {
+                            timerId = setTimeout(() => {
                                 el.classList.remove('mouseleave');
                             }, 400); 
                         }}  
@@ -366,7 +369,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, cartItems}: a
                         ></div>:
                         <button 
                         onClick={(e) => {
-                            if(cartItems.some((item: any)=> item.product._id.toString() === product._id.toString())){
+                            if(items.some(item => item.variantId === sizesObj[`${selectedColor}-${selectedSize}`].variantId!)){
                                 setToastError(true);
                                 setToastMsgVisible(false);
                             }else{

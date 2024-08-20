@@ -47,8 +47,7 @@ const ProductPage = async ({
         ...productData,
         paramsId: params.id,
         paramsColor: params.color,
-        paramsProduct: params.product,
-        cartItems
+        paramsProduct: params.product
     };
 
   return (

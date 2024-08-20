@@ -11,7 +11,7 @@ connect();
 export async function POST(req: NextRequest) {
   try {
     const reqBody = await req.json();
-    const { firstName, lastName, email, password } = reqBody;
+    const { firstName, lastName, email, password, enableEmailMarketing } = reqBody;
 
     const user = await User.findOne({ email });
     //check if user laready exists
@@ -22,33 +22,54 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const hash = await argon.hash(password);
+    if(password && firstName  && lastName && enableEmailMarketing & email){
+      
+          const hash = await argon.hash(password);
+      
+          const newUser = new User({
+            email,
+            password: hash,
+            firstName,
+            lastName,
+            enableEmailMarketing
+          });
+      
+          const savedUser = await newUser.save();
+      
+          //sending verification email
+          const msgInfo = await sendMail({
+            email: savedUser.email,
+            emailType: EmailType.verify,
+            userId: savedUser._id
+          });
+      
+          return NextResponse.json(
+            {
+              message: "User created successfully",
+              success: true,
+              verificationData: msgInfo,
+              savedUser,
+            },
+            { status: 201 }
+          );
 
-    const newUser = new User({
-      email,
-      password: hash,
-      firstName,
-      lastName
-    });
+    }else{
+      
+      const newUser = new User({
+        email
+      });
+  
+      const savedUser = await newUser.save();
 
-    const savedUser = await newUser.save();
-
-    //sending verification email
-    const msgInfo = await sendMail({
-      email: savedUser.email,
-      emailType: EmailType.verify,
-      userId: savedUser._id
-    });
-
-    return NextResponse.json(
-      {
-        message: "User created successfully",
-        success: true,
-        verificationData: msgInfo,
-        savedUser,
-      },
-      { status: 201 }
-    );
+      return NextResponse.json(
+        {
+          message: "User created successfully",
+          success: true,
+          id: savedUser._id.toString(),
+        },
+        { status: 201 }
+      );
+    }
   } catch (error: any) {
     return NextResponse.json(
       {

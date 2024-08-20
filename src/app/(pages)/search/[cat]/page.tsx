@@ -65,6 +65,7 @@ const SearchPage = async ({ params, searchParams}: any) => {
 
     const searchData = await getSearchData(keyword, sortBy, page, lowerBoundary, upperBoundary, availability, productType);
     const cartItems = await getCart();
+
   return (
     <>
     <Header cartItems={cartItems}/>
@@ -76,6 +77,7 @@ const SearchPage = async ({ params, searchParams}: any) => {
       upperBoundary,
       sortBy,
       productType,
+      availability,
       page
     }} />
     </>

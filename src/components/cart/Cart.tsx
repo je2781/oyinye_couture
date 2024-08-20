@@ -1,6 +1,6 @@
 'use client';
 
-import { extractProductDetails, regex } from "@/helpers/getHelpers";
+import { emailPattern, extractProductDetails, regex } from "@/helpers/getHelpers";
 import { Base64ImagesObj, CartItemObj} from "@/interfaces";
 import useCart from "@/store/useCart";
 import axios from "axios";
@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import './Cart.css';
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import useWindowWidth from "../helpers/getWindowWidth";
 
 interface InitialCartData {
     price: number, 
@@ -20,19 +22,25 @@ interface InitialCartData {
 
 export default function CartInfo({
     total,
-    cartItems
+    cartItems,
+    userEmail
 }: any){
     let cartItemObj: CartItemObj = {};
+    let timerId: NodeJS.Timeout | null  = null;
 
     let frontBase64ImagesObj: Base64ImagesObj = {};
 
-    const {removeItem, addItem} = useCart();
+    const {removeItem, addItem, items} = useCart();
+
     const [loader, setLoader] = useState(false);
+    const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
     const [totalAmount, setTotalAmount] = useState(total);
     const [cartI, setCartI] = useState(cartItems);
     const [isIncrementingCart, setIsIncrementingCart] = useState<InitialCartData>();
     const router = useRouter();
+    const [email, setEmail] = useState(userEmail);
     const [isDeductingCart, setIsDeductingCart] = useState<InitialCartData>();
+    let windowWidth = useWindowWidth();
     
     if(cartI.length > 0){
 
@@ -41,9 +49,9 @@ export default function CartInfo({
     }
     const [quantities, setQuantities] = useState<number[]>(Object.values(cartItemObj).map((item: any) => item.quantity));
     const [itemTotalAmounts, setItemTotalAmounts] = useState<number[]>(Object.values(cartItemObj).map((item: any) => item.quantity * item.price));
-            
-    useEffect(() => {
+           
 
+    useEffect(() => {
         async function sendCartData(){
             if(isIncrementingCart){
                 setLoader(true);
@@ -117,6 +125,32 @@ export default function CartInfo({
     }, [isDeductingCart]);
 
 
+    useEffect(() => {
+        timerId = setTimeout(async () => {
+            if(emailPattern.test(email)){
+                try {
+                    const res = await axios.post('/api/users/signup', {
+                        email
+                    });
+                    
+                    await axios.patch('/api/products/cart/update', {
+                        userId: res.data.id
+                    });
+                } catch (error: any) {
+                    toast.error(error.message);
+                }
+            }
+        }, 5000);
+        
+
+        return () => {
+            if(timerId){
+                clearTimeout(timerId);
+            }
+        };
+
+    }, [email]);
+
     const handleQuantityChange = (index: number, delta: number, price: number, variantId: string, id: string, total: number) => {
         setQuantities(prevQuantities => {
             const newQuantities = [...prevQuantities];
@@ -155,10 +189,22 @@ export default function CartInfo({
     };
 
     const handleCheckout = async () => {
-       const res = await axios.get('/api/products/checkout');
+        //validation checks
+        if(!email.includes('@')){
+            return toast.error("You're email is missing");
+        }
 
-       router.push(`/checkouts/cn/${res.data.checkout_session_token}`);
+       try {
+        setIsCreatingCheckout(true);
+        const res = await axios.get('/api/checkouts');
+
+        router.push(`/checkouts/cn/${res.data.checkout_session_token}`);
+       } catch (error: any) {
+        toast.error(error);
+       }
     }
+
+    
 
     return (
         <>
@@ -166,11 +212,74 @@ export default function CartInfo({
         {
             cartI.length > 0 ?
             <main className="min-h-screen w-full container mx-auto md:pl-16 px-8 md:pt-12 py-5 flex flex-col gap-y-9">
-                <header className="flex flex-row justify-between items-center pt-6">
+                <header className="flex md:flex-row flex-col gap-y-5 justify-between items-start md:items-center pt-6 w-full">
                     <h1 className="font-sans md:text-4xl text-2xl text-gray-600">Your Cart</h1>
-                    <p className="underline underline-offset-1 md:text-lg text-[1rem] font-sans">Continue shopping</p>
+                    <div className="inline-flex flex-col gap-y-1 md:w-[40%] w-full text-gray-600">
+                        <h1 className="font-semibold md:text-lg text-sm">Contact</h1>
+                        <div id='email-container' className="flex flex-row justify-between items-center gap-y-1 focus-within:border-checkout-200 rounded-lg border-gray-300 border py-2 px-3 w-full h-12">
+                            <div className="flex flex-col justify-center w-full">
+                                <label htmlFor="email" className="text-xs hide-label text-gray-500">
+                                    Email
+                                </label>
+                                <input
+                                    placeholder="Email"
+                                    onBlur={(e) => {
+                                        let item = e.currentTarget;
+                                        item.placeholder = "Email";
+                                        let label = item.previousElementSibling;
+                                        if (label && item.value.length === 0) {
+                                            label.classList.add("hide-label");
+                                            label.classList.remove("show-label");
+                                        }
+
+                                        if(!e.target.value.includes('@')){
+                                            document.querySelector('#email-error')?.classList.remove('hidden');
+                                            document.querySelector('#email-container')?.classList.remove('border-gray-300', 'border');
+                                            document.querySelector('#email-container')?.classList.add('border-red-500', 'border-2');
+                                        }
+                                        
+                                    }}
+                                    onKeyDown={(e) => {
+                                        let item = e.currentTarget;
+                                        let label = item.previousElementSibling;
+                                        if (e.key === "Backspace" && label) {
+                                            label.classList.remove("hide-label");
+                                            label.classList.add("show-label");
+                                        }
+                                    }}
+                                    onInput={(e) => {
+                                        let item = e.currentTarget;
+                                        item.placeholder = "";
+                                        let label = item.previousElementSibling;
+                                        if (label) {
+                                            if (item.value.length === 1) {
+                                            label.classList.remove("hide-label");
+                                            label.classList.add("show-label");
+                                            }
+                                        }
+
+                                        document.querySelector('#email-error')?.classList.add('hidden');
+                                        document.querySelector('#email-container')?.classList.add('border-gray-300', 'border');
+                                        document.querySelector('#email-container')?.classList.remove('border-red-500', 'border-2');
+                                    }}
+                                    id="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                                />
+                            </div>
+                            {windowWidth > 768 && <span className="icon-container">
+                                <i className="fa-regular fa-circle-question cursor-pointer"></i>
+                                <span className="hint text-[.7rem]">
+                                    In case we need to contact you about your cart
+                                </span>
+                            </span>}
+                        </div>
+                        <p id='email-error' className="text-red-600 text-sm font-sans hidden">Enter a valid email</p>
+                    </div>
                 </header>
-                <section className="w-full">
+                <section className="w-ful">
+                    
                     <header className="w-full flex flex-row justify-between items-center font-sans text-xs text-gray-400 font-extralight
                     border-[0.7px] border-gray-300 border-l-0 border-r-0 border-t-0 py-5">
                         <h3 className="tracking-widest md:w-[65%] w-[90%]">PRODUCT</h3>
@@ -319,7 +428,7 @@ export default function CartInfo({
                         <p className="md:text-[1rem] text-xs font-extralight">SUBTOTAL&nbsp;&nbsp;&nbsp;<span className="md:text-2xl text-xl font-normal">&#8358;{totalAmount.toLocaleString("en-US")}</span></p>
                         <p className="italic md:text-[1rem] text-xs font-light underline underline-offset-1 cursor-pointer">Shipping &#38; taxes calculated at checkout</p>
                     </div>
-                    <button onClick={handleCheckout} disabled={loader} className={` text-white text-sm px-24 py-3 ${loader ? 'bg-gray-200 cursor-not-allowed': 'bg-gray-700 ring-gray-700 cursor-pointer hover:ring-2'}`}>CHECKOUT</button>
+                    <button onClick={handleCheckout} disabled={loader} className={` text-white text-sm px-24 py-3 flex flex-row justify-center items-center ${isCreatingCheckout ? 'w-[252px]': ''} ${loader ? 'bg-gray-200 cursor-not-allowed': 'bg-gray-700 hover:ring-gray-700 cursor-pointer hover:ring-2'}`}>{isCreatingCheckout ? <div className="border-2 border-transparent rounded-full border-t-white border-r-white w-[15px] h-[15px] spin"></div> : 'CHECKOUT'}</button>
                 </footer>
             </main>
             : <main className="min-h-screen w-full container mx-auto md:px-16 px-8 md:pt-12 pt-5 flex flex-col gap-y-5 justify-center items-center">

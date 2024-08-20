@@ -3,10 +3,11 @@
 import Image from "next/image";
 import logo from "../../../public/oyinye.png";
 import './Sidebar.css';
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { appsList, tablesList } from "@/helpers/getHelpers";
+import { time } from "console";
 
 export default function Sidebar({pathName}: any){
     const parentElementRef = useRef<HTMLDivElement>(null);
@@ -18,7 +19,16 @@ export default function Sidebar({pathName}: any){
         tables: false,
         dashboard: false
     });
+    let timerId: NodeJS.Timeout | null = null;
 
+
+    useEffect(() => {
+        return () => {
+            if(timerId){
+                clearTimeout(timerId);
+            }
+        }
+    }, []);
 
     const routeNames = appsList.map(app => {
         let routeName, firstWord, secondWord = '';
@@ -39,8 +49,6 @@ export default function Sidebar({pathName}: any){
 
         return routeName;
     });
-
-
 
 
     function handleSidebar(e: React.MouseEvent){
@@ -70,7 +78,7 @@ export default function Sidebar({pathName}: any){
         }
 
         if(!parentElementRef.current?.classList.contains('collapse-bar') && arrowLeft && mainNav && body){
-            setTimeout(() => {
+            timerId = setTimeout(() => {
                 setIsCollapsed(true);
             }, 50);
             parentElementRef.current?.classList.add('collapse-bar');
@@ -82,7 +90,7 @@ export default function Sidebar({pathName}: any){
             body.classList.remove('lg:pl-64');
             body.classList.add('lg:pl-32');
         }else{
-            setTimeout(() => {
+            timerId = setTimeout(() => {
                 setIsCollapsed(false);
             }, 100);
             parentElementRef.current?.classList.add('expand-bar');
@@ -279,7 +287,7 @@ export default function Sidebar({pathName}: any){
                                     className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2"
                                     key={i}
                                     onClick={() => {
-                                        router.push(`/admin/order-management`);
+                                        router.push(`/admin/order-management?page=1`);
                                       }}
                                 >
                                     <div 
@@ -300,7 +308,7 @@ export default function Sidebar({pathName}: any){
                             {tablesList.map((item: any, i: number) => (
                                 <li
                                 onClick={() => {
-                                    router.push(`/admin/order-management`);
+                                    router.push(`/admin/order-management?page=1`);
                                 }} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-[3px]" key={i}>
                                     <div 

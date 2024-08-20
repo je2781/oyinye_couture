@@ -3,28 +3,45 @@ import Cart from "@/components/cart/Cart";
 import Checkout from "@/components/checkout/Checkout";
 import { cookies } from "next/headers";
 
-
 export const dynamicParams = true;
- 
+
 export async function generateStaticParams() {
   return [];
 }
 
 async function getCheckout() {
   const cookieStore = cookies();
-  const cartId = cookieStore.get('cart')?.value;
-  const orderId = cookieStore.get('order')?.value;
+  const cartId = cookieStore.get("cart")?.value;
+  const orderId = cookieStore.get("order")?.value;
+  const userId = cookieStore.get("user")?.value;
 
-  if(cartId){
-    const res = await fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`);
-    const data = await res.json();
-  
-    return {...data, orderId};
-  }else{
+  const userDataRes = await fetch(`${process.env.DOMAIN}/api/users/${userId}`);
+  const userData = await userDataRes.json();
+
+  const countryDataRes = await fetch(
+    `https://ipinfo.io?token=${process.env.IPINFO_TOKEN}`
+  );
+  const countryData = await countryDataRes.json();
+
+  if (cartId) {
+    const cartDataRes = await fetch(
+      `${process.env.DOMAIN}/api/products/cart/${cartId}`
+    );
+    const cartData = await cartDataRes.json();
+
+    return {
+      ...cartData,
+      orderId,
+      country: countryData.country,
+      userEmail: userData ? userData.email : "",
+    };
+  } else {
     return {
       cartItems: [],
       total: 0,
-      orderId
+      orderId,
+      country: countryData.country,
+      userEmail: userData ? userData.email : "",
     };
   }
 }
@@ -34,8 +51,10 @@ async function CheckoutPage() {
 
   return (
     <>
-      <Header cartItems={data.cartItems} isCheckout/>
-      <Checkout cartItems={data.cartItems} total={data.total} orderId={data.orderId}/>
+      <Header cartItems={data.cartItems} isCheckout />
+      <Checkout
+        {...data}
+      />
     </>
   );
 }

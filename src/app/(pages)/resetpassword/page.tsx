@@ -3,6 +3,12 @@ import Header from "@/components/Header";
 import Reset from "@/components/auth/Reset";
 import { cookies } from "next/headers";
 
+export const dynamicParams = true;
+ 
+export async function generateStaticParams() {
+  return [];
+}
+
 async function getCart() {
   const cookieStore = cookies();
   const cartId = cookieStore.get('cart')?.value;

@@ -1,3 +1,3 @@
 interface Window {
-  webpayCheckout: any; // Replace `any` with the correct type if known
+  checkout: (callback: (response: any) => Promise<void>) => void;
 }

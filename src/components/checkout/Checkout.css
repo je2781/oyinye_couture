@@ -97,6 +97,16 @@
   -webkit-animation: show-billing-address 800ms ease-in-out forwards;
 }
 
+.hide-summary {
+  animation: hide-summary 300ms ease-out forwards;
+  -webkit-animation: hide-summary 300ms ease-out forwards;
+}
+
+.show-summary {
+  animation: show-summary 600ms ease-out forwards;
+  -webkit-animation: show-summary 600ms ease-out forwards;
+}
+
 @keyframes bgChange {
   0% {
     background-color: transparent;
@@ -149,6 +159,37 @@
   }
 }
 
+@keyframes show-summary {
+  0% {
+    max-height: 0;
+    opacity: 0;
+    display: none;
+  }
+  100% {
+    max-height: 1050px;
+    opacity: 1;
+    display: flex;
+  }
+}
+
+@keyframes hide-summary {
+  0% {
+    max-height: 1050px;
+    opacity: 1;
+    display: flex;
+  }
+  50% {
+    max-height: 1050px;
+    opacity: 1;
+    display: flex;
+  }
+  100% {
+    max-height: 0;
+    opacity: 0;
+    display: none;
+  }
+}
+
 @-webkit-keyframes bgChange {
   0% {
     background-color: transparent;
@@ -198,5 +239,37 @@
     opacity: 0;
     overflow-y: hidden;
     overflow-x: hidden;
+  }
+}
+
+
+@-webkit-keyframes show-summary {
+  0% {
+    max-height: 0;
+    opacity: 0;
+    display: none;
+  }
+  100% {
+    max-height: 1050px;
+    opacity: 1;
+    display: flex;
+  }
+}
+
+@-webkit-keyframes hide-summary {
+  0% {
+    max-height: 1050px;
+    opacity: 1;
+    display: flex;
+  }
+  50% {
+    max-height: 1050px;
+    opacity: 1;
+    display: flex;
+  }
+  100% {
+    max-height: 0;
+    opacity: 0;
+    display: none;
   }
 }

@@ -1,12 +1,100 @@
 import { SendMail } from "@/interfaces/send-mail-interface";
 import User from "@/models/user";
 import { EmailType } from "@/interfaces/send-mail-interface";
-import nodemailer from "nodemailer";
+import sgMail from '@sendgrid/mail';
 import crypto from "crypto";
+import ejs from "ejs";
+import path from "path";
 
-export const sendMail = async ({ email, emailType, userId }: SendMail) => {
+
+const resetPasswordEmailData = async (
+  resetPasswordToken: string
+) => {
+  const title = "Forgot your password? It happens to the best of us.";
+  const mainInfo =
+    "To reset your password, click the button below. The link will self-destruct after 1 hour";
+  const extraInfo = `If you do not want to change your password or didn't request a reset, you can ignore and delete this email.`;
+
+  //preparing email template and its data
+    const templatePath = path.join(
+      process.cwd(),
+      '..',
+      'templates/notification.ejs'
+    );
+
+  const ejsData = {
+    title,
+    mainInfo,
+    extraInfo,
+    isNewPass: false,
+    isReset: true,
+
+    link: `${process.env.DOMAIN!}/resetpassword/${resetPasswordToken}`,
+    year: new Date().getFullYear(),
+  };
+  return ejs.renderFile(templatePath, { ...ejsData });
+};
+
+const newPasswordEmailData = async (
+  password: string,
+) => {
+  const title = "Your new password.";
+  const mainInfo =
+    "Use this password to book future consultations with your doctor";
+  const extraInfo = `If you did not register your details with us, you can ignore and delete this email.`;
+
+  //preparing email template and its data
+  const templatePath = path.join(
+    process.cwd(),
+    '..',
+    'templates/notification.ejs'
+  );
+
+  const ejsData = {
+    title,
+    mainInfo,
+    extraInfo,
+    isNewPass: true,
+    password
+
+  };
+  return ejs.renderFile(templatePath, { ...ejsData });
+};
+
+const verifyEmailData = async (
+  verifyAccountToken: string
+) => {
+  const title =
+    "Please verify your account.";
+  const mainInfo =
+    "To verify your account, click the button below. The link will self-destruct after 1 hour";
+  const extraInfo = `If were not expecting this email, you can ignore and delete this email.`;
+
+  //preparing email template and its data
+  const templatePath = path.join(
+    process.cwd(),
+    '..',
+    'templates/notification.ejs'
+  );
+
+  const ejsData = {
+    title,
+    mainInfo,
+    extraInfo,
+    isNewPass: false,
+    isReset: false,
+    link: `${process.env.DOMAIN!}/verifyemail/${verifyAccountToken}`,
+    year: new Date().getFullYear(),
+  };
+
+  return ejs.renderFile(templatePath, { ...ejsData });
+};
+
+export const sendMail = async ({ email, emailType, userId, emailBody }: SendMail) => {
   try {
     crypto.randomBytes(32, async (err, buffer) => {
+      let vendorEmailBody, resetPasswordEmailBody, updatedTo, verifyEmailBody, newPasswordEmailBody  = '';
+
       //create a hash token
       const hashedToken = buffer.toString("hex");
 
@@ -15,42 +103,30 @@ export const sendMail = async ({ email, emailType, userId }: SendMail) => {
           verifyToken: hashedToken,
           verifyTokenExpirationDate: new Date(Date.now() + 3600000),
         });
+        verifyEmailBody = await verifyEmailData(hashedToken);
+
       } else {
         await User.findOneAndUpdate(userId, {
           resetToken: hashedToken,
           resetTokenExpirationDate: new Date(Date.now() + 3600000),
         });
+        resetPasswordEmailBody = await resetPasswordEmailData(hashedToken);
       }
 
-      const transport = nodemailer.createTransport({
-        host: "sandbox.smtp.mailtrap.io",
-        port: 2525,
-        auth: {
-          user: process.env.MAIL_USER!,
-          pass: process.env.MAIL_PASS!,
-        },
-      })!;
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
-      return transport.sendMail({
-        from: "sender@yourdomain.com",
+      const msg: sgMail.MailDataRequired = {
         to: email,
-        subject:
-          emailType === EmailType.reset
-            ? "Password Reset"
-            : "Verify your email",
-        html: `<p>Click <a href='${process.env.DOMAIN!}/${
-          emailType === EmailType.verify ? "verifyemail" : "resetpassword"
-        }?token=${hashedToken}'>here</a>
-               to ${
-                 emailType === EmailType.verify
-                   ? "verify your email"
-                   : "reset your password"
-               } 
-               or copy and paste the link in your browser <br /> ${process.env
-                 .DOMAIN!}/${
-                  emailType === EmailType.verify ? "verifyemail" : "resetpassword"
-                  }?token=${hashedToken}</p>`,
-      });
+        from: {
+          name: 'Oyinye Couture',
+          email: 'hello@oyinye.com'
+        },
+        subject: emailType === EmailType.reset ? "Password Reset" : "Verify your Email",
+        html: emailType === EmailType.reset ? resetPasswordEmailBody! : verifyEmailBody!
+      };
+
+      await sgMail.send(msg);
+      
     });
   } catch (error) {
     throw error;

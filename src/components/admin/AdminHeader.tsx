@@ -10,15 +10,53 @@ import Image from "next/image";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import useGlobal from "@/store/useGlobal";
 
-export default function AdminHeader({sectionName, pathName, isModalOpen, setIsModalOpen}: any) {
-
-  let width = useWindowWidth();
-
+export default function AdminHeader({sectionName, pathName}: any) {
 
   const { authStatus } = useAuth();
   const [isSearchModalOpen, setIsSearchModalOpen] = React.useState(false);
   const router = useRouter();
+  const {isMobileModalOpen, setIsMobileModalOpen} = useGlobal();
+  let width = useWindowWidth();
+
+  useEffect(() => {
+    if(width >= 1024){
+      setIsMobileModalOpen(false);
+    }
+  }, [width]);
+
+  
+  useEffect(() => {
+    const dashboardMenu = document.querySelector('#dashboard-menu');
+    const orderManagementOptions = document.querySelector('#options-menu');
+    const orderManagementOptionsForSmScreens = document.querySelector('#options-menu-for-sm-screen');
+    const mainContent = document.querySelector('#admin-content') as HTMLElement;
+
+    const handleContentClick = (event: MouseEvent) => {
+      if(dashboardMenu && !dashboardMenu.classList.contains('hidden')){
+        dashboardMenu.classList.add('hidden');
+      }
+      if(orderManagementOptions && !orderManagementOptions.classList.contains('hidden')){
+        orderManagementOptions.classList.add('hidden');
+      }
+      if(orderManagementOptionsForSmScreens && !orderManagementOptionsForSmScreens.classList.contains('hidden')){
+        orderManagementOptionsForSmScreens.classList.add('hidden');
+      }
+    };
+
+
+    // Adding the event listener to the body element
+    mainContent.addEventListener('click', handleContentClick);
+
+
+    // Cleanup the event listener when the component unmounts
+    return () => {
+      mainContent.removeEventListener('click', handleContentClick);
+    };
+  }, []);
+
+
 
   const showSearchModalHandler = (e: React.MouseEvent) => {
     setIsSearchModalOpen(true);
@@ -56,7 +94,7 @@ export default function AdminHeader({sectionName, pathName, isModalOpen, setIsMo
             className="hover:bg-gray-600/10 focus:bg-gray-600/10  px-2 py-1 bg-transparent rounded-md lg:hidden inline-block"
             aria-haspopup="true"
             aria-expanded="false"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsMobileModalOpen(true)}
           >
             <i className="fa-solid fa-bars text-white text-lg"></i>
             <span className="sr-only">Open dashboard mobile navbar</span>

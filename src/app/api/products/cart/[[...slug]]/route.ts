@@ -1,8 +1,10 @@
 import { connect } from "@/db/config";
 import { getDataFromCart } from "@/helpers/getDataFromCart";
 import Cart from "@/models/cart";
+import Order from "@/models/order";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
+import crypto from 'crypto';
 
 connect();
 
@@ -53,7 +55,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
   export async function POST(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
       
-      if(params.slug){
+      if(params.slug && params.slug[0] === 'remove'){
 
         const reqBody = await req.json();
         const { quantity, variantId, price} = reqBody;
@@ -173,4 +175,88 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
       );
     }
   }
+
+  
+  export async function PATCH(req: NextRequest, { params }: { params: { slug?: string[] } }) {
+    try {
+      
+      if(params.slug){
+
+        const reqBody = await req.json();
+        const { userId} = reqBody;
+    
+        const cartId = getDataFromCart(req);
+
+        const newCartId = mongoose.Types.ObjectId.createFromHexString(cartId);
+        const newUserId = mongoose.Types.ObjectId.createFromHexString(userId);
+    
+        if (mongoose.Types.ObjectId.isValid(newCartId) && mongoose.Types.ObjectId.isValid(newUserId)) {
+            //creating checkout session token
+            const buffer = await crypto.randomBytes(32);
+            const hashedToken = buffer.toString("hex");
+
+            const remainingMilliseconds = 5184000000; // 2 month
+            const now = new Date();
+            const expiryDate = new Date(now.getTime() + remainingMilliseconds);
+
+            //retrieving cart data for the current public session and storing user data
+            const cart = await Cart.findById(newCartId);
+    
+            cart.user.userId = newUserId;
+
+            await cart.save();
+
+            //creating add to cart state in order
+            let orderId = (await crypto.randomBytes(6)).toString("hex");
+
+            const newOrder = new Order({
+              _id: orderId,
+              status: 'add to cart',
+              'user.userId': newUserId
+            });
+
+            await newOrder.save();
+
+            const res = NextResponse.json(
+              {
+                message: "Order created!",
+                checkout_session_token: hashedToken,
+                success: true,
+              },
+              { status: 201 }
+            );
+      
+            res.cookies.set("checkout_session_token", hashedToken, {
+              expires: expiryDate,
+              httpOnly: true,
+            });
+      
+            res.cookies.set("order", newOrder._id.toString(), {
+              expires: expiryDate,
+              httpOnly: true,
+            });
+      
+            res.cookies.set("user", userId, {
+              expires: expiryDate,
+              httpOnly: true,
+            });
+      
+
+            return res;
+        }else{
+          throw new Error('Invalid cart and user id');
+        }
+      }
+      
+    } catch (error: any) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          success: false,
+        },
+        { status: 500 }
+      );
+    }
+  }
+  
   

@@ -33,14 +33,27 @@ body {
   }
 }
 
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px white inset !important;
+  -webkit-text-fill-color: black !important;
+}
+
 .backdrop {
   width: 100%;
   height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 25;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 40;
   scroll-behavior: unset;
 }
 .modal {
@@ -48,7 +61,7 @@ body {
   position: fixed;
   top: 10vh;
   left: 10%;
-  z-index: 30;
+  z-index: 45;
   animation: slide-down 300ms ease-out forwards;
 }
 
@@ -56,8 +69,24 @@ body {
   animation: slide-down 300ms ease-out forwards;
 }
 
-.leading-text {
+#admin-settings-modal {
+  width: 100%;
+  position: absolute;
+  top: 10vh;
+  left: 10%;
+  z-index: 50;
+}
+
+.slide-up{
   animation: slide-up 300ms ease-out forwards;
+}
+
+.slide-down{
+  animation: slide-down 300ms ease-out forwards;
+}
+
+.leading-text {
+  animation: slide-text-up 300ms ease-out forwards;
 }
 
 #zoom-hint,
@@ -291,21 +320,10 @@ body {
   }
 }
 
-@keyframes slide-up {
+@keyframes slide-text-up {
   from {
     opacity: 0;
     transform: translateY(5rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slide-down {
-  from {
-    opacity: 0;
-    transform: translateY(-5rem);
   }
   to {
     opacity: 1;
@@ -322,6 +340,27 @@ body {
   }
 }
 
+@keyframes slide-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-5rem);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 @keyframes angle-down-rotate-anticlock {
   0% {
@@ -376,14 +415,14 @@ body {
     max-height: 0;
     opacity: 0;
     transform: translateY(-25px);
-    overflow-y: hidden;
+    display: none;
 
   }
   100% {
     max-height: 1050px;
     opacity: 1;
     transform: translateY(0);
-    overflow-y: auto;
+    display: flex;
 
   }
 }
@@ -393,14 +432,13 @@ body {
     max-height: 1050px;
     opacity: 1;
     transform: translateY(0);
-    overflow-y: auto;
-
+    display: flex;
   }
   100% {
     max-height: 0;
     opacity: 0;
     transform: translateY(-25px);
-    overflow-y: hidden;
+    display: none;
 
   }
 }
@@ -428,13 +466,13 @@ body {
     max-height: 0;
     opacity: 0;
     transform: translateY(-25px);
-    overflow-y: hidden;
+    display: flex;
   }
   100% {
     max-height: 1050px;
     opacity: 1;
     transform: translateY(0);
-    overflow-y: auto;
+    display: none;
   }
 }
 
@@ -443,13 +481,13 @@ body {
     max-height: 1050px;
     opacity: 1;
     transform: translateY(0);
-    overflow-y: auto;
+    display: none;
   }
   100% {
     max-height: 0;
     opacity: 0;
     transform: translateY(-25px);
-    overflow-y: hidden;
+    display: flex;
   }
 }
 
@@ -483,6 +521,50 @@ body {
     display: none;
   }
 }
+
+@-webkit-keyframes slide-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-5rem);
+  }
+}
+
+@-webkit-keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+@-webkit-keyframes slide-text-up {
+  from {
+    opacity: 0;
+    transform: translateY(5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@-webkit-keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 
 #go-to-productpage__section a {
   margin: 0;
@@ -538,4 +620,9 @@ body {
     left: calc(50% - 35rem);
     width: 70rem;
   }
+  #admin-settings-modal{
+    left: calc(55% - 17.5rem);
+    width: 35rem;
 }
+}
+
