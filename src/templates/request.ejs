@@ -65,7 +65,7 @@
                                                                                             <tbody>
                                                                                                 <tr>
                                                                                                     <td align="center" style="color: rgb(119, 119, 119); font-size: 12px; line-height: 18px; padding: 0px;" editable="">
-                                                                                                        <a href="[PAYMENT_URL]" style="text-decoration: none; color: #777777;">
+                                                                                                        <a href="<%= url  %>" style="text-decoration: none; color: #777777;">
                                                                                                             <font color="#777777" size="2" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; font-size: 12px; text-size-adjust: 100%; text-transform: uppercase;font-weight:700;">
 
                                                                                                                 Order: ##<%=  orderId  %>##
@@ -124,7 +124,7 @@
                                                                             </tbody>
                                                                         </table>
                                                                     </td>
-                                                                    <td align="center" style="line-height: 100%; padding: 0px 20px;" editable=""><img alt="" border="0" height="35" src="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/shopping-cart.png" style="display: block; height: 35px; width: 40px;" width="40"></td>
+                                                                    <td align="center" style="line-height: 100%; padding: 0px 20px;" editable=""><img alt="" border="0" height="35" src="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/shopping-cart.png" style="display: block; height: 35px; width: 40px;" width="40"></td>
                                                                     <td align="center" style="padding-top: 0px; padding-bottom: 0px; padding-left: 0px; padding-right: 0px;">
                                                                         <table align="center" bgcolor="#dddddd" border="0" cellpadding="0" cellspacing="0" class="tablemobile" height="1" lang="x-tablem" style="background-color: #dddddd; border-collapse: collapse; min-width: 80px; width: 260px;" width="260" cloneordelete="single">
                                                                             <tbody>
@@ -205,7 +205,7 @@
                                                                                                     <td align="left" style="padding-bottom: 10px; padding-left: 0px; padding-right: 0px; padding-top: 0px;">
                                                                                                         <font color="#333333" size="2" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; text-size-adjust: 100%;font-weight:700;">
 
-                                                                                                            [MERCHANT_NAME]
+                                                                                                            Oyinye Couture
 
                                                                                                         </font>
                                                                                                         <table align="left" border="0" cellpadding="0" cellspacing="0" class="tablemobile" lang="x-tablem" style="border-collapse: collapse;" cloneordelete="single">
@@ -223,7 +223,7 @@
                                                                                                     <td align="left" style="color: #777777;font-family: 'Noto Sans', 'Open Sans', sans-serif;font-size: 13px;line-height: 18px;padding-bottom: 10px;padding-left: 0px;padding-right: 1rem;padding-top: 0px;" editable=""><font color="#777777" size="2" style="font-family: 'Noto Sans', 'Open Sans', sans-serif; text-size-adjust: 100%;">Awaiting notification of successful payment for order amount below, delivery of purchase will commerce on confirmation</font></td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="left" style="color: rgb(51, 51, 51); font-size: 13px; line-height: 16px; padding: 0px 0px 10px;" editable=""><font color="#333333" size="2" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; text-size-adjust: 100%;font-weight:700;"> Price:&nbsp; </font> <font color="#000000" size="2" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; text-size-adjust: 100%;font-weight:600"> ₦ ##PRICE## </font></td>
+                                                                                                    <td align="left" style="color: rgb(51, 51, 51); font-size: 13px; line-height: 16px; padding: 0px 0px 10px;" editable=""><font color="#333333" size="2" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; text-size-adjust: 100%;font-weight:700;"> Price:&nbsp; </font> <font color="#000000" size="2" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; text-size-adjust: 100%;font-weight:600"> ₦ ##<%= total  %>## </font></td>
                                                                                                 </tr>
                                                                                             </tbody>
                                                                                         </table>
@@ -262,7 +262,7 @@
                                                                                             <tbody>
                                                                                                 <tr>
                                                                                                     <td align="center" style="color: rgb(255, 255, 255); font-size: 10px; line-height: 12px;">
-                                                                                                        <a style="text-decoration: none;" href="[PAYMENT_URL]">
+                                                                                                        <a style="text-decoration: none;" href="<%= url  %>">
                                                                                                             <font color="#ffffff" size="2" style="font-family: 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue','BBAlpha Sans','S60 Sans',Arial,sans-serif; text-size-adjust: 100%; text-align: center;">
 
                                                                                                                 CLICK TO PAY
@@ -339,7 +339,7 @@
                                                                 <tr>
                                                                     <td align="center" style="color: #777777; font-size: 13px; line-height: 18px; padding-bottom: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px;" editable="">
                                                                         <font color="#777777" size="2" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; font-size: 12px; text-size-adjust: 100%; text-transform: uppercase;font-weight:600;">
-                                                                            <a href="tel:[USER_MOBILENO]" style="color: #777777;text-decoration: none;">Contact Seller</a>
+                                                                            <a href="tel:<%= businessTel %>" style="color: #777777;text-decoration: none;">Contact Seller</a>
                                                                         </font>
                                                                     </td>
                                                                 </tr>
@@ -361,7 +361,7 @@
                                     <td align="center" height="20" style="color: transparent; font-size: 1px; height: 20px; line-height: 20px; padding-bottom: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px;"> &nbsp; </td>
                                 </tr>
                                 <tr>
-                                    <td align="center" style="color: #b0b0b0; font-size: 13px; line-height: 18px; padding-bottom: 0px; padding-left: 20px; padding-right: 20px; padding-top: 0px;" editable=""><font color="#b0b0b0" size="2" style="font-family: 'Open Sans', 'Source Sans Pro', sans-serif; font-weight: 400; text-size-adjust: 100%;"> 	© Safeonline Limited</font></td>
+                                    <td align="center" style="color: #b0b0b0; font-size: 13px; line-height: 18px; padding-bottom: 0px; padding-left: 20px; padding-right: 20px; padding-top: 0px;" editable=""><font color="#b0b0b0" size="2" style="font-family: 'Open Sans', 'Source Sans Pro', sans-serif; font-weight: 400; text-size-adjust: 100%;"> 	© Oyinye Couture LLC</font></td>
                                 </tr>
                                 <tr>
                                     <td align="center" height="20" style="color: transparent; font-size: 1px; height: 20px; line-height: 20px; padding-bottom: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px;"> &nbsp; </td>

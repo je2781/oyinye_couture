@@ -1199,7 +1199,9 @@ export default function Body({
                                         try {
                                           setIsLoading(true);
                                           await axios.post('/api/orders/send/payment-request', {
-                                            content: content.value.trim()
+                                            link: content.value.trim(),
+                                            id: order.id,
+                                            total: order.sales
                                           });
                                         } catch (error: any) {
                                           toast.error(error.message);

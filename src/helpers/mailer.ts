@@ -90,10 +90,34 @@ const verifyEmailData = async (
   return ejs.renderFile(templatePath, { ...ejsData });
 };
 
+const paymentRequestData = async (
+  id: string,
+  total: number,
+  tel: string,
+  paymentUrl: string
+) => {
+
+  //preparing email template and its data
+  const templatePath = path.join(
+    process.cwd(),
+    '..',
+    'templates/request.ejs'
+  );
+
+  const ejsData = {
+    total,
+    businessTel: tel,
+    orderId: id,
+    url: paymentUrl,
+  };
+
+  return ejs.renderFile(templatePath, { ...ejsData });
+};
+
 export const sendMail = async ({ password, email, emailType, userId, emailBody }: SendMail) => {
   try {
     crypto.randomBytes(32, async (err, buffer) => {
-      let vendorEmailBody, resetPasswordEmailBody, updatedTo, verifyEmailBody, newPasswordEmailBody  = '';
+      let vendorEmailBody, resetPasswordEmailBody, updatedTo, verifyEmailBody, newPasswordEmailBody, paymentRequestBody  = '';
 
       //create a hash token
       const hashedToken = buffer.toString("hex");
@@ -111,6 +135,10 @@ export const sendMail = async ({ password, email, emailType, userId, emailBody }
         }else{
 
         }
+      } else if(emailType === EmailType.request) {
+        paymentRequestBody = await paymentRequestData(
+          emailBody.id, emailBody.total, '+2349061681807', emailBody.link
+        );
       } else {
         await User.findOneAndUpdate(userId, {
           resetToken: hashedToken,
@@ -127,8 +155,8 @@ export const sendMail = async ({ password, email, emailType, userId, emailBody }
           name: 'Oyinye Couture',
           email: 'hello@oyinye.com'
         },
-        subject: emailType === EmailType.reset ? "Password Reset" : emailType === EmailType.reminder && password ? 'New Password' : emailType === EmailType.reminder && !password ? 'Reminder!' : "Verify your Email",
-        html: emailType === EmailType.reset ? resetPasswordEmailBody! : verifyEmailBody!
+        subject: emailType === EmailType.reset ? "Password Reset" : emailType === EmailType.reminder && password ? 'New Password' : emailType === EmailType.reminder && !password ? 'Reminder!' : emailType === EmailType.request ? 'Payment Update' : "Verify your Email",
+        html: emailType === EmailType.reset ? resetPasswordEmailBody! : emailType === EmailType.request ? paymentRequestBody  : verifyEmailBody!
       };
 
       await sgMail.send(msg);

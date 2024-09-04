@@ -187,7 +187,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
             }
         
           case 'payment-request':
-            const {content} = await request.json();
+            const {link, id, total} = await request.json();
 
             if (order) {
               let updatedOrder = await order.populate('user.userId');
@@ -196,7 +196,11 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
                 email: user.email,
                 userId: user._id.toString(),
                 emailType: EmailType.request,
-                emailBody: content
+                emailBody: {
+                  link,
+                  id,
+                  total
+                }
               });
 
               return NextResponse.json({

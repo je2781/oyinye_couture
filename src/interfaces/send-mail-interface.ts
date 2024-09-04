@@ -7,5 +7,5 @@ export interface  SendMail{
     userId?: any;
     emailType: EmailType;
     email: string;
-    emailBody?: string;
+    emailBody?: any;
 }
