@@ -34,6 +34,7 @@ export default function CartInfo({
 
     const [loader, setLoader] = useState(false);
     const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
+    const [isCreatingUserProfile, setIsCreatingUserProfile] = useState(false);
     const [totalAmount, setTotalAmount] = useState(total);
     const [cartI, setCartI] = useState(cartItems);
     const [isIncrementingCart, setIsIncrementingCart] = useState<InitialCartData>();
@@ -126,6 +127,8 @@ export default function CartInfo({
 
 
     useEffect(() => {
+        setIsCreatingUserProfile(true);
+        
         timerId = setTimeout(async () => {
             if(emailPattern.test(email)){
                 try {
@@ -133,14 +136,18 @@ export default function CartInfo({
                         email
                     });
                     
-                    await axios.patch('/api/products/cart/update', {
-                        userId: res.data.id
-                    });
+                    if(res.data.id){
+                        await axios.patch('/api/products/cart/update', {
+                            userId: res.data.id
+                        });
+                    }
                 } catch (error: any) {
                     toast.error(error.message);
+                }finally{
+                    setIsCreatingUserProfile(false);
                 }
             }
-        }, 5000);
+        }, 3000);
         
 
         return () => {
@@ -190,8 +197,15 @@ export default function CartInfo({
 
     const handleCheckout = async () => {
         //validation checks
-        if(!email.includes('@')){
+        if(!email){
             return toast.error("You're email is missing");
+        }
+        if(!email.includes('@')){
+            return toast.error("Invalid email");
+        }
+
+        if(isCreatingUserProfile){
+            return;
         }
 
        try {
@@ -428,7 +442,7 @@ export default function CartInfo({
                         <p className="md:text-[1rem] text-xs font-extralight">SUBTOTAL&nbsp;&nbsp;&nbsp;<span className="md:text-2xl text-xl font-normal">&#8358;{totalAmount.toLocaleString("en-US")}</span></p>
                         <p className="italic md:text-[1rem] text-xs font-light underline underline-offset-1 cursor-pointer">Shipping &#38; taxes calculated at checkout</p>
                     </div>
-                    <button onClick={handleCheckout} disabled={loader} className={` text-white text-sm px-24 py-3 flex flex-row justify-center items-center ${isCreatingCheckout ? 'w-[252px]': ''} ${loader ? 'bg-gray-200 cursor-not-allowed': 'bg-gray-700 hover:ring-gray-700 cursor-pointer hover:ring-2'}`}>{isCreatingCheckout ? <div className="border-2 border-transparent rounded-full border-t-white border-r-white w-[15px] h-[15px] spin"></div> : 'CHECKOUT'}</button>
+                    <button onClick={handleCheckout} disabled={loader} className={` text-white text-sm px-24 py-3 flex flex-row justify-center items-center ${isCreatingCheckout ? 'md:w-[256px]': ''} ${loader ? 'bg-gray-200 cursor-not-allowed': 'bg-gray-700 hover:ring-gray-700 cursor-pointer hover:ring-2'}`}>{isCreatingCheckout ? <div className="border-2 border-transparent rounded-full border-t-white border-r-white w-[15px] h-[15px] spin"></div> : 'CHECKOUT'}</button>
                 </footer>
             </main>
             : <main className="min-h-screen w-full container mx-auto md:px-16 px-8 md:pt-12 pt-5 flex flex-col gap-y-5 justify-center items-center">

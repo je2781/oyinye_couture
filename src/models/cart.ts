@@ -45,6 +45,8 @@ const CartSchema = new Schema<ICart>({
       type: Schema.Types.ObjectId,
     },
   },
+}, {
+  timestamps: true
 });
 
 CartSchema.methods.removeFromCart = function (

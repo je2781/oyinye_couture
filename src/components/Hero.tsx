@@ -1,9 +1,21 @@
 'use client';
 
-import Image from "next/image";
-import heroImage from '../../public/next.svg';
+
+import { useEffect } from "react";
+import { createVisitorAction } from "@/app/actions";
 
 const Hero = () => {
+    
+  useEffect(() => {
+    
+    async function createVisitor(){
+      await createVisitorAction();
+
+    }
+
+    createVisitor();
+  }, []);
+  
     return (
         <section>
             {/* <Image src={heroImage} alt='hero-image' height={400}  className="relative bg-cover parallax-image"/> */}

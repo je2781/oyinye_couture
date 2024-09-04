@@ -14,7 +14,7 @@ export default function AdminPagination({
         <Link
           className={`${
             isActivePage === 1 ? "bg-accent" : ""
-          } text-white px-2 py-1 text-sm border border-secondary rounded-[50%] hover:bg-accent/70 hover:text-white`}
+          } text-white px-2 py-1 text-sm border border-secondary-400 hover:bg-accent/70 hover:text-white`}
           href={`?page=1`}
         >
           1
@@ -35,7 +35,7 @@ export default function AdminPagination({
         <Link
           className={`${
             isActivePage === previousPage ? "bg-accent" : ""
-          } text-white px-2 py-1 text-sm border border-secondary rounded-[50%] hover:bg-accent/70 hover:text-white`}
+          } text-white px-2 py-1 text-sm border border-secondary-400 hover:bg-accent/70 hover:text-white`}
           href={`?page=${previousPage}`}
         >
           {previousPage}
@@ -44,7 +44,7 @@ export default function AdminPagination({
       <Link
         className={`${
           isActivePage === currentPage ? "bg-accent" : ""
-        } text-white px-2 py-1 text-sm border border-secondary rounded-[50%] hover:bg-accent/70 hover:text-white active`}
+        } text-white px-2 py-1 text-sm border border-secondary-400 hover:bg-accent/70 hover:text-white active`}
         href={`?page=${currentPage}`}
       >
         {currentPage}
@@ -53,7 +53,7 @@ export default function AdminPagination({
         <Link
           className={`${
             isActivePage === nextPage ? "bg-accent" : ""
-          } text-white px-2 py-1 text-sm border border-secondary rounded-[50%] hover:bg-accent/70 hover:text-white`}
+          } text-white px-2 py-1 text-sm border border-secondary-400 hover:bg-accent/70 hover:text-white`}
           href={`?page=${nextPage}`}
         >
           {nextPage}
@@ -72,7 +72,7 @@ export default function AdminPagination({
         <Link
           className={`${
             isActivePage === lastPage ? "bg-accent" : ""
-          } text-white px-2 py-1 text-sm border border-secondary rounded-[50%] hover:bg-accent/70 hover:text-white`}
+          } text-white px-2 py-1 text-sm border border-secondary-400 hover:bg-accent/70 hover:text-white`}
           href={`?page=${lastPage}`}
         >
           {lastPage}

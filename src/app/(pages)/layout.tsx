@@ -22,9 +22,12 @@ export default function RootLayout({
     defaultCartState
   );
 
+
+
   useEffect(() => {
     async function fetchAllProducts() {
       try {
+        
 
         const res = await fetch(`/api/products`);
         const data = await res.json();

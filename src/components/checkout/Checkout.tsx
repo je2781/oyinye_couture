@@ -21,7 +21,7 @@ import toast from "react-hot-toast";
 import useWindowWidth from "../helpers/getWindowWidth";
 import { useRouter } from "next/navigation";
 
-export default function Checkout({ cartItems, total, orderId, country, userEmail }: any) {
+export default function Checkout({ cartItems, total, orderId, country, userEmail, userId, billingInfo, shippingInfo, saveBillingInfo, saveShippingInfo }: any) {
   let cartItemObj: CartItemObj = {};
   let tax = 250;
 
@@ -29,8 +29,8 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
 
   const router = useRouter();
   const [showFlag, setShowFlag] = React.useState({
-    shipping: false,
-    billing: false
+    shipping: saveShippingInfo ? true : false,
+    billing: saveBillingInfo ? true : false
   });
   const [loader, setLoader] = React.useState(false);
   const [transactionRef, setTransactionRef] = React.useState(randomReference());
@@ -40,41 +40,41 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
     billing: Country.getCountryByCode(country)!.name
   });
   const [phone, setPhone] = React.useState({
-    shipping: '',
-    billing: ''
+    shipping: saveShippingInfo ? shippingInfo.conatct.phone : '',
+    billing: saveBillingInfo ? billingInfo.contact.phone : ''
   });
   const [email, setEmail] = React.useState(userEmail);
   const [firstName, setFirstName] = React.useState({
-    shipping: '',
-    billing: ''
+    shipping: saveShippingInfo ? shippingInfo.firstName : '',
+    billing: saveBillingInfo ? billingInfo.firstName : ''
   });
   const [lastName, setLastName] = React.useState({
-    shipping: '',
-    billing: ''
+    shipping: saveShippingInfo ? shippingInfo.lastName : '',
+    billing: saveBillingInfo ? billingInfo.lastName : ''
   });
   const [company, setCompany] = React.useState({
-    shipping: '',
-    billing: ''
+    shipping: saveShippingInfo ? shippingInfo.company : '',
+    billing: saveBillingInfo ? billingInfo.company : ''
   });
   const [address, setAddress] = React.useState({
-    shipping: '',
-    billing: ''
+    shipping: saveShippingInfo ? shippingInfo.address : '',
+    billing: saveBillingInfo ? billingInfo.address : ''
   });
   const [apartment, setApartment] = React.useState({
-    shipping: '',
-    billing: ''
+    shipping: saveShippingInfo ? shippingInfo.apartment : '',
+    billing: saveBillingInfo ? billingInfo.apartment : ''
   });
   const [city, setCity] = React.useState({
-    shipping: '',
-    billing: ''
+    shipping: saveShippingInfo ? shippingInfo.city : '',
+    billing: saveBillingInfo ? billingInfo.city : ''
   });
   const [state, setState] = React.useState({
-    shipping: '',
-    billing: ''
+    shipping: saveShippingInfo ? shippingInfo.state : '',
+    billing: saveBillingInfo ? billingInfo.state : ''
   });
   const [postal, setPostal] = React.useState({
-    shipping: '',
-    billing: ''
+    shipping: saveShippingInfo ? shippingInfo.postal : '',
+    billing: saveBillingInfo ? billingInfo.postal : ''
   });
   const [paymentMethod, setPaymentMethod] = React.useState("interswitch");
   const [shippingMethod, setShippingMethod] = React.useState(5000);
@@ -143,11 +143,10 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
 
     try {
       setLoader(true);
-      //creating user account
-      await axios.post('/api/users/signup', {
+      //updating user account
+      await axios.patch(`/api/users/${userId}`, {
         firstName,
         lastName,
-        email,
         password: randomReference(),
         enableEmailMarketing
       });
@@ -189,6 +188,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
         saveBillingInfo,
         saveShippingInfo,
         paymentType: paymentMethod,
+        userEmail, email,
         status: 'pending payment',
         paymentStatus: 'pending',
         shippingMethod: shippingMethod === 5000 ? 'island' : shippingMethod === 8500 ? 'mainland' : 'outside'
@@ -196,7 +196,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
   
       
     } catch (error: any) {
-      toast.error(error);
+      toast.error(error.message);
     }finally{
       setLoader(false);
       if(paymentMethod === 'streetzwyze'){
@@ -219,7 +219,9 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
                   toast.success('Payment successful');
                 }
               } catch (error: any) {
-                toast.error(error);
+                toast.error(error.message);
+              }finally{
+                router.replace('/');
               }
             }
           }

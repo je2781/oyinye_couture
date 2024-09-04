@@ -19,7 +19,9 @@ async function getCart() {
 
   if(cartId){
   
-    const cartDataRes = await fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`);
+    const cartDataRes = await fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`, {
+      'cache': 'no-store'
+    });
     const cartData = await cartDataRes.json();
 
     return {

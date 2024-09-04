@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import * as argon from "argon2";
 import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
+import { getVisitData } from "@/helpers/getVisitData";
+import mongoose from "mongoose";
 
 
 connect();
@@ -11,18 +13,23 @@ connect();
 export async function POST(req: NextRequest) {
   try {
     const reqBody = await req.json();
-    const { firstName, lastName, email, password, enableEmailMarketing } = reqBody;
+    const { firstName, lastName, email, password} = reqBody;
 
     const user = await User.findOne({ email });
     //check if user laready exists
     if (user) {
       return NextResponse.json(
-        { error: "User already exists" },
-        { status: 400 }
+        { message: "User already exists"},
+        {
+          status: 200
+        }
       );
     }
 
-    if(password && firstName  && lastName && enableEmailMarketing & email){
+    const visitId = getVisitData(req);
+    const newVisitId = mongoose.Types.ObjectId.createFromHexString(visitId!);
+
+    if(password && firstName  && lastName && email){
       
           const hash = await argon.hash(password);
       
@@ -31,7 +38,7 @@ export async function POST(req: NextRequest) {
             password: hash,
             firstName,
             lastName,
-            enableEmailMarketing
+            'visitor.visitId': mongoose.Types.ObjectId.isValid(newVisitId) ? newVisitId : null 
           });
       
           const savedUser = await newUser.save();
@@ -54,9 +61,9 @@ export async function POST(req: NextRequest) {
           );
 
     }else{
-      
       const newUser = new User({
-        email
+        email,
+        'visitor.visitId': mongoose.Types.ObjectId.isValid(newVisitId) ? newVisitId : null 
       });
   
       const savedUser = await newUser.save();

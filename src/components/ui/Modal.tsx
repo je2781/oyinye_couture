@@ -1,7 +1,7 @@
 import ReactDOM from "react-dom";
 
 const BackDrop = (props: any) => {
-  return <div className='backdrop' onClick={props.onClick}></div>;
+  return <div className='backdrop blur-sm' onClick={props.onClick}></div>;
 };
 
 const QuickViewModalOverlay = (props: any) => {
@@ -25,9 +25,9 @@ const FilterModalOverlay = (props: any) => {
 
 const AdminSettingsModalOverlay = (props: any) => {
   return (
-    <main aria-orientation="vertical" aria-labelledby='toggle-button' className={`${props.classes ? props.classes : 'bg-white px-4'} z-[45] w-4/5 h-fit fixed top-0 left-0`}>
+    <main id='admin-settings-modal' aria-orientation="vertical" style={{'--admin-modal-pos-left': `${props.left}`, '--admin-modal-width': `${props.width}`} as React.CSSProperties} aria-labelledby='toggle-button' className={`${props.classes ? props.classes : 'bg-white px-4 h-fit'} z-[50] w-4/5 fixed top-[10vh] left-[10%]`}>
       {props.children}
-      <i className="fa-solid fa-xmark text-xl absolute right-4 top-5 cursor-pointer text-gray-500" onClick={props.onClick}></i>
+      <i className="fa-solid fa-xmark text-xl absolute right-4 top-5 cursor-pointer text-gray-500" onClick={props.onClose}></i>
     </main>
   );
 };
@@ -103,8 +103,8 @@ export const AdminSettingsModal = (props: any) => {
         document.getElementById("backdrop-root")!
       )}
       {ReactDOM.createPortal(
-        <AdminSettingsModalOverlay onClick={props.onClose}>{props.children}</AdminSettingsModalOverlay>,
-        document.getElementById("admin-settings-modal")!
+        <AdminSettingsModalOverlay {...props}>{props.children}</AdminSettingsModalOverlay>,
+        document.getElementById("admin-modal")!
       )}
     </>
   );

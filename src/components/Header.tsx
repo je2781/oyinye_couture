@@ -12,7 +12,6 @@ import useWindowWidth from "./helpers/getWindowWidth";
 import { MobileModal } from "./ui/Modal";
 import useCart from "@/store/useCart";
 import useGlobal from "@/store/useGlobal";
-import { time } from "console";
 
 const menuItems = [
   {
@@ -57,6 +56,7 @@ export default function Header({cartItems, isCheckout}: any) {
       }
     };
   }, []);
+
   
   // Handling scroll
   const handleScroll = () => {

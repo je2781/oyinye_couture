@@ -70,7 +70,7 @@ const ProductDetail = ({
       };
 
       function getArticleBottomScrollYPosition() {
-        const element = document.querySelector('#article') as HTMLElement;
+        const element = document.querySelector('article') as HTMLElement;
     
         const rect = element.getBoundingClientRect();
         return window.scrollY + rect.bottom;
@@ -608,20 +608,20 @@ const ProductDetail = ({
                         onClick={(e) => {
                             let downAngle = e.currentTarget.querySelector("header i");
                             let header = e.currentTarget;
-                            let content = header.parentNode?.querySelector("#sizes-content");
+                            let content = document.querySelector("#sizes-content");
 
-                            if (downAngle && header) {
-                            if (!downAngle.classList.contains("ad-rotate")) {
-                                downAngle.classList.add("ad-rotate");
-                                downAngle.classList.remove("ad-rotate-anticlock");
-                                content?.classList.add("show-chart");
-                                content?.classList.remove("hide-chart");
-                            } else {
-                                downAngle.classList.remove("ad-rotate");
-                                downAngle.classList.add("ad-rotate-anticlock");
-                                content?.classList.remove("show-chart");
-                                content?.classList.add("hide-chart");
-                            }
+                            if (downAngle && header && content) {
+                                if (!downAngle.classList.contains("ad-rotate")) {
+                                    downAngle.classList.add("ad-rotate");
+                                    downAngle.classList.remove("ad-rotate-anticlock");
+                                    content.classList.add("show-chart");
+                                    content.classList.remove("hide-chart");
+                                } else {
+                                    downAngle.classList.remove("ad-rotate");
+                                    downAngle.classList.add("ad-rotate-anticlock");
+                                    content.classList.remove("show-chart");
+                                    content.classList.add("hide-chart");
+                                }
                             }
                         }}
                         className="py-4 cursor-pointer flex flex-row justify-between items-center pr-4 border border-l-0 border-r-0 border-b-0 border-gray-200">
@@ -631,7 +631,7 @@ const ProductDetail = ({
                         </h1>
                         <i className={`fa-angle-down fa-solid text-sm text-gray-500`}></i>
                     </header>
-                    <div id='sizes-content' className="border border-gray-200 pt-3 pb-6 px-5 lg:ml-3 lg:mr-12 mr-5 flex-col gap-y-4 flex">
+                    <div id='sizes-content' className="border border-gray-200 pt-3 pb-6 px-5 lg:ml-3 lg:mr-12 mr-5 flex-col gap-y-4 hidden">
                         <header className="flex flex-row justify-between">
                             <div className="lg:w-[65%] w-[60%]"></div>
                             <Image src={Logo} alt="logo" role='presentation' width={240} className="lg:w-[35%] w-[40%]"/>

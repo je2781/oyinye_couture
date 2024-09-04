@@ -1,11 +1,10 @@
 import { connect } from '@/db/config';
-import Cart from '@/models/cart';
 import Product from '@/models/product';
 import { NextResponse, type NextRequest } from 'next/server';
 
 connect();
  
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
     try {
 
         const products = await Product.find();
@@ -16,15 +15,14 @@ export async function GET(request: NextRequest) {
             { status: 404 }
           );
         }
-      
+
         return NextResponse.json({
           products,
           success: true
         }, {
           status: 200
         });
-    
-      
+
        
     } catch (error: any) {
       return NextResponse.json(

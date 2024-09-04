@@ -3,6 +3,7 @@ import { getDataFromOrder } from '@/helpers/getDataFromOrder';
 import { sendMail } from '@/helpers/mailer';
 import { EmailType } from '@/interfaces';
 import Order from '@/models/order';
+import User from '@/models/user';
 import axios from 'axios';
 import mongoose from 'mongoose';
 import { NextResponse, type NextRequest } from 'next/server';
@@ -41,20 +42,34 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
                 previousPage: currentPage - 1,
                 orders
             },
-                { status: 404 }
+                { status: 200 }
             );
         }
 
         orders = orders.map((order) => ({
             id: order._id,
-            items: order.items.map((item: any) => ({
+            items: order.items.map((item: any) => {
+              let price: number | undefined;
+              item.product.colors.forEach((color: any) => {
+                if(color.sizes.find((size: any) => size.variantId === item.variantId)){
+                  price = color.sizes.find((size: any) => size.variantId === item.variantId).price;
+                }
+              });
+              return {
                 quantity: item.quantity,
-                variantId: item.variantId
-            })),
+                variantId: item.variantId,
+                productType: item.product.type,
+                total: price ? price * item.quantity : 0
+              };
+            }),
+            sales: order.sales,
+            date: order.createdAt,
             status: order.status,
-            paymentType: order.paymentType ?? '', // Add logic to fetch or determine paymentType
-            paymentStatus: order.paymentStatus ?? '', // Add logic to fetch or determine paymentStatus
+            paymentType: order.paymentType ?? '',
+            paymentStatus: order.paymentStatus ?? '',
+            shippingMethod: order.shippingMethod ?? ''
         }));
+
 
         return NextResponse.json({
             hasNextPage,
@@ -137,7 +152,12 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
                   status: 400
                 });
               }else{
-                throw new Error("No order has been created");
+                return NextResponse.json({
+                  message: 'No order has been created',
+                  success: false
+                }, {
+                  status: 200
+                });
               }
 
               
@@ -158,7 +178,12 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
                 status: 201
               });
             }else{
-              throw new Error("No order has been created");
+              return NextResponse.json({
+                message: 'No order has been created',
+                success: false
+              }, {
+                status: 200
+              });
             }
         
           case 'payment-request':
@@ -181,7 +206,12 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
                 status: 201
               });
             }else{
-              throw new Error("No order has been created");
+              return NextResponse.json({
+                message: 'No order has been created',
+                success: false
+              }, {
+                status: 200
+              });
             }
 
         }
@@ -189,27 +219,39 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
       
       }else{
         const reqBody = await request.json();
-        const {shippingInfo, billingInfo, saveBillingInfo, saveShippingInfo, paymentType, status, paymentStatus, shippingMethod} = reqBody;
+        const {shippingInfo, billingInfo, saveBillingInfo, saveShippingInfo, paymentType, status, paymentStatus, shippingMethod, userEmail} = reqBody;
 
-        if (order) {
-          order.shippingInfo = shippingInfo;
-          order.billingInfo = billingInfo;
+        const extractedUser = await User.findOne({email: userEmail});
+
+        if (order && extractedUser) {
           order.paymentStatus = paymentStatus;
           order.status = status;
           order.paymentType = paymentType;
           order.shippingMethod = shippingMethod;
-          order.saveBillingInfo = saveBillingInfo;
-          order.saveShippingInfo = saveShippingInfo;
 
+          extractedUser.saveBillingInfo = saveBillingInfo;
+          extractedUser.saveShippingInfo = saveShippingInfo;
+          extractedUser.shippingInfo = shippingInfo;
+          extractedUser.billingInfo = billingInfo;
+  
           await order.save();
+          await extractedUser.save();
+
+          return NextResponse.json({
+            message: 'order updated',
+            success: true
+          }, {
+            status: 201
+          });
+        }else{
+          return NextResponse.json({
+            message: 'Got back to cart and checkout again',
+            success: false
+          }, {
+            status: 200
+          });
         }
-      
-        return NextResponse.json({
-          message: 'order updated',
-          success: true
-        }, {
-          status: 201
-        });
+
       }
     
       

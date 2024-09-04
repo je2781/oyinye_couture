@@ -18,7 +18,7 @@ const config: Config = {
           800: "#1f1f2b",
           950: "#181821",
         },
-        secondary: "#9a9cab",
+        secondary: {400: "#9a9cab", 800: '#2c3e50'},
         accent: "#20c997",
         checkout: {
           100: "#fef6f6",

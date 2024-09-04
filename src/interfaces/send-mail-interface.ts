@@ -3,8 +3,9 @@ export enum EmailType{
 }
 
 export interface  SendMail{
-    userId: any;
+    password?: string
+    userId?: any;
     emailType: EmailType;
     email: string;
-    emailBody?: string
+    emailBody?: string;
 }

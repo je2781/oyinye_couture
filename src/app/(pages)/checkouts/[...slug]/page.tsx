@@ -33,7 +33,7 @@ async function getCheckout() {
       ...cartData,
       orderId,
       country: countryData.country,
-      userEmail: userData ? userData.email : "",
+      userData,
     };
   } else {
     return {
@@ -41,17 +41,18 @@ async function getCheckout() {
       total: 0,
       orderId,
       country: countryData.country,
-      userEmail: userData ? userData.email : "",
+      userData: null,
     };
   }
 }
+
 
 async function CheckoutPage() {
   const data = await getCheckout();
 
   return (
     <>
-      <Header cartItems={data.cartItems} isCheckout />
+      <Header isCheckout />
       <Checkout
         {...data}
       />

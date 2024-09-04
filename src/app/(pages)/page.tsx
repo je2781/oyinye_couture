@@ -2,7 +2,8 @@
 import FeaturedProducts from "@/components/FeaturedProducts";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+
 
 async function getAllProducts(){
   const res = await fetch(`${process.env.DOMAIN}/api/products`, {next: {revalidate: 60}});
@@ -10,6 +11,7 @@ async function getAllProducts(){
 
   return data.products;
 }
+
 
 async function getCart() {
   const cookieStore = cookies();
@@ -26,6 +28,7 @@ async function getCart() {
 }
 
 export default async function Home() {
+  
   const products = await getAllProducts();
   const cartItems = await getCart();
 

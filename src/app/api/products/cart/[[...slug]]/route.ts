@@ -5,6 +5,7 @@ import Order from "@/models/order";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from 'crypto';
+import { getVisitData } from "@/helpers/getVisitData";
 
 connect();
 
@@ -14,11 +15,14 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
       if(params.slug){
 
         //retrieving cart data for the current public session
-        const cart = await Cart.findById(mongoose.Types.ObjectId.createFromHexString(params.slug[0]));
-    
-    
-        if (cart) {
+        let newCartId = mongoose.Types.ObjectId.createFromHexString(params.slug[0]);
+        
+        
+        if (mongoose.Types.ObjectId.isValid(newCartId)) {
+          let cart = await Cart.findById(newCartId);
+
           let updatedCart = await cart.populate('items.productId');
+
           const cartItems = updatedCart.items.map((cartItem: any) => {
             return {
               product: {...cartItem.productId._doc},
@@ -37,7 +41,10 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
               status: 200,
             }
           );
+        }else{
+          throw new Error('Invalid cart id');
         }
+  
       }
   
      
@@ -111,7 +118,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
           
           await newCart.save();
           
-          const remainingMilliseconds = 2629746000; // 1 month
+          const remainingMilliseconds = 5184000000; // 2 month
           const now = new Date();
           const expiryDate = new Date(
             now.getTime() + remainingMilliseconds
@@ -132,36 +139,41 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
           
           return res;
         }else{
-          const newObjectId = mongoose.Types.ObjectId.createFromHexString(cartId);
+          const newCartId = mongoose.Types.ObjectId.createFromHexString(cartId);
 
-          //retrieving cart data for the current public session
-          const cart = await Cart.findById(newObjectId);
+          if(mongoose.Types.ObjectId.isValid(newCartId)){
+
+            //retrieving cart data for the current public session
+            const cart = await Cart.findById(newCartId);
+            
+            await  cart.addToCart({
+              price,
+              quantity,
+                id,
+                variantId,
+              });
+  
+              let updatedCart = await cart.populate('items.productId');
+              const cartItems = updatedCart.items.map((cartItem: any) => {
+                return {
+                  product: {...cartItem.productId._doc},
+                  quantity: cartItem.quantity,
+                  variantId: cartItem.variantId,
+                };
+              });
           
-          await  cart.addToCart({
-            price,
-            quantity,
-              id,
-              variantId,
-            });
-
-            let updatedCart = await cart.populate('items.productId');
-            const cartItems = updatedCart.items.map((cartItem: any) => {
-              return {
-                product: {...cartItem.productId._doc},
-                quantity: cartItem.quantity,
-                variantId: cartItem.variantId,
-              };
-            });
-        
-            return NextResponse.json(
-              {
-                message: "Cart updated successfully",
-                totalAmount: cart.totalAmount,
-                items: cartItems,
-                success: true,
-              },
-              { status: 201 }
-            );
+              return NextResponse.json(
+                {
+                  message: "Cart updated successfully",
+                  totalAmount: cart.totalAmount,
+                  items: cartItems,
+                  success: true,
+                },
+                { status: 201 }
+              );
+          }else{
+            throw new Error('invalid cart id');
+          }
         }
       }
       
@@ -212,7 +224,8 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
             const newOrder = new Order({
               _id: orderId,
               status: 'add to cart',
-              'user.userId': newUserId
+              'user.userId': newUserId,
+              sales: cart.totalAmount
             });
 
             await newOrder.save();
@@ -243,8 +256,6 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
       
 
             return res;
-        }else{
-          throw new Error('Invalid cart and user id');
         }
       }
       

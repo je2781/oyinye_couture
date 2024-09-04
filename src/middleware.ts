@@ -12,22 +12,41 @@ export function middleware(request: NextRequest) {
     path === "/" ||
     path === "/resetpassword";
 
+  const isAdminPath =
+    path === "/admin/summary" ||
+    path === "/admin/product-listing" ||
+    path === "/admin/order" ||
+    path === "/admin/emails" ||
+    path === "/admin/calendar";
+
   const token = request.cookies.get("access_token")?.value;
   const isAdmin = request.cookies.get("admin_status")?.value;
 
-  if (isPublicPath && token && isAdmin && isAdmin === 'false') {
+  if (isPublicPath && token && isAdmin === 'false') {
     return NextResponse.redirect(new URL("/home", request.nextUrl), {
       status: 302,
     });
   }
 
-  if (isPublicPath && token && isAdmin && isAdmin === 'true') {
-    return NextResponse.redirect(new URL("/admin/dashboard", request.nextUrl), {
+  if (isAdminPath && token && isAdmin === 'false') {
+    return NextResponse.redirect(new URL("/home", request.nextUrl), {
+      status: 302,
+    });
+  }
+
+  if (isPublicPath && token && isAdmin === 'true') {
+    return NextResponse.redirect(new URL("/admin/summary", request.nextUrl), {
       status: 302,
     });
   }
 
   if (!isPublicPath && !token) {
+    return NextResponse.redirect(new URL("/", request.nextUrl), {
+      status: 302,
+    });
+  }
+
+  if (isAdminPath && !token) {
     return NextResponse.redirect(new URL("/", request.nextUrl), {
       status: 302,
     });
@@ -40,7 +59,12 @@ export const config = {
     "/",
     "/login",
     "/signup",
-    "/admin/dashboard",
     "/verifyemail",
+    "/resetpassword",
+    "/admin/summary",
+    "/admin/orders",
+    "/admin/product-listing",
+    "/admin/emails",
+    "/admin/calendar"
   ],
 };

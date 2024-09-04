@@ -68,7 +68,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
               filterSettings,
               highestPrice
             },
-            { status: 404 }
+            { status: 200 }
           );
         }
         

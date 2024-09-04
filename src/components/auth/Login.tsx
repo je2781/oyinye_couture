@@ -45,7 +45,7 @@ export default function LoginPage() {
       }else{
         toast.success("Login successful!");
         if(extractedUser.isAdmin){
-          router.push('/admin/dashboard');
+          router.push('/admin/dashboard/summary');
         }else{
           router.replace('/');
         };

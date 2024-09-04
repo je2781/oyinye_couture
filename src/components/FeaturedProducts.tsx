@@ -4,7 +4,7 @@ import ProductComponent from "./Product";
 const FeaturedProducts = ({featuredProducts, cartItems}: any) => {
 
   return (
-    <div className="flex flex-col lg:gap-y-8 gap-y-4 bg-white">
+    <div className="flex flex-col lg:gap-y-8 gap-y-4 bg-white max-w-7xl w-full mx-auto container">
       <section className="flex flex-col gap-y-6 items-center py-12 justify-center leading-text">
         <header className="text-center flex flex-col gap-y-6">
           <h1 className="lg:text-4xl text-3xl font-sans">Oyinye&apos;s collection</h1>
@@ -14,7 +14,7 @@ const FeaturedProducts = ({featuredProducts, cartItems}: any) => {
           Shop Now
         </button>
       </section>
-      <div className="flex flex-col lg:items-start items-center gap-y-5 font-sans container mx-auto">
+      <div className="flex flex-col lg:items-start items-center gap-y-5 font-sans">
         <header className="lg:text-4xl text-3xl">FeaturedProducts</header>
         <section className="flex flex-row items-center justify-evenly flex-wrap gap-x-5 gap-y-5">
           {featuredProducts.slice(0, 4).map((product: any, i: number) => <ProductComponent key={i} product={product} cartItems={cartItems}/>)}

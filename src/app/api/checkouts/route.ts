@@ -11,132 +11,57 @@ connect();
 
 export async function GET(req: NextRequest) {
   try {
-    
     const cartId = getDataFromCart(req);
 
     const newCartId = mongoose.Types.ObjectId.createFromHexString(cartId);
-    
-    if (mongoose.Types.ObjectId.isValid(newCartId) && getDataFromOrder(req).length === 0) {
-      const buffer = await crypto.randomBytes(32);
-      const hashedToken = buffer.toString("hex");
-  
-      const remainingMilliseconds = 5184000000; // 2 month
-      const now = new Date();
-      const expiryDate = new Date(now.getTime() + remainingMilliseconds);
-      
 
-      // Retrieving cart data for the current public session
-      const cart = await Cart.findById(newCartId);
+    const [orderId, checkoutSessionToken] = getDataFromOrder(req);
 
-      if (!cart) {
-        return NextResponse.json({ error: "Cart not found" }, { status: 404 });
-      }
+    if (orderId && mongoose.Types.ObjectId.isValid(newCartId)) {
+      // Retrieving order data for the current checkout session
+      const order = await Order.findById(orderId);
 
-      let updatedCart = await cart.populate("items.productId");
+      if (order) {
+        // Retrieving cart data for the current public session
+        const cart = await Cart.findById(newCartId);
 
-      const cartItems = updatedCart.items.map((cartItem: any) => {
-        return {
-          product: { ...cartItem.productId._doc },
-          quantity: cartItem.quantity,
-          variantId: cartItem.variantId,
-        };
-      });
-
-      //creating checkout state in order
-      let orderId = (await crypto.randomBytes(6)).toString("hex");
-
-      const newOrder = new Order({
-        _id: orderId,
-        items: cartItems.map((item: any) => ({
-          product: item.product,
-          quantity: item.quantity,
-          variantId: item.variantId
-        })),
-        status: 'checkout',
-        'user.userId': cart.user.userId
-      });
-
-      await newOrder.save();
-
-      const res = NextResponse.json(
-        {
-          message: "Order created!",
-          checkout_session_token: hashedToken,
-          success: true,
-        },
-        { status: 201 }
-      );
-
-      res.cookies.set("checkout_session_token", hashedToken, {
-        expires: expiryDate,
-        httpOnly: true,
-      });
-
-      res.cookies.set("order", newOrder._id.toString(), {
-        expires: expiryDate,
-        httpOnly: true,
-      });
-
-      return res;
-    } else if (getDataFromOrder(req).length > 0) {
-      const [orderId, checkoutSessionToken] = getDataFromOrder(req);
-
-      if(orderId){
-        // Retrieving order data for the current checkout session
-        const order = await Order.findById(orderId);
-
-        if(order && order.items.length === 0){
-          
-          // Retrieving cart data for the current public session
-          const cart = await Cart.findById(newCartId);
-
-          if (!cart) {
-            return NextResponse.json({ error: "Cart not found" }, { status: 404 });
-          }
-
-          let updatedCart = await cart.populate("items.productId");
-
-          const cartItems = updatedCart.items.map((cartItem: any) => {
-            return {
-              product: { ...cartItem.productId._doc },
-              quantity: cartItem.quantity,
-              variantId: cartItem.variantId,
-            };
-          });
-
-          //updating order with checkout state
-          order.items = cartItems;
-          order.status = 'checkout';
-  
-          await order.save();
+        if (!cart) {
+          return NextResponse.json(
+            { error: "Cart not found" },
+            { status: 404 }
+          );
         }
 
-        return NextResponse.json(
-          {
-            message: "session token retrieved",
-            checkout_session_token: checkoutSessionToken,
-            success: true,
-          },
-          { status: 200 }
-        );
+        let updatedCart = await cart.populate("items.productId");
 
-      }else{
-        return NextResponse.json(
-          {
-            message: "No order id",
-          },
-          { status: 404 }
-        );
+        const cartItems = updatedCart.items.map((cartItem: any) => {
+          return {
+            product: { ...cartItem.productId._doc },
+            quantity: cartItem.quantity,
+            variantId: cartItem.variantId,
+          };
+        });
+
+        //updating order with checkout state
+        order.items = cartItems;
+        order.status = "checkout";
+        order.sales = cart.totalAmount;
+
+        await order.save();
       }
 
-
-
-      
+      return NextResponse.json(
+        {
+          message: "session token retrieved",
+          checkout_session_token: checkoutSessionToken,
+          success: true,
+        },
+        { status: 200 }
+      );
     } else {
-      return NextResponse.json({ error: "No cart and order have been created" }, { status: 400 });
+      throw new Error('invalid order and cart id');
     }
   } catch (error: any) {
-    console.error("Error processing request:", error);
     return NextResponse.json(
       {
         error: error.message,

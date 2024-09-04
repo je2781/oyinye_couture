@@ -90,7 +90,7 @@ const verifyEmailData = async (
   return ejs.renderFile(templatePath, { ...ejsData });
 };
 
-export const sendMail = async ({ email, emailType, userId, emailBody }: SendMail) => {
+export const sendMail = async ({ password, email, emailType, userId, emailBody }: SendMail) => {
   try {
     crypto.randomBytes(32, async (err, buffer) => {
       let vendorEmailBody, resetPasswordEmailBody, updatedTo, verifyEmailBody, newPasswordEmailBody  = '';
@@ -105,6 +105,12 @@ export const sendMail = async ({ email, emailType, userId, emailBody }: SendMail
         });
         verifyEmailBody = await verifyEmailData(hashedToken);
 
+      } else if(emailType === EmailType.reminder) {
+        if(password){
+
+        }else{
+
+        }
       } else {
         await User.findOneAndUpdate(userId, {
           resetToken: hashedToken,
@@ -121,7 +127,7 @@ export const sendMail = async ({ email, emailType, userId, emailBody }: SendMail
           name: 'Oyinye Couture',
           email: 'hello@oyinye.com'
         },
-        subject: emailType === EmailType.reset ? "Password Reset" : "Verify your Email",
+        subject: emailType === EmailType.reset ? "Password Reset" : emailType === EmailType.reminder && password ? 'New Password' : emailType === EmailType.reminder && !password ? 'Reminder!' : "Verify your Email",
         html: emailType === EmailType.reset ? resetPasswordEmailBody! : verifyEmailBody!
       };
 

@@ -21,6 +21,21 @@ const UserSchema = new Schema({
   },
   isAdmin: {
     type: Boolean,
+    default: false
+  },
+  shippingInfo: {
+    type: Object,
+  },
+  billingInfo: {
+    type: Object,
+  },
+  saveShippingInfo: {
+    type: Boolean,
+    default: false
+  },
+  saveBillingInfo: {
+    type: Boolean,
+    default: false
   },
   resetToken: String,
   resetTokenExpirationDate: Date,
@@ -40,14 +55,16 @@ const UserSchema = new Schema({
   enableEmailMarketing: {
     type: Boolean,
     default: false
+  },
+  visitor: {
+    visitId: {
+      ref: "visitors",
+      type: Schema.Types.ObjectId,
+    },
   }
 
 
 });
-
-
-
-
 
 
 const User = mongoose.models.users ?? mongoose.model("users", UserSchema);
