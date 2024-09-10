@@ -58,13 +58,19 @@ const ProductSchema = new Schema({
     noOfOrders: {
         type: Number
     },
-    noOfReviews: {
-        type: Number
-    },
     type: {
         type: String,
         required: true
-    }
+    },
+    reviews: [
+        {
+            reviewId: {
+                ref: 'reviews',
+                type: Schema.Types.ObjectId,
+                required: true
+            }
+        }
+    ],
     
     
 

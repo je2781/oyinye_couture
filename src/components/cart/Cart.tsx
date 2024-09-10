@@ -30,7 +30,7 @@ export default function CartInfo({
 
     let frontBase64ImagesObj: Base64ImagesObj = {};
 
-    const {removeItem, addItem, items} = useCart();
+    const {deductItem, addItem, updateCart} = useCart();
 
     const [loader, setLoader] = useState(false);
     const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
@@ -71,6 +71,7 @@ export default function CartInfo({
                     frontBase64ImagesObj = {};
 
                     setCartI(items);
+                    updateCart(items);
                     extractProductDetails(items, cartItemObj, frontBase64ImagesObj);
                     setQuantities(Object.values(cartItemObj).map((item: any) => item.quantity));
                     setItemTotalAmounts(Object.values(cartItemObj).map((item: any) => item.quantity * item.price));
@@ -108,6 +109,7 @@ export default function CartInfo({
                     frontBase64ImagesObj = {};
 
                     setCartI(items);
+                    updateCart(items);
                     extractProductDetails(items, cartItemObj, frontBase64ImagesObj);
                     setQuantities(Object.values(cartItemObj).map((item: any) => item.quantity));
                     setItemTotalAmounts(Object.values(cartItemObj).map((item: any) => item.quantity * item.price));
@@ -168,7 +170,7 @@ export default function CartInfo({
         
         if(delta === -1){
             if(quantities[index] > 1){
-                removeItem(variantId, Math.abs(delta), price);
+                deductItem(variantId, Math.abs(delta), price);
                 //updating cart data in backend
                 setIsDeductingCart({
                     quantity: Math.abs(delta),
@@ -224,8 +226,13 @@ export default function CartInfo({
         <>
 
         {
-            cartI.length > 0 ?
-            <main className="min-h-screen w-full container mx-auto md:pl-16 px-8 md:pt-12 py-5 flex flex-col gap-y-9">
+            totalAmount === 0
+            ?  <main className="min-h-screen w-full container mx-auto md:px-16 px-8 md:pt-12 pt-5 flex flex-col gap-y-5 justify-center items-center">
+                <i className="fa-solid cursor-pointer fa-bag-shopping text-gray-600 text-3xl"></i>
+                <h1 className="font-sans text-2xl italic">Cart is Empty!</h1>
+                <button className="bg-gray-700 text-[1rem] font-sans text-white px-7 py-3 hover:ring-2 ring-gray-700 border-0">Start shopping</button>
+            </main>
+            : <main className="min-h-screen w-full container mx-auto md:pl-16 px-8 md:pt-12 py-5 flex flex-col gap-y-9">
                 <header className="flex md:flex-row flex-col gap-y-5 justify-between items-start md:items-center pt-6 w-full">
                     <h1 className="font-sans md:text-4xl text-2xl text-gray-600">Your Cart</h1>
                     <div className="inline-flex flex-col gap-y-1 md:w-[40%] w-full text-gray-600">
@@ -305,7 +312,7 @@ export default function CartInfo({
                     {loader && <div className="trailing-progress-bar">
                         <div className="trailing-progress" ></div>
                     </div>}
-                    {Object.values(cartItemObj).map((item: any, i: number) => <section key={i}
+                    {Object.values(cartItemObj).map((item: any, i: number) => quantities[i] > 0 && <section key={i}
                         className="border-[0.7px] border-gray-300 border-l-0 border-r-0 border-t-0 w-full py-7"
                     >
                         <section className="flex md:flex-row flex-col justify-between md:items-center items-start w-full gap-y-4">
@@ -355,7 +362,7 @@ export default function CartInfo({
                                             el.style.setProperty("background-color", "transparent");
 
                                             if(quantities[i] < item.quantity){
-                                                removeItem(item.variantId, item.quantity - quantities[i], item.price);
+                                                deductItem(item.variantId, item.quantity - quantities[i], item.price);
                                                 //updating cart data in backend
                                                 setIsDeductingCart({
                                                     quantity: item.quantity - quantities[i],
@@ -421,7 +428,7 @@ export default function CartInfo({
                                     <i className={`fa-solid fa-trash-can ${loader ? 'cursor-not-allowed' : ' cursor-pointer'} text-sm text-gray-600`} 
                                     onClick={() => {
                                         if(!loader){
-                                            removeItem(item.variantId, quantities[i], item.price);
+                                            deductItem(item.variantId, quantities[i], item.price);
                                             //updating cart data in backend
                                             setIsDeductingCart({
                                                 quantity: quantities[i],
@@ -445,11 +452,7 @@ export default function CartInfo({
                     <button onClick={handleCheckout} disabled={loader} className={` text-white text-sm px-24 py-3 flex flex-row justify-center items-center ${isCreatingCheckout ? 'md:w-[256px]': ''} ${loader ? 'bg-gray-200 cursor-not-allowed': 'bg-gray-700 hover:ring-gray-700 cursor-pointer hover:ring-2'}`}>{isCreatingCheckout ? <div className="border-2 border-transparent rounded-full border-t-white border-r-white w-[15px] h-[15px] spin"></div> : 'CHECKOUT'}</button>
                 </footer>
             </main>
-            : <main className="min-h-screen w-full container mx-auto md:px-16 px-8 md:pt-12 pt-5 flex flex-col gap-y-5 justify-center items-center">
-                <i className="fa-solid cursor-pointer fa-bag-shopping text-gray-600 text-3xl"></i>
-                <h1 className="font-sans text-2xl italic">Cart is Empty!</h1>
-                <button className="bg-gray-700 text-[1rem] font-sans text-white px-7 py-3 hover:ring-2 ring-gray-700 border-0">Start shopping</button>
-            </main>
+            
         }    
     
         </>

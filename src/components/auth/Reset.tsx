@@ -42,7 +42,8 @@ export default function ResetPasswordPage() {
       setIsLoading(true);
       await axios.post("/api/users/reset", user);
       toast.success('Reset password email has been sent!', {
-        duration: 5000
+        duration: 5000,
+        position: 'top-center'
       });
       router.push("/login");
     } catch (error: any) {
@@ -55,10 +56,18 @@ export default function ResetPasswordPage() {
   async function onSetNewPassword() {
     try {
       setIsLoading(true);
-      await axios.post("/api/users/newpassword", { ...user, token });
-      toast.success('Login with your new password', {
-        duration: 5000
-      });
+      const res = await axios.post("/api/users/new-password", { ...user, token });
+      if(res.data.success === false){
+        toast.error(res.data.message, {
+          duration: 5000,
+          position: 'top-center'
+        });
+      }else{
+        toast.success(res.data.message, {
+          duration: 5000,
+          position: 'top-center'
+        });
+      }
       router.push("/login");
     } catch (error: any) {
       toast.error(error.message);

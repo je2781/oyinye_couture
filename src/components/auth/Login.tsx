@@ -9,7 +9,7 @@ import useCart from "@/store/useCart";
 import Header from "@/components/Header";
 
 
-export default function LoginPage() {
+export default function LoginPage({message, success}: any) {
   const [user, setUser] = React.useState({
     email: "",
     password: ""
@@ -30,6 +30,20 @@ export default function LoginPage() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if(success === true){
+      toast.success(message, {
+        duration: 5000,
+        position: 'top-center'
+      });
+    }else if(success === false){
+      toast.error(message, {
+        duration: 5000,
+        position: 'top-center'
+      });
+    }
+  }, []);
+
   async function onLogin() {
     try {
       setIsLoading(true);
@@ -41,11 +55,10 @@ export default function LoginPage() {
         toast.success(`Check ${extractedUser.email} for verification link`, {
           position: 'top-center'
         });
-        router.replace('/');
       }else{
         toast.success("Login successful!");
         if(extractedUser.isAdmin){
-          router.push('/admin/dashboard/summary');
+          router.push('/admin/summary');
         }else{
           router.replace('/');
         };

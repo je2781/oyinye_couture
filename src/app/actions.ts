@@ -2,11 +2,49 @@
 
 import { connect } from '@/db/config';
 import { getBrowser, getDeviceType } from '@/helpers/getHelpers';
+import Product from '@/models/product';
 import Visitor from '@/models/visitor';
 import { cookies, headers } from 'next/headers';
 
 connect();
 
+
+export async function createViewedProductsAction(variantId: string) {
+  const cookieStore = cookies();
+  const viewedP = cookieStore.get('viewed_p')?.value;
+
+  if(!viewedP){
+
+    cookieStore.set({
+      name: 'viewed_p',
+      value: JSON.stringify([variantId]),
+      expires: new Date(new Date().getTime() + 2629746000), // Expires in 1 month,
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+    });
+  }else{
+    const viewedProductsArray = JSON.parse(viewedP);
+
+     // Add the new product variant id to the beginning of the array
+     if (!viewedProductsArray.includes(variantId)) {
+      viewedProductsArray.unshift(variantId);
+    }
+
+    // Limit the number of stored product variant ids (e.g., to the 10 most recent)
+    if (viewedProductsArray.length > 10) {
+      viewedProductsArray.pop();
+    }
+
+    cookieStore.set({
+      name: 'viewed_p',
+      value: JSON.stringify(viewedProductsArray),
+      expires: new Date(new Date().getTime() + 2629746000), // Expires in 1 month,
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+    });
+  }
+  
+}
 
 export async function createVisitorAction() {
   const cookieStore = cookies();
@@ -38,6 +76,7 @@ export async function createVisitorAction() {
       value: newVisitor._id.toString(),
       expires: expiryDate,
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
       path: '/',
     });
   }

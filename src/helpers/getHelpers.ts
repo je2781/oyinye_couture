@@ -414,7 +414,7 @@ export let setBrowserUsageData = (data: any) => {
 
 export function randomReference() {
   let length = 8;
-  let chars = "0123456789abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let chars = "0123456789abcdefghijklmnopqrstuvwxyz_?£&*%!#%><ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   let result = "";
   for (let i = length; i > 0; --i)
     result += chars[Math.floor(Math.random() * chars.length)];
@@ -1401,8 +1401,9 @@ export const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 export const extractProductDetails = (
   cartItems: any[],
   cartItemObj: CartItemObj,
-  frontBase64ImagesObj: Base64ImagesObj
+  frontBase64ImagesObj: Base64ImagesObj,
 ) => {
+  
   for (let item of cartItems) {
     for (let color of item.product.colors) {
       let size = color.sizes.find(
@@ -1457,7 +1458,7 @@ export const getRouteNames = (list: string[]) => {
   });
 }
 
-export const generateBase64FromImage = (
+export const generateBase64FromMedia = (
   imageFile: any
 ): Promise<string | ArrayBuffer | null | undefined> => {
   if (!imageFile) {
@@ -1479,6 +1480,27 @@ export const generateBase64FromImage = (
   reader.readAsDataURL(imageFile);
   return promise;
 };
+
+export // Function to convert Base64 string to File object
+function base64ToFile(base64String: string, fileName: string, mimeType: string) {
+    // Remove the data URL part if present
+    const byteString = atob(base64String.split(',')[1]);
+
+    // Create an ArrayBuffer and a view for Uint8Array
+    const arrayBuffer = new ArrayBuffer(byteString.length);
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    // Populate the Uint8Array with the decoded data
+    for (let i = 0; i < byteString.length; i++) {
+        uint8Array[i] = byteString.charCodeAt(i);
+    }
+
+    // Create a Blob from the ArrayBuffer
+    const blob = new Blob([uint8Array], { type: mimeType });
+
+    // Optionally, create a File object from the Blob
+    return new File([blob], fileName, { type: mimeType });
+}
 
 export const colorsReducer = (state: DressColorObj[], action: any) => {
   if (action.type === "ADD") {
@@ -1653,7 +1675,7 @@ export async function handleBackImageupload(
   try {
     file = backUploadRef.current!.files![0];
 
-    let base64Str = await generateBase64FromImage(file);
+    let base64Str = await generateBase64FromMedia(file);
     dispatchAction({
       type: "ADD",
       color: {
@@ -1694,7 +1716,7 @@ export async function handleFrontImagesupload(
   try {
     file = frontUploadRef.current!.files![0];
 
-    let base64Str = await generateBase64FromImage(file);
+    let base64Str = await generateBase64FromMedia(file);
     dispatchAction({
       type: "ADD",
       color: {
@@ -1779,7 +1801,7 @@ export function handleStockChange(
 export const cartReducer = (state: CartState, action: any) => {
   if (action.type === "ADD") {
     const updatedStateTotalAmount =
-      state.totalAmount + action.item.price * action.item.quantity;
+      state.totalAmount + (action.item.price * action.item.quantity);
 
     const existingCartItemIndex = state.items.findIndex(
       (item: any) => item.variantId === action.item.variantId
@@ -1811,10 +1833,9 @@ export const cartReducer = (state: CartState, action: any) => {
       (item: any) => item.variantId === action.item.variantId
     );
     const existingCartItem = state.items[existingCartItemIndex];
-    const updatedStateTotalAmount =
-      state.totalAmount - action.item.price * action.item.quantity;
+    const updatedStateTotalAmount = state.totalAmount - (action.item.price * action.item.quantity);
 
-    if (existingCartItem.quantity - action.item.quantity <= 0) {
+    if (existingCartItem.quantity - action.item.quantity === 0) {
       updatedStateItems = state.items.filter(
         (item: any) => item.variantId !== existingCartItem.variantId
       );

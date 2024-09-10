@@ -8,8 +8,9 @@ import ProductQuickView from "./ProductQuickView";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "@mui/material";
 import useWindowWidth from "./helpers/getWindowWidth";
+import toast from "react-hot-toast";
 
-const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView, setIsGridView, isFeaturedProducts, cartItems}: any) => {
+const Product = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDetailPage}: any) => {
     const[isModalOpen, setIsModalOpen] = React.useState(false);
     let width = useWindowWidth();
     const router = useRouter();
@@ -23,6 +24,7 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
       const item = e.currentTarget;
       item.classList.remove('expand');
       setIsModalOpen(true);
+      
     }
   
     const hideModalHandler = () => {
@@ -45,7 +47,7 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
     
   return (
     <div className="relative">
-      {isModalOpen && <ProductQuickView onHideModal={hideModalHandler} product={product} isSearchProduc/>}
+      {isModalOpen  && <ProductQuickView onHideModal={hideModalHandler} product={product} isSearchProduct={isSearchProduct} isOnDetailPage={isOnDetailPage}/>}
       <article
         className={`${isSearchProduct ? 'items-start': 'items-center'} flex flex-col gap-y-4 cursor-pointer pb-6 relative`}
         data-hover={product.colors[0].imageBackBase64}
@@ -61,7 +63,17 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
           }
 
         }}
-        onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variantId.toString()}`)}
+        onClick={() => {
+          if(product.colors[0].sizes[0].stock > 0){
+            if(isOnDetailPage){
+              location.replace(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variantId}`);
+            }else{
+              router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variantId}`)
+            }
+          }else{
+            toast.error('It is out of stock');
+          }
+        }}
         onMouseOver={(event) => {
           if (!isModalOpen) {
             const item = event.currentTarget;
@@ -125,4 +137,4 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
   );
 };
 
-export default ProductComponent;
+export default Product;

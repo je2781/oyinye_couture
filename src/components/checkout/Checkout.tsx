@@ -117,6 +117,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
     const enableEmailMarketing = (document.querySelector(`[id=email-offers]`) as HTMLInputElement).checked;
     const saveBillingInfo = (document.querySelector(`[id=billing-save-info`) as HTMLInputElement).checked;
     const saveShippingInfo = (document.querySelector(`[id=save-info]`) as HTMLInputElement).checked;
+    let errorsCount = 0;
 
     //validation check to see if checkout page has errors
     if(!email.includes('@') || phone.shipping.length < 10 || firstName.shipping.length === 0
@@ -135,11 +136,16 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
       
       return toast.error('billing data is missing vital info');
     }
+
     errors.forEach(error => {
       if(!error.classList.contains('hidden')){
-        return toast.error('The values entered are invalid');
+          errorsCount++;
       }
     });
+
+    if(errorsCount > 0){
+        return toast.error('The values entered are invalid');
+    }
 
     try {
       setLoader(true);

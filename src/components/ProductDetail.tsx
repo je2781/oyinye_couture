@@ -19,11 +19,14 @@ import useCart from "@/store/useCart";
 import { regex, sizes } from "@/helpers/getHelpers";
 import Header from "@/components/Header";
 
-import Ruler from 'https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/ruler.svg';
-import Truck from 'https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/truck.svg';
-import Logo from 'https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/oyinye.png';
+import Ruler from '../../public/ruler.svg';
+import Truck from '../../public/truck.svg';
+import Logo from '../../public/oyinye.png';
 import './ProductDetail.css';
 import toast from "react-hot-toast";
+import Product from "./Product";
+import Reviews from "./helpers/Reviews";
+import { createViewedProductsAction } from "@/app/actions";
 
 {/* <main className="min-h-screen w-full flex flex-col items-center justify-center bg-white hide-scrollbar">
             <section className="flex flex-col items-center gap-y-2">
@@ -38,7 +41,9 @@ const ProductDetail = ({
     productId,
     paramsId,
     paramsColor,
-    paramsProduct
+    paramsProduct,
+    relatedProducts,
+    productReviews,
 }: any) => {
     const [sizeData, setSizeData] = useState<DressSize | undefined>();
     const [sizesData, setSizesData] = useState<DressSize[]>(productSizes);
@@ -59,8 +64,7 @@ const ProductDetail = ({
     
         return () => window.removeEventListener("scroll", handleScroll);
       }, [articleIsNotSticky]);
-    
-      
+          
       // Handling scroll
       const handleScroll = () => {
         const docScrollPos = window.scrollY;
@@ -68,6 +72,13 @@ const ProductDetail = ({
     
         setArticleIsNotSticky(docScrollPos === AScrollPos);
       };
+
+      React.useEffect(() => {
+        async function getServerAction(){
+            await createViewedProductsAction(paramsId);
+        }
+        getServerAction();
+      }, []);
 
       function getArticleBottomScrollYPosition() {
         const element = document.querySelector('article') as HTMLElement;
@@ -338,415 +349,431 @@ const ProductDetail = ({
   }
 
   const mainContent = (
-    <main className="flex lg:flex-row flex-col container mx-auto bg-white gap-y-7 w-full min-h-screen px-7 max-w-7xl lg:pt-0 pt-8">
-        <article id='article' className={`flex flex-col gap-y-2 w-full lg:w-[46%] ${articleIsNotSticky ? '' : 'lg:sticky lg:top-0'} lg:h-full lg:pt-8`}>
-            <Swiper
-            modules={[Pagination, Navigation]}
-            key={selectedColor}
-            slidesPerView={1}
-            pagination={{
-                clickable: true,
-                el: '.custom-pagination',
-                renderBullet: (index, className) => {
-                    const images = frontBase64ImagesObj[selectedColor] ? frontBase64ImagesObj[selectedColor] : imageFrontBase64;
+    <>
+        { sizesObj[`${selectedColor}-${selectedSize}`]
+        ? <main className=" container mx-auto bg-white lg:gap-y-28 gap-y-14 w-full min-h-screen px-7 max-w-7xl lg:pt-0 pt-8 flex flex-col">
+            <section className="flex lg:flex-row flex-col gap-y-7">
+                <article id='article' className={`flex flex-col gap-y-2 w-full lg:w-[46%] ${articleIsNotSticky ? '' : 'lg:sticky lg:top-0'} lg:h-full lg:pt-8`}>
+                    <Swiper
+                    modules={[Pagination, Navigation]}
+                    key={selectedColor}
+                    slidesPerView={1}
+                    pagination={{
+                        clickable: true,
+                        el: '.custom-pagination',
+                        renderBullet: (index, className) => {
+                            const images = frontBase64ImagesObj[selectedColor] ? frontBase64ImagesObj[selectedColor] : imageFrontBase64;
 
-                    return `<span class="${className}" style="background-image: url(${images[index]}) !important;"></span>`;
-                },
-            }}
-            navigation
-            className="lg:h-[480px] w-full"
-            >
-                {(frontBase64ImagesObj[selectedColor] ? frontBase64ImagesObj[selectedColor] : imageFrontBase64).map((image: string, i: number) => (
-                    <SwiperSlide key={i}>
-                    <div
-                        id="image-zoom"
-                        className={`${
-                        dragActivated ? "cursor-grab" : "cursor-zoom-in"
-                        } relative h-full flex flex-row`}
-                        style={
-                        {
-                            "--url": `url(${image})`,
-                            "--zoom-x": "0%",
-                            "--zoom-y": "0%",
-                            "--display": "none",
-                        } as React.CSSProperties
-                        }
-                        onDrag={(e) => {
-                            if (dragActivated) {
-                                const item = e.currentTarget;
-                                item.style.setProperty("--display", "block");
-                                let pointer = {
-                                x:
-                                    (e.nativeEvent.offsetX * 100) /
-                                    e.currentTarget.offsetWidth,
-                                y:
-                                    (e.nativeEvent.offsetY * 100) /
-                                    e.currentTarget.offsetHeight,
-                                };
-
-                                item.style.setProperty("--zoom-x", `${pointer.x}` + "%");
-                                item.style.setProperty("--zoom-y", `${pointer.y}` + "%");
-                            }
-                        }}
-                        onClick={(e) => {
-                            const item = e.currentTarget;
-                            item.style.setProperty("--display", "block");
-                            let pointer = {
-                                x:
-                                (e.nativeEvent.offsetX * 100) /
-                                e.currentTarget.offsetWidth,
-                                y:
-                                (e.nativeEvent.offsetY * 100) /
-                                e.currentTarget.offsetHeight,
-                            };
-
-                            item.style.setProperty("--zoom-x", `${pointer.x}` + "%");
-                            item.style.setProperty("--zoom-y", `${pointer.y}` + "%");
-
-                            setDragActivated((prevState) => !prevState);
-                        }}
-                        onMouseLeave={(e) => {
-                        const item = e.currentTarget;
-                        setDragActivated(false);
-                        item.style.setProperty("--display", "none");
-                        }}
+                            return `<span class="${className}" style="background-image: url(${images[index]}) !important;"></span>`;
+                        },
+                    }}
+                    navigation
+                    className="lg:h-[480px] w-full"
                     >
-                        <div className="w-[10%]"></div>
-                        <img
-                            src={image}
-                            alt={`Slide ${i+1}`}
-                            className="w-[80%] h-full object-cover"
-                            role="presentation"
-                        />
-                        <div className="w-[10%]"></div>
-                    </div>
-                    </SwiperSlide>
-                ))}
-            </Swiper>
-            <div className="custom-pagination"></div>
-        </article>
-
-        <section id='scroll-section'  className=" w-full lg:px-12 px-6 lg:w-[54%] lg:h-full lg:pt-8 flex flex-col gap-y-5">
-            <header className="flex flex-col items-start gap-y-0">
-                <h3 className="font-sans text-xs text-gray-400 font-thin">
-                OYINYE COUTURE
-                </h3>
-                <h1 className="font-medium font-sans lg:text-4xl text-2xl">
-                {paramsProduct.charAt(0).toUpperCase() +
-                    paramsProduct.replace("-", " ").slice(1) }
-                </h1>
-            </header>
-
-            <section className="text-lg text-gray-600 flex flex-row gap-x-4 font-sans items-center">
-                <h3 className="font-sans font-bold text-black">
-                &#8358;
-                {(
-                    sizesObj[`${selectedColor}-${selectedSize}`]?.price ?? 0
-                ).toLocaleString("en-US")}
-                </h3>
-                {(sizesObj[`${selectedColor}-${selectedSize}`]?.stock ?? 0) ===
-                0 && (
-                <h3 className="bg-red-600 text-white h-6 px-2 py-1 w-[70px] text-sm text-center font-semibold flex items-center justify-center">
-                    Sold out
-                </h3>
-                )}
-            </section>
-            <p className="text-sm">
-                <Link
-                href="/policies/shipping-policy"
-                className="underline text-gray-500 text-sm font-sans"
-                >
-                Shipping
-                </Link>{" "}
-                calculated at checkout
-            </p>
-            <section
-                className="flex flex-col items-start gap-y-2"
-                id="color-list"
-            >
-                <h1 className="text-sm text-gray-500">Color</h1>
-                <div className="flex flex-row justify-start gap-x-2 flex-wrap gap-y-2">
-                {colorsData &&
-                    colorsData.map((color: any, i: number) =>
-                    (sizesObj[`${selectedColor}-${selectedSize}`]?.stock ?? 0) ===
-                    0 ? (
-                        <span
-                        key={i}
-                        onClick={handleColorChange}
-                        className={
-                            color.isAvailable && i === 0
-                            ? `cursor-pointer bg-black px-6 py-2 rounded-3xl text-gray-400 line-through`
-                            : `cursor-pointer bg-transparent border border-gray-200 px-6 py-2 rounded-3xl text-gray-400 line-through`
-                        }
-                        >
-                        {color.type}
-                        </span>
-                    ) : (
-                        <span
-                        key={i}
-                        onClick={handleColorChange}
-                        className={
-                            color.isAvailable && i === 0
-                            ? `bg-black px-6 py-2 rounded-3xl text-white cursor-pointer`
-                            : `cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600 px-6 py-2 rounded-3xl bg-transparent`
-                        }
-                        >
-                        {color.type}
-                        </span>
-                    )
-                    )}
-                </div>
-            </section>
-            <section className="flex flex-col items-start gap-y-2" id="size-list">
-                <h1 className="text-sm text-gray-500">Size</h1>
-                <div className="flex flex-row justify-start flex-wrap gap-x-2 gap-y-2">
-                {sizesJsxObj[selectedColor]
-                    ? sizesJsxObj[selectedColor]
-                    : sizes.map((size: number, i: number) => (
-                        <span
-                        key={i}
-                        className="font-sans bg-transparent px-6 py-2 rounded-3xl cursor-pointer text-gray-400 line-through border border-gray-200"
-                        >
-                        UK {size}
-                        </span>
-                    ))}
-                </div>
-            </section>
-            <section className="flex flex-col items-start gap-y-2 relative ">
-                <h1 className="text-sm text-gray-500">Quantity</h1>
-                <div className="flex flex-row gap-x-7 text-gray-600 border border-gray-600 px-5 py-2 w-36 h-12 items-center">
-                <button
-                    onClick={() => {
-                    setQuantity((prevState) => {
-                        if (parseInt(prevState) === 1) {
-                        return prevState;
-                        } else {
-                        return parseInt(prevState) - 1 + "";
-                        }
-                    });
-                    }}
-                    className="text-lg font-sans text-gray-600 font-semibold"
-                >
-                    -
-                </button>
-                <div className="w-14"></div>
-                <button
-                    className="text-lg font-sans cursor-pointer text-gray-600 font-semibold"
-                    onClick={() => {
-                        setQuantity((prevState) => parseInt(prevState) + 1 + "");
-
-                    }}
-                >
-                    +
-                </button>
-                </div>
-                <input
-                onBlur={(e) => {
-                    const el = e.currentTarget;
-                    el.classList.add("border-none");
-                    el.style.setProperty("height", "48px");
-                    el.classList.remove("shadow-4xl");
-                    el.style.setProperty("left", "42px");
-                    el.style.setProperty("bottom", "0");
-                    el.style.setProperty("background-color", "transparent");
-                }}
-                onFocus={(e) => {
-                    const el = e.currentTarget;
-                    el.classList.remove("border-none");
-                    el.style.setProperty("height", "58px");
-                    el.classList.add("shadow-4xl");
-                    el.classList.add("border-2");
-                    el.classList.add("border-[#665d5d]");
-                    el.style.setProperty("left", "42px");
-                    el.style.setProperty("bottom", "-5px");
-                    el.style.setProperty("background-color", "white");
-                }}
-                onChange={(e) => {
-                    const input = e.currentTarget;
-                    if (!regex.test(input.value)) {
-                        input.value = '';
-                    } else {
-                        setQuantity(input.value);
-                    }
-                }}
-
-                className="bg-transparent w-14 absolute left-[42px] bottom-0 border-none h-12
-                            text-sm font-sans text-gray-600 focus:outline-none text-center z-10
-                            p-2"
-                value={quantity}
-                />
-            </section>
-            <section className="mt-2 flex flex-col gap-y-3 lg:w-[80%] w-full">
-                {toastError && <div className="flex flex-row gap-x-2 text-sm font-sans items-center">
-                    <i className="fa-solid fa-circle-exclamation text-red-600"></i>
-                    <p className="text-gray-400">You can&apos;t add more {paramsProduct} to the cart</p>
-                </div>}
-                <button className="font-sans lg:px-44 px-28 py-2 ring-gray-600 hover:ring-1 border border-gray-600 text-gray-600 flex flex-row justify-center items-center"
-                    onClick={() => {
-                        if(items.some((item: any) => item.variantId === sizesObj[`${selectedColor}-${selectedSize}`].variantId)){
-                            setToastError(true);
-                        }else{
-                            //adding item to cart
-                            addItem({
-                                price:
-                                sizesObj[`${selectedColor}-${selectedSize}`].price,
-                                quantity: parseInt(quantity),
-                                variantId:
-                                sizesObj[`${selectedColor}-${selectedSize}`].variantId,
-                                id: productId,
-                            });
-                            //sending cart data to data layer
-                            setIsSavingCart(true);
-                        }
-                    }}
-                >{loader ?  <div className="loader" ></div> : <span>Add to cart</span>}</button>
-                <button className="font-sans lg:px-44 px-28 py-2 ring-[#5a31f4] hover:bg-[#512bd8] hover:ring-1 bg-[#5a31f4] text-white">Buy it now</button>
-            </section>
-            <section className="gap-y-3 mt-3 w-full flex flex-col">
-                <div className="flex flex-col gap-y-2">
-                    <header 
-                        onClick={(e) => {
-                            let downAngle = e.currentTarget.querySelector("header i");
-                            let header = e.currentTarget;
-                            let content = document.querySelector("#sizes-content");
-
-                            if (downAngle && header && content) {
-                                if (!downAngle.classList.contains("ad-rotate")) {
-                                    downAngle.classList.add("ad-rotate");
-                                    downAngle.classList.remove("ad-rotate-anticlock");
-                                    content.classList.add("show-chart");
-                                    content.classList.remove("hide-chart");
-                                } else {
-                                    downAngle.classList.remove("ad-rotate");
-                                    downAngle.classList.add("ad-rotate-anticlock");
-                                    content.classList.remove("show-chart");
-                                    content.classList.add("hide-chart");
+                        {(frontBase64ImagesObj[selectedColor] ? frontBase64ImagesObj[selectedColor] : imageFrontBase64).map((image: string, i: number) => (
+                            <SwiperSlide key={i}>
+                            <div
+                                id="image-zoom"
+                                className={`${
+                                dragActivated ? "cursor-grab" : "cursor-zoom-in"
+                                } relative h-full flex flex-row`}
+                                style={
+                                {
+                                    "--url": `url(${image})`,
+                                    "--zoom-x": "0%",
+                                    "--zoom-y": "0%",
+                                    "--display": "none",
+                                } as React.CSSProperties
                                 }
+                                onDrag={(e) => {
+                                    if (dragActivated) {
+                                        const item = e.currentTarget;
+                                        item.style.setProperty("--display", "block");
+                                        let pointer = {
+                                        x:
+                                            (e.nativeEvent.offsetX * 100) /
+                                            e.currentTarget.offsetWidth,
+                                        y:
+                                            (e.nativeEvent.offsetY * 100) /
+                                            e.currentTarget.offsetHeight,
+                                        };
+
+                                        item.style.setProperty("--zoom-x", `${pointer.x}` + "%");
+                                        item.style.setProperty("--zoom-y", `${pointer.y}` + "%");
+                                    }
+                                }}
+                                onClick={(e) => {
+                                    const item = e.currentTarget;
+                                    item.style.setProperty("--display", "block");
+                                    let pointer = {
+                                        x:
+                                        (e.nativeEvent.offsetX * 100) /
+                                        e.currentTarget.offsetWidth,
+                                        y:
+                                        (e.nativeEvent.offsetY * 100) /
+                                        e.currentTarget.offsetHeight,
+                                    };
+
+                                    item.style.setProperty("--zoom-x", `${pointer.x}` + "%");
+                                    item.style.setProperty("--zoom-y", `${pointer.y}` + "%");
+
+                                    setDragActivated((prevState) => !prevState);
+                                }}
+                                onMouseLeave={(e) => {
+                                const item = e.currentTarget;
+                                setDragActivated(false);
+                                item.style.setProperty("--display", "none");
+                                }}
+                            >
+                                <div className="w-[10%]"></div>
+                                <img
+                                    src={image}
+                                    alt={`Slide ${i+1}`}
+                                    className="w-[80%] h-full object-cover"
+                                    role="presentation"
+                                />
+                                <div className="w-[10%]"></div>
+                            </div>
+                            </SwiperSlide>
+                        ))}
+                    </Swiper>
+                    <div className="custom-pagination"></div>
+                </article>
+
+                <section id='scroll-section'  className=" w-full lg:px-12 px-6 lg:w-[54%] lg:h-full lg:pt-8 flex flex-col gap-y-5">
+                    <header className="flex flex-col items-start gap-y-0">
+                        <h3 className="font-sans text-xs text-gray-400 font-thin">
+                        OYINYE COUTURE
+                        </h3>
+                        <h1 className="font-medium font-sans lg:text-4xl text-2xl">
+                        {paramsProduct.charAt(0).toUpperCase() +
+                            paramsProduct.replace("-", " ").slice(1) }
+                        </h1>
+                    </header>
+
+                    <section className="text-lg text-gray-600 flex flex-row gap-x-4 font-sans items-center">
+                        <h3 className="font-sans font-bold text-black">
+                        &#8358;
+                        {(
+                            sizesObj[`${selectedColor}-${selectedSize}`]!.price
+                        ).toLocaleString("en-US")}
+                        </h3>
+                        {(sizesObj[`${selectedColor}-${selectedSize}`]!.stock) ===
+                        0 && (
+                        <h3 className="bg-red-600 text-white h-6 px-2 py-1 w-[70px] text-sm text-center font-semibold flex items-center justify-center">
+                            Sold out
+                        </h3>
+                        )}
+                    </section>
+                    <p className="text-sm">
+                        <Link
+                        href="/policies/shipping-policy"
+                        className="underline text-gray-500 text-sm font-sans"
+                        >
+                        Shipping
+                        </Link>{" "}
+                        calculated at checkout
+                    </p>
+                    <section
+                        className="flex flex-col items-start gap-y-2"
+                        id="color-list"
+                    >
+                        <h1 className="text-sm text-gray-500">Color</h1>
+                        <div className="flex flex-row justify-start gap-x-2 flex-wrap gap-y-2">
+                        {colorsData &&
+                            colorsData.map((color: any, i: number) =>
+                            (sizesObj[`${selectedColor}-${selectedSize}`]!.stock) ===
+                            0 ? (
+                                <span
+                                key={i}
+                                onClick={handleColorChange}
+                                className={
+                                    color.isAvailable && i === 0
+                                    ? `cursor-pointer bg-black px-6 py-2 rounded-3xl text-gray-400 line-through`
+                                    : `cursor-pointer bg-transparent border border-gray-200 px-6 py-2 rounded-3xl text-gray-400 line-through`
+                                }
+                                >
+                                {color.type}
+                                </span>
+                            ) : (
+                                <span
+                                key={i}
+                                onClick={handleColorChange}
+                                className={
+                                    color.isAvailable && i === 0
+                                    ? `bg-black px-6 py-2 rounded-3xl text-white cursor-pointer`
+                                    : `cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600 px-6 py-2 rounded-3xl bg-transparent`
+                                }
+                                >
+                                {color.type}
+                                </span>
+                            )
+                            )}
+                        </div>
+                    </section>
+                    <section className="flex flex-col items-start gap-y-2" id="size-list">
+                        <h1 className="text-sm text-gray-500">Size</h1>
+                        <div className="flex flex-row justify-start flex-wrap gap-x-2 gap-y-2">
+                        {sizesJsxObj[selectedColor]
+                            ? sizesJsxObj[selectedColor]
+                            : sizes.map((size: number, i: number) => (
+                                <span
+                                key={i}
+                                className="font-sans bg-transparent px-6 py-2 rounded-3xl cursor-pointer text-gray-400 line-through border border-gray-200"
+                                >
+                                UK {size}
+                                </span>
+                            ))}
+                        </div>
+                    </section>
+                    <section className="flex flex-col items-start gap-y-2 relative ">
+                        <h1 className="text-sm text-gray-500">Quantity</h1>
+                        <div className="flex flex-row gap-x-7 text-gray-600 border border-gray-600 px-5 py-2 w-36 h-12 items-center">
+                        <button
+                            onClick={() => {
+                            setQuantity((prevState) => {
+                                if (parseInt(prevState) === 1) {
+                                return prevState;
+                                } else {
+                                return parseInt(prevState) - 1 + "";
+                                }
+                            });
+                            }}
+                            className="text-lg font-sans text-gray-600 font-semibold"
+                        >
+                            -
+                        </button>
+                        <div className="w-14"></div>
+                        <button
+                            className="text-lg font-sans cursor-pointer text-gray-600 font-semibold"
+                            onClick={() => {
+                                setQuantity((prevState) => parseInt(prevState) + 1 + "");
+
+                            }}
+                        >
+                            +
+                        </button>
+                        </div>
+                        <input
+                        onBlur={(e) => {
+                            const el = e.currentTarget;
+                            el.classList.add("border-none");
+                            el.style.setProperty("height", "48px");
+                            el.classList.remove("shadow-4xl");
+                            el.style.setProperty("left", "42px");
+                            el.style.setProperty("bottom", "0");
+                            el.style.setProperty("background-color", "transparent");
+                        }}
+                        onFocus={(e) => {
+                            const el = e.currentTarget;
+                            el.classList.remove("border-none");
+                            el.style.setProperty("height", "58px");
+                            el.classList.add("shadow-4xl");
+                            el.classList.add("border-2");
+                            el.classList.add("border-[#665d5d]");
+                            el.style.setProperty("left", "42px");
+                            el.style.setProperty("bottom", "-5px");
+                            el.style.setProperty("background-color", "white");
+                        }}
+                        onChange={(e) => {
+                            const input = e.currentTarget;
+                            if (!regex.test(input.value)) {
+                                input.value = '';
+                            } else {
+                                setQuantity(input.value);
                             }
                         }}
-                        className="py-4 cursor-pointer flex flex-row justify-between items-center pr-4 border border-l-0 border-r-0 border-b-0 border-gray-200">
-                        <h1 className="flex flex-row gap-x-3">
-                            <Image src={Ruler} alt='ruler' role='presentation' className="w-6 lg:w-[28px]"/>
-                            <span className="text-gray-500 font-sans lg:text-lg text-[1rem]">Size Chart</span>
-                        </h1>
-                        <i className={`fa-angle-down fa-solid text-sm text-gray-500`}></i>
-                    </header>
-                    <div id='sizes-content' className="border border-gray-200 pt-3 pb-6 px-5 lg:ml-3 lg:mr-12 mr-5 flex-col gap-y-4 hidden">
-                        <header className="flex flex-row justify-between">
-                            <div className="lg:w-[65%] w-[60%]"></div>
-                            <Image src={Logo} alt="logo" role='presentation' width={240} className="lg:w-[35%] w-[40%]"/>
-                        </header>
-                        <section className="flex flex-col items-start w-full gap-y-1">
-                            <header className="w-full flex flex-col gap-y-5">
-                                <h5 className="text-[.5rem] font-sans font-thin pl-1">WWW.OYINYE.COM</h5>
-                                <table className="w-full border-separate border-spacing-x-1">
-                                    <thead>
-                                        <tr>
-                                            <th className="text-[.7rem] text-white text-center bg-black w-[31%]"></th>
-                                            <th className="text-[.7rem] text-white text-center bg-black w-[11.5%] py-1">XS</th>
-                                            <th className="text-[.7rem] text-white text-center bg-black w-[11.5%] py-1">S</th>
-                                            <th className="text-[.7rem] text-white text-center bg-black w-[11.5%] py-1">M</th>
-                                            <th className="text-[.7rem] text-white text-center bg-black w-[11.5%] py-1">L</th>
-                                            <th className="text-[.7rem] text-white text-center bg-black w-[11.5%] py-1">XL</th>
-                                            <th className="text-[.7rem] text-white text-center bg-black w-[11.5%] py-1">XXL</th>
-                                        </tr>
-                                    </thead>
-                                </table>
-                            </header>
-                            <table className="w-full border-separate border-spacing-1">
-                                
-                                <tbody>
-                                    <tr >
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[31%] font-bold">BUST</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">33</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">37</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">39</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">41</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">43</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[31%] font-bold">WAIST</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">26</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">28</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">31</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">32</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">34</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">36</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[31%] font-bold">HIP</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">38</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">40</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">42</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">44</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">46</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">48</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[31%] font-bold">INSEAM</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35.5</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35.5</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35.5</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35.5</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35.5</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35.5</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[31%] font-bold">DRESS SIZE (US)</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">4</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">6</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">8</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">10</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">12</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">14</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[31%] font-bold">DRESS SIZE (UK)</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">8</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">10</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">12</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">14</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">16</td>
-                                        <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">18</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </section>
-                    </div>
-                </div>
-                <div>
-                    <header 
-                        onClick={(e) => {
-                            let downAngle = e.currentTarget.querySelector("header i");
-                            let header = e.currentTarget;
-                            let content = header.parentNode?.querySelector("#shipping-content");
 
-                            if (downAngle && header) {
-                            if (!downAngle.classList.contains("ad-rotate")) {
-                                downAngle.classList.add("ad-rotate");
-                                downAngle.classList.remove("ad-rotate-anticlock");
-                                content?.classList.add("show-chart");
-                                content?.classList.remove("hide-chart");
-                            } else {
-                                downAngle.classList.remove("ad-rotate");
-                                downAngle.classList.add("ad-rotate-anticlock");
-                                content?.classList.remove("show-chart");
-                                content?.classList.add("hide-chart");
-                            }
-                            }
-                        }} className="py-4 cursor-pointer flex flex-row justify-between items-center pr-4 border border-l-0 border-r-0 border-b-0 border-gray-200">
-                        <h1 className="flex flex-row gap-x-3">
-                            <Image src={Truck} alt='delivery-truck' role='presentation' className="w-6 lg:w-[28px]"/>
-                            <span className="text-gray-500 font-sans lg:text-lg text-[1rem]">Shipping</span>
-                        </h1>
-                        <i className={`fa-angle-down fa-solid text-sm text-gray-500`}></i>
-                    </header>
-                    
-                </div>
+                        className="bg-transparent w-14 absolute left-[42px] bottom-0 border-none h-12
+                                    text-sm font-sans text-gray-600 focus:outline-none text-center z-10
+                                    p-2"
+                        value={quantity}
+                        />
+                    </section>
+                    <section className="mt-2 flex flex-col gap-y-3 lg:w-[80%] w-full">
+                        {toastError && <div className="flex flex-row gap-x-2 text-sm font-sans items-center">
+                            <i className="fa-solid fa-circle-exclamation text-red-600"></i>
+                            <p className="text-gray-400">You can&apos;t add more {paramsProduct} to the cart</p>
+                        </div>}
+                        <button className="font-sans lg:px-44 px-28 py-2 ring-gray-600 hover:ring-1 border border-gray-600 text-gray-600 flex flex-row justify-center items-center"
+                            onClick={() => {
+                                if(items.some((item: any) => item.variantId === sizesObj[`${selectedColor}-${selectedSize}`].variantId)){
+                                    setToastError(true);
+                                }else{
+                                    //adding item to cart
+                                    addItem({
+                                        price:
+                                        sizesObj[`${selectedColor}-${selectedSize}`].price,
+                                        quantity: parseInt(quantity),
+                                        variantId:
+                                        sizesObj[`${selectedColor}-${selectedSize}`].variantId,
+                                        id: productId,
+                                    });
+                                    //sending cart data to data layer
+                                    setIsSavingCart(true);
+                                }
+                            }}
+                        >{loader ?  <div className="loader" ></div> : <span>Add to cart</span>}</button>
+                        <button className="font-sans lg:px-44 px-28 py-2 ring-[#5a31f4] hover:bg-[#512bd8] hover:ring-1 bg-[#5a31f4] text-white">Buy it now</button>
+                    </section>
+                    <section className="gap-y-3 mt-3 w-full flex flex-col">
+                        <div className="flex flex-col gap-y-2">
+                            <header 
+                                onClick={(e) => {
+                                    let downAngle = e.currentTarget.querySelector("header i");
+                                    let header = e.currentTarget;
+                                    let content = document.querySelector("#sizes-content");
+
+                                    if (downAngle && header && content) {
+                                        if (!downAngle.classList.contains("ad-rotate")) {
+                                            downAngle.classList.add("ad-rotate");
+                                            downAngle.classList.remove("ad-rotate-anticlock");
+                                            content.classList.add("show-chart");
+                                            content.classList.remove("hide-chart");
+                                        } else {
+                                            downAngle.classList.remove("ad-rotate");
+                                            downAngle.classList.add("ad-rotate-anticlock");
+                                            content.classList.remove("show-chart");
+                                            content.classList.add("hide-chart");
+                                        }
+                                    }
+                                }}
+                                className="py-4 cursor-pointer flex flex-row justify-between items-center pr-4 border border-l-0 border-r-0 border-b-0 border-gray-200">
+                                <h1 className="flex flex-row gap-x-3">
+                                    <Image src={Ruler} alt='ruler' role='presentation' className="w-6 lg:w-[28px]"/>
+                                    <span className="text-gray-500 font-sans lg:text-lg text-[1rem]">Size Chart</span>
+                                </h1>
+                                <i className={`fa-angle-down fa-solid text-sm text-gray-500`}></i>
+                            </header>
+                            <div id='sizes-content' className="border border-gray-200 pt-3 pb-6 px-5 lg:ml-3 lg:mr-12 mr-5 flex-col gap-y-4 hidden">
+                                <header className="flex flex-row justify-between">
+                                    <div className="lg:w-[65%] w-[60%]"></div>
+                                    <Image src={Logo} alt="logo" role='presentation' width={240} className="lg:w-[35%] w-[40%]"/>
+                                </header>
+                                <section className="flex flex-col items-start w-full gap-y-1">
+                                    <header className="w-full flex flex-col gap-y-5">
+                                        <h5 className="text-[.5rem] font-sans font-thin pl-1">WWW.OYINYE.COM</h5>
+                                        <table className="w-full border-separate border-spacing-x-1">
+                                            <thead>
+                                                <tr>
+                                                    <th className="text-[.7rem] text-white text-center bg-black w-[31%]"></th>
+                                                    <th className="text-[.7rem] text-white text-center bg-black w-[11.5%] py-1">XS</th>
+                                                    <th className="text-[.7rem] text-white text-center bg-black w-[11.5%] py-1">S</th>
+                                                    <th className="text-[.7rem] text-white text-center bg-black w-[11.5%] py-1">M</th>
+                                                    <th className="text-[.7rem] text-white text-center bg-black w-[11.5%] py-1">L</th>
+                                                    <th className="text-[.7rem] text-white text-center bg-black w-[11.5%] py-1">XL</th>
+                                                    <th className="text-[.7rem] text-white text-center bg-black w-[11.5%] py-1">XXL</th>
+                                                </tr>
+                                            </thead>
+                                        </table>
+                                    </header>
+                                    <table className="w-full border-separate border-spacing-1">
+                                        
+                                        <tbody>
+                                            <tr >
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[31%] font-bold">BUST</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">33</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">37</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">39</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">41</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">43</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[31%] font-bold">WAIST</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">26</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">28</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">31</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">32</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">34</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">36</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[31%] font-bold">HIP</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">38</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">40</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">42</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">44</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">46</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">48</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[31%] font-bold">INSEAM</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35.5</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35.5</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35.5</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35.5</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35.5</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">35.5</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[31%] font-bold">DRESS SIZE (US)</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">4</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">6</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">8</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">10</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">12</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">14</td>
+                                            </tr>
+                                            <tr>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[31%] font-bold">DRESS SIZE (UK)</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">8</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">10</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">12</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">14</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">16</td>
+                                                <td className="text-[.7rem] text-black text-center bg-transparent border border-gray-400 w-[11.5%] py-1 font-medium">18</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </section>
+                            </div>
+                        </div>
+                        <div>
+                            <header 
+                                onClick={(e) => {
+                                    let downAngle = e.currentTarget.querySelector("header i");
+                                    let header = e.currentTarget;
+                                    let content = header.parentNode?.querySelector("#shipping-content");
+
+                                    if (downAngle && header) {
+                                    if (!downAngle.classList.contains("ad-rotate")) {
+                                        downAngle.classList.add("ad-rotate");
+                                        downAngle.classList.remove("ad-rotate-anticlock");
+                                        content?.classList.add("show-chart");
+                                        content?.classList.remove("hide-chart");
+                                    } else {
+                                        downAngle.classList.remove("ad-rotate");
+                                        downAngle.classList.add("ad-rotate-anticlock");
+                                        content?.classList.remove("show-chart");
+                                        content?.classList.add("hide-chart");
+                                    }
+                                    }
+                                }} className="py-4 cursor-pointer flex flex-row justify-between items-center pr-4 border border-l-0 border-r-0 border-b-0 border-gray-200">
+                                <h1 className="flex flex-row gap-x-3">
+                                    <Image src={Truck} alt='delivery-truck' role='presentation' className="w-6 lg:w-[28px]"/>
+                                    <span className="text-gray-500 font-sans lg:text-lg text-[1rem]">Shipping</span>
+                                </h1>
+                                <i className={`fa-angle-down fa-solid text-sm text-gray-500`}></i>
+                            </header>
+                            
+                        </div>
+                    </section>
+                </section>
             </section>
-        </section>
-    </main>
+            <section className="flex flex-col lg:items-start items-center gap-y-5 font-sans">
+                <header className="text-2xl">You may also like</header>
+                <section className="flex flex-row items-center justify-evenly flex-wrap gap-x-2 gap-y-4">
+                {relatedProducts.slice(0, 4).map((product: any, i: number) => <Product key={i} product={product} isOnDetailPage={true}/>)}
+                </section>
+                <Reviews productReviews={productReviews} product={paramsProduct}/>
+            </section>
+        </main>
+        : <main className="flex justify-center items-center flex-col gap-y-2 bg-white h-screen w-full" >
+        <h1 className="font-sans text-gray-600">Fetching Product...</h1>
+        <span className="border-4 border-transparent rounded-full border-t-gray-600 border-r-gray-600 w-[36px] h-[36px] spin"></span>
+        </main>}
+    </>
  );
 
   return mainContent;

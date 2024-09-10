@@ -17,7 +17,7 @@ async function getCart() {
   const cookieStore = cookies();
   const cartId = cookieStore.get('cart')?.value;
 
-  if(cartId){
+  if(cartId && cartId.length > 0){
     const res = await fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`);
     const data = await res.json();
   
@@ -36,7 +36,7 @@ export default async function Home() {
     <>
       <Header cartItems={cartItems}/>
       <Hero/>
-      <FeaturedProducts featuredProducts={products} cartItems={cartItems}/>
+      <FeaturedProducts featuredProducts={products}/>
     </>
   );
 }

@@ -176,7 +176,7 @@ img,p{margin:0;font-family:Fira Sans,BlinkMacSystemFont,Segoe UI,Helvetica Neue,
 <table role='presentation' cellpadding='0' cellspacing='0' align="center" valign=top width=580><tr><td width=580 valign=top><![endif]-->
 <div class='t5' style="display:inline-table;text-align:initial;vertical-align:inherit;width:100%;max-width:600px;">
 <table role='presentation' width='100%' cellpadding='0' cellspacing='0' class='t4'><tr>
-<td class='t3' style="border-bottom:1px solid #454545;overflow:hidden;background-color:#000;padding:20px 30px 20px 30px;border-radius:8px 8px 0 0;"><table role='presentation' width='100%' cellpadding='0' cellspacing='0'><tr><td>
+<td class='t3' style="border-bottom:1px solid #454545;overflow:hidden;background-color:black;padding:20px 30px 20px 30px;border-radius:8px 8px 0 0;"><table role='presentation' width='100%' cellpadding='0' cellspacing='0'><tr><td>
 <!--[if mso]>
 <table class='t2 'role='presentation' cellpadding='0' cellspacing='0' align=left>
 <![endif]-->
@@ -188,9 +188,12 @@ img,p{margin:0;font-family:Fira Sans,BlinkMacSystemFont,Segoe UI,Helvetica Neue,
 <td class='t1 'style="width:55px;">
 <![endif]-->
 <!--[if !mso]>-->
-<td class='t1' style="width:55px;">
+<td class='t1' style="max-width:250px;">
 <!--<![endif]-->
-<div style="font-size:0px;"><img class='t0' style="display:block;border:0;height:75px;width:150px;Margin:0;max-width:100%;" width='150' height='75' alt="logo" src="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/oyinye-bg-black.jpg"/></div></td>
+<div style="font-size:0px;margin-left: -80px;">
+    <img class="t0" alt="" border="0" src="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/oyinye-white.png" style="height:75px;display:inline-block" width="250">
+</div>
+</td>
 </tr></table>
 </td></tr></table></td>
 </tr></table>
@@ -234,7 +237,7 @@ img,p{margin:0;font-family:Fira Sans,BlinkMacSystemFont,Segoe UI,Helvetica Neue,
 <!--[if !mso]>-->
 <td class='t10' style="width:400px;">
 <!--<![endif]-->
-<h1 class='t9' style="margin:0;font-family:Inter Tight,BlinkMacSystemFont,Segoe UI,Helvetica Neue,Arial,sans-serif;line-height:40px;font-weight:700;font-style:normal;font-size:35px;text-decoration:none;text-transform:none;direction:ltr;color:#f32133;text-align:left;mso-line-height-rule:exactly;mso-text-raise:2px;"><%= title %></h1></td>
+<h1 class='t9' style="margin:0;font-family:Inter Tight,BlinkMacSystemFont,Segoe UI,Helvetica Neue,Arial,sans-serif;line-height:40px;font-weight:700;font-style:normal;font-size:35px;text-decoration:none;text-transform:none;direction:ltr;color:black;text-align:left;mso-line-height-rule:exactly;mso-text-raise:2px;"><%= title %></h1></td>
 </tr></table>
 </td></tr><tr><td><div class='t13' style="mso-line-height-rule:exactly;mso-line-height-alt:20px;line-height:20px;font-size:1px;display:block;">&nbsp;&nbsp;</div></td></tr><tr><td>
 <!--[if mso]>
@@ -264,15 +267,10 @@ img,p{margin:0;font-family:Fira Sans,BlinkMacSystemFont,Segoe UI,Helvetica Neue,
 <td class='t18' style="background-color:#022FAB;overflow:hidden;width:260px;text-align:center;line-height:50px;mso-line-height-rule:exactly;mso-text-raise:10px;border-radius:14px 14px 14px 14px;">
 <![endif]-->
 <!--[if !mso]>-->
-<% if(isNewPass){ %>
-<td class='t18' style="background-color:transparent;overflow:hidden;width:326px;line-height:50px;mso-line-height-rule:exactly;mso-text-raise:10px;">
-<!--<![endif]-->
-<p class='t16' style="display:block;margin:0;font-family:Inter,BlinkMacSystemFont,Segoe UI,Helvetica Neue,Arial,sans-serif;line-height:50px;font-weight:bold;font-style:normal;font-size:18px;direction:ltr;color:#f32133;mso-line-height-rule:exactly;mso-text-raise:10px;"><%= password %></p></td>
-<% } else { %>
-<td class='t18' style="background-color:#f32133;overflow:hidden;width:326px;text-align:center;line-height:50px;mso-line-height-rule:exactly;mso-text-raise:10px;border-radius:14px 14px 14px 14px;">
+
+<td class='t18' style="background-color:black;overflow:hidden;width:326px;text-align:center;line-height:50px;mso-line-height-rule:exactly;mso-text-raise:10px;border-radius:14px 14px 14px 14px;">
 <!--<![endif]-->
 <a class='t16' href="<%= link  %>" style="display:block;margin:0;font-family:Inter,BlinkMacSystemFont,Segoe UI,Helvetica Neue,Arial,sans-serif;line-height:50px;font-weight:600;font-style:normal;font-size:18px;text-decoration:none;direction:ltr;color:#FFFFFF;text-align:center;mso-line-height-rule:exactly;mso-text-raise:10px;" target=_blank><%= isReset === true ? 'Reset your password' : 'Verify account'%></a></td>
-<% } %>
 </tr></table>
 </td></tr><tr><td><div class='t21' style="mso-line-height-rule:exactly;mso-line-height-alt:20px;line-height:20px;font-size:1px;display:block;">&nbsp;&nbsp;</div></td></tr><tr><td>
 <!--[if mso]>

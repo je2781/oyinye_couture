@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     if (password.trim() !== confirmPassword.trim()) {
       return NextResponse.json(
         { message: "Passwords do not match!" },
-        { status: 400 }
+        { status: 200 }
       );
     }
 
@@ -46,8 +46,8 @@ export async function POST(req: NextRequest) {
     
     if(!user){
         return NextResponse.json(
-            { message: "Invalid token" },
-            { status: 400 }
+            { message: "Reset password link has expired", success: false },
+            { status: 200 }
         ); 
     }
     

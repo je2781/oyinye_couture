@@ -6,22 +6,21 @@ import { NextRequest, NextResponse } from "next/server";
 
 connect();
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest, {params}: {params: {token: string}}) {
   try {
-    const reqBody = await req.json();
-
-    const {token} = reqBody;
 
     const user = await User.findOne({
-        verifyToken: token,
+        verifyToken: params.token,
         verifyTokenExpirationDate: {$gt: new Date()}
     });
 
     if(!user){
-        return NextResponse.json(
-            { message: "Invalid token"},
-            { status: 400 }
-          ); 
+      return NextResponse.json(
+          { message: "verification link has expired",
+            success: false
+          },
+          { status: 200 }
+        ); 
     }
 
     user.isVerified = true;

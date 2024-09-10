@@ -17,17 +17,18 @@ import { Base64ImagesObj, DressSizesJsxObj, DressSizesObj } from "@/interfaces";
 import { extractProductDetails, regex, sizes } from "@/helpers/getHelpers";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 
-const ProductQuickView = ({ product, onHideModal, isSearchProduct}: any) => {
+const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPage}: any) => {
     const {totalAmount, addItem, items} = useCart();
-    const {authStatus} = useAuth();
     const [quantity, setQuantity] = React.useState('1');
     const [zoomActivated, setZoomActivated] = React.useState(false);
     const [progressIndicator, setProgressIndicator] = React.useState(false);
     const [toastMsgVisible, setToastMsgVisible] = React.useState(false);
     const [isSavingCart, setIsSavingCart] = React.useState(false);
     const [toastError, setToastError] = React.useState(false);
+    const router = useRouter();
 
     let sizesJsxObj: DressSizesJsxObj  = {};
     let sizesObj: DressSizesObj  = {};
@@ -272,8 +273,15 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct}: any) => {
                     <h3 className="font-sans text-xs text-gray-400 font-thin">OYINYE COUTURE</h3>
                     <h1 className="font-medium font-sans lg:text-4xl text-2xl">{product.title}</h1>
                 </header>
-                <section className="border border-l-0 border-r-0 border-gray-300 w-full py-4 font-medium my-2 font-sans text-gray-600" id='go-to-productpage__section'>
-                    <Link href={`/products/${product.title.replace(' ', '-').toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].color!.toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].variantId!}`} className="cursor-pointer"><i className="fa-solid fa-arrow-right-long text-gray-600"></i>&nbsp;&nbsp;Go to product page</Link>
+                <section className="border border-l-0 border-r-0 border-gray-300 w-full py-4 font-medium my-2 font-sans text-gray-600">
+                    <button onClick={() => {
+                        if(isOnDetailPage){
+                            location.replace(`/products/${product.title.replace(' ', '-').toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].color!.toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].variantId!}`);
+                        }else{
+                            router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].color!.toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].variantId!}`);
+                        }
+                        
+                    }}  className="cursor-pointer transition-all m-0 ease-in-out duration-200 hover:ml-2"><i className="fa-solid fa-arrow-right-long text-gray-600"></i>&nbsp;&nbsp;Go to product page</button>
                 </section>
                 <section className="text-lg text-gray-600 flex flex-row gap-x-4 font-sans items-center">
                     <h1 className="font-sans font-bold text-black">&#8358;{sizesObj[`${selectedColor}-${selectedSize}`].price.toLocaleString("en-US")}</h1>
@@ -321,7 +329,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct}: any) => {
                         id='minus-icon'><i className="fa-solid fa-minus text-gray-600 text-xs relative"></i></button>
                         <input 
                         onBlur={(e) => {
-                            const el = e.currentTarget;
+                            const el = e.target;
                             el.classList.add('border-none');
                             el.classList.remove('shadow-md');
                     
@@ -338,9 +346,9 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct}: any) => {
                             const input = e.currentTarget;
                             if (!regex.test(input.value)) {
                                 input.value = '';
-                            } else {
-                                setQuantity(input.value);
-                            }
+                                return;
+                            } 
+                            setQuantity(input.value);
                         }}
 
                         type="text"

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import React, { useEffect } from "react";
+import React, { useEffect, useLayoutEffect } from "react";
 import logo from "../../public/oyinye.png";
 import useAuth from "../store/useAuth";
 import HeaderCartButton from "./layout/HeaderCartButton";
@@ -28,12 +28,12 @@ const menuItems = [
   },
 ];
 
-export default function Header({cartItems, isCheckout}: any) {
+export default function Header({cartItems, isCheckout, isAuth}: any) {
   const { authStatus } = useAuth();
   const [isSearchModalOpen, setIsSearchModalOpen] = React.useState(false);
   const [prevScrollPos, setPrevScrollPos] = React.useState(0);
   const [visible, setVisible] = React.useState(true);
-  const {updateCart} = useCart();
+  const {updateCart, items} = useCart();
   const {isMobileModalOpen, setIsMobileModalOpen} = useGlobal();
   let windowWidth = useWindowWidth();
   let timerId: NodeJS.Timeout | null  = null;
@@ -47,16 +47,10 @@ export default function Header({cartItems, isCheckout}: any) {
   //updating local cart data with data from current public session
   useEffect(() => {
     if(cartItems){
+
       updateCart(cartItems);
     }
-
-    return () => {
-      if(timerId){
-        clearTimeout(timerId);
-      }
-    };
   }, []);
-
   
   // Handling scroll
   const handleScroll = () => {
@@ -75,6 +69,12 @@ export default function Header({cartItems, isCheckout}: any) {
       mobileNav.classList.add('forward');
       mobileNav.classList.remove('backward');
     }
+
+    return () => {
+      if(timerId){
+        clearTimeout(timerId);
+      }
+    };
     
   }, [isMobileModalOpen]);
   
@@ -158,7 +158,7 @@ export default function Header({cartItems, isCheckout}: any) {
               <i className="fa-solid cursor-pointer fa-user text-lg text-gray-600 transition-all duration-300 ease-out transform hover:scale-110"></i>
             </Link>}
             <Link href={`/cart`}>
-              <HeaderCartButton isCheckout={isCheckout}/>
+              <HeaderCartButton isCheckout={isCheckout} isAuth={isAuth}/>
             </Link>
           </div>
         </div>

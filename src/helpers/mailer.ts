@@ -29,7 +29,7 @@ const resetPasswordEmailData = async (
     isNewPass: false,
     isReset: true,
 
-    link: `${process.env.DOMAIN!}/resetpassword/${resetPasswordToken}`,
+    link: `${process.env.DOMAIN!}/resetpassword?token=${resetPasswordToken}`,
     year: new Date().getFullYear(),
   };
   return ejs.renderFile(templatePath, { ...ejsData });
@@ -83,7 +83,7 @@ const verifyEmailData = async (
     extraInfo,
     isNewPass: false,
     isReset: false,
-    link: `${process.env.DOMAIN!}/verifyemail/${verifyAccountToken}`,
+    link: `${process.env.DOMAIN!}/verifyemail?token=${verifyAccountToken}`,
     year: new Date().getFullYear(),
   };
 

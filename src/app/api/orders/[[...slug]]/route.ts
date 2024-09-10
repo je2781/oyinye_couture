@@ -1,9 +1,11 @@
 import { connect } from '@/db/config';
 import { getDataFromOrder } from '@/helpers/getDataFromOrder';
+import { getVisitData } from '@/helpers/getVisitData';
 import { sendMail } from '@/helpers/mailer';
 import { EmailType } from '@/interfaces';
 import Order from '@/models/order';
 import User from '@/models/user';
+import Visitor from '@/models/visitor';
 import axios from 'axios';
 import mongoose from 'mongoose';
 import { NextResponse, type NextRequest } from 'next/server';
@@ -226,6 +228,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
         const {shippingInfo, billingInfo, saveBillingInfo, saveShippingInfo, paymentType, status, paymentStatus, shippingMethod, userEmail} = reqBody;
 
         const extractedUser = await User.findOne({email: userEmail});
+
 
         if (order && extractedUser) {
           order.paymentStatus = paymentStatus;

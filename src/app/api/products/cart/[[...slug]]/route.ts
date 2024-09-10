@@ -62,22 +62,53 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
   export async function POST(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
       
+
       if(params.slug && params.slug[0] === 'remove'){
 
         const reqBody = await req.json();
         const { quantity, variantId, price} = reqBody;
-    
+
         const cartId = getDataFromCart(req);
-  
+
         const newObjectId = mongoose.Types.ObjectId.createFromHexString(cartId);
     
         if (mongoose.Types.ObjectId.isValid(newObjectId)) {
             //retrieving cart data for the current public session
             const cart = await Cart.findById(newObjectId);
       
-            await cart.removeFromCart(variantId, quantity, price);
+            await cart.deductFromCart(variantId, quantity, price);
+
+            const updatedCartItems = cart.items.filter((cartItem: any) => cartItem.quantity > 0);
+
+            cart.items = updatedCartItems;
+
+            await cart.save();
+
+            //checking for empty cart
+            if(cart.items.length === 0){
+              //removing cart document from database and clearing its cookie from browser
+              await Cart.findByIdAndDelete(newObjectId);
+                  
+              const res =  NextResponse.json(
+                {
+                  message: "Cart updated successfully",
+                  totalAmount: 0,
+                  items: [],
+                  success: true,
+                },
+                { status: 201 }
+              );
+
+              res.cookies.set('cart', '', {
+                httpOnly: true,
+                path: '/',
+                maxAge: 0
+              });
+              return res;
+            }
 
             let updatedCart = await cart.populate('items.productId');
+
             const cartItems = updatedCart.items.map((cartItem: any) => {
               return {
                 product: {...cartItem.productId._doc},
@@ -85,84 +116,8 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
                 variantId: cartItem.variantId,
               };
             });
-        
+
             return NextResponse.json(
-              {
-                message: "Cart updated successfully",
-                totalAmount: cart.totalAmount,
-                items: cartItems,
-                success: true,
-              },
-              { status: 201 }
-            );
-        }else{
-          throw new Error('Invalid cart id');
-        }
-      }else{
-        const reqBody = await req.json();
-        const { price, quantity, variantId, id, totalAmount } = reqBody;
-    
-        const cartId = getDataFromCart(req);
-        
-        if (cartId.length === 0) {
-          const newCart = new Cart({
-            items: [
-              {
-                productId: mongoose.Types.ObjectId.createFromHexString(id),
-                variantId,
-                quantity,
-              },
-            ],
-            totalAmount,
-          });
-          
-          await newCart.save();
-          
-          const remainingMilliseconds = 5184000000; // 2 month
-          const now = new Date();
-          const expiryDate = new Date(
-            now.getTime() + remainingMilliseconds
-          );
-          
-          const res = NextResponse.json(
-            {
-              message: "Cart created successfully",
-              success: true,
-            },
-            { status: 201 }
-          );
-          
-          res.cookies.set("cart", newCart._id.toString(), {
-            expires: expiryDate,
-            path: '/'
-          });
-          
-          return res;
-        }else{
-          const newCartId = mongoose.Types.ObjectId.createFromHexString(cartId);
-
-          if(mongoose.Types.ObjectId.isValid(newCartId)){
-
-            //retrieving cart data for the current public session
-            const cart = await Cart.findById(newCartId);
-            
-            await  cart.addToCart({
-              price,
-              quantity,
-                id,
-                variantId,
-              });
-  
-              let updatedCart = await cart.populate('items.productId');
-              const cartItems = updatedCart.items.map((cartItem: any) => {
-                return {
-                  product: {...cartItem.productId._doc},
-                  quantity: cartItem.quantity,
-                  variantId: cartItem.variantId,
-                };
-              });
-          
-              return NextResponse.json(
                 {
                   message: "Cart updated successfully",
                   totalAmount: cart.totalAmount,
@@ -171,12 +126,91 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
                 },
                 { status: 201 }
               );
+            
+
+        }else{
+          throw new Error('Invalid cart id');
+        }
+      }else{
+          const reqBody = await req.json();
+          const { price, quantity, variantId, id, totalAmount } = reqBody;
+      
+          const cartId = getDataFromCart(req);
+          
+          if (cartId.length === 0) {
+            const newCart = new Cart({
+              items: [
+                {
+                  productId: mongoose.Types.ObjectId.createFromHexString(id),
+                  variantId,
+                  quantity,
+                },
+              ],
+              totalAmount,
+            });
+            
+            await newCart.save();
+            
+            const remainingMilliseconds = 5184000000; // 2 month
+            const now = new Date();
+            const expiryDate = new Date(
+              now.getTime() + remainingMilliseconds
+            );
+            
+            const res = NextResponse.json(
+              {
+                message: "Cart created successfully",
+                success: true,
+              },
+              { status: 201 }
+            );
+            
+            res.cookies.set("cart", newCart._id.toString(), {
+              expires: expiryDate,
+              secure: process.env.NODE_ENV === 'production',
+              path: '/'
+            });
+            
+            return res;
           }else{
-            throw new Error('invalid cart id');
+            const newCartId = mongoose.Types.ObjectId.createFromHexString(cartId);
+
+            if(mongoose.Types.ObjectId.isValid(newCartId)){
+
+              //retrieving cart data for the current public session
+              const cart = await Cart.findById(newCartId);
+              
+              await  cart.addToCart({
+                price,
+                quantity,
+                  id,
+                  variantId,
+                });
+    
+                let updatedCart = await cart.populate('items.productId');
+                const cartItems = updatedCart.items.map((cartItem: any) => {
+                  return {
+                    product: {...cartItem.productId._doc},
+                    quantity: cartItem.quantity,
+                    variantId: cartItem.variantId,
+                  };
+                });
+            
+                return NextResponse.json(
+                  {
+                    message: "Cart updated successfully",
+                    totalAmount: cart.totalAmount,
+                    items: cartItems,
+                    success: true,
+                  },
+                  { status: 201 }
+                );
+            }else{
+              throw new Error('invalid cart id');
+            }
           }
         }
-      }
-      
+        
     } catch (error: any) {
       return NextResponse.json(
         {
@@ -242,16 +276,19 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
             res.cookies.set("checkout_session_token", hashedToken, {
               expires: expiryDate,
               httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
             });
       
             res.cookies.set("order", newOrder._id.toString(), {
               expires: expiryDate,
               httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
             });
       
             res.cookies.set("user", userId, {
               expires: expiryDate,
               httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
             });
       
 
@@ -270,4 +307,4 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
     }
   }
   
-  
+

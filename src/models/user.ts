@@ -18,6 +18,7 @@ const UserSchema = new Schema({
   },
   isVerified: {
     type: Boolean,
+    default: false
   },
   isAdmin: {
     type: Boolean,
@@ -41,17 +42,6 @@ const UserSchema = new Schema({
   resetTokenExpirationDate: Date,
   verifyToken: String,
   verifyTokenExpirationDate: Date,
-  reviews: [
-    {
-        content: {
-            type: String,
-        },
-        productId: {
-            ref: 'products',
-            type: Schema.Types.ObjectId
-        }
-    }
-  ],
   enableEmailMarketing: {
     type: Boolean,
     default: false

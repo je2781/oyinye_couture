@@ -1,7 +1,7 @@
 import ReactDOM from "react-dom";
 
 const BackDrop = (props: any) => {
-  return <div className='backdrop blur-sm' onClick={props.onClick}></div>;
+  return <div className='backdrop' onClick={props.onClick}></div>;
 };
 
 const QuickViewModalOverlay = (props: any) => {
@@ -23,9 +23,18 @@ const FilterModalOverlay = (props: any) => {
   );
 };
 
+const ReviewsModalOverlay = (props: any) => {
+  return (
+    <main aria-orientation="vertical" id='reviews-form' style={{'--modal-pos-left': `${props.left}`, '--modal-width': `${props.width}`} as React.CSSProperties} aria-labelledby='toggle-button' className={`${props.classes} w-4/5 left-[10%] z-[50] fixed bottom-[1vh] top-[0.5vh]`}>
+      {props.children}
+      <i className="fa-solid fa-xmark text-xl absolute right-6 top-5 cursor-pointer text-gray-500" onClick={props.onClose}></i>
+    </main>
+  );
+};
+
 const AdminSettingsModalOverlay = (props: any) => {
   return (
-    <main id='admin-settings-modal' aria-orientation="vertical" style={{'--admin-modal-pos-left': `${props.left}`, '--admin-modal-width': `${props.width}`} as React.CSSProperties} aria-labelledby='toggle-button' className={`${props.classes ? props.classes : 'bg-white px-4 h-fit'} z-[50] w-4/5 fixed top-[10vh] left-[10%]`}>
+    <main id='admin-settings-modal' aria-orientation="vertical" style={{'--modal-pos-left': `${props.left}`, '--modal-width': `${props.width}`} as React.CSSProperties} aria-labelledby='toggle-button' className={`${props.classes ? props.classes : 'bg-white px-4 h-fit'} z-[50] w-4/5 fixed top-[10vh] left-[10%]`}>
       {props.children}
       <i className="fa-solid fa-xmark text-xl absolute right-4 top-5 cursor-pointer text-gray-500" onClick={props.onClose}></i>
     </main>
@@ -90,6 +99,21 @@ export const FilterModal = (props: any) => {
       {ReactDOM.createPortal(
         <FilterModalOverlay onClick={props.onClose}>{props.children}</FilterModalOverlay>,
         document.getElementById("filter-modal")!
+      )}
+    </>
+  );
+};
+
+export const ReviewsModal = (props: any) => {
+  return (
+    <>
+      {ReactDOM.createPortal(
+        <BackDrop onClick={props.onClose}/>,
+        document.getElementById("backdrop-root")!
+      )}
+      {ReactDOM.createPortal(
+        <ReviewsModalOverlay {...props}>{props.children}</ReviewsModalOverlay>,
+        document.getElementById("reviews-modal")!
       )}
     </>
   );

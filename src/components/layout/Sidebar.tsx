@@ -1,7 +1,6 @@
 'use client';
 
 import Image from "next/image";
-import logo from "../../../public/oyinye.png";
 import './Sidebar.css';
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";

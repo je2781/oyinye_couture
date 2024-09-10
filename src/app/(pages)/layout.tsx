@@ -22,13 +22,10 @@ export default function RootLayout({
     defaultCartState
   );
 
-
-
   useEffect(() => {
     async function fetchAllProducts() {
       try {
         
-
         const res = await fetch(`/api/products`);
         const data = await res.json();
 
@@ -38,13 +35,11 @@ export default function RootLayout({
     }
 
     fetchAllProducts();
-
     
   }, []);
 
 
-
-  const removeItemHandler = (variantId: string,  quantity: number, price: number) => {
+  const deductItemHandler = (variantId: string,  quantity: number, price: number) => {
     dispatchCartAction({ type: "REMOVE", item: {
       variantId,
       quantity,
@@ -53,7 +48,7 @@ export default function RootLayout({
   };
 
   const addItemHandler = async (item: any) => {
-    dispatchCartAction({ type: "ADD", item: item });
+    dispatchCartAction({ type: "ADD", item });
   };
 
   const updateCartHandler = (items: any[]) => {
@@ -64,8 +59,8 @@ export default function RootLayout({
     items: cartState.items,
     totalAmount: cartState.totalAmount,
     addItem: addItemHandler,
-    removeItem: removeItemHandler,
-    updateCart: updateCartHandler,
+    deductItem: deductItemHandler,
+    updateCart: updateCartHandler
   };
 
   return (

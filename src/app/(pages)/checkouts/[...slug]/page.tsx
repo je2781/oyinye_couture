@@ -23,7 +23,7 @@ async function getCheckout() {
   );
   const countryData = await countryDataRes.json();
 
-  if (cartId) {
+  if(cartId && cartId.length > 0){
     const cartDataRes = await fetch(
       `${process.env.DOMAIN}/api/products/cart/${cartId}`
     );
@@ -33,7 +33,7 @@ async function getCheckout() {
       ...cartData,
       orderId,
       country: countryData.country,
-      userData,
+      ...userData,
     };
   } else {
     return {

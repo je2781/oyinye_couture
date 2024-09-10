@@ -8,12 +8,11 @@ const Hero = () => {
     
   useEffect(() => {
     
-    async function createVisitor(){
+    async function createActions(){
       await createVisitorAction();
-
     }
 
-    createVisitor();
+    createActions();
   }, []);
   
     return (

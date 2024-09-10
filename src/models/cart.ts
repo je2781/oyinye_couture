@@ -15,7 +15,8 @@ interface ICart extends Document {
   };
   totalAmount: any;
   addToCart(product: any): Promise<void>;
-  removeFromCart(variantId: string, quantity: number): Promise<void>;
+  deductFromCart(variantId: string, quantity: number): Promise<void>;
+  deleteCartItem(variantId: string, quantity: number): Promise<void>;
   clearCart(): Promise<void>;
 }
 
@@ -49,7 +50,7 @@ const CartSchema = new Schema<ICart>({
   timestamps: true
 });
 
-CartSchema.methods.removeFromCart = function (
+CartSchema.methods.deductFromCart = function (
   variantId: string,
   quantity: number,
   price: number
@@ -62,9 +63,9 @@ CartSchema.methods.removeFromCart = function (
   const existingCartItem = updatedCartItems[existingCartItemIndex];
   const updatedCartTotalAmount = this.totalAmount - price * quantity;
 
-  if (existingCartItem.quantity - quantity <= 0) {
+  if ((existingCartItem.quantity - quantity) === 0) {
     updatedCartItems = updatedCartItems.filter(
-      (item: any) => item.variantId !== existingCartItem.variantId
+      (item: any) => item.variantId !==  existingCartItem.variantId
     );
   } else {
     const updatedCartItem = {
@@ -108,6 +109,7 @@ CartSchema.methods.addToCart = function (product: any) {
 
   return this.save();
 };
+
 
 CartSchema.methods.clearCart = function () {
   this.items = [];

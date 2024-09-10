@@ -29,6 +29,13 @@ export async function POST(req: NextRequest) {
       await user.save();
     }
 
+    if (!user.isAdmin && !user.isVerified) {
+      return NextResponse.json(
+        { message: `Check ${user.email} to verify your account` },
+        { status: 200 }
+      );
+    }
+
     // Check if password is correct
     const isMatch = await argon.verify(user.password, password);
 
@@ -61,12 +68,14 @@ export async function POST(req: NextRequest) {
 
     res.cookies.set('access_token', token, {
       httpOnly: true,
-      expires: expiryDate
+      expires: expiryDate,
+      secure: process.env.NODE_ENV === 'production',
     });
 
     res.cookies.set('admin_status', `${user.isAdmin}`, {
       httpOnly: true,
-      expires: expiryDate
+      expires: expiryDate,
+      secure: process.env.NODE_ENV === 'production',
     });
 
     return res;

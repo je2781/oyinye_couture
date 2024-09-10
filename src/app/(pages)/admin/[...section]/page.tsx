@@ -9,7 +9,7 @@ const BodyComponent = dynamic(() => import('../../../../components/admin/Body'),
     <span className="border-4 border-transparent rounded-full border-t-secondary-400 border-r-secondary-400 w-[36px] h-[36px] spin"></span>
 </div>,
 ssr: false
-})
+});
 
 export const dynamicParams = true;
  

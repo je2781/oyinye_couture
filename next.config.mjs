@@ -33,6 +33,11 @@ const nextConfig = {
             hostname: 'interswitchgroup.com',
             pathname: '/**',
           },
+          {
+            protocol: 'https',
+            hostname: 'cdn.jsdelivr.net',
+            pathname: '/**',
+          },
         ],
       },
 };

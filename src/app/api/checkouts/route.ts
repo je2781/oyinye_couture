@@ -48,16 +48,17 @@ export async function GET(req: NextRequest) {
         order.sales = cart.totalAmount;
 
         await order.save();
+        
+        return NextResponse.json(
+          {
+            message: "session token retrieved",
+            checkout_session_token: checkoutSessionToken,
+            success: true,
+          },
+          { status: 200 }
+        );
       }
 
-      return NextResponse.json(
-        {
-          message: "session token retrieved",
-          checkout_session_token: checkoutSessionToken,
-          success: true,
-        },
-        { status: 200 }
-      );
     } else {
       throw new Error('invalid order and cart id');
     }

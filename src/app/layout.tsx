@@ -21,6 +21,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+      <link rel="android-chrome-192x192" sizes="192x192" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/android-chrome-192x192.png"/>
+      <link rel="android-chrome-512x512" sizes="512x512" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/android-chrome-512x512.png"/>
       <link rel="apple-touch-icon" sizes="180x180" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/apple-touch-icon.png"/>
       <link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/favicon-32x32.png"/>
       <link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/favicon-16x16.png"/>
@@ -34,6 +36,7 @@ export default function RootLayout({
         <div id='mobile-modal'></div>
         <div id='filter-modal'></div>
         <div id='search-modal'></div>
+        <div id='reviews-modal'></div>
         <div id='admin-modal'></div>
         <div id='backdrop-root'></div>
         <Toaster position="bottom-center" />

@@ -1,77 +1,223 @@
 import { connect } from "@/db/config";
+import { getDataFromCart } from "@/helpers/getDataFromCart";
+import { randomReference } from "@/helpers/getHelpers";
+import { getVisitData } from "@/helpers/getVisitData";
+import Cart from "@/models/cart";
 import Order from "@/models/order";
 import Product from "@/models/product";
+import User from "@/models/user";
+import mongoose from "mongoose";
+import * as argon from "argon2";
+
 import { NextRequest, NextResponse } from "next/server";
+import { sendMail } from "@/helpers/mailer";
+import { EmailType } from "@/interfaces";
+import Review from "@/models/review";
+import { getUserData } from "@/helpers/getUserData";
 
 connect();
 
-export async function GET(req: NextRequest, {params}: {params: {  slug: string[]}}) {
+
+
+export async function POST(req: NextRequest, { params }: { params: { slug: string[] } }) {
   try {
-    let relatedProducts: any[] = [];
+
+    const {rating, email, name, review, headline, isMedia} = await req.json();
+
     const title = params.slug[0].charAt(0).toUpperCase() + params.slug[0].replace('-', ' ').slice(1);
+    
+    const user = await User.findOne({email});
+    
+    if(!user){
+      const visitId = getVisitData(req);
+      const newVisitId = mongoose.Types.ObjectId.createFromHexString(visitId!);
 
-    const product = await Product.findOne({
-        title: title
-    });
-    //check if user exists
-    if (!product) {
-      return NextResponse.json(
-        { error: "product doesn't exist" },
-        { status: 404 }
-      );
-    }
+      let newPassword = randomReference();
 
-    const extractedColorObj = product.colors.find((color: any) => color.type === (params.slug[1].charAt(0).toUpperCase() + params.slug[1].slice(1)));
-
-    if(extractedColorObj){
-      const sizes =  extractedColorObj.sizes;
-      const imageFrontBase64 = extractedColorObj.imageFrontBase64;
-
-      //finding related/grouped products of current product
-      let orders = await Order.find({'items.product._id': product._id});
-
-      if(orders){
-        let orderItems: any[] = [];
-        for(let order of orders){
-          orderItems.push(...order.items.map((orderItem: any) => ({
-            product: orderItem.product
-          })));
-        }
-        //removing duplicates from order items and storing them
-        relatedProducts = orderItems.filter((value, index, self) => 
-          index === self.findIndex((t) => (
-            JSON.stringify(t) === JSON.stringify(value)
-          ))
-        ).map(order => order.product);
-      }
-
-      return NextResponse.json({
-        product: {
-          productSizes: sizes,
-          productFrontBase64Images: imageFrontBase64,
-          productId: product._id.toString(),
-          productColors: product.colors
-        },
-        relatedProducts,
-        success: true
-      }, {
-        status: 200
+      const hash = await argon.hash(newPassword);
+      
+      const newUser = new User({
+        email,
+        password: hash,
+        firstName: name.split(' ').length === 2 ? name.split(' ')[0] : name,
+        lastName: name.split(' ').length === 2 ? name.split(' ')[1] : name,
+        'visitor.visitId': mongoose.Types.ObjectId.isValid(newVisitId) ? newVisitId : null 
       });
-    }else{
+
+      const savedUser = await newUser.save();
+
+      // Send password creation email
+      await sendMail({
+        password: newPassword,
+        email: savedUser.email,
+        emailType: EmailType.reminder,
+      });
+      
+      //sending verification email
+      await sendMail({
+        email: savedUser.email,
+        emailType: EmailType.verify,
+        userId: savedUser._id
+      });
+
+      //updating product with user review
+      const product = await Product.findOne({title});
+
+      const newReview = new Review({
+        headline,
+        rating: +rating,
+        content: review,
+        userId: savedUser._id,
+        isMedia
+      });
+
+      await newReview.save();
+
+      product.reviews = product.reviews.push({
+        reviewId: newReview._id
+      });
+
+      await product.save();
+
       return NextResponse.json(
-        { error: "product color doesn't exist" },
-        { status: 404 }
+        {
+          message: "product updated successfully",
+          success: true,
+          savedUser,
+        },
+        { status: 201 }
+      );
+    }else{
+      //updating product with user review
+      const product = await Product.findOne({title});
+
+      const newReview = new Review({
+        headline,
+        rating: +rating,
+        content: review,
+        userId: user._id,
+        isMedia
+      });
+
+      await newReview.save();
+
+      product.reviews = product.reviews.push({
+        reviewId: newReview._id
+      });
+
+      await product.save();
+
+      return NextResponse.json(
+        {
+          message: "Product updated successfully",
+          success: true,
+        },
+        { status: 201 }
       );
     }
-
-
-
+    
   } catch (error: any) {
-    return NextResponse.json(
-      {
-        error: error.message,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+
+export async function GET(req: NextRequest, { params }: { params: { slug: string[] } }) {
+  try {
+    let relatedProducts: any[] = [];
+    let reviewAuthors: any[] = [];
+
+    const title = params.slug[0].charAt(0).toUpperCase() + params.slug[0].replace('-', ' ').slice(1);
+
+    const product = await Product.findOne({ title: title });
+
+    if (!product) {
+      return NextResponse.json({ error: "product doesn't exist" }, { status: 404 });
+    }
+
+    const extractedColorObj = product.colors.find((color: any) => 
+      color.type === (params.slug[1].charAt(0).toUpperCase() + params.slug[1].slice(1))
+    );
+
+    if (extractedColorObj) {
+      const sizes = extractedColorObj.sizes;
+      const imageFrontBase64 = extractedColorObj.imageFrontBase64;
+
+      // Get the current viewed products from the cookie
+      const viewedProducts = req.cookies.get('viewed_p')?.value;
+
+      let viewedProductsArray: string[] = [];
+      let extractedProductsArray: string[] = [];
+
+      if (viewedProducts) {
+        viewedProductsArray = JSON.parse(viewedProducts);
+        //getting products attached to variant ids
+        for (let viewedProduct of viewedProductsArray) {
+          let extractedProduct = await Product.findOne({ 'colors.sizes.variantId': viewedProduct });
+          extractedProductsArray.push(extractedProduct);
+        }
+      }
+
+      let updatedProducts: any[] = [];
+
+      //finding products similar in features to selected product
+      const extractedProductsOfSimilarColor = await Product.find({ 'colors.type': extractedColorObj.type, 'colors.sizes.variantId': { $ne: params.slug[2] } });
+
+        //finding related/grouped products of selected product
+      let carts = await Cart.find({ 'items.productId': product._id });
+      for (let cart of carts) {
+        let updatedCart = await cart.populate('items.productId');
+        const products = updatedCart.items.map((item: any) => ({ ...item.productId._doc }));
+        updatedProducts.push(...products);
+      }
+
+      updatedProducts = [...updatedProducts, ...extractedProductsArray, ...extractedProductsOfSimilarColor];
+
+       //removing duplicates and storing them
+      relatedProducts = updatedProducts.filter((prod: any) => prod._id.toString() !== product._id.toString());
+
+      //getting product reviews
+      const updatedProduct = await product.populate('reviews.reviewId');
+
+      const reviews = updatedProduct.reviews.map((review: any) => ({...review.reviewId._doc}));
+
+      for (let review of reviews){
+        const user = await User.findById(review.author.id);
+        reviewAuthors.push(user);
+      }
+
+      const updatedReviews = reviews.map((review: any) => {
+        const author = reviewAuthors.find((author: any) => author._id.toString() === review.author.id.toString());
+
+        return {
+          ...review,
+          author: author
+        };
+      });
+      
+      const res = NextResponse.json({
+        productSizes: sizes,
+        productFrontBase64Images: imageFrontBase64,
+        productId: product._id.toString(),
+        productColors: product.colors,
+        productReviews: updatedReviews,
+        relatedProducts,
+        success: true
+      }, { status: 200 });
+
+      res.cookies.set('viewed_p', JSON.stringify(viewedProductsArray), {
+        expires: new Date(new Date().getTime() + 2629746000), // Expires in 1 month
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+      });
+
+
+      return res;
+    } else {
+      return NextResponse.json({ error: "product color doesn't exist" }, { status: 404 });
+    }
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+

@@ -9,13 +9,14 @@ export async function GET(req: NextRequest) {
     );
 
     res.cookies.set('access_token', '', {
-        httpOnly: true
+        httpOnly: true,
+        maxAge: 0
     });
 
     res.cookies.set('admin_status', '', {
-        httpOnly: true
+        httpOnly: true,
+        maxAge: 0
     });
-
     return res;
   } catch (error: any) {
     return NextResponse.json(

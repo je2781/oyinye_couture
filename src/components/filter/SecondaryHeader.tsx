@@ -179,29 +179,29 @@ export default function SecondaryHeader({
                             let ul = section.querySelector("ul");
 
                             if (downAngle && ul && section && text) {
-                            if (!downAngle.classList.contains("ad-rotate")) {
-                                if (sort === "Relevance") {
-                                text.classList.add("slide-left");
-                                text.classList.remove("reverse-slide-left");
+                                if (!downAngle.classList.contains("ad-rotate")) {
+                                    if (sort === "Relevance") {
+                                        text.classList.add("slide-left");
+                                        text.classList.remove("reverse-slide-left");
+                                    }
+                                    downAngle.classList.add("ad-rotate");
+                                    downAngle.classList.remove("ad-rotate-anticlock");
+                                    section.classList.remove("top-0");
+                                    section.classList.add("-top-[18px]", "shadow-xl", 'bg-white');
+                                    ul.classList.remove("hidden");
+                                    ul.classList.add("flex");
+                                } else {
+                                    downAngle.classList.remove("ad-rotate");
+                                    if (sort === "Relevance") {
+                                        text.classList.add("reverse-slide-left");
+                                        text.classList.remove("slide-left");
+                                    }
+                                    downAngle.classList.add("ad-rotate-anticlock");
+                                    section.classList.add("top-0");
+                                    section.classList.remove("-top-[18px]", "shadow-xl", 'bg-white');
+                                    ul.classList.add("hidden");
+                                    ul.classList.remove("flex");
                                 }
-                                downAngle.classList.add("ad-rotate");
-                                downAngle.classList.remove("ad-rotate-anticlock");
-                                section.classList.remove("top-0");
-                                section.classList.add("-top-[18px]", "shadow-xl", 'bg-white');
-                                ul.classList.remove("hidden");
-                                ul.classList.add("flex");
-                            } else {
-                                downAngle.classList.remove("ad-rotate");
-                                if (sort === "Relevance") {
-                                text.classList.add("reverse-slide-left");
-                                text.classList.remove("slide-left");
-                                }
-                                downAngle.classList.add("ad-rotate-anticlock");
-                                section.classList.add("top-0");
-                                section.classList.remove("-top-[18px]", "shadow-xl", 'bg-white');
-                                ul.classList.add("hidden");
-                                ul.classList.remove("flex");
-                            }
                             }
                         }}
                     >
