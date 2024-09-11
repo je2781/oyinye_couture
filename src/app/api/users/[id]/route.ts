@@ -79,7 +79,7 @@ export async function PATCH(
     if (!user) {
       return NextResponse.json(
         { message: "Go back to cart and register your email" },
-        { status: 404 }
+        { status: 200 }
       );
     }
 
@@ -104,7 +104,7 @@ export async function PATCH(
     //sending verification email
     await sendMail({
       email: savedUser.email,
-      emailType: EmailType.verify,
+      emailType: EmailType.verify_buyer,
       userId: savedUser._id
     });
 
@@ -118,7 +118,6 @@ export async function PATCH(
     );
 
   } catch (error: any) {
-    console.error('Error in PATCH /api/users/[id]:', error);
     return NextResponse.json(
       {
         error: error?.message || "An unexpected error occurred",

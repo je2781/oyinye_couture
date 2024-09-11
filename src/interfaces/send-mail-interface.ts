@@ -1,5 +1,5 @@
 export enum EmailType{
-    verify, reset, reminder, request
+    verify_account, reset, reminder, request, verify_reviewer, verify_buyer
 }
 
 export interface  SendMail{

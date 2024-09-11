@@ -2,8 +2,8 @@
 import Header from "@/components/Header";
 import Login from "@/components/auth/Login";
 
-async function verifyToken(token: string){
-  const res = await fetch(`${process.env.DOMAIN}/api/users/verify-email/${token}`, {
+async function verifyToken(token: string, type: string){
+  const res = await fetch(`${process.env.DOMAIN}/api/users/verify-email/${type}/${token}`, {
     cache: 'no-store'
   });
 
@@ -12,8 +12,8 @@ async function verifyToken(token: string){
   return data;
 }
 
-export default async function VerifyPage({searchParams}: any) {
-  const data = await verifyToken(searchParams['token']);
+export default async function VerifyPage({searchParams, params}: any) {
+  const data = await verifyToken(searchParams['token'], params.type);
   return (
     <>
       <Header isAuth={true}/>

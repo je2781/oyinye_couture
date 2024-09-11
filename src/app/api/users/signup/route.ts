@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
           //sending verification email
           const msgInfo = await sendMail({
             email: savedUser.email,
-            emailType: EmailType.verify,
+            emailType: EmailType.verify_account,
             userId: savedUser._id
           });
       

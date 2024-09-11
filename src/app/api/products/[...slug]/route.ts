@@ -19,6 +19,36 @@ connect();
 
 
 
+export async function PATCH(req: NextRequest, { params }: { params: { slug: string[] } }) {
+  try {
+
+    if(params.slug[1] === 'likes-dislikes'){
+      const {likes, dislikes, reviewId} = await req.json();
+
+      await Review.findByIdAndUpdate(reviewId, {
+        likes,
+        dislikes
+      });
+
+      return NextResponse.json(
+        {
+          message: "Product reviews updated successfully",
+          success: true,
+        },
+        { status: 201 }
+      );
+    }
+    
+    
+
+    
+    
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+
 export async function POST(req: NextRequest, { params }: { params: { slug: string[] } }) {
   try {
 
@@ -56,7 +86,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       //sending verification email
       await sendMail({
         email: savedUser.email,
-        emailType: EmailType.verify,
+        emailType: EmailType.verify_reviewer,
         userId: savedUser._id
       });
 
@@ -83,7 +113,6 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         {
           message: "product updated successfully",
           success: true,
-          savedUser,
         },
         { status: 201 }
       );
@@ -97,6 +126,13 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         content: review,
         userId: user._id,
         isMedia
+      });
+
+      //sending verification email
+      await sendMail({
+        email: user.email,
+        emailType: EmailType.verify_reviewer,
+        userId: user._id
       });
 
       await newReview.save();
@@ -185,6 +221,8 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
         const user = await User.findById(review.author.id);
         reviewAuthors.push(user);
       }
+      //sorting reviews with the most likes in descending order
+      reviews.sort((a: any, b: any) => b.likes - a.likes);
 
       const updatedReviews = reviews.map((review: any) => {
         const author = reviewAuthors.find((author: any) => author._id.toString() === review.author.id.toString());

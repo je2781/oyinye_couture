@@ -10,6 +10,12 @@ const ProductDetailComponent = dynamic(() => import('../../../../../../component
 </main>
 });
 
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  return [];
+}
+
 async function getProductData(product: string, color: string, variantId: string){
   const res = await fetch(
     `${process.env.DOMAIN}/api/products/${product}/${color}/${variantId}`, {cache: 'no-cache'}

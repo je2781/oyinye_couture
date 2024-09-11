@@ -4,7 +4,7 @@ import Stars from '../../../public/shooting-stars.svg';
 import Image from 'next/image';
 import { ReviewsModal } from '../ui/Modal';
 import React from 'react';
-import { base64ToFile, generateBase64FromMedia } from '@/helpers/getHelpers';
+import { base64ToFile, decodedBase64, generateBase64FromMedia } from '@/helpers/getHelpers';
 import DocViewerComponent from './DocViewer';
 import toast from 'react-hot-toast';
 import axios from 'axios';
@@ -13,6 +13,9 @@ const Reviews = ({productReviews, product}: any) => {
     let averageRating = 0;
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [mediaBase64, setMediaBase64] = React.useState('');
+    const [likes, setLikes] = React.useState<number[]>(productReviews.map((review: any) => review.likes));
+    const [dislikes, setDislikes] = React.useState<number[]>(productReviews.map((review: any) => review.dislikes));
+    const [reviews, setReviews] = React.useState(productReviews);
     const [review, setReview] = React.useState('');
     const [headline, setHeadline] = React.useState('');
     const [email, setEmail] = React.useState('');
@@ -27,32 +30,84 @@ const Reviews = ({productReviews, product}: any) => {
     });
 
     const [selectedRating, setSelectedRating] = React.useState<any>('all');
-    const [reviews, setReviews] = React.useState<any>(productReviews);
 
-    const handleSelect = (e: React.MouseEvent, rating: any) => {
-        const selected = e.currentTarget;
-        const allRatings = selected.parentNode?.querySelectorAll('li');
+    if(productReviews.length > 0){
+        averageRating = Math.floor(productReviews.map((review: any) => review.rating).reduce((prev: number, current: number) => prev + current, 0)/productReviews.length)
+    }
 
-        if(allRatings){
-            allRatings.forEach(li => {
-                let checkmark = li.querySelector('.check');
-                if(!checkmark?.classList.contains('hidden')){
-                    checkmark?.classList.add('hidden');
-                    li.classList.remove('bg-yellow-400/10');
-                }
-            });
+    const handleSelect = (rating: any, e?: React.MouseEvent) => {
+        if(rating !== 'media'){
+            const selected = e?.currentTarget ?? document.getElementById("all");
+            const allRatings = document.getElementById("ratings-dropdown")?.querySelectorAll('li');
+            let ratingsDropdown = document.getElementById("ratings-dropdown");
+            let downAngle = document.querySelector("#ratings-button i.fa-angle-down");
+    
+            if(allRatings){
+                allRatings.forEach(li => {
+                    let checkmark = li.querySelector('.check');
+                    if(!checkmark?.classList.contains('hidden')){
+                        checkmark?.classList.add('hidden');
+                        li.classList.remove('bg-yellow-400/10');
+                    }
+                });
+            }
+    
+            selected?.classList.add("bg-yellow-400/10");
+            selected?.querySelector('.check')?.classList.remove('hidden');
+            selected?.querySelector('.check')?.classList.add('bg-yellow-400/10');
+    
+            //hiding ratings dropdown
+            ratingsDropdown?.classList.add('hide');
+            ratingsDropdown?.classList.remove('show');
+            downAngle?.classList.remove("ad-rotate");
+            downAngle?.classList.add("ad-rotate-anticlock");
+    
+            setSelectedRating(rating);
         }
 
-        selected.classList.add("bg-yellow-400/10");
-        selected.querySelector('.check')?.classList.remove('hidden');
-        selected.querySelector('.check')?.classList.add('bg-yellow-400/10');
-        setSelectedRating(rating);
-    };
+        const mediaContainer = document.getElementById('media') as HTMLDivElement;
 
-    
-    if(reviews.length > 0){
-        averageRating = Math.floor(reviews.map((review: any) => review.rating).reduce((prev: number, current: number) => prev + current, 0)/reviews.length)
-    }
+        //updating reviews
+        setReviews((_: any) => {
+            if(rating === 'all'){
+                return productReviews;
+            }else if(rating === 'media'){
+                mediaContainer.innerHTML = ''; //clearing previous media
+                
+                return productReviews.filter((review: any) => {
+                    if (review.content.startsWith('data:text/plain;')) {
+                        // For .txt files, display as plain text
+                        const textContent = decodedBase64(review.content);
+                        const pre = document.createElement('pre');
+                        pre.textContent = textContent;
+                        mediaContainer.appendChild(pre);
+                    }  else if (review.content.startsWith('data:application/pdf;base64,')) {
+                       const pdfIframe = document.createElement('iframe');
+                       pdfIframe.src = review.content;
+                       pdfIframe.style.width = '100%';
+                       pdfIframe.style.height = '400px'; 
+                       mediaContainer.appendChild(pdfIframe);
+                    } else if (review.content.startsWith('data:audio/')) {
+                       const audio = document.createElement('audio');
+                       audio.controls = true;
+                       audio.style.width = '100%';
+                       audio.src = review.content;
+                       mediaContainer.appendChild(audio);
+                   } else if (review.content.startsWith('data:video/')) { 
+                       const video = document.createElement('video');
+                       video.controls = true;
+                       video.style.width = '100%';
+                       video.src = review.content;
+                       mediaContainer.appendChild(video);
+                   }
+
+                   return productReviews.filter((review: any) => review.isMedia === true);
+                });
+            }else{
+                return productReviews.filter((review: any) => review.rating === rating);
+            }
+        });
+    };
 
     const hideModalHandler = () => {
         const previewContainer = document.getElementById('preview') as HTMLDivElement;
@@ -223,7 +278,6 @@ const Reviews = ({productReviews, product}: any) => {
 
         if(errorsCount > 0){
             return toast.error('The values entered are invalid');
-
         }
 
         try {
@@ -245,13 +299,63 @@ const Reviews = ({productReviews, product}: any) => {
 
     }
 
+    async function handleDislikes(review: any, index: number){
+        setDislikes(prevDislikes => {
+            const newDislikes = [...prevDislikes];
+            if(newDislikes[index] > review.dislikes){
+                newDislikes[index] = newDislikes[index] - 1;
+            }else{
+                newDislikes[index] = newDislikes[index] + 1;
+            }
+            return newDislikes;
+        });
+
+        try {
+            setLoader(true);
+            await axios.patch(`/api/products/reviews/likes-dislikes/update`, {
+                likes: likes[index],
+                dislikes: dislikes[index],
+                reviewId: review._id
+            });
+        } catch (error: any) {
+            toast.error(error.message);
+        }finally{
+            setLoader(false);
+        }
+    }
+
+    async function handleLikes(review: any, index: number){
+        setLikes(prevLikes => {
+            const newLikes = [...prevLikes];
+            if(newLikes[index] > review.likes){
+                newLikes[index] = newLikes[index] - 1;
+            }else{
+                newLikes[index] = newLikes[index] + 1;
+            }
+            return newLikes;
+        });
+
+        try {
+            setLoader(true);
+            await axios.patch(`/api/products/reviews/likes-dislikes/update`, {
+                likes: likes[index],
+                dislikes: dislikes[index],
+                reviewId: review._id
+            });
+        } catch (error: any) {
+            toast.error(error.message);
+        }finally{
+            setLoader(false);
+        }
+    }
+
   return <section className={`font-sans flex flex-col items-center gap-y-5 w-full py-7`}>
     <header className="text-2xl flex flex-row w-full justify-start">
         <h2>CUSTOMER REVIEWS</h2>
     </header>
-    {reviews.length > 0 ? <div className='w-full pt-6 flex flex-col gap-y-7'>
-        <header className='w-full flex lg:flex-row flex-col justify-center relative bg-detail-500/5 py-4 h-28'>
-            <section className='flex flex-row items-center gap-x-4'>
+    {productReviews.length > 0 ? <div className='w-full pt-4 flex flex-col gap-y-7'>
+        <header className='w-full flex lg:flex-row flex-col items-center gap-y-5 justify-center relative bg-detail-500/5 lg:p-4 p-5 lg:h-[7.1rem] h-[8rem]'>
+            <section className='flex flex-row items-center gap-x-3'>
                 <h1 className='text-5xl text-detail-500 font-light'>{averageRating}</h1>
                 <div className='inline-flex flex-col gap-y-[5px]'>
                     <ul className="flex flex-row items-center gap-x-1">
@@ -262,10 +366,10 @@ const Reviews = ({productReviews, product}: any) => {
                             <li><i key={i} className='fa-regular fa-star text-xl text-yellow-400'></i></li>
                         ))}
                     </ul> 
-                    <p className='text-[1rem] text-detail-500 font-light'>Based on {reviews.length} review(s)</p>
+                    <p className='text-[1rem] text-detail-500 font-light'>Based on {productReviews.length} review(s)</p>
                 </div>
             </section>
-            <button onClick={() => setIsModalOpen(true)} className='px-5 py-1 absolute right-6 top-[38%] rounded-3xl bg-detail-500 text-white outline-none hover:ring-1 hover:ring-detail-500 text-[0.9rem]'>Write A Review</button>
+            <button onClick={() => setIsModalOpen(true)} className='px-5 py-1 lg:absolute lg:right-6 lg:top-[38%] rounded-3xl bg-detail-500 text-white outline-none hover:ring-1 hover:ring-detail-500 text-[0.9rem]'>Write A Review</button>
         </header>
         <section className='lg:w-[36%] w-full flex flex-row lg:justify-start items-center text-sm gap-x-2'>
             <div className="relative inline-block w-[50%]">
@@ -287,6 +391,7 @@ const Reviews = ({productReviews, product}: any) => {
                         }
                     }
                 }}
+                id='ratings-button'
                 className="w-full relative text-left rounded-3xl font-medium px-3 py-2 hover:border-detail-500 focus:border-detail-500 cursor-pointer bg-white border border-gray-300">
                     {selectedRating === 'all' ?
                     'Rating'
@@ -301,14 +406,14 @@ const Reviews = ({productReviews, product}: any) => {
                     <i className="fa-solid fa-angle-down in-dropdown absolute right-4 text-xs top-3"></i>
                 </button>
                 <ul id='ratings-dropdown' className="absolute z-30 w-full bg-white rounded-md shadow-lg flex-col p-3 hide">
-                    <li onClick={(e) => handleSelect(e, 'all')} className="cursor-pointer p-3 font-semibold text-xs bg-yellow-400/10 hover:bg-yellow-400/10 flex flex-row justify-between items-center">
+                    <li onClick={(e) => handleSelect('all', e)} id='all' className="cursor-pointer p-3 font-semibold text-xs bg-yellow-400/10 hover:bg-yellow-400/10 flex flex-row justify-between items-center">
                         <span>All ratings</span>
                         <span className='check'><i className="fa-solid fa-check text-yellow-400 text-xs pt-1"></i></span>
                     </li>
                     {[5, 4, 3, 2, 1].map((rating) => (
                         <li
                             key={rating}
-                            onClick={(e) => handleSelect(e, rating)}
+                            onClick={(e) => handleSelect(rating, e)}
                             className="cursor-pointer flex flex-row items-center justify-between p-3 hover:bg-yellow-400/10"
                         >
                             <span className='flex flex-row items-center justify-between gap-x-1 '>
@@ -334,9 +439,11 @@ const Reviews = ({productReviews, product}: any) => {
                         if(!circle.classList.contains("fa-circle-check")){
                             circle.classList.remove("fa-circle", 'fa-regular', 'text-gray-300');
                             circle.classList.add("fa-circle-check", 'fa-solid', 'text-accent');
+                            handleSelect('media');
                         }else{
                             circle.classList.add("fa-circle", 'fa-regular', 'text-gray-300');
                             circle.classList.remove("fa-circle-check", 'fa-solid', 'text-accent');
+                            handleSelect('all');
                         }
                     }
                 }}
@@ -345,30 +452,65 @@ const Reviews = ({productReviews, product}: any) => {
                 </button>
             </div>
         </section>
-        <div className='flex flex-row flex-wrap gap-x-2 w-full'>
-            {reviews.map((review: any) => <article className='p-9 bg-detail-100 rounded-sm w-[36%] h-fit flex flex-col gap-y-4'>
-                <header className='flex flex-col gap-y-6'>
-                    <h2 className='flex flex-row justify-between items-center'>
-                        <ul className="flex flex-row items-center gap-x-1">
-                            {Array.from({ length: review.rating }).map((_, i) => (
-                                <li><i key={i} className='fa-solid fa-star text-xl text-yellow-400'></i></li>
-                            ))}
-                            {Array.from({ length: 5 - review.rating }).map((_, i) => (
-                                <li><i key={i} className='fa-regular fa-star text-xl text-yellow-400'></i></li>
-                            ))}
-                        </ul>
-                        <h3 className='text-detail-500/50 font-sans text-[1rem]'>{`${new Date(review.createdAt).getMonth() + 1}/${new Date(review.createdAt).getDate()}/${new Date(review.createdAt).getFullYear().toString().slice(-2)}`}</h3>
-                    </h2>
-                    <h1 className='text-3xl text-detail-500 font-extralight'>{review.headline}</h1>
-                </header>
-                <p className='text-detail-500/80 font-light'>{review.content}</p>
-                <div className='flex flex-row w-[35%]'>
-                    <p className='text-detail-500/80 font-light'>{review.author.firstName ?? review.author.email}</p>
-                    <span className='border-2 border-black border-l-0 border-t-0 border-b-0 h-1 px-1'></span>
-                    {review.author.isVerified && <p><i className="fa-solid fa-circle-check text-xs text-detail-500"></i>&nbsp;Verified Reviewer</p>}
+       {reviews.length > 0
+       ? <section className='flex flex-col gap-y-7'>
+            {selectedRating !== 'all' && <div className='flex flex-col w-full gap-y-3'>
+                <hr className='text-detail-500/40' /> 
+                <p className='text-[.9rem] text-detail-500 font-extralight'>We found {reviews.length} matching review(s). <button className='underline' onClick={(e) => handleSelect('all')}>Clear filters</button></p>
+                <hr className='text-detail-500/40' />
+            </div>}
+            <div className='flex flex-row flex-wrap gap-x-2 w-full'>
+                    {reviews.map((review: any, i: number) => <article key={i} className='px-9 pt-9 pb-5 bg-detail-100 rounded-sm lg:w-[36%] w-full h-fit flex flex-col gap-y-4'>
+                        <header className='flex flex-col gap-y-6'>
+                            <h2 className='flex flex-row justify-between items-center'>
+                                <ul className="flex flex-row items-center gap-x-1">
+                                    {Array.from({ length: review.rating }).map((_, i) => (
+                                        <li><i key={i} className='fa-solid fa-star text-xl text-yellow-400'></i></li>
+                                    ))}
+                                    {Array.from({ length: 5 - review.rating }).map((_, i) => (
+                                        <li><i key={i} className='fa-regular fa-star text-xl text-yellow-400'></i></li>
+                                    ))}
+                                </ul>
+                                <h3 className='text-detail-500/50 font-sans text-[1rem]'>{`${new Date(review.createdAt).getMonth() + 1}/${new Date(review.createdAt).getDate()}/${new Date(review.createdAt).getFullYear().toString().slice(-2)}`}</h3>
+                            </h2>
+                            <h1 className='text-3xl text-detail-500 font-extralight'>{review.headline}</h1>
+                        </header>
+                        {review.isMedia 
+                        ? <div id='media'></div>
+                        : <p className='text-detail-500/80 font-light'>{review.content}</p>}
+                        <div className='inline-flex flex-row w-[75%] items-center'>
+                            <p className='text-detail-500/80 font-light w-[35%]'>{review.author.firstName ?? review.author.email}</p>
+                            <div className="w-[2px] h-3 bg-black mx-2"></div>
+                            {<p className='text-sm text-detail-500/80 font-light w-[48%]'>
+                                <i className="fa-solid fa-circle-check text-xs text-detail-500"></i>&nbsp;Verified {review.author.isVerified.reviewer ? 'Reviewer' : review.author.isVerified.buyer ? 'Buyer': ''}
+                            </p>}
+                        </div>
+                        <div className='flex flex-row justify-end w-full items-center gap-x-2'>
+                            <p className='text-detail-500/80 font-light text-[1rem]'>Was this review helpful?&nbsp;</p>
+                            <div className='inline-flex flex-row gap-x-2 relative'>
+                                <button disabled={loader} className='inline-flex flex-row gap-x-2 items-center text-detail-500/80 cursor-pointer' onClick={() => handleLikes(review, i)}><i className={`${loader ? 'text-gray-400 cursor-not-allowed fa-regular' : likes[i] > review.likes ? 'text-detail-500 fa-solid' : 'text-gray-600 fa-regular'} fa-thumbs-up`}></i>{likes[i]}</button>
+                                <button disabled={loader} className='inline-flex flex-row gap-x-2 items-center text-detail-500/80 cursor-pointer' 
+                                onClick={() => handleDislikes(review, i)} ><i className={`fa-regular ${loader ? 'text-gray-400 cursor-not-allowed fa-regular' : dislikes[i] > review.dislikes ? 'text-detail-500 fa-solid' : 'text-gray-600 fa-regular'} fa-thumbs-down`}></i>{dislikes[i]}</button>
+                            </div>
+                        </div>
+                        <hr className='text-detail-500/40' />
+                    </article>)}
+            </div>
+        </section> 
+        : <section className='flex flex-col gap-y-20'>
+            <div className='flex flex-col w-full gap-y-3'>
+                <hr className='text-detail-500/40' /> 
+                <p className='text-[.9rem] text-detail-500 font-extralight'>We found {reviews.length} matching review(s). <button className='underline' onClick={(e) => handleSelect('all')}>Clear filters</button></p>
+                <hr className='text-detail-500/40' />
+            </div>   
+            <div className='flex flex-col items-center gap-y-11 font-sans'>
+                <div className='flex flex-col items-center text-gray-600'>
+                    <p className='text-[1rem]'>No matching review</p>
+                    <p className='text-[.85rem]'>Try clearing or changing the filters.</p>
                 </div>
-            </article>)}
-        </div>
+                <button className='rounded-3xl px-7 py-1 bg-detail-500 text-white text-[.9rem] hover:ring-detail-500 hover:ring-1' onClick={() => handleSelect('all')}>Clear filters</button>
+            </div> 
+        </section>}
     </div>
     : <div className='flex flex-col items-center gap-y-4 w-full pt-12'>
         <Image src={Stars} width={55} height={55} alt='Be a star'/>

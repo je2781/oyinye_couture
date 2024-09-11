@@ -61,13 +61,14 @@ const newPasswordEmailData = async (
   return ejs.renderFile(templatePath, { ...ejsData });
 };
 
-const verifyEmailData = async (
-  verifyAccountToken: string
+const verifyData = async (
+  verifyAccountToken: string,
+  emailType: EmailType
 ) => {
   const title =
-    "Please verify your account.";
+    `${emailType === EmailType.verify_account ? 'Please verify your account.' : emailType === EmailType.verify_reviewer ? 'Please verify you wrote a review' : 'Please verify you made a purchase.'}`;
   const mainInfo =
-    "To verify your account, click the button below. The link will self-destruct after 1 hour";
+    "To verify your credentials, click the button below. The link will self-destruct after 1 hour";
   const extraInfo = `If were not expecting this email, you can ignore and delete this email.`;
 
   //preparing email template and its data
@@ -83,7 +84,7 @@ const verifyEmailData = async (
     extraInfo,
     isNewPass: false,
     isReset: false,
-    link: `${process.env.DOMAIN!}/verifyemail?token=${verifyAccountToken}`,
+    link: `${process.env.DOMAIN!}/verifyemail/${emailType === EmailType.verify_account ? 'account' : emailType === EmailType.verify_reviewer ? 'reviewer' : 'buyer'}/?token=${verifyAccountToken}`,
     year: new Date().getFullYear(),
   };
 
@@ -122,12 +123,12 @@ export const sendMail = async ({ password, email, emailType, userId, emailBody }
       //create a hash token
       const hashedToken = buffer.toString("hex");
 
-      if (emailType === EmailType.verify) {
+      if (emailType === EmailType.verify_account || emailType === EmailType.verify_reviewer || emailType === EmailType.verify_buyer) {
         await User.findOneAndUpdate(userId, {
           verifyToken: hashedToken,
           verifyTokenExpirationDate: new Date(Date.now() + 3600000),
         });
-        verifyEmailBody = await verifyEmailData(hashedToken);
+        verifyEmailBody = await verifyData(hashedToken, emailType);
 
       } else if(emailType === EmailType.reminder) {
         if(password){

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       await user.save();
     }
 
-    if (!user.isAdmin && !user.isVerified) {
+    if (!user.isAdmin && !user.isVerified.account) {
       return NextResponse.json(
         { message: `Check ${user.email} to verify your account` },
         { status: 200 }

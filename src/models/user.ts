@@ -17,8 +17,18 @@ const UserSchema = new Schema({
     type: String,
   },
   isVerified: {
-    type: Boolean,
-    default: false
+    buyer: {
+      type: Boolean,
+      default: false
+    },
+    account: {
+      type: Boolean,
+      default: false
+    },
+    reviewer: {
+      type: Boolean,
+      default: false
+    }
   },
   isAdmin: {
     type: Boolean,

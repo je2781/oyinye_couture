@@ -491,7 +491,7 @@ export default function SearchResults({
             </section>
           )}
         </section>
-        {isLoading && <section className="absolute top-[120px] z-20 left-0 bg-white/50 w-full h-full">
+        {isLoading && <section className="absolute top-[110px] z-20 left-0 bg-white/50 w-full h-full">
         </section>}
         {data.products.length > 0 && <Pagination {...data} />}
       </main>

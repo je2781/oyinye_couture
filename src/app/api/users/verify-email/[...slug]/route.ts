@@ -6,11 +6,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 connect();
 
-export async function GET(req: NextRequest, {params}: {params: {token: string}}) {
+export async function GET(req: NextRequest, {params}: {params: {slug: string[]}}) {
   try {
 
     const user = await User.findOne({
-        verifyToken: params.token,
+        verifyToken: params.slug[1],
         verifyTokenExpirationDate: {$gt: new Date()}
     });
 
@@ -23,14 +23,24 @@ export async function GET(req: NextRequest, {params}: {params: {token: string}})
         ); 
     }
 
-    user.isVerified = true;
+    switch (params.slug[0]) {
+      case 'buyer':
+        user.isVerified.buyer = true;
+        break;
+      case 'reviewer':
+        user.isVerified.reviewer = true;
+        break;
+      default:
+        user.isVerified.account = true;
+        break;
+    }
     user.verifyToken = undefined;
     user.verifyTokenExpirationDate = undefined;
 
     await user.save();
 
     return NextResponse.json(
-      { message: "User verified", success: true},
+      { message: `${params.slug[0].charAt(0).toUpperCase() + params.slug[0].slice(1)} verified`, success: true},
       { status: 200 }
     );
   } catch (error: any) {
