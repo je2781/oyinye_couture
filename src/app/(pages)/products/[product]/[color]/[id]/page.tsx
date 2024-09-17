@@ -16,27 +16,20 @@ export async function generateStaticParams() {
   return [];
 }
 
-async function getProductData(product: string, color: string, variantId: string){
-  const res = await fetch(
-    `${process.env.DOMAIN}/api/products/${product}/${color}/${variantId}`, {cache: 'no-cache'}
-    );
-    const data = await res.json();
-
-    return data;
-}
-
-
-async function getCart() {
+async function getData(product: string, color: string, variantId: string) {
   const cookieStore = cookies();
   const cartId = cookieStore.get('cart')?.value;
 
   if(cartId && cartId.length > 0){
-    const res = await fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`);
-    const data = await res.json();
-  
-    return data.cartItems;
+    const [productDataRes, cartDataRes] = await Promise.all([fetch(
+      `${process.env.DOMAIN}/api/products/${product}/${color}/${variantId}`, {cache: 'no-cache'}
+      ), fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`)]);
+
+    const [productData, cartData] = await Promise.all([productDataRes.json(), cartDataRes.json()]);
+
+    return [productData, cartData.cartItems];
   }else{
-    return [];
+    return [[], []];
   }
 }
 
@@ -46,8 +39,7 @@ const ProductPage = async ({
 }: {
   params: { product: string; color: string; id: string };
 }) => {
-    const productData = await getProductData(params.product, params.color, params.id);
-    const cartItems = await getCart();
+    const [productData, cartItems] = await getData(params.product, params.color, params.id);
 
 
     const data = {

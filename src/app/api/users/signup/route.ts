@@ -6,6 +6,7 @@ import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
 import { getVisitData } from "@/helpers/getVisitData";
 import mongoose from "mongoose";
+import { error } from "console";
 
 
 connect();
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
     //check if user laready exists
     if (user) {
       return NextResponse.json(
-        { message: "User already exists"},
+        { error: "User already exists"},
         {
           status: 200
         }
@@ -54,7 +55,6 @@ export async function POST(req: NextRequest) {
             {
               message: "User created successfully",
               success: true,
-              verificationData: msgInfo,
               savedUser,
             },
             { status: 201 }

@@ -125,16 +125,14 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         
           default:
             for(let product of products){
-              let noOfReviews = await User.find({'reviews.productId': product._id}).countDocuments();
               let noOfOrders = await Order.find({'items.product._id': product._id}).countDocuments();
     
               product.set('noOfOrders', noOfOrders, { strict: false });
-              product.set('noOfReviews', noOfReviews, { strict: false });
             }
     
             products.sort((a, b) => {
               if (b.noOfOrders === a.noOfOrders) {
-                return b.noOfReviews - a.noOfReviews;
+                return b.reviews.length - a.reviews.length;
               }
               return b.noOfOrders - a.noOfOrders;
             });

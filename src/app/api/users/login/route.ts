@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { error: "User doesn't exist" },
-        { status: 400 }
+        { status: 200 }
       );
     }
 
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       await user.save();
     }
 
-    if (!user.isAdmin && !user.isVerified.account) {
+    if (!user.isVerified.account) {
       return NextResponse.json(
         { message: `Check ${user.email} to verify your account` },
         { status: 200 }
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const isMatch = await argon.verify(user.password, password);
 
     if (!isMatch) {
-      return NextResponse.json({ error: "Invalid password" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid password" }, { status: 200 });
     }
 
     // Create token data

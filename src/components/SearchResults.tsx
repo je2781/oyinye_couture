@@ -187,7 +187,7 @@ export default function SearchResults({
     <>
       <section className={`${
             visible ? "show" : "hide"
-          } mx-auto container px-7 fixed top-[60px] z-10 bg-white h-11 shadow-md py-2 md:hidden`}>
+          } mx-auto container px-7 fixed top-[60px] z-10 bg-white h-11 shadow-md py-2 md:hidden max-w-7xl`}>
           <SecondaryHeader 
             setFilter={setFilter}
             filter={filter}
@@ -364,13 +364,13 @@ export default function SearchResults({
                               height={65}
                             />
                             <section>
-                              <h3 className="font-sans text-[1rem] font-medium hover:underline-offset-1 hover:underline">
+                              <h2 className="font-sans text-[1rem] font-medium hover:underline-offset-1 hover:underline">
                                 {product.title}
-                              </h3>
-                              <h3 className="font-sans font-thin text-gray-400 text-[.9rem]">
+                              </h2>
+                              <h2 className="font-sans font-thin text-gray-400 text-[.9rem]">
                                 &#8358;
                                 {product.colors[0].sizes[0].price.toLocaleString()}
-                              </h3>
+                              </h2>
                             </section>
                           </article>
                         </li>

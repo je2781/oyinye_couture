@@ -15,19 +15,14 @@ async function getCheckout() {
   const orderId = cookieStore.get("order")?.value;
   const userId = cookieStore.get("user")?.value;
 
-  const userDataRes = await fetch(`${process.env.DOMAIN}/api/users/${userId}`);
-  const userData = await userDataRes.json();
-
-  const countryDataRes = await fetch(
-    `https://ipinfo.io?token=${process.env.IPINFO_TOKEN}`
-  );
-  const countryData = await countryDataRes.json();
-
   if(cartId && cartId.length > 0){
-    const cartDataRes = await fetch(
-      `${process.env.DOMAIN}/api/products/cart/${cartId}`
-    );
-    const cartData = await cartDataRes.json();
+    const [userDataRes, countryDataRes,cartDataRes] = await Promise.all([
+      fetch(`${process.env.DOMAIN}/api/users/${userId}`),
+      fetch(`https://ipinfo.io?token=${process.env.IPINFO_TOKEN}`),
+      fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`)
+    ]);
+
+    const [userData, countryData, cartData] = await Promise.all([userDataRes.json(), countryDataRes.json(), cartDataRes.json()]);
 
     return {
       ...cartData,
@@ -40,7 +35,7 @@ async function getCheckout() {
       cartItems: [],
       total: 0,
       orderId,
-      country: countryData.country,
+      country: 'NG',
       userData: null,
     };
   }

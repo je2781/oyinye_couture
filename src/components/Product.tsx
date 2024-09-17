@@ -64,15 +64,12 @@ const Product = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDet
 
         }}
         onClick={() => {
-          if(product.colors[0].sizes[0].stock > 0){
-            if(isOnDetailPage){
-              location.replace(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variantId}`);
-            }else{
-              router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variantId}`)
-            }
+          if(isOnDetailPage){
+            location.replace(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variantId}`);
           }else{
-            toast.error('It is out of stock');
+            router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variantId}`)
           }
+          
         }}
         onMouseOver={(event) => {
           if (!isModalOpen) {
@@ -96,10 +93,10 @@ const Product = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDet
               role="presentation"
           />
           <section className={`${isSearchProduct  ? 'items-start': 'items-center'} flex flex-col gap-y-1`}>
-            <h3 className="text-gray-500 font-sans text-sm">{product.title}</h3>
-            <h3 className="text-[1rem]">
+            <h2 className="text-gray-500 font-sans text-sm">{product.title}</h2>
+            <h2 className="text-[1rem]">
                 &#8358;{product.colors[0].sizes[0].price.toLocaleString("en-US")}
-            </h3>
+            </h2>
           </section>
           {product.colors[0].sizes[0].stock === 0 && <section 
             className={`${width > 768 && imageH && imageW ? 'bottom-[33.5%]' : width < 768 && !isGridView ? 'bottom-[20.5%]' : width < 768 && isGridView ? 'bottom-[33%]' : 'bottom-[26%]'} absolute font-sans bg-black px-4 py-1 rounded-3xl cursor-pointer text-white left-[4%] text-sm`}

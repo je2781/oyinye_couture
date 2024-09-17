@@ -65,44 +65,12 @@ const Reviews = ({productReviews, product}: any) => {
             setSelectedRating(rating);
         }
 
-        const mediaContainer = document.getElementById('media') as HTMLDivElement;
-
         //updating reviews
         setReviews((_: any) => {
             if(rating === 'all'){
                 return productReviews;
             }else if(rating === 'media'){
-                mediaContainer.innerHTML = ''; //clearing previous media
-                
-                return productReviews.filter((review: any) => {
-                    if (review.content.startsWith('data:text/plain;')) {
-                        // For .txt files, display as plain text
-                        const textContent = decodedBase64(review.content);
-                        const pre = document.createElement('pre');
-                        pre.textContent = textContent;
-                        mediaContainer.appendChild(pre);
-                    }  else if (review.content.startsWith('data:application/pdf;base64,')) {
-                       const pdfIframe = document.createElement('iframe');
-                       pdfIframe.src = review.content;
-                       pdfIframe.style.width = '100%';
-                       pdfIframe.style.height = '400px'; 
-                       mediaContainer.appendChild(pdfIframe);
-                    } else if (review.content.startsWith('data:audio/')) {
-                       const audio = document.createElement('audio');
-                       audio.controls = true;
-                       audio.style.width = '100%';
-                       audio.src = review.content;
-                       mediaContainer.appendChild(audio);
-                   } else if (review.content.startsWith('data:video/')) { 
-                       const video = document.createElement('video');
-                       video.controls = true;
-                       video.style.width = '100%';
-                       video.src = review.content;
-                       mediaContainer.appendChild(video);
-                   }
-
-                   return productReviews.filter((review: any) => review.isMedia === true);
-                });
+                return productReviews.filter((review: any) => review.isMedia === true);
             }else{
                 return productReviews.filter((review: any) => review.rating === rating);
             }
@@ -460,41 +428,112 @@ const Reviews = ({productReviews, product}: any) => {
                 <hr className='text-detail-500/40' />
             </div>}
             <div className='flex flex-row flex-wrap gap-x-2 w-full'>
-                    {reviews.map((review: any, i: number) => <article key={i} className='px-9 pt-9 pb-5 bg-detail-100 rounded-sm lg:w-[36%] w-full h-fit flex flex-col gap-y-4'>
-                        <header className='flex flex-col gap-y-6'>
-                            <h2 className='flex flex-row justify-between items-center'>
-                                <ul className="flex flex-row items-center gap-x-1">
-                                    {Array.from({ length: review.rating }).map((_, i) => (
-                                        <li><i key={i} className='fa-solid fa-star text-xl text-yellow-400'></i></li>
-                                    ))}
-                                    {Array.from({ length: 5 - review.rating }).map((_, i) => (
-                                        <li><i key={i} className='fa-regular fa-star text-xl text-yellow-400'></i></li>
-                                    ))}
-                                </ul>
-                                <h3 className='text-detail-500/50 font-sans text-[1rem]'>{`${new Date(review.createdAt).getMonth() + 1}/${new Date(review.createdAt).getDate()}/${new Date(review.createdAt).getFullYear().toString().slice(-2)}`}</h3>
-                            </h2>
-                            <h1 className='text-3xl text-detail-500 font-extralight'>{review.headline}</h1>
-                        </header>
-                        {review.isMedia 
-                        ? <div id='media'></div>
-                        : <p className='text-detail-500/80 font-light'>{review.content}</p>}
-                        <div className='inline-flex flex-row w-[75%] items-center'>
-                            <p className='text-detail-500/80 font-light w-[35%]'>{review.author.firstName ?? review.author.email}</p>
-                            <div className="w-[2px] h-3 bg-black mx-2"></div>
-                            {<p className='text-sm text-detail-500/80 font-light w-[48%]'>
-                                <i className="fa-solid fa-circle-check text-xs text-detail-500"></i>&nbsp;Verified {review.author.isVerified.reviewer ? 'Reviewer' : review.author.isVerified.buyer ? 'Buyer': ''}
-                            </p>}
-                        </div>
-                        <div className='flex flex-row justify-end w-full items-center gap-x-2'>
-                            <p className='text-detail-500/80 font-light text-[1rem]'>Was this review helpful?&nbsp;</p>
-                            <div className='inline-flex flex-row gap-x-2 relative'>
-                                <button disabled={loader} className='inline-flex flex-row gap-x-2 items-center text-detail-500/80 cursor-pointer' onClick={() => handleLikes(review, i)}><i className={`${loader ? 'text-gray-400 cursor-not-allowed fa-regular' : likes[i] > review.likes ? 'text-detail-500 fa-solid' : 'text-gray-600 fa-regular'} fa-thumbs-up`}></i>{likes[i]}</button>
-                                <button disabled={loader} className='inline-flex flex-row gap-x-2 items-center text-detail-500/80 cursor-pointer' 
-                                onClick={() => handleDislikes(review, i)} ><i className={`fa-regular ${loader ? 'text-gray-400 cursor-not-allowed fa-regular' : dislikes[i] > review.dislikes ? 'text-detail-500 fa-solid' : 'text-gray-600 fa-regular'} fa-thumbs-down`}></i>{dislikes[i]}</button>
-                            </div>
-                        </div>
-                        <hr className='text-detail-500/40' />
-                    </article>)}
+                    {reviews.map((review: any, i: number) => {
+                        if(review.isMedia){
+                            const mediaContainer = document.getElementById('media') as HTMLDivElement;
+                            if (review.content.startsWith('data:text/plain;')) {
+                                // For .txt files, display as plain text
+                                const textContent = decodedBase64(review.content);
+                                const pre = document.createElement('pre');
+                                pre.textContent = textContent;
+                                mediaContainer.appendChild(pre);
+                            }  else if (review.content.startsWith('data:application/pdf;base64,')) {
+                                const pdfIframe = document.createElement('iframe');
+                                pdfIframe.src = review.content;
+                                pdfIframe.style.width = '100%';
+                                pdfIframe.style.height = '400px'; 
+                                mediaContainer.appendChild(pdfIframe);
+                            } else if (review.content.startsWith('data:audio/')) {
+                                const audio = document.createElement('audio');
+                                audio.controls = true;
+                                audio.style.width = '100%';
+                                audio.src = review.content;
+                                mediaContainer.appendChild(audio);
+                            } else if (review.content.startsWith('data:video/')) { 
+                                const video = document.createElement('video');
+                                video.controls = true;
+                                video.style.width = '100%';
+                                video.src = review.content;
+                                mediaContainer.appendChild(video);
+                            }
+
+                            return (
+                                <article key={i} className='bg-detail-100 rounded-sm lg:w-[36%] w-full h-fit flex flex-col gap-y-4'>
+                                    <div id='media' className='w-full'></div>
+                                    <section className='p-4'>
+                                        <div className='inline-flex flex-row w-[75%] items-center'>
+                                            <p className='text-detail-500/80 font-light w-[35%]'>{review.author.firstName ?? review.author.email}</p>
+                                            <div className="w-[2px] h-3 bg-black mx-2"></div>
+                                            {<p className='text-sm text-detail-500/80 font-light w-[48%]'>
+                                                <i className="fa-solid fa-circle-check text-xs text-detail-500"></i>&nbsp;Verified {review.author.isVerified.reviewer ? 'Reviewer' : review.author.isVerified.buyer ? 'Buyer': ''}
+                                            </p>}
+                                        </div>
+                                        <header className='flex flex-col gap-y-6'>
+                                            <h2 className='flex flex-row justify-between items-center'>
+                                                <ul className="flex flex-row items-center gap-x-1">
+                                                    {Array.from({ length: review.rating }).map((_, i) => (
+                                                        <li><i key={i} className='fa-solid fa-star text-xl text-yellow-400'></i></li>
+                                                    ))}
+                                                    {Array.from({ length: 5 - review.rating }).map((_, i) => (
+                                                        <li><i key={i} className='fa-regular fa-star text-xl text-yellow-400'></i></li>
+                                                    ))}
+                                                </ul>
+                                                <h3 className='text-detail-500/50 font-sans text-[1rem]'>{`${new Date(review.createdAt).getMonth() + 1}/${new Date(review.createdAt).getDate()}/${new Date(review.createdAt).getFullYear().toString().slice(-2)}`}</h3>
+                                            </h2>
+                                            <h1 className='text-3xl text-detail-500 font-extralight'>{review.headline}</h1>
+                                        </header>
+                                        
+                                        <div className='flex flex-row justify-end w-full items-center gap-x-2'>
+                                            <p className='text-detail-500/80 font-light text-[1rem]'>Was this review helpful?&nbsp;</p>
+                                            <div className='inline-flex flex-row gap-x-2 relative'>
+                                                <button disabled={loader} className='inline-flex flex-row gap-x-2 items-center text-detail-500/80 cursor-pointer' onClick={() => handleLikes(review, i)}><i className={`${loader ? 'text-gray-400 cursor-not-allowed fa-regular' : likes[i] > review.likes ? 'text-detail-500 fa-solid' : 'text-gray-600 fa-regular'} fa-thumbs-up`}></i>{likes[i]}</button>
+                                                <button disabled={loader} className='inline-flex flex-row gap-x-2 items-center text-detail-500/80 cursor-pointer' 
+                                                onClick={() => handleDislikes(review, i)} ><i className={`fa-regular ${loader ? 'text-gray-400 cursor-not-allowed fa-regular' : dislikes[i] > review.dislikes ? 'text-detail-500 fa-solid' : 'text-gray-600 fa-regular'} fa-thumbs-down`}></i>{dislikes[i]}</button>
+                                            </div>
+                                        </div>
+                                    </section>
+                                    <hr className='text-detail-500/40' />
+                                </article>
+                            );
+                        }else{
+                            return(
+                                 <article key={i} className='px-9 pt-9 pb-5 bg-detail-100 rounded-sm lg:w-[36%] w-full h-fit flex flex-col gap-y-4'>
+                                     <header className='flex flex-col gap-y-6'>
+                                         <h2 className='flex flex-row justify-between items-center'>
+                                             <ul className="flex flex-row items-center gap-x-1">
+                                                 {Array.from({ length: review.rating }).map((_, i) => (
+                                                     <li><i key={i} className='fa-solid fa-star text-xl text-yellow-400'></i></li>
+                                                 ))}
+                                                 {Array.from({ length: 5 - review.rating }).map((_, i) => (
+                                                     <li><i key={i} className='fa-regular fa-star text-xl text-yellow-400'></i></li>
+                                                 ))}
+                                             </ul>
+                                             <h3 className='text-detail-500/50 font-sans text-[1rem]'>{`${new Date(review.createdAt).getMonth() + 1}/${new Date(review.createdAt).getDate()}/${new Date(review.createdAt).getFullYear().toString().slice(-2)}`}</h3>
+                                         </h2>
+                                         <h1 className='text-3xl text-detail-500 font-extralight'>{review.headline}</h1>
+                                     </header>
+                                     <p className='text-detail-500/80 font-light'>{review.content}</p>
+                                     <div className='inline-flex flex-row w-[75%] items-center'>
+                                         <p className='text-detail-500/80 font-light w-[35%]'>{review.author.firstName ?? review.author.email}</p>
+                                         <div className="w-[2px] h-3 bg-black mx-2"></div>
+                                         {<p className='text-sm text-detail-500/80 font-light w-[48%]'>
+                                             <i className="fa-solid fa-circle-check text-xs text-detail-500"></i>&nbsp;Verified {review.author.isVerified.reviewer ? 'Reviewer' : review.author.isVerified.buyer ? 'Buyer': ''}
+                                         </p>}
+                                     </div>
+                                     <div className='flex flex-row justify-end w-full items-center gap-x-2'>
+                                         <p className='text-detail-500/80 font-light text-[1rem]'>Was this review helpful?&nbsp;</p>
+                                         <div className='inline-flex flex-row gap-x-2 relative'>
+                                             <button disabled={loader} className='inline-flex flex-row gap-x-2 items-center text-detail-500/80 cursor-pointer' onClick={() => handleLikes(review, i)}><i className={`${loader ? 'text-gray-400 cursor-not-allowed fa-regular' : likes[i] > review.likes ? 'text-detail-500 fa-solid' : 'text-gray-600 fa-regular'} fa-thumbs-up`}></i>{likes[i]}</button>
+                                             <button disabled={loader} className='inline-flex flex-row gap-x-2 items-center text-detail-500/80 cursor-pointer' 
+                                             onClick={() => handleDislikes(review, i)} ><i className={`fa-regular ${loader ? 'text-gray-400 cursor-not-allowed fa-regular' : dislikes[i] > review.dislikes ? 'text-detail-500 fa-solid' : 'text-gray-600 fa-regular'} fa-thumbs-down`}></i>{dislikes[i]}</button>
+                                         </div>
+                                     </div>
+                                     <hr className='text-detail-500/40' />
+                                 </article>
+                             );
+                        }
+                    
+                    })}
             </div>
         </section> 
         : <section className='flex flex-col gap-y-20'>
@@ -742,7 +781,7 @@ const Reviews = ({productReviews, product}: any) => {
                         }
                         
                     }} name='headline' id='headline' placeholder='Summarize your experience' className='border border-gray-500 p-2 h-10 focus:shadow-lg focus:outline-none text-lg w-full'/>
-                <p id='headline-error' className="text-red-600 text-xs font-sans hidden -mt-1">A name is required</p>
+                <p id='headline-error' className="text-red-600 text-xs font-sans hidden -mt-1">A headline is required</p>
                 </div>
                 <div className='flex flex-row w-full'>
                     <div className='flex flex-col gap-y-2 text-lg w-[47.5%]'>

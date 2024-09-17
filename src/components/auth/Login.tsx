@@ -51,17 +51,21 @@ export default function LoginPage({message, success}: any) {
 
       const extractedUser = res.data.user;
 
-      if(!extractedUser.isVerified){
-        toast.success(`Check ${extractedUser.email} for verification link`, {
-          position: 'top-center'
-        });
-      }else{
-        toast.success("Login successful!");
-        if(extractedUser.isAdmin){
-          router.push('/admin/summary');
+      if(extractedUser){
+        if(!extractedUser.isVerified.account){
+          toast.success(`Check ${extractedUser.email} for verification link`, {
+            position: 'top-center'
+          });
         }else{
-          router.replace('/');
-        };
+          toast.success("Login successful!");
+          if(extractedUser.isAdmin){
+            router.push('/admin/summary');
+          }else{
+            router.replace('/');
+          }
+        }
+      }else{
+        toast.error(res.data.error);
       }
     } catch (error: any) {
       toast.error(error.message);

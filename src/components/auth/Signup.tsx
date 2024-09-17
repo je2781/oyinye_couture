@@ -37,11 +37,13 @@ export default function LoginPage() {
   async function onSignup() {
     try {
         setIsLoading(true);
-        const response = await axios.post("/api/users/signup", user);
+        const res = await axios.post("/api/users/signup", user);
 
-        console.log('signup successful', response.data);
-
-        router.push('/login');
+        if(res.data.success){
+          router.push('/login');
+        }else{
+          toast.error(res.data.error);
+        }
     } catch (error: any) {
         toast.error(error.message);
     }finally{

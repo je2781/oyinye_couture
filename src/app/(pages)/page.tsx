@@ -5,32 +5,28 @@ import Hero from "@/components/Hero";
 import { cookies, headers } from "next/headers";
 
 
-async function getAllProducts(){
-  const res = await fetch(`${process.env.DOMAIN}/api/products`, {next: {revalidate: 60}});
-  const data = await res.json();
 
-  return data.products;
-}
-
-
-async function getCart() {
+async function getData() {
   const cookieStore = cookies();
   const cartId = cookieStore.get('cart')?.value;
 
   if(cartId && cartId.length > 0){
-    const res = await fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`);
-    const data = await res.json();
+    const [cartDataRes, productDataRes] = await Promise.all([
+      fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`),
+      fetch(`${process.env.DOMAIN}/api/products`, {next: {revalidate: 3600}})
+    ]);
+
+    const [cartData, productData] = await Promise.all([cartDataRes.json(), productDataRes.json()]);
   
-    return data.cartItems;
+    return [cartData.cartItems, productData.products];
   }else{
-    return [];
+    return [[], []];
   }
 }
 
 export default async function Home() {
   
-  const products = await getAllProducts();
-  const cartItems = await getCart();
+  const [cartItems, products] = await getData();
 
   return (
     <>

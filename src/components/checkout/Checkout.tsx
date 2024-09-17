@@ -80,7 +80,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
   const [shippingMethod, setShippingMethod] = React.useState(5000);
   const [billing, setBilling] = React.useState("");
   const [phonePlaceholder, setPhonePlaceholder] = React.useState(
-    "Phone: +234..."
+    `Phone: +${Country.getCountryByCode(country)!.phonecode}...`
   );
   let windowWidth = useWindowWidth();
 
@@ -442,7 +442,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
                     }}
                     className="w-full h-6 appearance-none bg-transparent focus:outline-none pt-1 placeholder:text-gray-600 placeholder:text-sm text-sm"
                   >
-                    <option hidden>{Country.getCountryByCode("NG")!.name}</option>
+                    <option hidden>{countryName.shipping}</option>
                     {Country.getAllCountries().map((country, index) => (
                       <option key={index} value={country.isoCode}>
                         {country.name}
@@ -1427,7 +1427,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
                       }}
                       className="w-full h-6 appearance-none bg-transparent focus:outline-none pt-1 placeholder:text-gray-600 placeholder:text-sm text-sm"
                     >
-                      <option hidden>{Country.getCountryByCode("NG")!.name}</option>
+                      <option hidden>{countryName.billing}</option>
                       {Country.getAllCountries().map((country, index) => (
                         <option key={index} value={country.isoCode}>
                           {country.name}

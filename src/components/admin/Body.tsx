@@ -3,7 +3,6 @@
 import {
   colorsReducer,
   driveList,
-  generateBase64FromImage,
   getDataset,
   currentDate,
   currentMonth,
@@ -445,7 +444,7 @@ export default function Body({
                 className="flex flex-col gap-y-5 w-full"
                 noValidate
               >
-                <section className="flex flex-col gap-y-4 w-full">
+                <div className="flex flex-col gap-y-4 w-full">
                   <div className="inline-flex flex-col w-full">
                     <label
                       htmlFor="upload-front"
@@ -515,7 +514,7 @@ export default function Body({
                       ref={backUploadRef}
                     />
                   </div>
-                </section>
+                </div>
                 <div className="text-secondary-400 flex flex-col gap-y-7 text-sm w-full">
                   <input
                     placeholder="Title"

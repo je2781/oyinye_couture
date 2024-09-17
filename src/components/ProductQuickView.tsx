@@ -270,7 +270,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                 
             <section className="lg:p-12 p-6 lg:w-[60%] flex flex-col w-full gap-y-5 lg:overflow-y-scroll h-[60%] lg:h-full">
                 <header className="flex flex-col items-start gap-y-0">
-                    <h3 className="font-sans text-xs text-gray-400 font-thin">OYINYE COUTURE</h3>
+                    <h2 className="font-sans text-xs text-gray-400 font-thin">OYINYE COUTURE</h2>
                     <h1 className="font-medium font-sans lg:text-4xl text-2xl">{product.title}</h1>
                 </header>
                 <section className="border border-l-0 border-r-0 border-gray-300 w-full py-4 font-medium my-2 font-sans text-gray-600">
@@ -285,7 +285,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                 </section>
                 <section className="text-lg text-gray-600 flex flex-row gap-x-4 font-sans items-center">
                     <h1 className="font-sans font-bold text-black">&#8358;{sizesObj[`${selectedColor}-${selectedSize}`].price.toLocaleString("en-US")}</h1>
-                    {sizesObj[`${selectedColor}-${selectedSize}`].stock === 0 && <h3 className="bg-red-600 text-white h-6 px-2 py-1 w-[70px] text-sm text-center font-semibold flex items-center justify-center">Sold out</h3>}
+                    {sizesObj[`${selectedColor}-${selectedSize}`].stock === 0 && <h2 className="bg-red-600 text-white h-6 px-2 py-1 w-[70px] text-sm text-center font-semibold flex items-center justify-center">Sold out</h2>}
                 </section>
                 <section className="flex flex-col items-start gap-y-2" id='color-list'>
                     <h1 className="text-sm text-gray-500">Color</h1>

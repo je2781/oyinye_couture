@@ -15,7 +15,7 @@ const ReviewSchema = new Schema({
         default: false,
     },
     author: {
-        id: {
+        authorId: {
             ref: 'users',
             type: Schema.Types.ObjectId
         }

@@ -40,9 +40,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
     }
     
     
-
-    
-    
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -97,7 +94,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         headline,
         rating: +rating,
         content: review,
-        userId: savedUser._id,
+        'author.authorId': savedUser._id,
         isMedia
       });
 
@@ -124,7 +121,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         headline,
         rating: +rating,
         content: review,
-        userId: user._id,
+        'author.authorId': user._id,
         isMedia
       });
 
@@ -165,7 +162,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 
     const title = params.slug[0].charAt(0).toUpperCase() + params.slug[0].replace('-', ' ').slice(1);
 
-    const product = await Product.findOne({ title: title });
+    const product = await Product.findOne({ title });
 
     if (!product) {
       return NextResponse.json({ error: "product doesn't exist" }, { status: 404 });
@@ -176,8 +173,6 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     );
 
     if (extractedColorObj) {
-      const sizes = extractedColorObj.sizes;
-      const imageFrontBase64 = extractedColorObj.imageFrontBase64;
 
       // Get the current viewed products from the cookie
       const viewedProducts = req.cookies.get('viewed_p')?.value;
@@ -218,14 +213,14 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       const reviews = updatedProduct.reviews.map((review: any) => ({...review.reviewId._doc}));
 
       for (let review of reviews){
-        const user = await User.findById(review.author.id);
+        const user = await User.findById(review.author.authorId);
         reviewAuthors.push(user);
       }
       //sorting reviews with the most likes in descending order
       reviews.sort((a: any, b: any) => b.likes - a.likes);
 
       const updatedReviews = reviews.map((review: any) => {
-        const author = reviewAuthors.find((author: any) => author._id.toString() === review.author.id.toString());
+        const author = reviewAuthors.find((author: any) => author._id.toString() === review.author.authorId.toString());
 
         return {
           ...review,
@@ -234,8 +229,8 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       });
       
       const res = NextResponse.json({
-        productSizes: sizes,
-        productFrontBase64Images: imageFrontBase64,
+        productSizes: extractedColorObj.sizes,
+        productFrontBase64Images: extractedColorObj.imageFrontBase64,
         productId: product._id.toString(),
         productColors: product.colors,
         productReviews: updatedReviews,

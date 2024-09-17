@@ -14,14 +14,15 @@ async function getCart() {
   const cookieStore = cookies();
   const cartId = cookieStore.get('cart')?.value;
   const userId = cookieStore.get('user')?.value;
-  
-  const userDataRes = await fetch(`${process.env.DOMAIN}/api/users/${userId}`);
-  const userData = await userDataRes.json();
 
   if(cartId && cartId.length > 0){
   
-    const cartDataRes = await fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`);
-    const cartData = await cartDataRes.json();
+    const [userDataRes, cartDataRes] = await Promise.all([
+      fetch(`${process.env.DOMAIN}/api/users/${userId}`),
+      fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`, {cache: 'no-cache'})
+    ]);
+
+    const [userData, cartData] = await Promise.all([userDataRes.json(), cartDataRes.json()]);
 
     return {
       cartItems: cartData.cartItems,
@@ -32,7 +33,7 @@ async function getCart() {
     return {
       cartItems: [],
       total: 0,
-      userEmail: userData ? userData.email : ''
+      userEmail: ''
 
     };
   }
