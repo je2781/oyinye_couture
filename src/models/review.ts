@@ -7,9 +7,7 @@ const ReviewSchema = new Schema({
         type: String,
     },
     rating: Number,
-    content: {
-        type: String,
-    },
+    content: String,
     isMedia: {
         type: Boolean,
         default: false,

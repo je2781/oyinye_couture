@@ -90,8 +90,10 @@ const ProductDetail = ({
     function getArticleBottomScrollYPosition() {
         const element = document.querySelector('article') as HTMLElement;
 
-        const rect = element.getBoundingClientRect();
-        return window.scrollY + rect.bottom;
+        if(element){
+            const rect = element.getBoundingClientRect();
+            return window.scrollY + rect.bottom;
+        }
 
     }
 

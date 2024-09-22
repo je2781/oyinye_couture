@@ -61,7 +61,10 @@ export default function Bookings({country}: any){
                 size: parseInt(size),
                 phone,
                 eventDate,
-                styles: base64Images
+                styles: uploadedFiles.map(file => ({
+                    image: base64Images,
+                    fileName: file
+                }))
             });
         } catch (error: any) {
             toast.error(error.message);

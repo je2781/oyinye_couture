@@ -35,27 +35,29 @@ const resetPasswordEmailData = async (
   return ejs.renderFile(templatePath, { ...ejsData });
 };
 
-const newPasswordEmailData = async (
-  password: string,
+const reminderData = async (
+  to: string,
+  password?: string,
+  reminderDate?: string,
+  body?: string,
 ) => {
-  const title = "Your new password.";
-  const mainInfo =
-    "Use this password to book future consultations with your doctor";
-  const extraInfo = `If you did not register your details with us, you can ignore and delete this email.`;
+  const title = password ? "Your new password." : 'Appointment';
+  const date = reminderDate;
+  const message =
+    password ? "Use this password to login into your account and access restricted content. If you did not register your details with us, you can ignore and delete this email.": body;
 
   //preparing email template and its data
   const templatePath = path.join(
     process.cwd(),
     '..',
-    'templates/notification.ejs'
+    'templates/reminder.ejs'
   );
 
   const ejsData = {
     title,
-    mainInfo,
-    extraInfo,
-    isNewPass: true,
-    password
+    contact: to,
+    message,
+    date
 
   };
   return ejs.renderFile(templatePath, { ...ejsData });
@@ -84,20 +86,28 @@ const verifyData = async (
     extraInfo,
     isNewPass: false,
     isReset: false,
-    link: `${process.env.DOMAIN!}/verifyemail/${emailType === EmailType.verify_account ? 'account' : emailType === EmailType.verify_reviewer ? 'reviewer' : 'buyer'}/?token=${verifyAccountToken}`,
+    link: `${process.env.DOMAIN!}/verifyemail/${emailType === EmailType.verify_account ? 'account' : emailType === EmailType.verify_reviewer ? 'reviewer' : 'buyer'}?token=${verifyAccountToken}`,
     year: new Date().getFullYear(),
   };
 
   return ejs.renderFile(templatePath, { ...ejsData });
 };
 
-const paymentRequestData = async (
+const requestData = async (
   id: string,
   total: number,
   tel: string,
-  paymentUrl: string
+  paymentUrl: string,
+  cartItems: any[] = []
 ) => {
 
+  const header = cartItems.length === 0 ? "Here's a quick view of the total amount this invoice is for, contact the seller for a detailed breakdown of the total amount" : 
+  "Here's a quick view of the cart items, and the breakdown of the total amount of each item";
+  const footer = cartItems.length === 0 ? 'Complete payment relax and wait for delivery<br> for this purchase' : 
+  'Checkout cart and proceed to payment';
+  const message = cartItems.length === 0 ? 'Awaiting notification of successful payment for order amount below, delivery of purchase will commerce on confirmation' : 
+  'Waiting on you to finalize cart items and checkout. Offers and promotions will be added at checkout to subsidize payment';
+  const actionWord = cartItems.length === 0 ? 'PAY' : 'VIEW';
   //preparing email template and its data
   const templatePath = path.join(
     process.cwd(),
@@ -108,8 +118,14 @@ const paymentRequestData = async (
   const ejsData = {
     total,
     businessTel: tel,
-    orderId: id,
+    id,
     url: paymentUrl,
+    footer,
+    actionWord,
+    header,
+    isCart: cartItems.length > 0 ? true : false,
+    message,
+    cartItems
   };
 
   return ejs.renderFile(templatePath, { ...ejsData });
@@ -118,7 +134,7 @@ const paymentRequestData = async (
 export const sendMail = async ({ password, email, emailType, userId, emailBody }: SendMail) => {
   try {
     crypto.randomBytes(32, async (err, buffer) => {
-      let vendorEmailBody, resetPasswordEmailBody, updatedTo, verifyEmailBody, newPasswordEmailBody, paymentRequestBody  = '';
+      let vendorEmailBody, resetPasswordEmailBody, updatedTo, verifyEmailBody, reminderEmailBody, paymentRequestBody  = '';
 
       //create a hash token
       const hashedToken = buffer.toString("hex");
@@ -134,11 +150,11 @@ export const sendMail = async ({ password, email, emailType, userId, emailBody }
         if(password){
 
         }else{
-
+          reminderEmailBody = await reminderData(emailBody.contact, undefined, emailBody.date, emailBody.message);
         }
       } else if(emailType === EmailType.request) {
-        paymentRequestBody = await paymentRequestData(
-          emailBody.id, emailBody.total, '+2349061681807', emailBody.link
+        paymentRequestBody = await requestData(
+          emailBody.id, emailBody.total, '+2349061681807', emailBody.link, emailBody.items
         );
       } else {
         await User.findOneAndUpdate(userId, {
@@ -156,7 +172,7 @@ export const sendMail = async ({ password, email, emailType, userId, emailBody }
           name: 'Oyinye Couture',
           email: 'hello@oyinye.com'
         },
-        subject: emailType === EmailType.reset ? "Password Reset" : emailType === EmailType.reminder && password ? 'New Password' : emailType === EmailType.reminder && !password ? 'Reminder!' : emailType === EmailType.request ? 'Payment Update' : "Verify your Email",
+        subject: emailType === EmailType.reset ? "Password Reset" : emailType === EmailType.reminder && password ? 'New Password' : emailType === EmailType.reminder && !password ? 'Appointment Update' : emailType === EmailType.request ? 'Payment Update' : "Verify your Email",
         html: emailType === EmailType.reset ? resetPasswordEmailBody! : emailType === EmailType.request ? paymentRequestBody  : verifyEmailBody!
       };
 

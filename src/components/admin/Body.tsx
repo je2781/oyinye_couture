@@ -16,8 +16,6 @@ import {
   lineGraphOptions,
   months,
   sizes,
-  setBrowserUsageData,
-  // horizontalBarGraphOptions,
   verticalBarGraphOptions,
   productTypeGraphOptions,
   deliveryOptionsGraphOptions,
@@ -25,14 +23,16 @@ import {
 import "./Body.css";
 import React from "react";
 import toast from "react-hot-toast";
-import { SizeData } from "@/interfaces";
+import { EmailType, SizeData, Value } from "@/interfaces";
 import axios from "axios";
+import Calendar from 'react-calendar';
 import { Swiper, SwiperSlide } from "swiper/react";
 import FullCalendar from '@fullcalendar/react';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
 
 import "swiper/css";
+import 'react-calendar/dist/Calendar.css';
 import useWindowWidth from "../helpers/getWindowWidth";
 import { AdminSettingsModal, MobileModal } from "../ui/Modal";
 import useGlobal from "@/store/useGlobal";
@@ -42,12 +42,15 @@ import { Chart, LinearScale, CategoryScale, BarElement, PointElement, LineElemen
 Chart.register(LinearScale, CategoryScale, BarElement, PointElement, LineElement, Filler, Legend, ArcElement);
 
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
+import Link from "next/link";
+import { sendMail } from "@/helpers/mailer";
 
 
 export default function Body({
   pathName,
   extractedOrders,
   data, 
+  appointmentsData,
   visitors
 }: any) {
   const colorList = [
@@ -65,11 +68,12 @@ export default function Body({
     colorsReducer,
     []
   );
-  const frontUploadRef = React.useRef<HTMLInputElement>(null);
-  const backUploadRef = React.useRef<HTMLInputElement>(null);
-  const calendarRef = React.useRef<HTMLElement>(null);
   const [isChecked, setIsChecked] = React.useState(false);
   const [orders, setOrders] = React.useState<any[]>(extractedOrders);
+  const [appts, setAppts] = React.useState<any[]>(appointmentsData.appointments);
+  const [orderListLength, setOrderListLength] = React.useState('10');
+  const [isReading, setIsReading] = React.useState(false);
+  const [isReplying, setIsReplying] = React.useState(false);
   const [frontFilename, setFrontFilename] = React.useState<string | null>(null);
   const [backFilename, setBackFilename] = React.useState<string | null>(null);
   const [isAdminSettingsOpen, setIsAdminSettingsOpen] = React.useState(false);
@@ -84,6 +88,8 @@ export default function Body({
   const [end, setEnd] = React.useState<string>(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
   const [startDate, setStartDate] = React.useState(`${(currentDate - 29) <= 0 ? new Date(currentDate -29 <= 0 && currentMonth === 0 ? currentYear-1 : currentYear, currentDate -29 <= 0 && currentMonth === 0 ? 8 : currentMonth-4, 0).getDate() - Math.abs(currentDate - 29) : currentDate - 29} ${(currentDate - 29) <= 0 ? (currentMonth === 0 ? months[7] : months[currentMonth-5]) : months[currentMonth -4]} ${(currentDate - 29) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}`);
   const [endDate, setEndDate] = React.useState(`${new Date().getDate()} ${months[currentMonth]} ${new Date().getFullYear()}`);
+  const [endValue, setEndValue] = React.useState<Value>(new Date(endDate));
+  const [startValue, setStartValue] = React.useState<Value>(new Date(startDate));
   const [price, setPrice] = React.useState("");
   const [stock, setStock] = React.useState("");
   const [title, setTitle] = React.useState("");
@@ -99,11 +105,10 @@ export default function Body({
   const [paymentTypeData, setPaymentTypeData] = React.useState(Object.values(monthPaymentTypeData)[4]);
   let width = useWindowWidth();
   const { isMobileModalOpen, setIsMobileModalOpen } = useGlobal();
+  const [loader, setLoader] = React.useState(false);
  
 
-  let file: File | null;
   let timerId: NodeJS.Timeout | null = null;
-  let updatedOrders: any[] = [];
 
   let currentBgColors: string[] = [];
 
@@ -333,17 +338,22 @@ export default function Body({
   }
 
   React.useEffect(() => {
-    let adminOptions = document.querySelector(
-      "#admin-settings-modal"
-    ) as HTMLElement;
-    if (isAdminSettingsOpen && adminOptions) {
-      adminOptions.classList.add("slide-down");
-      adminOptions.classList.remove("slide-up");
-    } else if (!isAdminSettingsOpen && adminOptions) {
-      adminOptions.classList.remove("slide-down");
-      adminOptions.classList.add("slide-up");
-    }
-  }, [isAdminSettingsOpen]);
+    const timerId = setTimeout(async () => {
+      if(orderListLength !== '10'){
+        try {
+          setLoader(true);
+          const res = await axios.get(`/api/orders/${orderListLength}?page=1`);
+          setOrders(res.data.orders);
+        } catch (error: any) {
+          toast.error(error.message);
+        }finally{
+          setLoader(false);
+        }
+      }
+    }, 3000);
+
+    return () => clearTimeout(timerId);
+  }, [orderListLength]);
 
   React.useEffect(() => {
     if (isAdminSettingsOpen) {
@@ -369,19 +379,15 @@ export default function Body({
   }, [isMobileModalOpen]);
 
   const hideAdminSettingsModalHandler = () => {
-    let adminOptions = document.querySelector(
-      "#admin-settings-modal"
-    ) as HTMLElement;
-    if (adminOptions) {
-      adminOptions.classList.remove("slide-down");
-      adminOptions.classList.add("slide-up");
-      timerId = setTimeout(() => {
-        setIsAdminSettingsOpen(false);
-      }, 300);
-    } else {
+      const optionsMenus = document.querySelectorAll('[id^=options-menu]');
+
+      optionsMenus.forEach(menu => {
+        if(!menu.classList.contains('hidden')){
+          menu.classList.add("hidden");
+        }
+      })
       setIsAdminSettingsOpen(false);
-    }
-  };
+  }
 
   const hideMobileModalHandler = () => {
     let mobileNav = document.querySelector("#mobile-nav") as HTMLElement;
@@ -395,29 +401,70 @@ export default function Body({
       setIsMobileModalOpen(false);
     }
   };
-  //extracting order details
-  for (let order of orders) {
-    updatedOrders.push({
-      totalItems: order.items
-        .map((item: any) => item.quantity)
-        .reduce((prev: number, current: number) => prev + current, 0),
-      orderItemVariantIds: order.items.map((item: any) => item.variantId),
-      status: order.status,
-      paymentType: order.paymentType,
-      paymentStatus: order.paymentStatus,
-      id: order.id,
-    });
-  }
 
-  const browserUsageData = {
-    chrome: visitors.filter((visitor: any) => visitor.browser === 'Chrome').length,
-    safari: visitors.filter((visitor: any) => visitor.browser === 'Safari').length,
-    firefox: visitors.filter((visitor: any) => visitor.browser === 'Firefox').length,
-    ie: visitors.filter((visitor: any) => visitor.browser === 'IE').length,
-    edgeL: visitors.filter((visitor: any) => visitor.browser === 'Edge (Legacy)').length,
-    opera: visitors.filter((visitor: any) => visitor.browser === 'Opera').length,
-    edgeC: visitors.filter((visitor: any) => visitor.browser === 'Edge (Chromium)').length,
+  const sortOrderList = (e: React.MouseEvent, type: string, key = 'id') => {
+    let item = e.currentTarget;
+    let angleUp = item.querySelector('i.fa-angle-up');
+    let angleDown = item.querySelector('i.fa-angle-down');
+    let angleDowns = document.querySelectorAll(`i.fa-angle-down:not(#${type})`);
+    let angleUps = document.querySelectorAll(`i.fa-angle-up:not(#${type})`);
+  
+    // Make a copy of the orders array to avoid mutating the original array
+    let sortedOrders = [...orders];
+  
+    // Update angleDown's appearance accordingly
+    if (angleDown?.classList.contains('text-secondary-400/20') && angleUp?.classList.contains('text-secondary-400')) {
+      angleDown.classList.remove('text-secondary-400/20');
+      angleDown.classList.add('text-secondary-400');
+    } else {
+      angleDown?.classList.remove('text-secondary-400');
+      angleDown?.classList.add('text-secondary-400/20');
+    }
+
+    if (angleUp?.classList.contains('text-secondary-400')) {
+      // Sort in descending order if angleUp is active
+      angleUp.classList.remove('text-secondary-400');
+      angleUp.classList.add('text-secondary-400/20');
+      sortedOrders.sort((a, b) => {
+        if (a[key] < b[key]) return 1;
+        if (a[key] > b[key]) return -1;
+        return 0;
+      });
+    }else {
+      // Sort in ascending order if angleUp is not active
+      angleUp?.classList.add('text-secondary-400');
+      angleUp?.classList.remove('text-secondary-400/20');
+      sortedOrders.sort((a, b) => {
+        if (a[key] > b[key]) return 1;
+        if (a[key] < b[key]) return -1;
+        return 0;
+      });
+    }
+  
+    angleDowns.forEach(angleDown => {
+      angleDown.classList.remove('text-secondary-400');
+      angleDown.classList.add('text-secondary-400/20');
+    });
+
+    angleUps.forEach(angleUp => {
+        angleUp.classList.remove('text-secondary-400');
+        angleUp.classList.add('text-secondary-400/20');
+    });
+  
+    // Set the sorted orders state to trigger a re-render
+    setOrders(sortedOrders);
   };
+  
+
+  // const browserUsageData = {
+  //   chrome: visitors.filter((visitor: any) => visitor.browser === 'Chrome').length,
+  //   safari: visitors.filter((visitor: any) => visitor.browser === 'Safari').length,
+  //   firefox: visitors.filter((visitor: any) => visitor.browser === 'Firefox').length,
+  //   ie: visitors.filter((visitor: any) => visitor.browser === 'IE').length,
+  //   edgeL: visitors.filter((visitor: any) => visitor.browser === 'Edge (Legacy)').length,
+  //   opera: visitors.filter((visitor: any) => visitor.browser === 'Opera').length,
+  //   edgeC: visitors.filter((visitor: any) => visitor.browser === 'Edge (Chromium)').length,
+  // };
 
   return (
       <main
@@ -471,11 +518,8 @@ export default function Body({
                           currentBgColors,
                           setImgData,
                           setFrontFilename,
-                          frontUploadRef,
-                          file
                         )
                       }
-                      ref={frontUploadRef}
                       disabled={currentBgColors.length === 0}
                     />
                   </div>
@@ -499,19 +543,17 @@ export default function Body({
                     <input
                       id="upload-back"
                       type="file"
-                      disabled={currentBgColors.length === 0}
+                      disabled={currentBgColors.length === 0 || backFilename !== null}
                       className="hidden"
                       onChange={(e) =>
                         handleBackImageupload(
+                          e,
                           dispatchAction,
                           currentBgColors,
                           setImgData,
                           setBackFilename,
-                          backUploadRef,
-                          file
                         )
                       }
-                      ref={backUploadRef}
                     />
                   </div>
                 </div>
@@ -651,7 +693,7 @@ export default function Body({
                   </button>
                 </div>
               </form>
-              <section className="px-3 flex flex-col gap-y-5 text-[1rem] py-2 mt-3">
+              <div className="px-3 flex flex-col gap-y-5 text-[1rem] py-2 mt-3">
                 <header className="text-white font-sans font-medium">
                   My Drive
                 </header>
@@ -662,11 +704,11 @@ export default function Body({
                       className="cursor-pointer transition-all duration-200 pl-0 hover:pl-2 ease-out  inline-flex flex-row gap-x-3 items-center text-secondary-400"
                     >
                       <i className="fa-regular fa-folder"></i>
-                      <h3>{item}</h3>
+                      <h2>{item}</h2>
                     </div>
                   ))}
                 </ul>
-              </section>
+              </div>
             </section>
             <section className="lg:w-[70%] w-full h-full flex flex-col gap-y-16">
               {imgData.length > 0 && (
@@ -695,14 +737,14 @@ export default function Body({
                   ))}
                 </Swiper>
               )}
-              <section className="flex flex-col items-start lg:gap-y-10 gap-y-5 font-sans w-full">
+              <div className="flex flex-col items-start lg:gap-y-10 gap-y-5 font-sans w-full">
                 <h1 className="font-medium lg:text-lg text-white text-[1rem]">
                   Folders
                 </h1>
                 <div className="flex flex-row gap-x-4 text-secondary-400 lg:pl-5 items-center">
                   <i className="fa-regular fa-folder-open lg:text-4xl text-3xl"></i>
                   <header className="flex flex-col items-start lg:text-[1rem] text-sm">
-                    <h3>Photos</h3>
+                    <h2>Photos</h2>
                     <p>
                       {imgData.length}files,&nbsp;
                       {(
@@ -714,8 +756,8 @@ export default function Body({
                     </p>
                   </header>
                 </div>
-              </section>
-              <section className="flex flex-col items-start lg:gap-y-4 gap-y-2 font-sans w-full">
+              </div>
+              <div className="flex flex-col items-start lg:gap-y-4 gap-y-2 font-sans w-full">
                 <h1 className="font-medium lg:text-lg text-white text-[1rem] text-left">
                   Files
                 </h1>
@@ -740,7 +782,7 @@ export default function Body({
                     </div>
                   )}
                 </div>
-              </section>
+              </div>
             </section>
             <section className="lg:hidden flex flex-col gap-y-6 items-start w-full">
               <form
@@ -786,11 +828,8 @@ export default function Body({
                           currentBgColors,
                           setImgData,
                           setFrontFilename,
-                          frontUploadRef,
-                          file
                         )
                       }
-                      ref={frontUploadRef}
                       disabled={currentBgColors.length === 0}
                     />
                   </div>
@@ -818,15 +857,13 @@ export default function Body({
                       className="hidden"
                       onChange={(e) =>
                         handleBackImageupload(
+                          e,
                           dispatchAction,
                           currentBgColors,
                           setImgData,
                           setBackFilename,
-                          backUploadRef,
-                          file
                         )
                       }
-                      ref={backUploadRef}
                     />
                   </div>
                 </section>
@@ -976,16 +1013,8 @@ export default function Body({
                 <span>Show</span>
                 <input
                   autoFocus
-                  defaultValue={10}
-                  onBlur={async (e) => {
-                    try {
-                      
-                      const res = await axios.get(`/api/orders/${e.target.value}?page=1`);
-                      setOrders(res.data.orders);
-                    } catch (error) {
-                      
-                    }
-                  }}
+                  value={orderListLength}
+                  onChange={(e) => setOrderListLength(e.target.value)}
                   className="text-white text-center w-10 h-8 px-2 py-1 bg-transparent border border-secondary-400/20 rounded-[5px] focus:outline-none "
                 />
                 <span>entries</span>
@@ -997,78 +1026,85 @@ export default function Body({
               :
               <>
                 <table className="w-full border-spacing-y-2 text-secondary-400 text-xs md:table hidden">
-                  <thead>
+                  <thead className="w-full relative">
                     <tr>
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-[20%]">
                         <div className="inline-flex flex-row justify-between items-center w-full pl-9 pr-1 py-2">
                           <span>ORDER ID</span>
-                          <div className="flex flex-col text-[1rem] cursor-pointer">
-                            <i className="fa-solid fa-angle-up text-secondary-400"></i>
-                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2"></i>
+                          <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'order-id')}>
+                            <i className="fa-solid fa-angle-up text-secondary-400" id='order-id'></i>
+                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='order-id'></i>
                           </div>
                         </div>
                       </th>
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-[25%] py-1">
                         <div className="inline-flex flex-row justify-between gap-x-14 items-center w-full pl-9 pr-1 py-2">
                           <span>VAR ID(s)</span>
-                          <div className="flex flex-col text-[1rem] cursor-pointer">
-                            <i className="fa-solid fa-angle-up text-secondary-400/20"></i>
-                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2"></i>
+                          <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'var-id')}>
+                            <i className="fa-solid fa-angle-up text-secondary-400/20" id="var-id"></i>
+                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='var-id'></i>
                           </div>
                         </div>
                       </th>
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-[10%] py-1">
                         <div className="inline-flex flex-row justify-end gap-x-4 items-center w-full px-1 py-2">
                           <span>TOTAL</span>
-                          <div className="flex flex-col text-[1rem] cursor-pointer">
-                            <i className="fa-solid fa-angle-up text-secondary-400/20"></i>
-                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2"></i>
+                          <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'total', 'total')} >
+                            <i className="fa-solid fa-angle-up text-secondary-400/20" id='total'></i>
+                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='total'></i>
                           </div>
                         </div>
                       </th>
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-[15%] py-1">
                         <div className="inline-flex flex-row justify-end gap-x-11 items-center w-full px-1 py-2">
                           <span>STATE</span>
-                          <div className="flex flex-col text-[1rem] cursor-pointer">
-                            <i className="fa-solid fa-angle-up text-secondary-400/20"></i>
-                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2"></i>
+                          <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'state', 'status')}>
+                            <i className="fa-solid fa-angle-up text-secondary-400/20" id="state"></i>
+                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='state'></i>
                           </div>
                         </div>
                       </th>
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-[12.5%] py-1">
                         <div className="inline-flex flex-row justify-end gap-x-9 items-center w-full px-1 py-2">
                           <span>TYPE</span>
-                          <div className="flex flex-col text-[1rem] cursor-pointer">
-                            <i className="fa-solid fa-angle-up text-secondary-400/20"></i>
-                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2"></i>
+                          <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'type', 'paymentType')}>
+                            <i className="fa-solid fa-angle-up text-secondary-400/20" id='type'></i>
+                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='type'></i>
                           </div>
                         </div>
                       </th>
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-[12.5%] py-1">
                         <div className="inline-flex flex-row justify-end gap-x-7 items-center w-full px-1 py-2">
                           <span>STATUS</span>
-                          <div className="flex flex-col text-[1rem] cursor-pointer">
-                            <i className="fa-solid fa-angle-up text-secondary-400/20"></i>
-                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2"></i>
+                          <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'status', 'paymentStatus')}>
+                            <i className="fa-solid fa-angle-up text-secondary-400/20" id='status'></i>
+                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='status'></i>
                           </div>
                         </div>
                       </th>
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-[5%] py-1"></th>
                     </tr>
+                    {loader && (
+                      <div className="absolute bottom-0 left-0 w-full h-[4px]">
+                        <div className="trailing-progress-bar w-full">
+                          <div className="trailing-progress bg-blue-500 h-full"></div>
+                        </div>
+                      </div>
+                    )}
                   </thead>
                   <tbody className="text-sm">
-                    {updatedOrders.map((order: any, i: number) => (
+                    {orders.map((order: any, i: number) => (
                       <tr key={i}>
                         <td className="bg-transparent text-start border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-[20%] py-5 pl-9 pr-1 font-medium">
                           {order.id}
                         </td>
                         <td className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-[25%] py-5 font-medium pl-9 pr-1">
-                          {order.orderItemVariantIds.map((variantId: string, i: number) => (
-                            <span key={i}>{variantId},&nbsp;</span>
+                          {order.items.map((item: any, i: number) => (
+                            <span key={i}>{item.variantId},&nbsp;</span>
                           ))}
                         </td>
                         <td className="bg-transparent text-center border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-[10%] py-5 font-medium">
-                          {order.totalItems}
+                          {order.totalQuantity}
                         </td>
                         <td className="bg-transparent text-center border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-[15%] py-5 font-medium">
                           {order.status}
@@ -1086,10 +1122,12 @@ export default function Body({
                             className="fa-solid fa-ellipsis-vertical text-lg cursor-pointer"
                             onClick={(e) => {
                               let item = e.currentTarget;
-                              let menu = item.parentNode?.querySelector(
-                                "#options-menu"
-                              ) as HTMLDivElement;
-                              menu.classList.toggle("hidden");
+                              if(!loader){
+                                let menu = item.parentNode?.querySelector(
+                                  "#options-menu"
+                                ) as HTMLDivElement;
+                                menu.classList.toggle("hidden");
+                              }
                             }}
                             id="options-ellipsis-icon"
                           ></i>
@@ -1101,29 +1139,34 @@ export default function Body({
                             aria-orientation="vertical"
                             aria-labelledby="options-ellipsis-icon"
                           >
-                            <h3
+                            <h2
                               onClick={() => setIsAdminSettingsOpen(true)}
                               className="hover:text-accent text-xs cursor-pointer"
                             >
                               Update Payment status
-                            </h3>
+                            </h2>
                             {order.paymentType === "streetzwyze" && (
-                              <h3
+                              <h2
                                 onClick={() => setIsAdminSettingsOpen(true)}
                                 className="hover:text-accent text-xs cursor-pointer"
                               >
                                 Send Payment request
-                              </h3>
+                              </h2>
                             )}
                             {order.status === "add to cart" && (
                               <button onClick={async (e) => {
                                 try {
                                   setIsLoading(true);
-                                  await axios.post('/api/orders/send/reminder');
+                                  await axios.post('/api/orders/send/reminder',{
+                                    items: order.items
+                                  });
                                 } catch (error: any) {
                                   toast.error(error.message);
                                 }finally{
                                   setIsLoading(false);
+                                  toast.success('reminder sent', {
+                                    position: 'top-center'
+                                  });
                                 }
                               }} className="hover:text-accent text-xs">
                                 {isLoading ? 'Processing..' : 'Send Reminder'}
@@ -1153,7 +1196,7 @@ export default function Body({
                                       </h2>
                                     </div>
                                     <select id='payment-status' className="text-sm text-gray-600 focus:outline-none w-[50%] md:w-[30%]">
-                                      <option hidden>choose status</option>
+                                      <option hidden selected value=''>choose status</option>
                                       <option value="pending">pending</option>
                                       <option value="paid">paid</option>
                                       <option value="failed">failed</option>
@@ -1161,6 +1204,9 @@ export default function Body({
                                   </div>
                                   <button onClick={async (e) => {
                                     let selectedStatus = document.querySelector('#payment-status') as HTMLSelectElement;
+                                    if(selectedStatus && selectedStatus.value.length === 0){
+                                      return;
+                                    }
                                     try {
                                       setIsLoading(true);
                                       await axios.post('/api/orders/update/payment-status', {
@@ -1170,6 +1216,9 @@ export default function Body({
                                       toast.error(error.message);
                                     }finally{
                                       setIsLoading(false);
+                                      toast.success('payment status updated', {
+                                        position: 'top-center'
+                                      });
                                     }
                                   }} className="px-7 py-2 bg-accent text-white hover:ring-accent hover:ring-1 rounded-md text-xs">
                                     {isLoading ? <span className="border-2 border-transparent rounded-full border-t-white border-r-white w-[15px] h-[15px] spin"></span> : 'Update Status'}
@@ -1195,6 +1244,9 @@ export default function Body({
                                       ></textarea>
                                       <button onClick={async (e) => {
                                         let content = document.querySelector('#request-content') as HTMLSelectElement;
+                                        if(content && content.value.length === 0){
+                                          return;
+                                        }
                                         try {
                                           setIsLoading(true);
                                           await axios.post('/api/orders/send/payment-request', {
@@ -1206,6 +1258,9 @@ export default function Body({
                                           toast.error(error.message);
                                         }finally{
                                           setIsLoading(false);
+                                          toast.success('payment request sent', {
+                                            position: 'top-center'
+                                          });
                                         }
                                       }} className="px-7 py-2 w-full bg-accent text-white hover:ring-accent hover:ring-1 rounded-md text-xs">
                                         {isLoading ? <span className="border-2 border-transparent rounded-full border-t-white border-r-white w-[15px] h-[15px] spin"></span> : <span>Send&nbsp;&nbsp;
@@ -1228,16 +1283,16 @@ export default function Body({
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-1">
                         <div className="inline-flex flex-row justify-between items-center w-full pl-9 pr-1 py-2">
                           <span>ORDER ID</span>
-                          <div className="flex flex-col text-[1rem] cursor-pointer ">
-                            <i className="fa-solid fa-angle-up text-secondary-400"></i>
-                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2"></i>
+                          <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'order-id-sm-screen')}>
+                            <i className="fa-solid fa-angle-up text-secondary-400" id='order-id-sm-screen'></i>
+                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='order-id-sm-screen'></i>
                           </div>
                         </div>
                       </th>
                     </tr>
                   </thead>
                   <tbody className="text-sm">
-                    {updatedOrders.map((order: any, i: number) => (
+                    {orders.map((order: any, i: number) => (
                       <tr key={i}>
                         <td className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-5 pl-9 pr-1 font-medium flex flex-row justify-between items-center">
                           <span>{order.id}</span>
@@ -1246,10 +1301,12 @@ export default function Body({
                               className="fa-solid fa-ellipsis-vertical text-lg cursor-pointer"
                               onClick={(e) => {
                                 let item = e.currentTarget;
-                                let menu = item.parentNode?.querySelector(
-                                  "#options-menu-sm-screen"
-                                ) as HTMLDivElement;
-                                menu.classList.toggle("hidden");
+                                if(!loader){
+                                  let menu = item.parentNode?.querySelector(
+                                    "#options-menu-sm-screen"
+                                  ) as HTMLDivElement;
+                                  menu.classList.toggle("hidden");
+                                }
                               }}
                             ></i>
                             <span className="sr-only">Open admin options</span>
@@ -1260,29 +1317,34 @@ export default function Body({
                               aria-orientation="vertical"
                               aria-labelledby="options-ellipsis-icon"
                             >
-                              <h3
+                              <h2
                                 onClick={() => setIsAdminSettingsOpen(true)}
                                 className="hover:text-accent text-xs cursor-pointer"
                               >
                                 Update Payment status
-                              </h3>
+                              </h2>
                               {order.paymentType === "streetzwyze" && (
-                                <h3
+                                <h2
                                   onClick={() => setIsAdminSettingsOpen(true)}
                                   className="hover:text-accent text-xs cursor-pointer"
                                 >
                                   Send Payment request
-                                </h3>
+                                </h2>
                               )}
                               {order.status === "add to cart" && (
                                 <button onClick={async (e) => {
                                   try {
                                     setIsLoading(true);
-                                    await axios.post('/api/orders/send/reminder');
+                                    await axios.post('/api/orders/send/reminder',{
+                                      items: order.items
+                                    });
                                   } catch (error: any) {
                                     toast.error(error.message);
                                   }finally{
                                     setIsLoading(false);
+                                    toast.success('reminder sent', {
+                                      position: 'top-center'
+                                    })
                                   }
                                 }} className="hover:text-accent text-xs">
                                   {isLoading ? 'Processing..' : 'Send Reminder'}
@@ -1301,20 +1363,20 @@ export default function Body({
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-1">
                         <div className="inline-flex flex-row justify-between items-center w-full pl-9 pr-1 py-2">
                           <span>VAR ID(s)</span>
-                          <div className="flex flex-col text-[1rem] cursor-pointer">
-                            <i className="fa-solid fa-angle-up text-secondary-400/20"></i>
-                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2"></i>
+                          <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'var-id-sm-screen')}>
+                            <i className="fa-solid fa-angle-up text-secondary-400/20" id='var-id-sm-screen'></i>
+                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='var-id-sm-screen'></i>
                           </div>
                         </div>
                       </th>
                     </tr>
                   </thead>
                   <tbody className="text-sm">
-                    {updatedOrders.map((order: any, i: number) => (
+                    {orders.map((order: any, i: number) => (
                       <tr key={i}>
                         <td className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-5 font-medium pl-9 pr-1">
-                          {order.orderItemVariantIds.map((variantId: string, i: number) => (
-                            <span key={i}>{variantId},&nbsp;</span>
+                          {order.items.map((item: any, i: number) => (
+                            <span key={i}>{item.variantId},&nbsp;</span>
                           ))}
                         </td>
                       </tr>
@@ -1327,19 +1389,19 @@ export default function Body({
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-1">
                         <div className="inline-flex flex-row justify-between items-center w-full pl-9 pr-1 py-2">
                           <span>TOTAL</span>
-                          <div className="flex flex-col text-[1rem] cursor-pointer">
-                            <i className="fa-solid fa-angle-up text-secondary-400/20"></i>
-                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2"></i>
+                          <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'total-id-sm-screen', 'total')}>
+                            <i className="fa-solid fa-angle-up text-secondary-400/20" id='total-id-sm-screen'></i>
+                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='total-id-sm-screen'></i>
                           </div>
                         </div>
                       </th>
                     </tr>
                   </thead>
                   <tbody className="text-sm">
-                    {updatedOrders.map((order: any, i: number) => (
+                    {orders.map((order: any, i: number) => (
                       <tr key={i}>
                         <td className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-5 pl-9 pr-1 font-medium">
-                          {order.totalItems}
+                          {order.totalQuantity}
                         </td>
                       </tr>
                     ))}
@@ -1351,16 +1413,16 @@ export default function Body({
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-1">
                         <div className="inline-flex flex-row justify-between items-center w-full pl-9 pr-1 py-2">
                           <span>STATE</span>
-                          <div className="flex flex-col text-[1rem] cursor-pointer">
-                            <i className="fa-solid fa-angle-up text-secondary-400/20"></i>
-                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2"></i>
+                          <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'state-id-sm-screen', 'status')}>
+                            <i className="fa-solid fa-angle-up text-secondary-400/20" id='state-id-sm-screen'></i>
+                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='state-id-sm-screen'></i>
                           </div>
                         </div>
                       </th>
                     </tr>
                   </thead>
                   <tbody className="text-sm">
-                    {updatedOrders.map((order: any, i: number) => (
+                    {orders.map((order: any, i: number) => (
                       <tr key={i}>
                         <td className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-5 pl-9 pr-1 font-medium">
                           {order.status}
@@ -1375,16 +1437,16 @@ export default function Body({
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-1">
                         <div className="inline-flex flex-row justify-between items-center w-full pl-9 pr-1 py-2">
                           <span>TYPE</span>
-                          <div className="flex flex-col text-[1rem] cursor-pointer">
-                            <i className="fa-solid fa-angle-up text-secondary-400/20"></i>
-                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2"></i>
+                          <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'type-id-sm-screen', 'paymentType')}>
+                            <i className="fa-solid fa-angle-up text-secondary-400/20" id='type-id-sm-screen'></i>
+                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='type-id-sm-screen'></i>
                           </div>
                         </div>
                       </th>
                     </tr>
                   </thead>
                   <tbody className="text-sm">
-                    {updatedOrders.map((order: any, i: number) => (
+                    {orders.map((order: any, i: number) => (
                       <tr key={i}>
                         <td className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-5 pl-9 pr-1 font-medium">
                           {order.paymentType.length === 0 ? "---" : order.paymentType}
@@ -1399,16 +1461,16 @@ export default function Body({
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-1">
                         <div className="inline-flex flex-row justify-between items-center w-full pl-9 pr-1 py-2">
                           <span>STATUS</span>
-                          <div className="flex flex-col text-[1rem] cursor-pointer">
-                            <i className="fa-solid fa-angle-up text-secondary-400/20"></i>
-                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2"></i>
+                          <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'status-id-sm-screen', 'paymentStatus')}>
+                            <i className="fa-solid fa-angle-up text-secondary-400/20" id='status-id-sm-screen'></i>
+                            <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='status-id-sm-screen'></i>
                           </div>
                         </div>
                       </th>
                     </tr>
                   </thead>
                   <tbody className="text-sm">
-                    {updatedOrders.map((order: any, i: number) => (
+                    {orders.map((order: any, i: number) => (
                       <tr key={i}>
                         <td className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-5 pl-9 pr-1 font-medium">
                           {order.paymentStatus.length === 0
@@ -1484,7 +1546,7 @@ export default function Body({
                 </Bar>
               </article>
               {
-                isAdminSettingsOpen && pathName === "summary" && <AdminSettingsModal onClose={hideAdminSettingsModalHandler}  left='20rem' width='40rem' classes='h-fit bg-white'>
+                isAdminSettingsOpen && pathName === "summary" && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white'>
                   
                   <section className="flex-col gap-y-6 items-start px-5 py-6 justify-center flex h-full">
                       
@@ -1862,6 +1924,785 @@ export default function Body({
               }
             </section>
           )
+        }
+        {
+          pathName === 'email' && (
+            <section className="flex flex-col w-full gap-y-5 lg:px-8 text-secondary-400 font-sans">
+              <header className="text-lg pb-4 border font-medium border-l-0 border-t-0 border-r-0 border-secondary-400/20">
+                  Inbox
+              </header>
+              <p className="text-[.8rem]">This page contains messages from clients regarding appointments and other enquiries</p>
+              <section className='md:w-[45%] w-full flex flex-row flex-wrap justify-start items-center text-sm gap-x-2 gap-y-2 mt-6'>
+                <div className="md:inline-block md:w-[21%] hidden relative">
+                    <button 
+                    onClick={(e) => {
+                        let downAngle = e.currentTarget.querySelector("i.actions-angle-down");
+                        let actionsDropdown = document.getElementById("actions-dropdown");
+                        let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#actions-dropdown)');
+                        let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                        let filterAngleDown = document.querySelector('i.filter-angle-down');
+                        let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
+
+                        if(calendarAngleDown?.classList.contains('ad-rotate')){
+                          calendarAngleDown?.classList.remove("ad-rotate");
+                          calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                        }
+                        if(filterAngleDown?.classList.contains('ad-rotate')){
+                          filterAngleDown?.classList.remove("ad-rotate");
+                          filterAngleDown?.classList.add("ad-rotate-anticlock");
+                        }
+                        if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                          activeActionAngleDown?.classList.remove("ad-rotate");
+                          activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                        }
+
+                        dropdowns.forEach(dropdown => {
+                          if(dropdown.classList.contains('show')){
+                            dropdown.classList.add('hide');
+                            dropdown.classList.remove('show');
+                          }
+                        });
+
+                        if(downAngle && actionsDropdown){
+                            if(!downAngle.classList.contains("ad-rotate")){
+                                downAngle.classList.add("ad-rotate");
+                                downAngle.classList.remove("ad-rotate-anticlock");
+                                actionsDropdown.classList.remove('hide');
+                                actionsDropdown.classList.add('show');
+                            }else{
+                                downAngle.classList.remove("ad-rotate");
+                                downAngle.classList.add("ad-rotate-anticlock");
+                                actionsDropdown.classList.add('hide');
+                                actionsDropdown.classList.remove('show');
+                            }
+                        }
+                    }}
+                    id='actions-button'
+                    className="w-full rounded-sm font-medium px-2 py-[6px] gap-x-2 cursor-pointer bg-transparent border border-secondary-400 inline-flex flex-row items-end">
+                        <i className="fa-solid fa-circle-play"></i>
+                        <span className="text-xs">Action</span>
+                        <i className="fa-solid fa-angle-down text-xs actions-angle-down"></i>
+                    </button>
+                    <ul id='actions-dropdown' className="absolute z-30 w-[130%] text-xs text-gray-600 font-medium bg-white rounded-md shadow-sm shadow-white flex-col hide">
+                        {[
+                          'Mark As Read',
+                          'Mark As Unread',
+                          'Save Messages',
+                          'Remove'
+                        ].map((action: string, i: number) => (
+                            <div>
+                                <li
+                                key={action}
+                                // onClick={(e) => handleSelect(rating, e)}
+                                className="cursor-pointer flex flex-row items-center justify-between p-2"
+                              >
+                                  {action}
+                              </li>
+                              {action !== 'Remove' && <hr className="border-secondary-400"/>}
+                            </div>
+                        ))}
+                    </ul>
+                </div>
+                <div className="md:inline-block md:w-[12%] hidden relative">
+                    <button 
+                      onClick={(e) => {
+                        let downAngle = e.currentTarget.querySelector("i.calendar-angle-down");
+                        let calendarDropdown = document.getElementById("calendar-dropdown");
+                        let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                        let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#calendar-dropdown)');
+                        let filterAngleDown = document.querySelector('i.filter-angle-down');
+                        let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
+
+                        if(actionsAngleDown?.classList.contains('ad-rotate')){
+                          actionsAngleDown?.classList.remove("ad-rotate");
+                          actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                        }
+                        if(filterAngleDown?.classList.contains('ad-rotate')){
+                          filterAngleDown?.classList.remove("ad-rotate");
+                          filterAngleDown?.classList.add("ad-rotate-anticlock");
+                        }
+                        if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                          activeActionAngleDown?.classList.remove("ad-rotate");
+                          activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                        }
+                        
+                        dropdowns.forEach(dropdown => {
+                          if(dropdown.classList.contains('show')){
+                            dropdown.classList.add('hide');
+                            dropdown.classList.remove('show');
+                          }
+                        });
+
+                        if(downAngle && calendarDropdown){
+                            if(!downAngle.classList.contains("ad-rotate")){
+                                downAngle.classList.add("ad-rotate");
+                                downAngle.classList.remove("ad-rotate-anticlock");
+                                calendarDropdown.classList.remove('hide');
+                                calendarDropdown.classList.add('show');
+                            }else{
+                                downAngle.classList.remove("ad-rotate");
+                                downAngle.classList.add("ad-rotate-anticlock");
+                                calendarDropdown.classList.add('hide');
+                                calendarDropdown.classList.remove('show');
+                            }
+                        }
+                      }}
+                    className="w-full rounded-sm font-medium px-2 py-[7px] gap-x-2 cursor-pointer bg-transparent border border-secondary-400 inline-flex flex-row items-end">
+                        <i className="fa-regular fa-calendar-days"></i>
+                        <i className="fa-solid fa-angle-down text-xs calendar-angle-down"></i>
+                    </button>
+                    <div className="hide absolute z-30 flex-col gap-y-3 pt-5 pb-4 px-3 h-fit w-[1000%] bg-white rounded-md" id='calendar-dropdown'>
+                      <div className="flex flex-row gap-x-1 mb-2">
+                          <div className="relative">
+                              <input 
+                              type="text"
+                              value={startDate}
+                              onChange={(e) => {
+                                //extracting date data from input
+                                let extractedDate, extractedYear;
+                                let extractedMonth = 0;
+                                
+                                extractedDate = parseInt(e.target.value.split(' ')[0]);
+                                for(let i = 0; i < months.length; i++){
+                                  if(months[i] === e.target.value.split(' ')[1]){
+                                    extractedMonth = i; 
+                                  }
+                                }
+                                extractedYear = parseInt(e.target.value.split(' ')[2]);
+                                //binding value to change event
+                                setStartDate(e.target.value);
+    
+                              const timeDiff = new Date(currentYear, currentMonth+1, currentDate).getTime() - new Date(extractedYear, extractedMonth!+1, extractedDate).getTime();
+                              //validation check
+                              if(timeDiff  < 86400000){
+                                alert('start date has to be at least 1 day apart from end date');
+                                return;
+                              }else{
+                                setStart(`${extractedYear}-${('0' + (extractedMonth! + 1)).slice(-2)}-${('0' + extractedDate).slice(-2)}`);
+    
+                                //clearing factory range and period
+                                setRange(null);
+                                setPeriod(null);
+    
+                                if(timeDiff <= 2505600000){
+                                  let range = timeDiff/86400000;
+    
+                                  setLineGraphData(Object.values(dailyData)[Math.round(range-1)]);
+                                  setProductTypeBarGraphData(Object.values(dailyProductTypeData)[Math.round(range-1)]);
+                                  setVisitorsBarGraphData(Object.values(dailyVisitorsData)[Math.round(range-1)]);
+                                  
+                                }
+    
+                                if(timeDiff > 31560000000 && timeDiff <= 378720000000){
+                                  let range = timeDiff/31560000000;
+    
+                                  setLineGraphData(Object.values(annualData)[Math.round(range-1)]);
+                                  setProductTypeBarGraphData(Object.values(annualProductTypeData)[Math.round(range-1)]);
+                                  setVisitorsBarGraphData(Object.values(annualVisitorsData)[Math.round(range-1)]);
+    
+                                }
+    
+                                if(timeDiff > 2505600000 && timeDiff <= 31560000000){
+                                  let range = timeDiff/2505600000;
+    
+                                  setLineGraphData(Object.values(monthData)[Math.round(range-1)]);
+                                  setProductTypeBarGraphData(Object.values(monthProductTypeData)[Math.round(range-1)]);
+                                  setVisitorsBarGraphData(Object.values(monthVisitorsData)[Math.round(range-1)]);
+    
+                                }
+                                
+                              }
+                            }}  id="start-date" placeholder="1 Jan 1960" className="peer rounded-md placeholder:text-xs focus:outline-secondary-400 p-2 text-xs focus:ring-1  border border-gray-400 focus:border-secondary-400 w-28"
+                              />
+                              <label className="text-xs font-bold absolute peer-focus:text-secondary-400 top-[-6px] left-[10px] bg-white px-[5px] text-gray-400 ">Start date</label>
+                          </div>
+                          <div className="text-lg text-gray-400">-</div>
+                          <div className="relative">
+                              <input 
+                                onChange={(e) => {
+                                
+                                  //extracting date data from input
+                                  let extractedStartDate, extractedStartYear, extractedEndDate, extractedEndYear;
+                                  let extractedEndMonth = 0;
+                                  let extractedStartMonth = 0;
+                                  
+                                  extractedStartDate = parseInt(start.split(' ')[0]);
+                                  for(let i = 0; i < months.length; i++){
+                                      if(months[i] === start.split(' ')[1]){
+                                          extractedStartMonth = i; 
+                                      }
+                                  }
+                                  extractedStartYear = parseInt(start.split(' ')[2]);
+                                  
+                                  extractedEndDate = parseInt(e.target.value.split(' ')[0]);
+                                  for(let i = 0; i < months.length; i++){
+                                      if(months[i] === e.target.value.split(' ')[1]){
+                                          extractedEndMonth = i; 
+                                      }
+                                  }
+                                  extractedEndYear = parseInt(e.target.value.split(' ')[2]);
+                                  //binding value to change event
+                                  setEndDate(e.target.value);
+      
+                                  const currentTime = new Date(extractedEndYear, extractedEndMonth+1, extractedEndDate).getTime() - new Date(currentYear, currentMonth+1, currentDate).getTime();
+      
+                                  //validation check to prevent user from inputing an end date greater than current time
+                                  if(currentTime > 0){
+                                      setIsAdminSettingsOpen(false);
+                                      alert('end date cannot be greater than current date');
+                                      return;
+                                  }
+                                  const timeDiff = new Date(extractedEndYear,extractedEndMonth+1,extractedEndDate).getTime() - new Date(extractedStartYear, extractedStartMonth+1, extractedStartDate).getTime();
+                                  
+                                  //validation check
+                                  if(timeDiff  < 86400000){
+                                      setIsAdminSettingsOpen(false);
+                                      alert('start date has to be at least 1 day apart from end date');
+                                      return;
+                                  }else{
+                                    setStart(`${extractedStartYear}-${('0' + (extractedStartMonth + 1)).slice(-2)}-${('0' + extractedStartDate).slice(-2)}`);
+                                    setEnd(`${extractedEndYear}-${('0' + (extractedEndMonth + 1)).slice(-2)}-${('0' + extractedEndDate).slice(-2)}`);
+    
+                                    //clearing factory range and period
+                                    setRange(null);
+                                    setPeriod(null);
+    
+                                    if(timeDiff <= 2505600000){
+                                      let range = timeDiff/86400000;
+    
+                                      setLineGraphData(Object.values(dailyData)[Math.round(range-1)]);
+                                      setProductTypeBarGraphData(Object.values(dailyProductTypeData)[Math.round(range-1)]);
+                                      setVisitorsBarGraphData(Object.values(dailyVisitorsData)[Math.round(range-1)]);
+                                      
+                                    }
+    
+                                    if(timeDiff > 31560000000 && timeDiff <= 378720000000){
+                                      let range = timeDiff/31560000000;
+    
+                                      setLineGraphData(Object.values(annualData)[Math.round(range-1)]);
+                                      setProductTypeBarGraphData(Object.values(annualProductTypeData)[Math.round(range-1)]);
+                                      setVisitorsBarGraphData(Object.values(annualVisitorsData)[Math.round(range-1)]);
+    
+                                    }
+    
+                                    if(timeDiff > 2505600000 && timeDiff <= 31560000000){
+                                      let range = timeDiff/2505600000;
+    
+                                      setLineGraphData(Object.values(monthData)[Math.round(range-1)]);
+                                      setProductTypeBarGraphData(Object.values(monthProductTypeData)[Math.round(range-1)]);
+                                      setVisitorsBarGraphData(Object.values(monthVisitorsData)[Math.round(range-1)]);
+    
+                                    }
+                                  }
+                                }} 
+                                type="text" 
+                                id="end-date" 
+                                value={endDate}
+                                placeholder="1 Jan 1960" 
+                                className="peer rounded-md placeholder:text-xs focus:outline-secondary-400 p-2 text-xs focus:ring-1  border border-gray-400 focus:border-secondary-400 w-28"
+                                />
+                              <label className="text-xs font-bold absolute peer-focus:text-secondary-400 top-[-6px] left-[10px] bg-white px-[5px] text-gray-400">End date</label>
+                          </div>
+                      </div>
+                      <div className="flex flex-row gap-x-4 w-full">
+                          <Calendar onChange={setStartValue} value={startValue} maxDate={new Date(new Date().getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000 - 3600000)}/>
+                          <Calendar onChange={setEndValue} value={endValue} maxDate={new Date(new Date().getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000)}/>
+                      </div>
+                    </div>
+                </div>
+                <div className="md:inline-block md:w-[21%] hidden relative">
+                    <button 
+                    onClick={(e) => {
+                        let downAngle = e.currentTarget.querySelector("i.filter-angle-down");
+                        let filterDropdown = document.getElementById("filter-dropdown");
+                        let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#filter-dropdown)');
+                        let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                        let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                        let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
+
+                        if(calendarAngleDown?.classList.contains('ad-rotate')){
+                          calendarAngleDown?.classList.remove("ad-rotate");
+                          calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                        }
+                        if(actionsAngleDown?.classList.contains('ad-rotate')){
+                          actionsAngleDown?.classList.remove("ad-rotate");
+                          actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                        }
+                        if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                          activeActionAngleDown?.classList.remove("ad-rotate");
+                          activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                        }
+
+                        dropdowns.forEach(dropdown => {
+                          if(dropdown.classList.contains('show')){
+                            dropdown.classList.add('hide');
+                            dropdown.classList.remove('show');
+                          }
+                        });
+
+                        if(downAngle && filterDropdown){
+                            if(!downAngle.classList.contains("ad-rotate")){
+                                downAngle.classList.add("ad-rotate");
+                                downAngle.classList.remove("ad-rotate-anticlock");
+                                filterDropdown.classList.remove('hide');
+                                filterDropdown.classList.add('show');
+                            }else{
+                                downAngle.classList.remove("ad-rotate");
+                                downAngle.classList.add("ad-rotate-anticlock");
+                                filterDropdown.classList.add('hide');
+                                filterDropdown.classList.remove('show');
+                            }
+                        }
+                    }}
+                    id='filter-button'
+                    className="w-full rounded-sm font-medium px-2 py-[6px] gap-x-2 cursor-pointer bg-transparent border border-secondary-400 inline-flex flex-row items-end">
+                        <i className="fa-solid fa-filter"></i>
+                        <span className="text-xs">Filter</span>
+                        <i className="fa-solid fa-angle-down text-xs filter-angle-down"></i>
+                    </button>
+                    <ul id='filter-dropdown' className="absolute z-30 w-[130%] text-gray-600 font-medium text-xs bg-white pt-3 pb-2 rounded-md shadow-sm shadow-white flex-col hide">
+                        <li className="mb-2 pl-4 text-gray-700">State</li>
+                        {[
+                          'Read',
+                          'Unread',
+                          'Saved',
+                        ].map((action: string, i: number) => (
+                              <li
+                                key={action}
+                                // onClick={(e) => handleSelect(rating, e)}
+                                className="cursor-pointer flex flex-row items-center gap-x-1 px-4 py-1"
+                              >
+                                  <input
+                                    type="checkbox"
+                                    id={action}
+                                    className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-300 rounded-sm relative
+                                      cursor-pointer outline-none checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
+                                      checked:after:border-accent checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
+                                      checked:after:rotate-45"
+                                  /><span>{action}</span>
+                              </li>
+                        ))}
+                        <hr className="bg-gray-400 mt-3 h-[2px]" />
+                        <div className="inline-flex flex-row gap-x-4 justify-center mt-3 px-2">
+                            <button className="bg-accent text-white px-3 py-2 rounded-md hover:ring-1 hover:ring-accent">Apply</button>
+                            <button className="text-accent bg-transparent hover:text-red-700">Clear</button>
+                        </div>
+                    </ul>
+                </div>
+                <div className="inline-flex md:w-[40%] w-[60%] relative flex-row items-center border border-secondary-400 rounded-sm px-2">
+                    <input className="bg-transparent py-[5px] focus:outline-none w-full placeholder:text-secondary-400" placeholder="search"/>
+                    <i className="fa-solid fa-magnifying-glass text-secondary-400 cursor-pointer"></i>
+                </div>
+              </section>
+              <hr className="border-secondary-400/30 border -mt-2" />
+              <div className="w-full inline-flex flex-row -my-1 text-sm">
+                <div className="md:w-[60%] w-[70%] inline-flex flex-row gap-x-2 items-center">
+                  <input
+                    type="checkbox"
+                    id='all'
+                    onChange={(e) => {
+                      let msgs = document.querySelectorAll('[id=single]') as NodeListOf<HTMLInputElement>;
+
+                      msgs.forEach(msg => {
+                        if(e.currentTarget.checked){
+                          msg.checked = true;
+                        }else{
+                          msg.checked = false;
+                        }
+                      });
+                    }}
+                    className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-300 rounded-sm relative
+                    cursor-pointer outline-none checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
+                    checked:after:border-accent checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
+                    checked:after:rotate-45"
+                  /><span className="font-medium">Subject</span>
+                </div>
+                <div className="md:w-[40%] w-[30%] font-medium">Date</div>
+              </div>
+              <hr className="border-secondary-400/30 border" />
+              {(appts.length === 0 ? [{
+                createdAt: new Date(),
+                author: {
+                  fullName: 'Josh',
+                  email: 'test@test.com'
+                }
+              }] : appts).map((appt: any, i: number) => {
+
+                return (
+                  <div key={i} className="w-full inline-flex flex-row -my-1 text-sm">
+                    <div className="md:w-[60%] w-[70%] inline-flex flex-row gap-x-2 items-center relative">
+                      <input
+                        type="checkbox"
+                        id='single'
+                        className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-300 rounded-sm relative
+                        cursor-pointer outline-none checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
+                        checked:after:border-accent checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
+                        checked:after:rotate-45"
+                      />
+                      <span className="font-light">
+                        <i className="fa-regular fa-envelope-open text-accent/30"></i>&nbsp;&nbsp;Appointment by {appt.author.fullName}
+                      </span>
+                      <div className="md:hidden inline-block w-[35%] absolute left-0 top-10">
+                          <div className="w-[156%] rounded-sm font-medium bg-transparent inline-flex flex-row items-center">
+                              <button className="text-xs border-secondary-400 border px-2 py-[6px] hover:ring-1 hover:ring-secondary-400" onClick={() => {
+                                let activeActionAngleDown = document.querySelector("i.active-action-dropdown-for-sm-screen");
+                                let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                                let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                                let filterAngleDown = document.querySelector('i.filter-angle-down');
+                                let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown-for-sm-screen)');
+
+                                if(calendarAngleDown?.classList.contains('ad-rotate')){
+                                  calendarAngleDown?.classList.remove("ad-rotate");
+                                  calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                                }
+                                if(filterAngleDown?.classList.contains('ad-rotate')){
+                                  filterAngleDown?.classList.remove("ad-rotate");
+                                  filterAngleDown?.classList.add("ad-rotate-anticlock");
+                                }
+                                if(actionsAngleDown?.classList.contains('ad-rotate')){
+                                  actionsAngleDown?.classList.remove("ad-rotate");
+                                  actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                                }
+                                if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                                  activeActionAngleDown?.classList.remove("ad-rotate");
+                                  activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                                }
+
+                                dropdowns.forEach(dropdown => {
+                                  if(dropdown.classList.contains('show')){
+                                    dropdown.classList.add('hide');
+                                    dropdown.classList.remove('show');
+                                  }
+                                });
+                                
+                                setIsAdminSettingsOpen(true);
+                                setIsReading(true);
+                                setIsReplying(false);
+                                }}>READ MESSAGE</button>
+                              <div className="px-2 py-[4px] border border-secondary-400"
+                                  onClick={(e) => {
+                                    let downAngle = e.currentTarget.querySelector("i.active-action-angle-down-for-sm-screen");
+                                    let activeActionDropdown = document.getElementById("active-action-dropdown-for-sm-screen");
+                                    let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                                    let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                                    let filterAngleDown = document.querySelector('i.filter-angle-down');
+                                    let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown-for-sm-screen)');
+
+                                    if(calendarAngleDown?.classList.contains('ad-rotate')){
+                                      calendarAngleDown?.classList.remove("ad-rotate");
+                                      calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                                    }
+                                    if(filterAngleDown?.classList.contains('ad-rotate')){
+                                      filterAngleDown?.classList.remove("ad-rotate");
+                                      filterAngleDown?.classList.add("ad-rotate-anticlock");
+                                    }
+                                    if(actionsAngleDown?.classList.contains('ad-rotate')){
+                                      actionsAngleDown?.classList.remove("ad-rotate");
+                                      actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                                    }
+
+                                    dropdowns.forEach(dropdown => {
+                                      if(dropdown.classList.contains('show')){
+                                        dropdown.classList.add('hide');
+                                        dropdown.classList.remove('show');
+                                      }
+                                    });
+
+                                    if(downAngle && activeActionDropdown){
+                                        if(!downAngle.classList.contains("ad-rotate")){
+                                            downAngle.classList.add("ad-rotate");
+                                            downAngle.classList.remove("ad-rotate-anticlock");
+                                            activeActionDropdown.classList.remove('hide');
+                                            activeActionDropdown.classList.add('show');
+                                        }else{
+                                            downAngle.classList.remove("ad-rotate");
+                                            downAngle.classList.add("ad-rotate-anticlock");
+                                            activeActionDropdown.classList.add('hide');
+                                            activeActionDropdown.classList.remove('show');
+                                        }
+                                    }
+                                }}
+                              >
+                                <i className="fa-solid fa-angle-down text-xs active-action-angle-down-for-sm-screen cursor-pointer"></i>
+                              </div>
+                          </div>
+                          <ul id='active-action-dropdown-for-sm-screen' className="absolute z-30 w-[150%] text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white flex-col hide">
+                              {[
+                                'Reply',
+                                'Unread',
+                                'Save Message',
+                                'Remove'
+                              ].map((action: string, i: number) => (
+                                  <div>
+                                      <li
+                                      key={action}
+                                      onClick={(e) => {
+                                        let activeActionAngleDown = document.querySelector("i.active-action-angle-down-for-sm-screen");
+                                        let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                                        let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                                        let filterAngleDown = document.querySelector('i.filter-angle-down');
+                                        let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown-for-sm-screen)');
+
+                                        if(calendarAngleDown?.classList.contains('ad-rotate')){
+                                          calendarAngleDown?.classList.remove("ad-rotate");
+                                          calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                                        }
+                                        if(filterAngleDown?.classList.contains('ad-rotate')){
+                                          filterAngleDown?.classList.remove("ad-rotate");
+                                          filterAngleDown?.classList.add("ad-rotate-anticlock");
+                                        }
+                                        if(actionsAngleDown?.classList.contains('ad-rotate')){
+                                          actionsAngleDown?.classList.remove("ad-rotate");
+                                          actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                                        }
+                                        if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                                          activeActionAngleDown?.classList.remove("ad-rotate");
+                                          activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                                        }
+
+                                        dropdowns.forEach(dropdown => {
+                                          if(dropdown.classList.contains('show')){
+                                            dropdown.classList.add('hide');
+                                            dropdown.classList.remove('show');
+                                          }
+                                        });
+
+                                        switch (action) {
+                                          case 'Reply':
+                                            setIsAdminSettingsOpen(true);
+                                            setIsReplying(true);
+                                            setIsReading(false);
+                                            break;
+                                        
+                                          default:
+                                            break;
+                                        }
+                                      }}
+                                      className="cursor-pointer flex flex-row items-center justify-between p-2"
+                                    >
+                                        {action}
+                                    </li>
+                                    {action !== 'Remove' && <hr className="border-secondary-400"/>}
+                                  </div>
+                              ))}
+                          </ul>
+                      </div>
+                    </div>
+                    <div className="md:w-[40%] w-[30%] font-light relative"><span>{`${months[new Date(appt.createdAt).getMonth()]} ${new Date(appt.createdAt).getDate()}, ${new Date(appt.createdAt).getFullYear()}`}</span>
+                      <div className="md:inline-block w-[21%] absolute md:right-[10%] hidden">
+                          <div className="w-[156%] rounded-sm font-medium bg-transparent inline-flex flex-row items-center">
+                              <button className="text-xs border-secondary-400 border px-2 py-[6px] hover:ring-1 hover:ring-secondary-400" onClick={() => {
+                                
+                                let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
+                                let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                                let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                                let filterAngleDown = document.querySelector('i.filter-angle-down');
+                                let dropdowns = document.querySelectorAll('[id$=-dropdown]');
+
+                                if(calendarAngleDown?.classList.contains('ad-rotate')){
+                                  calendarAngleDown?.classList.remove("ad-rotate");
+                                  calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                                }
+                                if(filterAngleDown?.classList.contains('ad-rotate')){
+                                  filterAngleDown?.classList.remove("ad-rotate");
+                                  filterAngleDown?.classList.add("ad-rotate-anticlock");
+                                }
+                                if(actionsAngleDown?.classList.contains('ad-rotate')){
+                                  actionsAngleDown?.classList.remove("ad-rotate");
+                                  actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                                }
+                                if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                                  activeActionAngleDown?.classList.remove("ad-rotate");
+                                  activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                                }
+
+                                dropdowns.forEach(dropdown => {
+                                  if(dropdown.classList.contains('show')){
+                                    dropdown.classList.add('hide');
+                                    dropdown.classList.remove('show');
+                                  }
+                                });
+
+                                setIsAdminSettingsOpen(true);
+                                setIsReading(true);
+                                setIsReplying(false);
+                              }}>READ MESSAGE</button>
+                              <div className="px-2 py-[4px] border border-secondary-400" 
+                                  onClick={(e) => {
+                                  let downAngle = e.currentTarget.querySelector("i.active-action-angle-down");
+                                  let activeActionDropdown = document.getElementById("active-action-dropdown");
+                                  let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                                  let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                                  let filterAngleDown = document.querySelector('i.filter-angle-down');
+                                  let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown)');
+
+                                  if(calendarAngleDown?.classList.contains('ad-rotate')){
+                                    calendarAngleDown?.classList.remove("ad-rotate");
+                                    calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                                  }
+                                  if(filterAngleDown?.classList.contains('ad-rotate')){
+                                    filterAngleDown?.classList.remove("ad-rotate");
+                                    filterAngleDown?.classList.add("ad-rotate-anticlock");
+                                  }
+                                  if(actionsAngleDown?.classList.contains('ad-rotate')){
+                                    actionsAngleDown?.classList.remove("ad-rotate");
+                                    actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                                  }
+
+                                  dropdowns.forEach(dropdown => {
+                                    if(dropdown.classList.contains('show')){
+                                      dropdown.classList.add('hide');
+                                      dropdown.classList.remove('show');
+                                    }
+                                  });
+
+                                  if(downAngle && activeActionDropdown){
+                                      if(!downAngle.classList.contains("ad-rotate")){
+                                          downAngle.classList.add("ad-rotate");
+                                          downAngle.classList.remove("ad-rotate-anticlock");
+                                          activeActionDropdown.classList.remove('hide');
+                                          activeActionDropdown.classList.add('show');
+                                      }else{
+                                          downAngle.classList.remove("ad-rotate");
+                                          downAngle.classList.add("ad-rotate-anticlock");
+                                          activeActionDropdown.classList.add('hide');
+                                          activeActionDropdown.classList.remove('show');
+                                      }
+                                  }
+                                  }}>
+                                <i className="fa-solid fa-angle-down text-xs active-action-angle-down cursor-pointer"></i>
+                              </div>
+                          </div>
+                          <ul id='active-action-dropdown' className="hide flex-col absolute z-30 w-[150%] text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white">
+                              {[
+                                'Reply',
+                                'Unread',
+                                'Save Message',
+                                'Remove'
+                              ].map((action: string, i: number) => (
+                                  <div>
+                                      <li
+                                      key={action}
+                                      onClick={async (e) => {
+                                        let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
+                                        let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                                        let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                                        let filterAngleDown = document.querySelector('i.filter-angle-down');
+                                        let dropdowns = document.querySelectorAll('[id$=-dropdown]');
+
+                                        if(calendarAngleDown?.classList.contains('ad-rotate')){
+                                          calendarAngleDown?.classList.remove("ad-rotate");
+                                          calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                                        }
+                                        if(filterAngleDown?.classList.contains('ad-rotate')){
+                                          filterAngleDown?.classList.remove("ad-rotate");
+                                          filterAngleDown?.classList.add("ad-rotate-anticlock");
+                                        }
+                                        if(actionsAngleDown?.classList.contains('ad-rotate')){
+                                          actionsAngleDown?.classList.remove("ad-rotate");
+                                          actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                                        }
+                                        if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                                          activeActionAngleDown?.classList.remove("ad-rotate");
+                                          activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                                        }
+
+                                        dropdowns.forEach(dropdown => {
+                                          if(dropdown.classList.contains('show')){
+                                            dropdown.classList.add('hide');
+                                            dropdown.classList.remove('show');
+                                          }
+                                        });
+
+                                        switch (action) {
+                                          case 'Reply':
+                                            setIsAdminSettingsOpen(true);
+                                            setIsReplying(true);
+                                            setIsReading(false);
+                                            break;
+                                        
+                                          default:
+                                            break;
+                                        }
+                                      }}
+                                      className="cursor-pointer flex flex-row items-center justify-between p-2"
+                                    >
+                                        {action}
+                                    </li>
+                                    {action !== 'Remove' && <hr className="border-secondary-400"/>}
+                                  </div>
+                              ))}
+                          </ul>
+                      </div>
+                    </div>
+                    {
+                      isAdminSettingsOpen && pathName === "email" && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white'>
+                        <section className="flex flex-col items-start gap-x-2 w-full h-full px-5 pb-6 pt-16 font-sans gap-y-9">
+                              <header className="text-sm flex flex-row justify-between items-center w-full">
+                                <h2>From:&nbsp;<span className="font-normal">{isReading ? appt.author.email : 'hello@oyinye.com'}</span></h2>
+                                <h2>{`${months[new Date(isReading ? appt.createdAt: new Date()).getMonth()]} ${new Date(isReading ? appt.createdAt: new Date()).getDate()}, ${new Date(isReading ? appt.createdAt: new Date()).getFullYear()}, ${new Date(new Date(isReading ? appt.createdAt: new Date()).getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000).toISOString().substring(11, 16)}${new Date(isReading ? appt.createdAt: new Date()).getHours() >= 11 ? 'PM' : 'AM'}`}</h2>
+                              </header>
+                              <form onSubmit={async (e) => {
+                                e.preventDefault();
+                                let adminContent = document.getElementById('admin-letter') as HTMLTextAreaElement;
+                                if(adminContent && adminContent.value.length === 0){
+                                  return;
+                                }
+                                try {
+                                  setLoader(true);
+                                  await axios.post('/api/admin/send-reminder', {
+                                    email: appt.author.email,
+                                    message: adminContent?.value,
+                                    contact: appt.author.fullName,
+                                    date: `${months[new Date(isReading ? appt.createdAt: new Date()).getMonth()]} ${new Date(isReading ? appt.createdAt: new Date()).getDate()}. ${new Date(isReading ? appt.createdAt: new Date()).getFullYear()}`
+                                  });
+                                } catch (error: any) {
+                                  toast.error(error.message);
+                                }finally{
+                                  setLoader(false);
+                                  toast.success('reminder sent', {
+                                    position: 'top-center'
+                                  });
+                                }
+                              }} className="flex flex-col items-start gap-y-4 text-gray-600 font-sans w-full">
+                                <p className="leading-tight tracking-wider text-sm font-medium cursive">
+                                  Hi {isReading ? 'Oyinye Couture team' : appt.author.fullName},
+                                </p>
+                                
+                                  {isReading 
+                                  ? <p className="text-base leading-relaxed text-wrap tracking-wider text-gray-500 w-full">
+                                      {appt.content ?? 'I am writing to inform you.'} 
+                                    </p>
+                                  : <textarea cols={50} rows={5} placeholder="Compose letter here..." id='admin-letter' className="focus:outline-none w-full border border-gray-300 rounded-md p-2 text-base leading-relaxed text-wrap tracking-wider text-gray-500">
+                                    
+                                    </textarea>}
+                                {isReading 
+                                  ? <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br/>{appt.author.fullName}<br/>Phone:&nbsp;<Link href={`tel:${appt.author.phoneNo ?? '070333748920'}`}>{appt.author.phoneNo ?? '070333748920'}</Link><br/>Standard Size: {appt.author.size ?? 8}</p>
+                                  : <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br />Oyinye Couture Team</p>}
+                                
+                                  {isReplying && <div className="w-full flex justify-end flex-row">
+                                    <button type='submit' className="px-7 py-2 text-sm bg-accent text-white hover:ring-1 hover:ring-accent rounded-md">{loader ? 'Sending..' : 'Send'}</button>
+                                  </div>}
+                              </form>
+                              {appt.author.styles && isReading && appt.author.styles.length > 0 && appt.author.styles.map(((data: any) => <div className="flex flex-row flex-wrap gap-x-3 gap-y-2 w-full">
+                                <div className="flex flex-col items-center gap-y-1">
+                                  <div className="w-24 h-24 rounded-md" style={{backgroundImage: `url(${data.image})`}}></div>
+                                  <p className="font-sans text-xs">{data.fileName}</p>
+                                </div>
+                              </div>
+                            ))}
+                            
+                        </section>
+                      </AdminSettingsModal>
+                    }
+                  </div>
+                );
+              })}
+              {appts.length > 0 && <AdminPagination {...appointmentsData} />}
+
+            </section>
+          )
+          
         }
       </main>
   );

@@ -28,6 +28,7 @@
     "mongoose": "^8.5.0",
     "next": "14.2.4",
     "react": "^18",
+    "react-calendar": "^5.0.0",
     "react-chartjs-2": "^5.2.0",
     "react-doc-viewer": "^0.1.14",
     "react-dom": "^18",

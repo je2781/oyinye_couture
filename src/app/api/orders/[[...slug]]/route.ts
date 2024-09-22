@@ -1,8 +1,10 @@
 import { connect } from '@/db/config';
+import { getDataFromCart } from '@/helpers/getDataFromCart';
 import { getDataFromOrder } from '@/helpers/getDataFromOrder';
 import { getVisitData } from '@/helpers/getVisitData';
 import { sendMail } from '@/helpers/mailer';
 import { EmailType } from '@/interfaces';
+import Cart from '@/models/cart';
 import Order from '@/models/order';
 import User from '@/models/user';
 import Visitor from '@/models/visitor';
@@ -49,21 +51,31 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
         }
 
         orders = orders.map((order) => ({
-            id: order._id,
+            id: order._id.toString(),
             items: order.items.map((item: any) => {
-              let price: number | undefined;
+              let price: number = 0;
+              let frontBase64Images: string[] = [];
+              let colorType: string  = '';
+              let size: number = 0;
               item.product.colors.forEach((color: any) => {
                 if(color.sizes.find((size: any) => size.variantId === item.variantId)){
                   price = color.sizes.find((size: any) => size.variantId === item.variantId).price;
+                  size = color.sizes.find((size: any) => size.variantId === item.variantId).number;
+                  frontBase64Images = color.imageFrontBase64;
+                  colorType = color.type;
                 }
               });
               return {
                 quantity: item.quantity,
                 variantId: item.variantId,
                 productType: item.product.type,
-                total: price ? price * item.quantity : 0
+                total: price * item.quantity,
+                frontBase64Images,
+                color: colorType,
+                size
               };
             }),
+            totalQuantity: order.items.map((item: any) => item.quantity).reduce((prev: number, current: number) => prev + current, 0),
             sales: order.sales,
             date: order.createdAt,
             status: order.status,
@@ -187,6 +199,43 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
                 status: 200
               });
             }
+          case 'reminder':
+            const {items} = await request.json();
+            const cartId = getDataFromCart(request);
+
+            const newCartId = mongoose.Types.ObjectId.createFromHexString(cartId);
+
+            if(mongoose.Types.ObjectId.isValid(newCartId)){
+              const cart = await Cart.findById(newCartId);
+              const updatedcart = await cart.populate('user.userId');
+              const extractedUser = {...updatedcart.user.userId._doc};
+              //sending cart reminder
+              await sendMail({
+                emailType: EmailType.request,
+                email: extractedUser.email,
+                emailBody: {
+                  link: `${process.env.DOMAIN}/cart`,
+                  id: cartId,
+                  total: cart.totalAmount,
+                  items
+                }
+              });
+
+              return NextResponse.json({
+                message: 'cart reminder sent',
+                success: true
+              }, {
+                status: 201
+              });
+            }else{
+              return NextResponse.json({
+                message: 'invalid cart id'
+              }, {
+                status: 200
+              })
+            }
+
+            
         
           case 'payment-request':
             const {link, id, total} = await request.json();

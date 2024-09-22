@@ -4,7 +4,7 @@ import Stars from '../../../public/shooting-stars.svg';
 import Image from 'next/image';
 import { ReviewsModal } from '../ui/Modal';
 import React from 'react';
-import { base64ToFile, decodedBase64, generateBase64FromMedia } from '@/helpers/getHelpers';
+import {decodedBase64, generateBase64FromMedia } from '@/helpers/getHelpers';
 import DocViewerComponent from './DocViewer';
 import toast from 'react-hot-toast';
 import axios from 'axios';
@@ -12,7 +12,10 @@ import axios from 'axios';
 const Reviews = ({productReviews, product}: any) => {
     let averageRating = 0;
     const [isModalOpen, setIsModalOpen] = React.useState(false);
-    const [mediaBase64, setMediaBase64] = React.useState('');
+    const [mediaBase64, setMediaBase64] = React.useState({
+        media: '',
+        image: ''
+    });
     const [likes, setLikes] = React.useState<number[]>(productReviews.map((review: any) => review.likes));
     const [dislikes, setDislikes] = React.useState<number[]>(productReviews.map((review: any) => review.dislikes));
     const [reviews, setReviews] = React.useState(productReviews);
@@ -173,7 +176,10 @@ const Reviews = ({productReviews, product}: any) => {
                
                let base64String = await generateBase64FromMedia(file);
     
-               setMediaBase64(base64String as string);
+               setMediaBase64(prevMedia => ({
+                ...prevMedia,
+                media: base64String as string
+               }));
     
                const fileType = file.type;
                
@@ -183,7 +189,7 @@ const Reviews = ({productReviews, product}: any) => {
                     const pre = document.createElement('pre');
                     pre.textContent = textContent;
                     previewContainer.appendChild(pre);
-                }  else if (file.type === 'application/pdf') { // PDF file preview
+                } else if (file.type === 'application/pdf') { // PDF file preview
                    const pdfIframe = document.createElement('iframe');
                    pdfIframe.src = URL.createObjectURL(file);
                    pdfIframe.style.width = '100%';
@@ -195,18 +201,18 @@ const Reviews = ({productReviews, product}: any) => {
                    audio.style.width = '100%';
                    audio.src = URL.createObjectURL(file);
                    previewContainer.appendChild(audio);
-               } else if (fileType.startsWith('video/')) { // Video file preview
+                } else if (fileType.startsWith('video/')) { // Video file preview
                    const video = document.createElement('video');
                    video.controls = true;
                    video.style.width = '100%';
                    video.src = URL.createObjectURL(file);
                    previewContainer.appendChild(video);
-               } else {
+                }else {
                     previewContainer.classList.add('hidden');
                     textarea.classList.remove('hidden');
                     alert('Unsupported file type!');
                }
-           }
+            }
         }
          
     }
@@ -227,14 +233,17 @@ const Reviews = ({productReviews, product}: any) => {
     async function handleReviewSubmit(e: React.FormEvent){
         e.preventDefault();
         const starRatingStatement = document.getElementById(`statement`);
+        const avatarInput = document.getElementById(`avatar`) as HTMLInputElement;
         let errorsCount = 0;
 
         //validation checks
-        if(starRatingStatement){
-            if(starRatingStatement.innerText.length === 0){
-                document.querySelector('#rating-error')?.classList.remove('hidden');
-            }
+        if(starRatingStatement?.innerText.length === 0){
+            document.querySelector('#rating-error')?.classList.remove('hidden');
         }
+        // if(avatarInput.value.length === 0){
+        //     document.querySelector('#avatar-error')?.classList.remove('hidden');
+        // }
+        
 
         const errors = document.querySelectorAll(`[id$=error]`);
 
@@ -254,7 +263,8 @@ const Reviews = ({productReviews, product}: any) => {
                 rating: starRatingStatement ? getRating(starRatingStatement.innerText) : 0,
                 email,
                 name,
-                review: review.length > 0 ? review : mediaBase64,
+                review: review.length > 0 ? review : mediaBase64.media,
+                avatar: mediaBase64.image,
                 headline,
                 isMedia: review.length === 0
             });
@@ -459,7 +469,7 @@ const Reviews = ({productReviews, product}: any) => {
 
                             return (
                                 <article key={i} className='bg-detail-100 rounded-sm lg:w-[36%] w-full h-fit flex flex-col gap-y-4'>
-                                    <div id='media' className='w-full'></div>
+                                    <div id='media' className='w-full rounded-tl-sm rounded-tr-sm'></div>
                                     <section className='p-4'>
                                         <div className='inline-flex flex-row w-[75%] items-center'>
                                             <p className='text-detail-500/80 font-light w-[35%]'>{review.author.firstName ?? review.author.email}</p>
@@ -478,7 +488,7 @@ const Reviews = ({productReviews, product}: any) => {
                                                         <li><i key={i} className='fa-regular fa-star text-xl text-yellow-400'></i></li>
                                                     ))}
                                                 </ul>
-                                                <h3 className='text-detail-500/50 font-sans text-[1rem]'>{`${new Date(review.createdAt).getMonth() + 1}/${new Date(review.createdAt).getDate()}/${new Date(review.createdAt).getFullYear().toString().slice(-2)}`}</h3>
+                                                <span className='text-detail-500/50 font-sans text-[1rem]'>{`${new Date(review.createdAt).getMonth() + 1}/${new Date(review.createdAt).getDate()}/${new Date(review.createdAt).getFullYear().toString().slice(-2)}`}</span>
                                             </h2>
                                             <h1 className='text-3xl text-detail-500 font-extralight'>{review.headline}</h1>
                                         </header>
@@ -508,17 +518,20 @@ const Reviews = ({productReviews, product}: any) => {
                                                      <li><i key={i} className='fa-regular fa-star text-xl text-yellow-400'></i></li>
                                                  ))}
                                              </ul>
-                                             <h3 className='text-detail-500/50 font-sans text-[1rem]'>{`${new Date(review.createdAt).getMonth() + 1}/${new Date(review.createdAt).getDate()}/${new Date(review.createdAt).getFullYear().toString().slice(-2)}`}</h3>
+                                             <span className='text-detail-500/50 font-sans text-[1rem]'>{`${new Date(review.createdAt).getMonth() + 1}/${new Date(review.createdAt).getDate()}/${new Date(review.createdAt).getFullYear().toString().slice(-2)}`}</span>
                                          </h2>
                                          <h1 className='text-3xl text-detail-500 font-extralight'>{review.headline}</h1>
                                      </header>
                                      <p className='text-detail-500/80 font-light'>{review.content}</p>
-                                     <div className='inline-flex flex-row w-[75%] items-center'>
-                                         <p className='text-detail-500/80 font-light w-[35%]'>{review.author.firstName ?? review.author.email}</p>
-                                         <div className="w-[2px] h-3 bg-black mx-2"></div>
-                                         {<p className='text-sm text-detail-500/80 font-light w-[48%]'>
-                                             <i className="fa-solid fa-circle-check text-xs text-detail-500"></i>&nbsp;Verified {review.author.isVerified.reviewer ? 'Reviewer' : review.author.isVerified.buyer ? 'Buyer': ''}
-                                         </p>}
+                                     <div className='inline-flex flex-row gap-x-2 items-center'>
+                                        <div style={{backgroundImage: `url(${review.author.avatar ?? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'})`}} className='rounded-[50%] w-16 h-16 cursor-pointer bg-cover'>
+                                        </div>
+                                        <div className='inline-flex flex-col items-start'>
+                                            <p className='text-detail-500/80 font-light'>{review.author.firstName ?? review.author.email}</p>
+                                            {<p className='text-sm text-detail-500/80 font-light'>
+                                                <i className="fa-solid fa-circle-check text-xs text-detail-500"></i>&nbsp;Verified {review.author.isVerified.reviewer ? 'Reviewer' : review.author.isVerified.buyer ? 'Buyer': ''}
+                                            </p>}
+                                        </div>
                                      </div>
                                      <div className='flex flex-row justify-end w-full items-center gap-x-2'>
                                          <p className='text-detail-500/80 font-light text-[1rem]'>Was this review helpful?&nbsp;</p>
@@ -562,7 +575,30 @@ const Reviews = ({productReviews, product}: any) => {
             <header className='text-2xl flex flex-row justify-center'>
                 <h2>SHARE YOUR THOUGHTS</h2>
             </header>
-            <form onSubmit={handleReviewSubmit} className='flex flex-col gap-y-11 overflow-y-auto max-h-[70vh] hide-scrollbar' encType="multipart/form-data">
+            <form onSubmit={handleReviewSubmit} className='flex flex-col gap-y-9 overflow-y-auto max-h-[70vh] hide-scrollbar' encType="multipart/form-data">
+                <div className='flex flex-col gap-y-3 items-center'>
+                    <div className='flex flex-row justify-center'>
+                        <label htmlFor='avatar' id='avatar-container' className='rounded-[50%] w-28 h-28 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                            <i className="fa-solid fa-camera text-2xl text-white"></i>
+                        </label>
+                        <input type='file' className='hidden' id='avatar' onChange={async(e) => {
+                            const base64String = await generateBase64FromMedia(e.target.files![0]);
+                            const picContainer = document.getElementById('avatar-container') as HTMLLabelElement;
+                            //clearing reviewer picture container
+                            picContainer.innerHTML = '';
+
+                            if(picContainer){
+                                setMediaBase64(prevMedia => ({
+                                    ...prevMedia,
+                                    image: base64String as string
+                                }));
+                                picContainer.style.backgroundImage = `url(${base64String})`;
+                            }
+
+                        }}/>
+                    </div>
+                    <p id='avatar-error' className="text-red-600 text-xs font-sans hidden -mt-1">An avatar is required</p>
+                </div>
                 <div className='flex flex-col gap-y-3 items-start w-full'>
                     <div className='flex flex-col gap-y-7 text-lg'>
                         <label>RATE YOUR EXPERIENCE&nbsp;<sup>*</sup></label>
@@ -742,7 +778,7 @@ const Reviews = ({productReviews, product}: any) => {
                 </div>
                 <div className='flex flex-col gap-y-2 w-full items-start'>
                     <label htmlFor='review' className='flex flex-row items-center gap-x-2'>
-                        <h3 className='text-lg'>WRITE A REVIEW&nbsp;<sup>*</sup></h3>
+                        <h2 className='text-lg'>WRITE A REVIEW&nbsp;<sup>*</sup></h2>
                         <div className='inline-block text-sm'>
                             <label htmlFor='file' className='underline cursor-pointer'>or upload a review</label>
                             <input type='file' onChange={(e) => handleFileChange(e)} id="file" className='hidden' name="file" accept=".txt, .doc, .docx, .DOCX, .pdf, audio/*, video/*"></input>

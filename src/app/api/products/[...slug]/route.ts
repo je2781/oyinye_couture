@@ -49,7 +49,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
 export async function POST(req: NextRequest, { params }: { params: { slug: string[] } }) {
   try {
 
-    const {rating, email, name, review, headline, isMedia} = await req.json();
+    const {rating, email, name, review, headline, isMedia, avatar} = await req.json();
 
     const title = params.slug[0].charAt(0).toUpperCase() + params.slug[0].replace('-', ' ').slice(1);
     
@@ -68,10 +68,30 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         password: hash,
         firstName: name.split(' ').length === 2 ? name.split(' ')[0] : name,
         lastName: name.split(' ').length === 2 ? name.split(' ')[1] : name,
-        'visitor.visitId': mongoose.Types.ObjectId.isValid(newVisitId) ? newVisitId : null 
+        'visitor.visitId': mongoose.Types.ObjectId.isValid(newVisitId) ? newVisitId : null,
+        avatar
       });
 
       const savedUser = await newUser.save();
+
+      //updating product with new user review
+      const newReview = new Review({
+        headline,
+        rating: +rating,
+        content: review,
+        'author.authorId': savedUser._id,
+        isMedia,
+      });
+
+      await newReview.save();
+
+      const product = await Product.findOne({title});
+
+      product.reviews = product.reviews.push({
+        reviewId: newReview._id
+      });
+
+      await product.save();
 
       // Send password creation email
       await sendMail({
@@ -79,32 +99,13 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         email: savedUser.email,
         emailType: EmailType.reminder,
       });
-      
+
       //sending verification email
       await sendMail({
         email: savedUser.email,
         emailType: EmailType.verify_reviewer,
         userId: savedUser._id
       });
-
-      //updating product with user review
-      const product = await Product.findOne({title});
-
-      const newReview = new Review({
-        headline,
-        rating: +rating,
-        content: review,
-        'author.authorId': savedUser._id,
-        isMedia
-      });
-
-      await newReview.save();
-
-      product.reviews = product.reviews.push({
-        reviewId: newReview._id
-      });
-
-      await product.save();
 
       return NextResponse.json(
         {
@@ -114,8 +115,10 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         { status: 201 }
       );
     }else{
-      //updating product with user review
-      const product = await Product.findOne({title});
+      //updating product and user record with new user review and avatar
+      user.avatar = avatar;
+
+      await user.save();
 
       const newReview = new Review({
         headline,
@@ -124,6 +127,16 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         'author.authorId': user._id,
         isMedia
       });
+      
+      await newReview.save();
+      
+      const product = await Product.findOne({title});
+      
+      product.reviews = product.reviews.push({
+        reviewId: newReview._id
+      });
+      
+      await product.save();
 
       //sending verification email
       await sendMail({
@@ -131,14 +144,6 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         emailType: EmailType.verify_reviewer,
         userId: user._id
       });
-
-      await newReview.save();
-
-      product.reviews = product.reviews.push({
-        reviewId: newReview._id
-      });
-
-      await product.save();
 
       return NextResponse.json(
         {

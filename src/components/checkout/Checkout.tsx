@@ -295,7 +295,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
                       </span>
                     </div>
                     <div className="font-sans inline-block">
-                      <h3 className="text-sm font-normal">{item.title}</h3>
+                      <h2 className="text-sm font-normal">{item.title}</h2>
                       <p className="text-sm font-extralight text-gray-500">
                         {item.color}/UK {item.number}
                       </p>
@@ -1144,7 +1144,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
               >
                 <div className="flex flex-row gap-x-3 items-center">
                   <input type="checkbox" className="checkbox" />
-                  <h3>Within Lagos - Island{windowWidth < 768 ? '' : ' (5 - 7 business days)'}</h3>
+                  <h2>Within Lagos - Island{windowWidth < 768 ? '' : ' (5 - 7 business days)'}</h2>
                 </div>
                 <h5 className="font-medium">&#8358;5,000</h5>
               </div>
@@ -1188,7 +1188,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
               >
                 <div className="flex flex-row gap-x-3 items-center">
                   <input type="checkbox" className="checkbox" />
-                  <h3>Within Lagos - Mainland{windowWidth < 768 ? '' : ' (5 - 7 business days)'}</h3>
+                  <h2>Within Lagos - Mainland{windowWidth < 768 ? '' : ' (5 - 7 business days)'}</h2>
                 </div>
                 <h5 className="font-medium">&#8358;8,500</h5>
               </div>
@@ -1232,7 +1232,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
               >
                 <div className="flex flex-row gap-x-3 items-center">
                   <input type="checkbox" className="checkbox" />
-                  <h3>Outside Lagos{windowWidth < 768 ? '' : ' (5 - 7 business days)'}</h3>
+                  <h2>Outside Lagos{windowWidth < 768 ? '' : ' (5 - 7 business days)'}</h2>
                 </div>
                 <h5 className="font-medium">&#8358;15,000</h5>
               </div>
@@ -1276,7 +1276,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
               >
                 <div className="flex flex-row gap-x-3 items-center">
                   <input type="checkbox" className="checkbox interswitch" />
-                  <h3>Pay Now</h3>
+                  <h2>Pay Now</h2>
                 </div>
                 <Image
                   src="https://www.interswitchgroup.com/assets/images/home/interswitch_logo.svg"
@@ -1313,7 +1313,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
               >
                 <div className="flex flex-row gap-x-3 items-center">
                   <input type="checkbox" className="checkbox" />
-                  <h3>Pay on Delivery</h3>
+                  <h2>Pay on Delivery</h2>
                 </div>
                 <Image
                   src={PaymentLogo}
@@ -1363,7 +1363,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
               >
                 <div className="flex flex-row gap-x-3 items-center">
                   <input type="checkbox" className="checkbox same-billing" />
-                  <h3>Same as shipping address</h3>
+                  <h2>Same as shipping address</h2>
                 </div>
               </div>
               <div
@@ -1402,7 +1402,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
               >
                 <div className="flex flex-row gap-x-3 items-center">
                   <input type="checkbox" className="checkbox" />
-                  <h3>Use a different billing address</h3>
+                  <h2>Use a different billing address</h2>
                 </div>
               </div>
               <section
@@ -2125,7 +2125,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
                     </span>
                   </div>
                   <div className="font-sans inline-block">
-                    <h3 className="text-sm font-normal">{item.title}</h3>
+                    <h2 className="text-sm font-normal">{item.title}</h2>
                     <p className="text-sm font-extralight text-gray-500">
                       {item.color}/UK {item.number}
                     </p>

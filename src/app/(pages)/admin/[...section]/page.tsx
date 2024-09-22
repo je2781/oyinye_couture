@@ -17,29 +17,29 @@ export async function generateStaticParams() {
   return [];
 }
 
-async function getVisitors() {
-    const res = await fetch(`${process.env.DOMAIN}/api/visitors`, {
-      cache: 'no-store' // Ensure the request isn't cached
-    });
-    const data = await res.json();
-  
-    return data.visitors;
-}
 
-async function getOrders(page?: string) {
-    const res = await fetch(`${process.env.DOMAIN}/api/orders/10?page=${page ? page : '1'}`, {
-      cache: 'no-store' // Ensure the request isn't cached
-  });
-    const data = await res.json();
+async function getData(page?: string) {
+    const [orderDataRes, apptsDataRes, visitorsDataRes] = await Promise.all([
+      fetch(`${process.env.DOMAIN}/api/orders/10?page=${page ? page : '1'}`, {
+        cache: 'no-store' // Ensure the request isn't cached
+      }),
+      fetch(`${process.env.DOMAIN}/api/bookings/10?page=${page ? page : '1'}`, {
+        cache: 'no-store' 
+      }),
+      fetch(`${process.env.DOMAIN}/api/visitors`)
+    ]);
+
+    const [orderData, apptsData, visitorsData] = await Promise.all([
+      orderDataRes.json(), apptsDataRes.json(), visitorsDataRes.json()
+    ]);
   
-    return data;
+    return [orderData, apptsData, visitorsData];
 }
 
 export default async function Admin({
     params, searchParams
   }: any){
-    const orderData = await getOrders(searchParams['page']);
-    const visitors = await getVisitors();
+    const [orderData, apptsData, visitorsData] = await getData(searchParams['page']);
 
     let pathNames: string[] = params.section;
     let sectionName = '';
@@ -73,7 +73,8 @@ export default async function Admin({
       };
 
       const bodyProps = {
-        visitors,
+        visitors: visitorsData.visitors,
+        appointmentsData: apptsData,
         data: orderData,
         extractedOrders: orderData.orders,
         pathName

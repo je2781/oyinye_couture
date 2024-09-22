@@ -152,13 +152,13 @@ const SearchBar = ({ onHideModal}: any) => {
                             height={65}
                           />
                           <section>
-                            <h3 className="font-sans text-[1rem] font-medium hover:underline-offset-1 hover:underline">
+                            <h2 className="font-sans text-[1rem] font-medium hover:underline-offset-1 hover:underline">
                               {product.title}
-                            </h3>
-                            <h3 className="font-sans font-thin text-gray-400 text-[.9rem]">
+                            </h2>
+                            <h2 className="font-sans font-thin text-gray-400 text-[.9rem]">
                               &#8358;
                               {product.colors[0].sizes[0].price.toLocaleString()}
-                            </h3>
+                            </h2>
                           </section>
                         </article>
                       </li>

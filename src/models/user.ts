@@ -16,6 +16,7 @@ const UserSchema = new Schema({
   password: {
     type: String,
   },
+  avatar: String,
   isVerified: {
     buyer: {
       type: Boolean,

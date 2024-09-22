@@ -1,3 +1,4 @@
+import { timeStamp } from 'console';
 import mongoose from 'mongoose';
 
 const Schema = mongoose.Schema;
@@ -9,18 +10,24 @@ const AppointmentSchema = new Schema({
             ref: "users",
             required: true,
         },
+        phoneNo: String,
+        residence: String,
+        size: Number,
+        styles: [
+            {
+                data: Object
+            }
+        ],
     },
     content: String,
-    phoneNo: String,
-    styles: [
-        {
-            image: String
-        }
-    ],
     eventDate: Date,
-    residence: String,
-    size: Number
-});
+    read: Boolean,
+    unRead: Boolean,
+    saved: Boolean
+}, {
+    timestamps: true
+}
+);
 
 const Appointments = mongoose.models.appointments ?? mongoose.model('appointments', AppointmentSchema);
 

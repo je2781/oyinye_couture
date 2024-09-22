@@ -129,11 +129,11 @@ export default function CartInfo({
 
 
     useEffect(() => {
-        setIsCreatingUserProfile(true);
         
         timerId = setTimeout(async () => {
             if(emailPattern.test(email)){
                 try {
+                    setIsCreatingUserProfile(true);
                     const res = await axios.post('/api/users/signup', {
                         email
                     });
@@ -299,14 +299,14 @@ export default function CartInfo({
                         <p id='email-error' className="text-red-600 text-sm font-sans hidden">Enter a valid email</p>
                     </div>
                 </header>
-                <section className="w-ful">
+                <section className="w-full">
                     
                     <header className="w-full flex flex-row justify-between items-center font-sans text-xs text-gray-400 font-extralight
                     border-[0.7px] border-gray-300 border-l-0 border-r-0 border-t-0 py-5">
-                        <h3 className="tracking-widest md:w-[65%] w-[90%]">PRODUCT</h3>
+                        <h2 className="tracking-widest md:w-[65%] w-[90%]">PRODUCT</h2>
                         <div className="inline-flex flex-row justify-between items-center md:gap-x-32 gap-x-8 md:w-[35%] w-[10%]">
-                            <h3 className="tracking-widest md:inline-block hidden">QUANTITY</h3>
-                            <h3 className="tracking-widest">TOTAL</h3>
+                            <h2 className="tracking-widest md:inline-block hidden">QUANTITY</h2>
+                            <h2 className="tracking-widest">TOTAL</h2>
                         </div>
                     </header>
                     {loader && <div className="trailing-progress-bar">
@@ -322,7 +322,7 @@ export default function CartInfo({
                                 <div className="flex flex-row md:gap-x-7 gap-x-3 items-start">
                                     <Image src={Object.values(frontBase64ImagesObj)[i][0]} width={100} height={175} alt={`cart-item${i+1}`}/>
                                     <div className="font-sans inline-block">
-                                        <h3 className="text-[1rem] font-normal">{item.title}</h3>
+                                        <h2 className="text-[1rem] font-normal">{item.title}</h2>
                                         <p className="text-sm font-extralight">&#8358;{item.price}</p>
                                         <p className="text-sm font-extralight">Color: {item.color}</p>
                                         <p className="text-sm font-extralight">Size: UK {item.number}</p>

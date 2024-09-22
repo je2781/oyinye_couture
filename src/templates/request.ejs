@@ -1,13 +1,17 @@
 <html xmlns="http://www.w3.org/1999/xhtml"><head>
-    <title>Oyinye - Payment Request</title>
+    <title>Oyinye - Request Form</title>
     <meta content="IE=edge" http-equiv="X-UA-Compatible">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="android-chrome-192x192" sizes="192x192" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/android-chrome-192x192.png"/>
+    <link rel="android-chrome-512x512" sizes="512x512" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/android-chrome-512x512.png"/>
     <link rel="apple-touch-icon" sizes="180x180" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/apple-touch-icon.png"/>
     <link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/favicon-32x32.png"/>
     <link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/favicon-16x16.png"/>
     <link rel="manifest" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/site.webmanifest"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+
 </head>
 
 <body bgcolor="#f2f2f2" style="background-color: rgb(242, 242, 242); margin: 40px 0px; padding: 0px;" yahoo="fix" leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0">
@@ -68,7 +72,7 @@
                                                                                                         <a href="<%= url  %>" style="text-decoration: none; color: #777777;">
                                                                                                             <font color="#777777" size="2" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; font-size: 12px; text-size-adjust: 100%; text-transform: uppercase;font-weight:700;">
 
-                                                                                                                Order: ##<%=  orderId  %>##
+                                                                                                                <%= isCart === true ? 'CART' : 'ORDER'  %>: ##<%=  id  %>##
 
                                                                                                             </font>
                                                                                                         </a>
@@ -154,7 +158,7 @@
                                                                     <td align="center" style="color: rgb(92, 107, 192); font-size: 16px; line-height: 20px; padding: 0px 0px 10px; text-transform: uppercase;" editable=""><font color="#000000" size="3" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; text-size-adjust: 100%; text-transform: uppercase;font-weight:600;"> Thank you for your patronage! </font></td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td align="center" style="color: rgb(119, 119, 119); font-size: 13px; line-height: 18px; padding: 0px;" editable=""><font color="#777777" size="2" style="font-family: 'Noto Sans', 'Open Sans', sans-serif; text-size-adjust: 100%;"> Here's a quick view of the total amount this invoice is for, contact the seller for a detailed breakdown of the total amount </font></td>
+                                                                    <td align="center" style="color: rgb(119, 119, 119); font-size: 13px; line-height: 18px; padding: 0px;" editable=""><font color="#777777" size="2" style="font-family: 'Noto Sans', 'Open Sans', sans-serif; text-size-adjust: 100%;"><%= header %></font></td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
@@ -211,8 +215,10 @@
                                                                                                         <table align="left" border="0" cellpadding="0" cellspacing="0" class="tablemobile" lang="x-tablem" style="border-collapse: collapse;" cloneordelete="single">
                                                                                                             <tbody>
                                                                                                                 <tr>
-                                                                                                                    <td align="center" style="color: #b4b4b4; font-size: 13px; line-height: 16px; padding-bottom: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px;" editable=""></td>
+                                                                                                                    <td align="center" style="color: #b4b4b4; font-size: 13px; line-height: 16px; padding-bottom: 0px; padding-left: 0px; padding-right: 0px; padding-top: 0px;" editable="">
+                                                                                                                        
 
+                                                                                                                    </td>
 
                                                                                                                 </tr>
                                                                                                             </tbody>
@@ -220,10 +226,48 @@
                                                                                                     </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="left" style="color: #777777;font-family: 'Noto Sans', 'Open Sans', sans-serif;font-size: 13px;line-height: 18px;padding-bottom: 10px;padding-left: 0px;padding-right: 1rem;padding-top: 0px;" editable=""><font color="#777777" size="2" style="font-family: 'Noto Sans', 'Open Sans', sans-serif; text-size-adjust: 100%;">Awaiting notification of successful payment for order amount below, delivery of purchase will commerce on confirmation</font></td>
+                                                                                                    <td align="left" style="color: #777777;font-family: 'Noto Sans', 'Open Sans', sans-serif ;font-size: 13px ;line-height: 18px;padding-bottom: 10px;padding-left: 0px;padding-right: 1rem;padding-top: 0px;" editable="">
+                                                                                                        <% if(isCart){ %>
+                                                                                                            <div class="flex flex-col gap-y-6 w-full">
+                                                                                                                <% for(let i = 0; i < cartItems.length; i++) { %>
+                                                                                                                    <article
+                                                                                                                        class="flex flex-row justify-between items-center w-[80%]"
+                                                                                                                    >
+                                                                                                                        <div class="flex flex-row gap-x-4 items-center">
+                                                                                                                            <div class="px-[6px] border border-gray-300 rounded-md relative">
+                                                                                                                                <img
+                                                                                                                                src="<%= cartItems[i].frontBase64Images[0] %>"
+                                                                                                                                width='65'
+                                                                                                                                height='90'
+                                                                                                                                alt="order-item<%= i+1 %>"
+                                                                                                                                />
+                                                                                                                                <span class="transition-all duration-300 ease-out transform hover:scale-125 bg-gray-500 px-[8px] py-[4px] text-[0.7rem] rounded-[50%] text-white absolute -right-[8px] -top-[12px] font-bold">
+                                                                                                                                <%= cartItems[i].quantity %>
+                                                                                                                                </span>
+                                                                                                                            </div>
+                                                                                                                            <div class="font-sans inline-block">
+                                                                                                                                <h2 class="text-sm font-normal"><%= cartItems[i].title  %></h2>
+                                                                                                                                <p class="text-sm font-extralight text-gray-500">
+                                                                                                                                <%= cartItems[i].color %>/UK <%= cartItems[i].size %>
+                                                                                                                                </p>
+                                                                                                                            </div>
+                                                                                                                        </div>
+                                                                                                                        <font class="text-sm" color="#000000" size="2" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; text-size-adjust: 100%;font-weight:600"> 
+                                                                                                                            &#8358;<%= parseFloat(cartItems[i].total.toFixed(2)).toLocaleString("en-US") %>
+                                                                                                                            
+                                                                                                                        </font>
+
+                                                                                                                    </article>
+                                                                                                                <% } %>
+                                                                                                            </div>
+                                                                                                        <% } %>
+                                                                                                    </td>
                                                                                                 </tr>
                                                                                                 <tr>
-                                                                                                    <td align="left" style="color: rgb(51, 51, 51); font-size: 13px; line-height: 16px; padding: 0px 0px 10px;" editable=""><font color="#333333" size="2" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; text-size-adjust: 100%;font-weight:700;"> Price:&nbsp; </font> <font color="#000000" size="2" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; text-size-adjust: 100%;font-weight:600"> ₦ ##<%= total  %>## </font></td>
+                                                                                                    <td align="left" style="color: #777777;font-family: 'Noto Sans', 'Open Sans', sans-serif;font-size: 13px;line-height: 18px;padding-bottom: 10px;padding-left: 0px;padding-right: 1rem;padding-top: 0px;" editable=""><font color="#777777" size="2" style="font-family: 'Noto Sans', 'Open Sans', sans-serif; text-size-adjust: 100%;"><%=  message %></font></td>
+                                                                                                </tr>
+                                                                                                <tr>
+                                                                                                    <td align="left" style="color: rgb(51, 51, 51); font-size: 13px; line-height: 16px; padding: 0px 0px 10px;" editable=""><font color="#333333" size="2" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; text-size-adjust: 100%;font-weight:700;"> Price:&nbsp; </font> <font color="#000000" size="2" style="font-family: 'Montserrat', 'Gotham Rounded', 'Gotham', 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue',Arial,sans-serif; text-size-adjust: 100%;font-weight:600"> &#8358; ##<%= sales  %>## </font></td>
                                                                                                 </tr>
                                                                                             </tbody>
                                                                                         </table>
@@ -265,7 +309,7 @@
                                                                                                         <a style="text-decoration: none;" href="<%= url  %>">
                                                                                                             <font color="#ffffff" size="2" style="font-family: 'Noto Sans', 'Open Sans', 'Source Sans Pro', 'Segoe UI','Segoe UI Web Regular','Segoe UI Symbol','Helvetica Neue','BBAlpha Sans','S60 Sans',Arial,sans-serif; text-size-adjust: 100%; text-align: center;">
 
-                                                                                                                CLICK TO PAY
+                                                                                                                CLICK TO <%= actionWord %>
                                                                                                             </font>
                                                                                                         </a>
                                                                                                     </td>
@@ -306,7 +350,7 @@
                                                         <table align="center" border="0" cellpadding="0" cellspacing="0" class="tablemobile" lang="x-tablem" style="border-collapse: collapse; width: 550px;" width="550" cloneordelete="single">
                                                             <tbody>
                                                                 <tr>
-                                                                    <td align="center" style="color: rgb(51, 51, 51); font-size: 13px; line-height: 18px; padding: 0px;" editable=""><font color="#333333" size="2" style="font-family: 'Noto Sans', 'Open Sans', sans-serif; text-size-adjust: 100%;">Complete payment relax and wait for delivery<br> for this purchase </font></td>
+                                                                    <td align="center" style="color: rgb(51, 51, 51); font-size: 13px; line-height: 18px; padding: 0px;" editable=""><font color="#333333" size="2" style="font-family: 'Noto Sans', 'Open Sans', sans-serif; text-size-adjust: 100%;"><%- footer %></font></td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>

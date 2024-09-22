@@ -345,6 +345,30 @@ export function convertToNumericCode(isoCode: string) {
   return countries.alpha3ToNumeric(alpha3Code);
 }
 
+
+export const generateBase64FromMedia = (
+  imageFile: any
+): Promise<string | ArrayBuffer | null | undefined> => {
+  if (!imageFile) {
+    return new Promise((resolve, reject) => {});
+  }
+
+  const reader = new FileReader();
+  const promise = new Promise(
+    (
+      resolve: (result: string | ArrayBuffer | null | undefined) => void,
+      reject: (reason: any) => void
+    ) => {
+      reader.onload = (e: ProgressEvent<FileReader>) =>
+        resolve(e.target?.result);
+      reader.onerror = (err) => reject(err);
+    }
+  );
+
+  reader.readAsDataURL(imageFile);
+  return promise;
+};
+
 export  function getDeviceType(userAgent: string) {
 
   if (/Mobile|Android|iPhone/i.test(userAgent)) {
@@ -426,6 +450,433 @@ export function randomReference() {
     result += chars[Math.floor(Math.random() * chars.length)];
   return result;
 }
+
+export const sizes = [8, 10, 12, 14, 16, 18];
+
+export const regex = /^[0-9]+$/;
+
+export const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+export const extractProductDetails = (
+  cartItems: any[],
+  cartItemObj: CartItemObj,
+  frontBase64ImagesObj: Base64ImagesObj,
+) => {
+  
+  for (let item of cartItems) {
+    for (let color of item.product.colors) {
+      let size = color.sizes.find(
+        (size: any) => size.variantId === item.variantId
+      );
+
+      if (size) {
+        cartItemObj[`${color.type}-${size.number}`] = {
+          ...size,
+          variantId: size.variantId,
+          title: item.product.title,
+          color: color.type,
+          quantity: item.quantity,
+          id: item.product._id.toString(),
+        };
+        frontBase64ImagesObj[`${color.type}-${size.number}`] = color.imageFrontBase64;
+      }
+    }
+  }
+};
+
+export const appsList = ["Email", "Calendar", "Product Listing"];
+
+export const viewsList = ["Orders"];
+
+export const insightList = ["Summary"];
+
+export const defaultCartState: CartState = {
+  items: [],
+  totalAmount: 0,
+};
+
+export const getRouteNames = (list: string[]) => {
+  return list.map(app => {
+    let routeName, firstWord, secondWord = '';
+    let newWord = [];
+    switch (app) {
+        case 'Product Listing':
+            firstWord = app.split(' ')[0].charAt(0).toLowerCase() + app.split(' ')[0].slice(1);
+            secondWord = app.split(' ')[1].charAt(0).toLowerCase() + app.split(' ')[1].slice(1);
+  
+            newWord = [firstWord, secondWord];
+            routeName =  newWord.join('-');
+            break;
+        default:
+            routeName = app.charAt(0).toLowerCase() + app.slice(1);
+            break;
+  
+    }
+  
+    return routeName;
+  });
+}
+
+export const colorsReducer = (state: DressColorObj[], action: any) => {
+  if (action.type === "ADD") {
+    let updatedColorsObj = state.slice();
+    let existingColorObjIndex = updatedColorsObj.findIndex(
+      (colorObj) => Object.keys(colorObj)[0] === action.color.type
+    );
+    let existingColorObj = updatedColorsObj[existingColorObjIndex];
+
+    if (existingColorObj) {
+      let updatedColorObj = {
+        ...existingColorObj,
+        [action.color.type]: {
+          imageFront: action.color.front
+            ? [
+                ...existingColorObj[action.color.type].imageFront,
+                action.color.front,
+              ]
+            : existingColorObj[action.color.type].imageFront,
+          imageBack: action.color.back
+            ? action.color.back
+            : existingColorObj[action.color.type].imageBack,
+        },
+      };
+
+      updatedColorsObj[existingColorObjIndex] = updatedColorObj;
+    } else {
+      updatedColorsObj.push({
+        [action.color.type]: {
+          imageFront: action.color.front ? [action.color.front] : [],
+          imageBack: action.color.back ? action.color.back : "",
+        },
+      });
+    }
+
+    return updatedColorsObj;
+  }
+
+  if (action.type === "REMOVE") {
+    let updatedColorsObj = state.slice();
+    let existingColorObjIndex = updatedColorsObj.findIndex(
+      (colorObj) => Object.keys(colorObj)[0] === action.color.type
+    );
+    let existingColorObj = updatedColorsObj[existingColorObjIndex];
+
+    if (existingColorObj) {
+      updatedColorsObj = state.filter(
+        (colorObj) => Object.keys(colorObj)[0] !== action.color.type
+      );
+    }
+
+    return updatedColorsObj;
+  }
+
+  return [];
+};
+
+export async function handleSubmit(
+  e: React.FormEvent,
+  title: string,
+  desc: string,
+  type: string,
+  dressColorsState: DressColorObj[],
+  currentBgColors: string[],
+  sizeData: SizeData[],
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
+) {
+  e.preventDefault();
+  let sizeDataArray: SizeData[] = [];
+
+  if (title.length === 0) {
+    return toast.error(`title missing`, {
+      position: "top-center",
+    });
+  }
+
+  if (desc.length === 0) {
+    return toast.error(`description missing`, {
+      position: "top-center",
+    });
+  }
+
+  if (type.length === 0) {
+    return toast.error(`product type missing`, {
+      position: "top-center",
+    });
+  }
+
+  if (
+    Object.values(dressColorsState[dressColorsState.length - 1])[0].imageFront
+      .length === 0
+  ) {
+    return toast.error(`front image(s) missing`, {
+      position: "top-center",
+    });
+  }
+  if (
+    Object.values(dressColorsState[dressColorsState.length - 1])[0].imageBack
+      .length === 0
+  ) {
+    return toast.error(`back image missing`, {
+      position: "top-center",
+    });
+  }
+  //extracting size data for each size in every dress color
+  for (let bgColor of currentBgColors) {
+    let updatedSizeData = sizeData.filter((datum) => datum.color === bgColor);
+    for (let size of sizes) {
+      let newSizeData = updatedSizeData.filter(
+        (datum) => datum.number! === size
+      );
+      sizeDataArray.push(newSizeData[newSizeData.length - 1]);
+    }
+  }
+
+  const hashedId = (await crypto.randomBytes(32)).toString("hex");
+
+  const Product = {
+    title,
+    description: desc,
+    noOfOrders: 0,
+    type,
+    noOfReviews: 0,
+    colors: currentBgColors.map((bgColor) => {
+      let updatedSizeData = sizeDataArray
+        .filter((datum) => datum !== undefined)
+        .filter((datum) => datum.color === bgColor);
+      return {
+        type: bgColor,
+        imageFrontBase64: Object.values(
+          dressColorsState[dressColorsState.length - 1]
+        )[0].imageFront,
+        imageBackBase64: Object.values(
+          dressColorsState[dressColorsState.length - 1]
+        )[0].imageBack,
+        sizes: updatedSizeData.map((datum) => ({
+          number: datum.number!,
+          price: parseFloat(datum.price!),
+          stock: datum.stock ? datum.stock : 0,
+          variantId: hashedId,
+        })),
+      };
+    }),
+  };
+
+  try {
+    setIsLoading(true);
+    await axios.post("/api/products/new", Product);
+    toast.success("Product created!");
+  } catch (error: any) {
+    toast.error(error);
+  } finally {
+    setIsLoading(false);
+  }
+}
+
+export async function handleBackImageupload(
+  e: React.ChangeEvent<HTMLInputElement>,
+  dispatchAction: React.Dispatch<any>,
+  currentBgColors: string[],
+  setImgData: React.Dispatch<
+    React.SetStateAction<
+      {
+        size: string;
+        filename: string;
+      }[]
+    >
+  >,
+  setBackFilename: React.Dispatch<React.SetStateAction<string | null>>,
+) {
+  const file = e.target.files![0];
+  try {
+
+    let base64Str = await generateBase64FromMedia(file);
+    dispatchAction({
+      type: "ADD",
+      color: {
+        type: currentBgColors[currentBgColors.length - 1],
+        back: base64Str,
+      },
+    });
+  } catch (error) {
+    toast.error("image conversion failed");
+  } finally {
+    setBackFilename(file.name);
+    setImgData((prevState) => [
+      ...prevState,
+      {
+        size: (file.size / 1024).toFixed(2),
+        filename: file.name,
+      },
+    ]);
+  }
+}
+
+export async function handleFrontImagesupload(
+  e: React.ChangeEvent<HTMLInputElement>,
+  dispatchAction: React.Dispatch<any>,
+  currentBgColors: string[],
+  setImgData: React.Dispatch<
+    React.SetStateAction<
+      {
+        size: string;
+        filename: string;
+      }[]
+    >
+  >,
+  setFrontFilename: React.Dispatch<React.SetStateAction<string | null>>,
+) {
+  const file = e.target.files![0];
+  try {
+
+    let base64Str = await generateBase64FromMedia(file);
+    dispatchAction({
+      type: "ADD",
+      color: {
+        type: currentBgColors[currentBgColors.length - 1],
+        front: base64Str,
+      },
+    });
+  } catch (error) {
+    toast.error("image conversion failed");
+  } finally {
+    setFrontFilename(file.name);
+    setImgData((prevState) => [
+      ...prevState,
+      {
+        size: (file.size / 1024).toFixed(2),
+        filename: file.name,
+      },
+    ]);
+  }
+}
+
+export function handlePriceChange(
+  e: React.ChangeEvent<HTMLInputElement>,
+  currentBgColors: string[],
+  sizeData: SizeData[],
+  setSizeData: React.Dispatch<React.SetStateAction<SizeData[]>>,
+  setPrice: React.Dispatch<React.SetStateAction<string>>
+) {
+  if (currentBgColors.length === 0) {
+    return toast.error(`Select a dress color`, {
+      position: "top-center",
+    });
+  }
+  if (currentBgColors.length > 0 && sizeData.length === 0) {
+    return toast.error(
+      `Select a dress size for ${currentBgColors[currentBgColors.length - 1]}`,
+      {
+        position: "top-center",
+      }
+    );
+  }
+
+  setPrice(e.target.value);
+
+  //storing size data of previous active size
+  setSizeData((prevState) => [
+    ...prevState,
+    {
+      ...prevState[prevState.length - 1],
+      color: currentBgColors[currentBgColors.length - 1],
+      price: e.target.value,
+    },
+  ]);
+}
+
+export function handleStockChange(
+  e: React.ChangeEvent<HTMLInputElement>,
+  currentBgColors: string[],
+  sizeData: SizeData[],
+  setIsChecked: React.Dispatch<React.SetStateAction<boolean>>
+) {
+  let sizes = document.querySelectorAll("[id^=size]") as NodeListOf<
+    HTMLSpanElement
+  >;
+  if (currentBgColors.length === 0) {
+    return toast.error(`Select a dress color`, {
+      position: "top-center",
+    });
+  }
+  if (currentBgColors.length > 0 && sizeData.length === 0) {
+    return toast.error(
+      `Select a dress size for ${currentBgColors[currentBgColors.length - 1]}`,
+      {
+        position: "top-center",
+      }
+    );
+  }
+
+  setIsChecked(e.currentTarget.checked!);
+}
+
+export const cartReducer = (state: CartState, action: any) => {
+  if (action.type === "ADD") {
+    const updatedStateTotalAmount =
+      state.totalAmount + (action.item.price * action.item.quantity);
+
+    const existingCartItemIndex = state.items.findIndex(
+      (item: any) => item.variantId === action.item.variantId
+    );
+    const existingCartItem = state.items[existingCartItemIndex];
+
+    let updatedStateItems;
+
+    if (existingCartItem) {
+      const updatedStateItem = {
+        ...existingCartItem,
+        quantity: existingCartItem.quantity + action.item.quantity,
+      };
+      updatedStateItems = [...state.items];
+      updatedStateItems[existingCartItemIndex] = updatedStateItem;
+    } else {
+      // updatedStateItem = {...action.item};
+      updatedStateItems = state.items.concat(action.item);
+    }
+
+    return {
+      items: updatedStateItems,
+      totalAmount: parseFloat(updatedStateTotalAmount.toFixed(2)),
+    };
+  }
+  if (action.type === "REMOVE") {
+    let updatedStateItems;
+    const existingCartItemIndex = state.items.findIndex(
+      (item: any) => item.variantId === action.item.variantId
+    );
+    const existingCartItem = state.items[existingCartItemIndex];
+    const updatedStateTotalAmount = state.totalAmount - (action.item.price * action.item.quantity);
+
+    if (existingCartItem.quantity - action.item.quantity === 0) {
+      updatedStateItems = state.items.filter(
+        (item: any) => item.variantId !== existingCartItem.variantId
+      );
+    } else {
+      const updatedStateItem = {
+        ...existingCartItem,
+        quantity: existingCartItem.quantity - action.item.quantity,
+      };
+      updatedStateItems = [...state.items];
+      updatedStateItems[existingCartItemIndex] = updatedStateItem;
+    }
+
+    return {
+      items: updatedStateItems,
+      totalAmount: parseFloat(updatedStateTotalAmount.toFixed(2)),
+    };
+  }
+  if (action.type === "UPDATE") {
+    return {
+      items: action.cartData.items,
+      totalAmount: state.totalAmount,
+    };
+  }
+
+  return defaultCartState;
+};
+
+export const driveList = ["All Files", "Recent", "Important", "Deleted"];
+
 
 export const lineGraphOptions = {
   layout: {
@@ -1397,479 +1848,6 @@ export const getDataset = (orders: any[]) => {
     
 }
 
-
-export const sizes = [8, 10, 12, 14, 16, 18];
-
-export const regex = /^[0-9]+$/;
-
-export const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
-export const extractProductDetails = (
-  cartItems: any[],
-  cartItemObj: CartItemObj,
-  frontBase64ImagesObj: Base64ImagesObj,
-) => {
-  
-  for (let item of cartItems) {
-    for (let color of item.product.colors) {
-      let size = color.sizes.find(
-        (size: any) => size.variantId === item.variantId
-      );
-
-      if (size) {
-        cartItemObj[`${color.type}-${size.number}`] = {
-          ...size,
-          variantId: size.variantId,
-          title: item.product.title,
-          color: color.type,
-          quantity: item.quantity,
-          id: item.product._id.toString(),
-        };
-        frontBase64ImagesObj[`${color.type}-${size.number}`] = color.imageFrontBase64;
-      }
-    }
-  }
-};
-
-export const appsList = ["Email", "Calendar", "Product Listing"];
-
-export const viewsList = ["Orders"];
-
-export const insightList = ["Summary"];
-
-export const defaultCartState: CartState = {
-  items: [],
-  totalAmount: 0,
-};
-
-export const getRouteNames = (list: string[]) => {
-  return list.map(app => {
-    let routeName, firstWord, secondWord = '';
-    let newWord = [];
-    switch (app) {
-        case 'Product Listing':
-            firstWord = app.split(' ')[0].charAt(0).toLowerCase() + app.split(' ')[0].slice(1);
-            secondWord = app.split(' ')[1].charAt(0).toLowerCase() + app.split(' ')[1].slice(1);
-  
-            newWord = [firstWord, secondWord];
-            routeName =  newWord.join('-');
-            break;
-        default:
-            routeName = app.charAt(0).toLowerCase() + app.slice(1);
-            break;
-  
-    }
-  
-    return routeName;
-  });
-}
-
-export const generateBase64FromMedia = (
-  imageFile: any
-): Promise<string | ArrayBuffer | null | undefined> => {
-  if (!imageFile) {
-    return new Promise((resolve, reject) => {});
-  }
-
-  const reader = new FileReader();
-  const promise = new Promise(
-    (
-      resolve: (result: string | ArrayBuffer | null | undefined) => void,
-      reject: (reason: any) => void
-    ) => {
-      reader.onload = (e: ProgressEvent<FileReader>) =>
-        resolve(e.target?.result);
-      reader.onerror = (err) => reject(err);
-    }
-  );
-
-  reader.readAsDataURL(imageFile);
-  return promise;
-};
-
-export // Function to convert Base64 string to File object
-function base64ToFile(base64String: string, fileName: string, mimeType: string) {
-    // Remove the data URL part if present
-    const byteString = atob(base64String.split(',')[1]);
-
-    // Create an ArrayBuffer and a view for Uint8Array
-    const arrayBuffer = new ArrayBuffer(byteString.length);
-    const uint8Array = new Uint8Array(arrayBuffer);
-
-    // Populate the Uint8Array with the decoded data
-    for (let i = 0; i < byteString.length; i++) {
-        uint8Array[i] = byteString.charCodeAt(i);
-    }
-
-    // Create a Blob from the ArrayBuffer
-    const blob = new Blob([uint8Array], { type: mimeType });
-
-    // Optionally, create a File object from the Blob
-    return new File([blob], fileName, { type: mimeType });
-}
-
-export const colorsReducer = (state: DressColorObj[], action: any) => {
-  if (action.type === "ADD") {
-    let updatedColorsObj = state.slice();
-    let existingColorObjIndex = updatedColorsObj.findIndex(
-      (colorObj) => Object.keys(colorObj)[0] === action.color.type
-    );
-    let existingColorObj = updatedColorsObj[existingColorObjIndex];
-
-    if (existingColorObj) {
-      let updatedColorObj = {
-        ...existingColorObj,
-        [action.color.type]: {
-          imageFront: action.color.front
-            ? [
-                ...existingColorObj[action.color.type].imageFront,
-                action.color.front,
-              ]
-            : existingColorObj[action.color.type].imageFront,
-          imageBack: action.color.back
-            ? action.color.back
-            : existingColorObj[action.color.type].imageBack,
-        },
-      };
-
-      updatedColorsObj[existingColorObjIndex] = updatedColorObj;
-    } else {
-      updatedColorsObj.push({
-        [action.color.type]: {
-          imageFront: action.color.front ? [action.color.front] : [],
-          imageBack: action.color.back ? action.color.back : "",
-        },
-      });
-    }
-
-    return updatedColorsObj;
-  }
-
-  if (action.type === "REMOVE") {
-    let updatedColorsObj = state.slice();
-    let existingColorObjIndex = updatedColorsObj.findIndex(
-      (colorObj) => Object.keys(colorObj)[0] === action.color.type
-    );
-    let existingColorObj = updatedColorsObj[existingColorObjIndex];
-
-    if (existingColorObj) {
-      updatedColorsObj = state.filter(
-        (colorObj) => Object.keys(colorObj)[0] !== action.color.type
-      );
-    }
-
-    return updatedColorsObj;
-  }
-
-  return [];
-};
-
-export async function handleSubmit(
-  e: React.FormEvent,
-  title: string,
-  desc: string,
-  type: string,
-  dressColorsState: DressColorObj[],
-  currentBgColors: string[],
-  sizeData: SizeData[],
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
-) {
-  e.preventDefault();
-  let sizeDataArray: SizeData[] = [];
-
-  if (title.length === 0) {
-    return toast.error(`title missing`, {
-      position: "top-center",
-    });
-  }
-
-  if (desc.length === 0) {
-    return toast.error(`description missing`, {
-      position: "top-center",
-    });
-  }
-
-  if (type.length === 0) {
-    return toast.error(`product type missing`, {
-      position: "top-center",
-    });
-  }
-
-  if (
-    Object.values(dressColorsState[dressColorsState.length - 1])[0].imageFront
-      .length === 0
-  ) {
-    return toast.error(`front image(s) missing`, {
-      position: "top-center",
-    });
-  }
-  if (
-    Object.values(dressColorsState[dressColorsState.length - 1])[0].imageBack
-      .length === 0
-  ) {
-    return toast.error(`back image missing`, {
-      position: "top-center",
-    });
-  }
-  //extracting size data for each size in every dress color
-  for (let bgColor of currentBgColors) {
-    let updatedSizeData = sizeData.filter((datum) => datum.color === bgColor);
-    for (let size of sizes) {
-      let newSizeData = updatedSizeData.filter(
-        (datum) => datum.number! === size
-      );
-      sizeDataArray.push(newSizeData[newSizeData.length - 1]);
-    }
-  }
-
-  const hashedId = (await crypto.randomBytes(32)).toString("hex");
-
-  const Product = {
-    title,
-    description: desc,
-    noOfOrders: 0,
-    type,
-    noOfReviews: 0,
-    colors: currentBgColors.map((bgColor) => {
-      let updatedSizeData = sizeDataArray
-        .filter((datum) => datum !== undefined)
-        .filter((datum) => datum.color === bgColor);
-      return {
-        type: bgColor,
-        imageFrontBase64: Object.values(
-          dressColorsState[dressColorsState.length - 1]
-        )[0].imageFront,
-        imageBackBase64: Object.values(
-          dressColorsState[dressColorsState.length - 1]
-        )[0].imageBack,
-        sizes: updatedSizeData.map((datum) => ({
-          number: datum.number!,
-          price: parseFloat(datum.price!),
-          stock: datum.stock ? datum.stock : 0,
-          variantId: hashedId,
-        })),
-      };
-    }),
-  };
-
-  try {
-    setIsLoading(true);
-    await axios.post("/api/products/new", Product);
-    toast.success("Product created!");
-  } catch (error: any) {
-    toast.error(error);
-  } finally {
-    setIsLoading(false);
-  }
-}
-
-export async function handleBackImageupload(
-  dispatchAction: React.Dispatch<any>,
-  currentBgColors: string[],
-  setImgData: React.Dispatch<
-    React.SetStateAction<
-      {
-        size: string;
-        filename: string;
-      }[]
-    >
-  >,
-  setBackFilename: React.Dispatch<React.SetStateAction<string | null>>,
-  backUploadRef: React.RefObject<HTMLInputElement>,
-  file: File | null
-) {
-  try {
-    file = backUploadRef.current!.files![0];
-
-    let base64Str = await generateBase64FromMedia(file);
-    dispatchAction({
-      type: "ADD",
-      color: {
-        type: currentBgColors[currentBgColors.length - 1],
-        back: base64Str,
-      },
-    });
-  } catch (error) {
-    toast.error("image conversion failed");
-  } finally {
-    setBackFilename(file!.name);
-    setImgData((prevState) => [
-      ...prevState,
-      {
-        size: (file!.size / 1024).toFixed(2),
-        filename: file!.name,
-      },
-    ]);
-  }
-}
-
-export async function handleFrontImagesupload(
-  e: React.ChangeEvent,
-  dispatchAction: React.Dispatch<any>,
-  currentBgColors: string[],
-  setImgData: React.Dispatch<
-    React.SetStateAction<
-      {
-        size: string;
-        filename: string;
-      }[]
-    >
-  >,
-  setFrontFilename: React.Dispatch<React.SetStateAction<string | null>>,
-  frontUploadRef: React.RefObject<HTMLInputElement>,
-  file: File | null
-) {
-  try {
-    file = frontUploadRef.current!.files![0];
-
-    let base64Str = await generateBase64FromMedia(file);
-    dispatchAction({
-      type: "ADD",
-      color: {
-        type: currentBgColors[currentBgColors.length - 1],
-        front: base64Str,
-      },
-    });
-  } catch (error) {
-    toast.error("image conversion failed");
-  } finally {
-    setFrontFilename(file!.name);
-    setImgData((prevState) => [
-      ...prevState,
-      {
-        size: (file!.size / 1024).toFixed(2),
-        filename: file!.name,
-      },
-    ]);
-  }
-}
-
-export function handlePriceChange(
-  e: React.ChangeEvent<HTMLInputElement>,
-  currentBgColors: string[],
-  sizeData: SizeData[],
-  setSizeData: React.Dispatch<React.SetStateAction<SizeData[]>>,
-  setPrice: React.Dispatch<React.SetStateAction<string>>
-) {
-  if (currentBgColors.length === 0) {
-    return toast.error(`Select a dress color`, {
-      position: "top-center",
-    });
-  }
-  if (currentBgColors.length > 0 && sizeData.length === 0) {
-    return toast.error(
-      `Select a dress size for ${currentBgColors[currentBgColors.length - 1]}`,
-      {
-        position: "top-center",
-      }
-    );
-  }
-
-  setPrice(e.target.value);
-
-  //storing size data of previous active size
-  setSizeData((prevState) => [
-    ...prevState,
-    {
-      ...prevState[prevState.length - 1],
-      color: currentBgColors[currentBgColors.length - 1],
-      price: e.target.value,
-    },
-  ]);
-}
-
-export function handleStockChange(
-  e: React.ChangeEvent<HTMLInputElement>,
-  currentBgColors: string[],
-  sizeData: SizeData[],
-  setIsChecked: React.Dispatch<React.SetStateAction<boolean>>
-) {
-  let sizes = document.querySelectorAll("[id^=size]") as NodeListOf<
-    HTMLSpanElement
-  >;
-  if (currentBgColors.length === 0) {
-    return toast.error(`Select a dress color`, {
-      position: "top-center",
-    });
-  }
-  if (currentBgColors.length > 0 && sizeData.length === 0) {
-    return toast.error(
-      `Select a dress size for ${currentBgColors[currentBgColors.length - 1]}`,
-      {
-        position: "top-center",
-      }
-    );
-  }
-
-  setIsChecked(e.currentTarget.checked!);
-}
-
-export const cartReducer = (state: CartState, action: any) => {
-  if (action.type === "ADD") {
-    const updatedStateTotalAmount =
-      state.totalAmount + (action.item.price * action.item.quantity);
-
-    const existingCartItemIndex = state.items.findIndex(
-      (item: any) => item.variantId === action.item.variantId
-    );
-    const existingCartItem = state.items[existingCartItemIndex];
-
-    let updatedStateItems;
-
-    if (existingCartItem) {
-      const updatedStateItem = {
-        ...existingCartItem,
-        quantity: existingCartItem.quantity + action.item.quantity,
-      };
-      updatedStateItems = [...state.items];
-      updatedStateItems[existingCartItemIndex] = updatedStateItem;
-    } else {
-      // updatedStateItem = {...action.item};
-      updatedStateItems = state.items.concat(action.item);
-    }
-
-    return {
-      items: updatedStateItems,
-      totalAmount: parseFloat(updatedStateTotalAmount.toFixed(2)),
-    };
-  }
-  if (action.type === "REMOVE") {
-    let updatedStateItems;
-    const existingCartItemIndex = state.items.findIndex(
-      (item: any) => item.variantId === action.item.variantId
-    );
-    const existingCartItem = state.items[existingCartItemIndex];
-    const updatedStateTotalAmount = state.totalAmount - (action.item.price * action.item.quantity);
-
-    if (existingCartItem.quantity - action.item.quantity === 0) {
-      updatedStateItems = state.items.filter(
-        (item: any) => item.variantId !== existingCartItem.variantId
-      );
-    } else {
-      const updatedStateItem = {
-        ...existingCartItem,
-        quantity: existingCartItem.quantity - action.item.quantity,
-      };
-      updatedStateItems = [...state.items];
-      updatedStateItems[existingCartItemIndex] = updatedStateItem;
-    }
-
-    return {
-      items: updatedStateItems,
-      totalAmount: parseFloat(updatedStateTotalAmount.toFixed(2)),
-    };
-  }
-  if (action.type === "UPDATE") {
-    return {
-      items: action.cartData.items,
-      totalAmount: state.totalAmount,
-    };
-  }
-
-  return defaultCartState;
-};
-
-export const driveList = ["All Files", "Recent", "Important", "Deleted"];
 
 // export let sizesJsxObj: DressSizesJsxObj  = {};
 // export let sizesObj: DressSizesObj  = {};
