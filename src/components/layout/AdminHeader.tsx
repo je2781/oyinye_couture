@@ -3,7 +3,7 @@
 import Link from "next/link";
 import React, { useEffect } from "react";
 import useWindowWidth from "../helpers/getWindowWidth";
-import Sidebar from "../layout/Sidebar";
+import Sidebar from "./Sidebar";
 import SearchBar from "../ui/SearchBar";
 import useAuth from "@/store/useAuth";
 import Image from "next/image";
@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import useGlobal from "@/store/useGlobal";
 import { MobileModal } from "../ui/Modal";
-import { appsList, getRouteNames, viewsList } from "@/helpers/getHelpers";
+import { appsList, getRouteNames, insightList, viewsList } from "@/helpers/getHelpers";
 
 export default function AdminHeader({sectionName, pathName}: any) {
   let timerId: NodeJS.Timeout | null  = null;
@@ -24,21 +24,20 @@ export default function AdminHeader({sectionName, pathName}: any) {
   let width = useWindowWidth();
 
   useEffect(() => {
-    if(width >= 1024){
-      setIsMobileModalOpen(false);
-    }
+    setIsMobileModalOpen(false);
+    
   }, [width]);
 
   
   useEffect(() => {
-    const insightMenu = document.querySelector('#insight-menu');
+    const adminMenu = document.querySelector('#admin-menu');
     const orderManagementOptions = document.querySelector('#options-menu');
     const orderManagementOptionsForSmScreens = document.querySelector('#options-menu-sm-screen');
     const mainContent = document.querySelector('#admin-content') as HTMLElement;
 
     const handleContentClick = (event: MouseEvent) => {
-      if(insightMenu && !insightMenu.classList.contains('hidden')){
-        insightMenu.classList.add('hidden');
+      if(adminMenu && !adminMenu.classList.contains('hidden')){
+        adminMenu.classList.add('hidden');
       }
       if(orderManagementOptions && !orderManagementOptions.classList.contains('hidden')){
         orderManagementOptions.classList.add('hidden');
@@ -141,7 +140,7 @@ export default function AdminHeader({sectionName, pathName}: any) {
               <button 
               onClick={(e) => {
                 let item = e.currentTarget;
-                let menu = item.parentNode?.querySelector('#insight-menu') as HTMLDivElement;
+                let menu = item.parentNode?.querySelector('#admin-menu') as HTMLDivElement;
                 menu.classList.toggle('hidden');
               }}
               id="user-menu-button" aria-expanded="false" aria-haspopup="true" type="button" className="rounded-full bg-transparent p-1  focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-950">
@@ -150,7 +149,7 @@ export default function AdminHeader({sectionName, pathName}: any) {
                   <Image width={30} height={30} className="rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="profile-pic"/>
               </button>
   
-              <div id='insight-menu' className="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md text-secondary-400 bg-primary-800 shadow-lg ring-1 ring-black ring-opacity-5 py-3 px-2 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" >
+              <div id='admin-menu' className="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md text-secondary-400 bg-primary-800 shadow-lg ring-1 ring-black ring-opacity-5 py-3 px-2 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" >
                   <div className="inline-flex flex-row items-center gap-x-3 px-4 py-2 hover:text-accent">
                     <i className="fa-regular fa-user"></i>
                     <Link href="#" className="text-[1rem] font-sans" role="menuitem"  id="user-menu-item-0">Profile</Link>
@@ -183,8 +182,31 @@ export default function AdminHeader({sectionName, pathName}: any) {
                 </Link>
                 <ul className={`inline-flex items-start flex-col gap-y-6 w-full`}>
                     <li
-                    className="w-full px-4 py-[2px] flex flex-row gap-x-1 items-center">
-                        <header  className={`${pathName === 'insight' ? 'text-accent' : 'text-secondary-400'} flex flex-row items-center w-full cursor-pointer`}>
+                    className="w-full px-4 py-[2px] flex flex-col gap-y-5 items-center">
+                        <header 
+                          onClick={(e) => {
+                            let rightA = e.currentTarget.querySelector("header i.fa-angle-right");
+                            let headerSection = e.currentTarget.querySelector("header section");
+                            let header = e.currentTarget;
+                            let content = header.parentNode?.querySelector("#insight-content");
+        
+                            if (rightA && header && headerSection && content) {
+                                if (!rightA.classList.contains("ar-rotate")) {
+                                    rightA.classList.add("ar-rotate");
+                                    rightA.classList.remove("ar-rotate-anticlock");
+                                    content.classList.add("show");
+                                    content.classList.remove("hide");
+                                    headerSection.classList.remove('transition-all', 'duration-300', 'ease-out', 'p-0', 'hover:pl-2');
+                                } else {
+                                    rightA.classList.remove("ar-rotate");
+                                    rightA.classList.add("ar-rotate-anticlock");
+                                    content.classList.remove("show");
+                                    content.classList.add("hide");
+                                    headerSection.classList.add('transition-all', 'duration-300', 'ease-out', 'p-0', 'hover:pl-2');
+                                }
+                            }
+                        }} 
+                        className={`${pathName === 'insight' ? 'text-accent' : 'text-secondary-400'} flex flex-row items-center w-full cursor-pointer`}>
                             <section className="flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2  w-[90%]">
                                 <i id='item-icon' className="fa-solid fa-file-waveform text-xl"></i>
                                 <h1 aria-current="page" className="text-sm font-medium font-sans">Insight</h1>
@@ -193,6 +215,28 @@ export default function AdminHeader({sectionName, pathName}: any) {
                                 <i className="fa-solid fa-angle-right text-sm " ></i>
                             </div>
                         </header>
+                        <section id="insight-content" className="w-full pl-[6px] hide">
+                            <ul className="flex-col text-secondary-400 flex gap-y-3">
+                            {insightList.map((item: any, i: number) => (
+                                <li
+                                onClick={() => {
+                                    router.push(`/admin/summary`);
+                                }} 
+                                className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2" key={i}>
+                                    <div 
+                                        className={`${pathName === 'summary' ? 'text-white' : 'text-secondary-400'} inline-flex flex-row gap-x-4 items-center`}
+                                    >
+                                        <i className="fa-regular fa-circle  text-[0.6rem]"></i>
+                                        <span
+                                        className="text-sm font-medium font-sans"
+                                        >
+                                            {item}
+                                        </span>
+                                    </div>
+                                </li>
+                            ))}
+                            </ul>
+                        </section>
                     </li>
                     <li  
                         className="w-full px-4 py-[2px] flex flex-col gap-y-5 items-center"
@@ -220,7 +264,7 @@ export default function AdminHeader({sectionName, pathName}: any) {
                                     }
                                 }
                             }}
-                            className={`${(pathName === 'file-manager' || pathName === 'calendar' || pathName === 'email') ? 'text-accent' : 'text-secondary-400'} flex flex-row items-center w-full cursor-pointer peer`}
+                            className={`${(pathName === 'product-listing' || pathName === 'calendar' || pathName === 'email') ? 'text-accent' : 'text-secondary-400'} flex flex-row items-center w-full cursor-pointer peer`}
                             
                         >
                             <section className="flex flex-row gap-x-3 transition-all duration-300 ease-out p-0 hover:pl-2 items-center w-[90%]">

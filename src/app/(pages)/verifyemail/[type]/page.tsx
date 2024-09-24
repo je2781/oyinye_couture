@@ -1,5 +1,5 @@
 
-import Header from "@/components/Header";
+import Header from "@/components/layout/Header";
 import Login from "@/components/auth/Login";
 
 async function verifyToken(token: string, type: string){

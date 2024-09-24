@@ -28,7 +28,16 @@ const SearchBar = ({ onHideModal}: any) => {
   }, [isLoading]);
 
 
-  const pages = [{title: "Contact Us", route: '/contact'}, {title: "About", route: '/about'}, {title: "Login", route: '/login'}, {title: "Signup", route: '/signup'}, {title: "Shipping Policy", route: '/policies/shipping-policy'}];
+  const pages = [
+    {title: "Contact Us", route: '/pages/contact'}, 
+    {title: "About", route: '/pages/about'}, 
+    {title: "Login", route: '/login'}, 
+    {title: "Signup", route: '/signup'}, 
+    {title: "Shipping Policy", route: '/pages/shipping-policy'},
+    {title: "Returns Policy", route: '/pages/returns-policy'},
+    {title: "Privacy Policy", route: '/pages/privacy-policy'},
+    {title: "Size Guide", route: '/pages/size-guide'},
+  ];
 
   let productSuggestions = allProducts.slice(0, 6).some((product: any)=> product.title.includes(query.charAt(0).toUpperCase() + query.slice(1)));
   let otherSuggestions =  pages.some(page => page.title.includes(query.charAt(0).toUpperCase() + query.slice(1)));

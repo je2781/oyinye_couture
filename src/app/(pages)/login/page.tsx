@@ -1,6 +1,6 @@
 
 
-import Header from "@/components/Header";
+import Header from "@/components/layout/Header";
 import Login from "@/components/auth/Login";
 import { cookies } from "next/headers";
 

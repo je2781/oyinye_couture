@@ -4,9 +4,10 @@ import { AuthContextProvider } from "@/store/authContext";
 import { useEffect, useReducer, useState } from "react";
 import { CartContextProvider } from "@/store/cartContext";
 import { ProductContextProvider } from "@/store/productContext";
-import Header from "@/components/Header";
+import Header from "@/components/layout/Header";
 import { cartReducer, defaultCartState } from "@/helpers/getHelpers";
 import { GlobalContextProvider } from "@/store/globalContext";
+import Footer from "@/components/footer/Footer";
 
 export default function RootLayout({
   children,
@@ -71,6 +72,7 @@ export default function RootLayout({
           value={{ allProducts}}
         >
           {children}
+          <Footer />
         </ProductContextProvider>
       </CartContextProvider>
     </AuthContextProvider>

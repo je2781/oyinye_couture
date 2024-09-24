@@ -1,7 +1,7 @@
 
 
-import Header from '@/components/Header';
-import SearchResults from '@/components/SearchResults';
+import Header from '@/components/layout/Header';
+import SearchResults from '@/components/search/SearchResults';
 import { cookies } from 'next/headers';
 
 export const dynamicParams = true;

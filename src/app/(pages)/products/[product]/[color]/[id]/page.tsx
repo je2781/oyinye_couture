@@ -1,9 +1,9 @@
 
-import Header from "@/components/Header";
+import Header from "@/components/layout/Header";
 import dynamic from "next/dynamic";
 import { cookies } from "next/headers";
 
-const ProductDetailComponent = dynamic(() => import('../../../../../../components/ProductDetail'),{
+const ProductDetailComponent = dynamic(() => import('../../../../../../components/productDetail/ProductDetail'),{
   loading: () => <main className="flex justify-center items-center flex-col gap-y-2 bg-white h-screen w-full" >
     <h1 className="font-sans text-gray-600">Fetching Product...</h1>
     <span className="border-4 border-transparent rounded-full border-t-gray-600 border-r-gray-600 w-[36px] h-[36px] spin"></span>

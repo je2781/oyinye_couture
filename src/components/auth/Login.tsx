@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
 import useCart from "@/store/useCart";
-import Header from "@/components/Header";
+import Header from "@/components/layout/Header";
 
 
 export default function LoginPage({message, success}: any) {
@@ -53,7 +53,7 @@ export default function LoginPage({message, success}: any) {
 
       if(extractedUser){
         if(!extractedUser.isVerified.account){
-          toast.success(`Check ${extractedUser.email} for verification link`, {
+          toast.error(`Check ${extractedUser.email} for verification link`, {
             position: 'top-center'
           });
         }else{
@@ -65,7 +65,7 @@ export default function LoginPage({message, success}: any) {
           }
         }
       }else{
-        toast.error(res.data.error);
+        throw new Error(res.data.message);
       }
     } catch (error: any) {
       toast.error(error.message);

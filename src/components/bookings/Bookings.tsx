@@ -53,7 +53,7 @@ export default function Bookings({country}: any){
 
         try {
             setLoader(true);
-            await axios.post(`/api/bookings`, {
+            await axios.post(`/api/enquiries/bookings`, {
                 email,
                 name: `${firstName} ${lastName}`,
                 content,
@@ -76,7 +76,7 @@ export default function Bookings({country}: any){
 
     }
 
-    return <main className="container mx-auto bg-white w-full min-h-screen max-w-7xl md:py-12 py-8 md:px-12 px-8 flex flex-col gap-y-9 items-center">
+    return <main className="container mx-auto bg-white w-full min-h-screen max-w-7xl lg:py-12 py-8 lg:px-12 px-8 flex flex-col gap-y-9 items-center">
         <article className="space-y-11">
             <header className="flex flex-col md:items-start items-center gap-y-4">
                 <h1 className='text-4xl font-serif'>Your Appointment</h1>

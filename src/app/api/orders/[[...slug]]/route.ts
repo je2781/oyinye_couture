@@ -229,7 +229,8 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
               });
             }else{
               return NextResponse.json({
-                message: 'invalid cart id'
+                message: 'invalid cart id',
+                success: false
               }, {
                 status: 200
               })

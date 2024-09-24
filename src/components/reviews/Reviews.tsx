@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { ReviewsModal } from '../ui/Modal';
 import React from 'react';
 import {decodedBase64, generateBase64FromMedia } from '@/helpers/getHelpers';
-import DocViewerComponent from './DocViewer';
+import DocViewerComponent from '../helpers/DocViewer';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
@@ -271,7 +271,6 @@ const Reviews = ({productReviews, product}: any) => {
         } catch (error: any) {
             toast.error(error.message);
         }finally{
-            setLoader(false);
             location.replace(location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1]);
         }
 

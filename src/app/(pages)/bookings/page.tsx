@@ -1,7 +1,7 @@
 
 
-import Bookings from "@/components/Bookings";
-import Header from "@/components/Header";
+import Bookings from "@/components/bookings/Bookings";
+import Header from "@/components/layout/Header";
 import { cookies } from "next/headers";
 
 async function getData() {

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import React from "react";
-import { QuickViewModal } from "./ui/Modal";
+import { QuickViewModal } from "../ui/Modal";
 import { Swiper, SwiperSlide } from "swiper/react";
 import 'swiper/css';
 import 'swiper/css/pagination';

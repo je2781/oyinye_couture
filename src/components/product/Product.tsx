@@ -7,7 +7,7 @@ import Link from "next/link";
 import ProductQuickView from "./ProductQuickView";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "@mui/material";
-import useWindowWidth from "./helpers/getWindowWidth";
+import useWindowWidth from "../helpers/getWindowWidth";
 import toast from "react-hot-toast";
 
 const Product = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDetailPage}: any) => {

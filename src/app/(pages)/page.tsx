@@ -1,8 +1,9 @@
 
-import FeaturedProducts from "@/components/FeaturedProducts";
-import Header from "@/components/Header";
+import FeaturedProducts from "@/components/product/FeaturedProducts";
+import Header from "@/components/layout/Header";
 import Hero from "@/components/Hero";
 import { cookies, headers } from "next/headers";
+import About from "@/components/about/AboutUs";
 
 
 
@@ -32,6 +33,7 @@ export default async function Home() {
     <>
       <Header cartItems={cartItems}/>
       <Hero/>
+      <About />
       <FeaturedProducts featuredProducts={products}/>
     </>
   );

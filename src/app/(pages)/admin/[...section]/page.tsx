@@ -1,5 +1,5 @@
 
-import AdminHeader from "@/components/admin/AdminHeader";
+import AdminHeader from "@/components/layout/AdminHeader";
 import Body from "@/components/admin/Body";
 import dynamic from 'next/dynamic'
 
@@ -19,27 +19,27 @@ export async function generateStaticParams() {
 
 
 async function getData(page?: string) {
-    const [orderDataRes, apptsDataRes, visitorsDataRes] = await Promise.all([
+    const [orderDataRes, enquiriesDataRes, visitorsDataRes] = await Promise.all([
       fetch(`${process.env.DOMAIN}/api/orders/10?page=${page ? page : '1'}`, {
         cache: 'no-store' // Ensure the request isn't cached
       }),
-      fetch(`${process.env.DOMAIN}/api/bookings/10?page=${page ? page : '1'}`, {
+      fetch(`${process.env.DOMAIN}/api/enquiries/10?page=${page ? page : '1'}`, {
         cache: 'no-store' 
       }),
       fetch(`${process.env.DOMAIN}/api/visitors`)
     ]);
 
-    const [orderData, apptsData, visitorsData] = await Promise.all([
-      orderDataRes.json(), apptsDataRes.json(), visitorsDataRes.json()
+    const [orderData, enquiriesData, visitorsData] = await Promise.all([
+      orderDataRes.json(), enquiriesDataRes.json(), visitorsDataRes.json()
     ]);
   
-    return [orderData, apptsData, visitorsData];
+    return [orderData, enquiriesData, visitorsData];
 }
 
 export default async function Admin({
     params, searchParams
   }: any){
-    const [orderData, apptsData, visitorsData] = await getData(searchParams['page']);
+    const [orderData, enquiriesData, visitorsData] = await getData(searchParams['page']);
 
     let pathNames: string[] = params.section;
     let sectionName = '';
@@ -74,7 +74,7 @@ export default async function Admin({
 
       const bodyProps = {
         visitors: visitorsData.visitors,
-        appointmentsData: apptsData,
+        enquiriesData,
         data: orderData,
         extractedOrders: orderData.orders,
         pathName

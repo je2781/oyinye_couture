@@ -17,15 +17,15 @@ import Link from "next/link";
 import Image from "next/image";
 import useCart from "@/store/useCart";
 import { regex, sizes } from "@/helpers/getHelpers";
-import Header from "@/components/Header";
+import Header from "@/components/layout/Header";
 
 import Ruler from '../../public/ruler.svg';
 import Truck from '../../public/truck.svg';
 import Logo from '../../public/oyinye.png';
 import './ProductDetail.css';
 import toast from "react-hot-toast";
-import Product from "./Product";
-import Reviews from "./helpers/Reviews";
+import Product from "../product/Product";
+import Reviews from "../reviews/Reviews";
 import { createViewedProductsAction } from "@/app/actions";
 
 {/* <main className="min-h-screen w-full flex flex-col items-center justify-center bg-white hide-scrollbar">

@@ -1,4 +1,4 @@
-import Header from "@/components/Header";
+import Header from "@/components/layout/Header";
 import Cart from "@/components/cart/Cart";
 import Checkout from "@/components/checkout/Checkout";
 import { cookies } from "next/headers";

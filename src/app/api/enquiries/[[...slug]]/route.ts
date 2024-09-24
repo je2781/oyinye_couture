@@ -1,7 +1,7 @@
 import { connect } from '@/db/config';
 import { months, randomReference } from '@/helpers/getHelpers';
 import { getVisitData } from '@/helpers/getVisitData';
-import Appointments from '@/models/appointments';
+import Enquiries from '@/models/enquiries';
 import * as argon from "argon2";
 import User from '@/models/user';
 import mongoose from 'mongoose';
@@ -13,6 +13,7 @@ connect();
 
 export async function POST(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
+
         const {
             email,
             name,
@@ -21,7 +22,9 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             size,
             phone,
             eventDate,
-            styles
+            styles,
+            subject,
+            message
         } = await req.json();
 
 
@@ -59,44 +62,68 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             userId: user._id
           });
     
-          //creating new appointment
-          const newAppointment = new Appointments({
-            'author.authorId': savedUser._id,
-            'author.styles': styles,
-            'author.size': size,
-            'author.residence': country,
-            'author.phoneNo': phone,
-            eventDate,
-            content,
-          });
+          if(params.slug![0] === 'bookings'){
+            //creating new appointment
+            const newEquiry = new Enquiries({
+              'author.authorId': savedUser._id,
+              'author.appointment.styles': styles,
+              'author.appointment.size': size,
+              'author.appointment.residence': country,
+              'author.appointment.phoneNo': phone,
+              'appointment.eventDate': eventDate,
+              'appointment.content': content
+            });
+
+            await newEquiry.save();
+          }else{
+            const newEquiry = new Enquiries({
+              'author.authorId': savedUser._id,
+              'contact.subject': subject,
+              'contact.message': message
+            });
+
+            await newEquiry.save();
+
+          }
     
-          await newAppointment.save();
     
           return NextResponse.json(
             {
-              message: "appointment created",
+              message: "enquiry created",
               success: true,
             },
             { status: 201 }
           );
         }else{
-          //updating product with user review
-          //creating new appointment
-          const newAppointment = new Appointments({
-            'author.authorId': user._id,
-            'author.styles': styles,
-            'author.size': size,
-            'author.residence': country,
-            'author.phoneNo': phone,
-            eventDate,
-            content,
-          });
-    
-          await newAppointment.save();
+          if(params.slug![0] === 'bookings'){
+
+            //updating product with user review
+            //creating new appointment
+            const newAppointment = new Enquiries({
+              'author.authorId': user._id,
+              'author.appointment.styles': styles,
+              'author.appointment.size': size,
+              'author.appointment.residence': country,
+              'author.appointment.phoneNo': phone,
+              'appointment.eventDate': eventDate,
+              'appointment.content': content,
+            });
+      
+            await newAppointment.save();
+          }else{
+              const newEquiry = new Enquiries({
+                'author.authorId': user._id,
+                'contact.subject': subject,
+                'contact.message': message
+              });
+  
+              await newEquiry.save();
+  
+            }
     
           return NextResponse.json(
             {
-              message: "appointment created",
+              message: "enquiry created",
               success: true,
             },
             { status: 201 }
@@ -124,17 +151,17 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
           const updatedPage = +page! || 1;
           const ITEMS_PER_PAGE = +params.slug[0];
   
-          let totalAppointments = await Appointments.find().countDocuments();
-          let appointments = await Appointments.find().skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+          let totalEnquiries = await Enquiries.find().countDocuments();
+          let enquiries = await Enquiries.find().skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
   
           const currentPage = updatedPage;
           const hasPreviousPage = currentPage > 1;
           const hasNextPage =
-              totalAppointments > currentPage * ITEMS_PER_PAGE;
+              totalEnquiries > currentPage * ITEMS_PER_PAGE;
           const lastPage = 
-               Math.ceil(totalAppointments / ITEMS_PER_PAGE);
+               Math.ceil(totalEnquiries / ITEMS_PER_PAGE);
 
-          if (appointments.length === 0) {
+          if (Enquiries.length === 0) {
             return NextResponse.json(
               {
                 hasNextPage,
@@ -144,25 +171,25 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
                 isActivePage: updatedPage,
                 nextPage: currentPage + 1,
                 previousPage: currentPage - 1,
-                appointments
+                enquiries
             },
                 { status: 200 }
             );
           }
               
-          for(let appt of appointments){
-            const updatedAppt = await appt.populate('author.authorId');
-            const authorData = {...updatedAppt.author.authorId._doc};
+          for(let enq of enquiries){
+            const updatedEnq = await enq.populate('author.authorId');
+            const authorData = {...updatedEnq.author.authorId._doc};
             authors.push(authorData);
           }
   
-          const updatedAppointments = appointments.map((appt) => {
-            const extractedAuthor = authors.find((author: any) => author._id.toString() === appt.author.authorId.toString());
+          const updatedEnquiries = enquiries.map((enq) => {
+            const extractedAuthor = authors.find((author: any) => author._id.toString() === enq.author.authorId.toString());
           
             return {
-              ...appt,
+              ...enq,
               author: {
-                ...appt.author,
+                ...enq.author,
                 fullName: `${extractedAuthor.firstName} ${extractedAuthor.lastName}`,
                 email: extractedAuthor.email,
               }
@@ -171,7 +198,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
       
           return NextResponse.json(
             {
-              message: "appointments retrived",
+              message: "enquiries retrieved",
               hasNextPage,
               hasPreviousPage,
               lastPage,
@@ -179,7 +206,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
               isActivePage: updatedPage,
               nextPage: currentPage + 1,
               previousPage: currentPage - 1,
-              appointments: updatedAppointments,
+              enquiries: updatedEnquiries,
               success: true,
             },
             { status: 200 }

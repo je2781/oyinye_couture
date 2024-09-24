@@ -1,18 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import Pagination from "./layout/Pagination";
+import Pagination from "../layout/Pagination";
 import React from "react";
 import Box from '@mui/material/Box';
 import Slider from '@mui/material/Slider';
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import ProductComponent from "./Product";
+import ProductComponent from "../product/Product";
 import useProduct from "@/store/useProduct";
 import "./SearchResults.css";
-import FilterSettings from "./filter/Settings";
-import SecondaryHeader from "./filter/SecondaryHeader";
-import useWindowWidth from "./helpers/getWindowWidth";
+import FilterSettings from "../filter/Settings";
+import SecondaryHeader from "../filter/SecondaryHeader";
+import useWindowWidth from "../helpers/getWindowWidth";
 
 export default function SearchResults({
   searchCat,

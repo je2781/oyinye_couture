@@ -2092,7 +2092,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
           <input type="hidden"  name='currency' value={convertToNumericCode(countryCode.length === 0 ? 'NGA' : countryCode)!}/>
           <input type="hidden"  name='merchant_code' value={`${process.env.NEXT_PUBLIC_MER_CODE}`}/>
           <input type="hidden"  name='pay_item_id' value={`${process.env.NEXT_PUBLIC_PAY_ITEM_ID}`}/>
-          <input type="hidden"  name='cust_email' value='jezeadiebuo5@gmail.com'/>
+          <input type="hidden"  name='cust_email' value='info@oyinye.com'/>
           <input type="hidden"  name='item_name' value={orderId}/>
           <input type="hidden"  name='cust_amount' value={parseFloat(total) * 100}/>
           <input type="hidden"  name='txn_ref' value={transactionRef}/>

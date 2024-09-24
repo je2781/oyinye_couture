@@ -50,7 +50,7 @@ export default function Body({
   pathName,
   extractedOrders,
   data, 
-  appointmentsData,
+  enquiriesData,
   visitors
 }: any) {
   const colorList = [
@@ -70,7 +70,7 @@ export default function Body({
   );
   const [isChecked, setIsChecked] = React.useState(false);
   const [orders, setOrders] = React.useState<any[]>(extractedOrders);
-  const [appts, setAppts] = React.useState<any[]>(appointmentsData.appointments);
+  const [enquiries, setEnquiries] = React.useState<any[]>(enquiriesData.enquiries);
   const [orderListLength, setOrderListLength] = React.useState('10');
   const [isReading, setIsReading] = React.useState(false);
   const [isReplying, setIsReplying] = React.useState(false);
@@ -378,6 +378,10 @@ export default function Body({
     }
   }, [isMobileModalOpen]);
 
+  React.useEffect(() => {
+    
+  },[endValue, startValue]);
+
   const hideAdminSettingsModalHandler = () => {
       const optionsMenus = document.querySelectorAll('[id^=options-menu]');
 
@@ -407,7 +411,7 @@ export default function Body({
     let angleUp = item.querySelector('i.fa-angle-up');
     let angleDown = item.querySelector('i.fa-angle-down');
     let angleDowns = document.querySelectorAll(`i.fa-angle-down:not(#${type})`);
-    let angleUps = document.querySelectorAll(`i.fa-angle-up:not(#${type})`);
+    let angleUps = document.querySelectorAll(`i.fa-angle-up:not(#${type}):not(#${width > 768 ? 'order-id-sm-screen' : 'order-id'})`);
   
     // Make a copy of the orders array to avoid mutating the original array
     let sortedOrders = [...orders];
@@ -1157,9 +1161,13 @@ export default function Body({
                               <button onClick={async (e) => {
                                 try {
                                   setIsLoading(true);
-                                  await axios.post('/api/orders/send/reminder',{
+                                  const res = await axios.post('/api/orders/send/reminder',{
                                     items: order.items
                                   });
+
+                                  if(res.data.success === false){
+                                    throw new Error(res.data.message);
+                                  }
                                 } catch (error: any) {
                                   toast.error(error.message);
                                 }finally{
@@ -1216,6 +1224,8 @@ export default function Body({
                                       toast.error(error.message);
                                     }finally{
                                       setIsLoading(false);
+                                      //resetting payment status
+                                      selectedStatus.value = '';
                                       toast.success('payment status updated', {
                                         position: 'top-center'
                                       });
@@ -1238,19 +1248,19 @@ export default function Body({
                                       <textarea
                                         className="bg-[#f3f3f3] w-full text-xs rounded-sm placeholder:text-gray-600 placeholder:text-xs p-2 focus:outline-none"
                                         placeholder="add payment link here"
-                                        id='request-content'
+                                        id='request-link'
                                         cols={25}
                                         rows={15}
                                       ></textarea>
                                       <button onClick={async (e) => {
-                                        let content = document.querySelector('#request-content') as HTMLSelectElement;
-                                        if(content && content.value.length === 0){
+                                        let link = document.querySelector('#request-link') as HTMLTextAreaElement;
+                                        if(link && link.value.length === 0){
                                           return;
                                         }
                                         try {
                                           setIsLoading(true);
                                           await axios.post('/api/orders/send/payment-request', {
-                                            link: content.value.trim(),
+                                            link: link.value.trim(),
                                             id: order.id,
                                             total: order.sales
                                           });
@@ -1258,6 +1268,8 @@ export default function Body({
                                           toast.error(error.message);
                                         }finally{
                                           setIsLoading(false);
+                                          //restting payment link
+                                          link.value = ''
                                           toast.success('payment request sent', {
                                             position: 'top-center'
                                           });
@@ -1278,7 +1290,7 @@ export default function Body({
                   </tbody>
                 </table>
                 <table className="w-full border-spacing-y-2 text-secondary-400 text-xs md:hidden table">
-                  <thead>
+                  <thead className="w-full relative">
                     <tr>
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-1">
                         <div className="inline-flex flex-row justify-between items-center w-full pl-9 pr-1 py-2">
@@ -1290,6 +1302,13 @@ export default function Body({
                         </div>
                       </th>
                     </tr>
+                    {loader && (
+                      <div className="absolute bottom-0 left-0 w-full h-[4px]">
+                        <div className="trailing-progress-bar w-full">
+                          <div className="trailing-progress bg-blue-500 h-full"></div>
+                        </div>
+                      </div>
+                    )}
                   </thead>
                   <tbody className="text-sm">
                     {orders.map((order: any, i: number) => (
@@ -1335,9 +1354,13 @@ export default function Body({
                                 <button onClick={async (e) => {
                                   try {
                                     setIsLoading(true);
-                                    await axios.post('/api/orders/send/reminder',{
+                                    const res = await axios.post('/api/orders/send/reminder',{
                                       items: order.items
                                     });
+
+                                    if(res.data.success === false){
+                                      throw new Error(res.data.message);
+                                    }
                                   } catch (error: any) {
                                     toast.error(error.message);
                                   }finally{
@@ -1388,7 +1411,7 @@ export default function Body({
                     <tr>
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-1">
                         <div className="inline-flex flex-row justify-between items-center w-full pl-9 pr-1 py-2">
-                          <span>TOTAL</span>
+                          <span>TOTAL ITEMS</span>
                           <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'total-id-sm-screen', 'total')}>
                             <i className="fa-solid fa-angle-up text-secondary-400/20" id='total-id-sm-screen'></i>
                             <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='total-id-sm-screen'></i>
@@ -1412,7 +1435,7 @@ export default function Body({
                     <tr>
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-1">
                         <div className="inline-flex flex-row justify-between items-center w-full pl-9 pr-1 py-2">
-                          <span>STATE</span>
+                          <span>ORDER STATE</span>
                           <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'state-id-sm-screen', 'status')}>
                             <i className="fa-solid fa-angle-up text-secondary-400/20" id='state-id-sm-screen'></i>
                             <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='state-id-sm-screen'></i>
@@ -1436,7 +1459,7 @@ export default function Body({
                     <tr>
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-1">
                         <div className="inline-flex flex-row justify-between items-center w-full pl-9 pr-1 py-2">
-                          <span>TYPE</span>
+                          <span>PAYMENT TYPE</span>
                           <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'type-id-sm-screen', 'paymentType')}>
                             <i className="fa-solid fa-angle-up text-secondary-400/20" id='type-id-sm-screen'></i>
                             <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='type-id-sm-screen'></i>
@@ -1460,7 +1483,7 @@ export default function Body({
                     <tr>
                       <th className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-1">
                         <div className="inline-flex flex-row justify-between items-center w-full pl-9 pr-1 py-2">
-                          <span>STATUS</span>
+                          <span>PAYMENT STATUS</span>
                           <div className="flex flex-col text-[1rem] cursor-pointer" onClick={(e) => sortOrderList(e, 'status-id-sm-screen', 'paymentStatus')}>
                             <i className="fa-solid fa-angle-up text-secondary-400/20" id='status-id-sm-screen'></i>
                             <i className="fa-solid fa-angle-down text-secondary-400/20 -mt-2" id='status-id-sm-screen'></i>
@@ -1560,58 +1583,77 @@ export default function Body({
                                 //extracting date data from input
                                 let extractedDate, extractedYear;
                                 let extractedMonth = 0;
+
+                                //validtion check to keep spaces between date string
+                                if(e.target.value.split(' ').length <= 2){
+                                  e.target.value = startDate;
+                                  return;
+                                }
                                 
                                 extractedDate = parseInt(e.target.value.split(' ')[0]);
+
+                                //validation check to prevent characters from being used
+                                if(isNaN(extractedDate) || extractedDate < 1){
+                                  e.target.value = startDate;
+                                  return;
+                                }
                                 for(let i = 0; i < months.length; i++){
                                   if(months[i] === e.target.value.split(' ')[1]){
                                     extractedMonth = i; 
+                                  }else{
+                                    e.target.value = startDate;
+                                    return;
                                   }
                                 }
                                 extractedYear = parseInt(e.target.value.split(' ')[2]);
+                                //validation check to prevent characters from being used or wrong year format
+                                if(isNaN(extractedYear) || extractedYear.toString().length < 4){
+                                  e.target.value = startDate;
+                                  return;
+                                }
                                 //binding value to change event
                                 setStartDate(e.target.value);
 
-                              const timeDiff = new Date(currentYear, currentMonth+1, currentDate).getTime() - new Date(extractedYear, extractedMonth!+1, extractedDate).getTime();
-                              //validation check
-                              if(timeDiff  < 86400000){
-                                setIsAdminSettingsOpen(false);
-                                alert('start date has to be at least 1 day apart from end date');
-                                return;
-                              }else{
-                                setStart(`${extractedYear}-${('0' + (extractedMonth! + 1)).slice(-2)}-${('0' + extractedDate).slice(-2)}`);
+                                const timeDiff = new Date(currentYear, currentMonth+1, currentDate).getTime() - new Date(extractedYear, extractedMonth!+1, extractedDate).getTime();
+                                //validation check
+                                if(timeDiff  < 86400000){
+                                  alert('start date has to be at least 1 day apart from end date');
+                                  return;
+                                }else{
+                                  setStart(`${extractedYear}-${('0' + (extractedMonth! + 1)).slice(-2)}-${('0' + extractedDate).slice(-2)}`);
 
-                                //clearing factory range and period
-                                setRange(null);
-                                setPeriod(null);
+                                  //clearing factory range and period
+                                  setRange(null);
+                                  setPeriod(null);
 
-                                if(timeDiff <= 2505600000){
-                                  let range = timeDiff/86400000;
+                                  if(timeDiff <= 2505600000){
+                                    let range = timeDiff/86400000;
 
-                                  setLineGraphData(Object.values(dailyData)[Math.round(range-1)]);
-                                  setProductTypeBarGraphData(Object.values(dailyProductTypeData)[Math.round(range-1)]);
-                                  setVisitorsBarGraphData(Object.values(dailyVisitorsData)[Math.round(range-1)]);
+                                    setLineGraphData(Object.values(dailyData)[Math.round(range-1)]);
+                                    setProductTypeBarGraphData(Object.values(dailyProductTypeData)[Math.round(range-1)]);
+                                    setVisitorsBarGraphData(Object.values(dailyVisitorsData)[Math.round(range-1)]);
+                                    
+                                  }
+
+                                  if(timeDiff > 31560000000 && timeDiff <= 378720000000){
+                                    let range = timeDiff/31560000000;
+
+                                    setLineGraphData(Object.values(annualData)[Math.round(range-1)]);
+                                    setProductTypeBarGraphData(Object.values(annualProductTypeData)[Math.round(range-1)]);
+                                    setVisitorsBarGraphData(Object.values(annualVisitorsData)[Math.round(range-1)]);
+
+                                  }
+
+                                  if(timeDiff > 2505600000 && timeDiff <= 31560000000){
+                                    let range = timeDiff/2505600000;
+
+                                    setLineGraphData(Object.values(monthData)[Math.round(range-1)]);
+                                    setProductTypeBarGraphData(Object.values(monthProductTypeData)[Math.round(range-1)]);
+                                    setVisitorsBarGraphData(Object.values(monthVisitorsData)[Math.round(range-1)]);
+
+                                  }
                                   
                                 }
-
-                                if(timeDiff > 31560000000 && timeDiff <= 378720000000){
-                                  let range = timeDiff/31560000000;
-
-                                  setLineGraphData(Object.values(annualData)[Math.round(range-1)]);
-                                  setProductTypeBarGraphData(Object.values(annualProductTypeData)[Math.round(range-1)]);
-                                  setVisitorsBarGraphData(Object.values(annualVisitorsData)[Math.round(range-1)]);
-
-                                }
-
-                                if(timeDiff > 2505600000 && timeDiff <= 31560000000){
-                                  let range = timeDiff/2505600000;
-
-                                  setLineGraphData(Object.values(monthData)[Math.round(range-1)]);
-                                  setProductTypeBarGraphData(Object.values(monthProductTypeData)[Math.round(range-1)]);
-                                  setVisitorsBarGraphData(Object.values(monthVisitorsData)[Math.round(range-1)]);
-
-                                }
-                                
-                              }
                             }}  id="start-date" placeholder="1 Jan 1960" className="peer rounded-md placeholder:text-xs focus:outline-secondary-400 p-2 text-xs focus:ring-1  border border-gray-400 focus:border-secondary-400 w-28"
                               />
                               <label className="text-xs font-bold absolute peer-focus:text-secondary-400 top-[-6px] left-[10px] bg-white px-[5px] text-gray-400 ">Start date</label>
@@ -1625,6 +1667,12 @@ export default function Body({
                                   let extractedStartDate, extractedStartYear, extractedEndDate, extractedEndYear;
                                   let extractedEndMonth = 0;
                                   let extractedStartMonth = 0;
+
+                                  //validtion check to keep spaces between date string
+                                  if(e.target.value.split(' ').length <= 2){
+                                    e.target.value = endDate;
+                                    return;
+                                  }
                                   
                                   extractedStartDate = parseInt(start.split(' ')[0]);
                                   for(let i = 0; i < months.length; i++){
@@ -1635,12 +1683,26 @@ export default function Body({
                                   extractedStartYear = parseInt(start.split(' ')[2]);
                                   
                                   extractedEndDate = parseInt(e.target.value.split(' ')[0]);
+                                  //validation check to prevent characters from being used
+                                  if(isNaN(extractedEndDate) || extractedEndDate < 1){
+                                    e.target.value = endDate;
+                                    return;
+                                  }
+
                                   for(let i = 0; i < months.length; i++){
                                       if(months[i] === e.target.value.split(' ')[1]){
                                           extractedEndMonth = i; 
+                                      }else{
+                                        e.target.value = endDate;
+                                        return;
                                       }
                                   }
                                   extractedEndYear = parseInt(e.target.value.split(' ')[2]);
+                                  //validation check to prevent characters from being used or wrong year format
+                                  if(isNaN(extractedEndYear) || extractedEndYear.toString().length < 4){
+                                    e.target.value = endDate;
+                                    return;
+                                  }
                                   //binding value to change event
                                   setEndDate(e.target.value);
       
@@ -1648,7 +1710,6 @@ export default function Body({
       
                                   //validation check to prevent user from inputing an end date greater than current time
                                   if(currentTime > 0){
-                                      setIsAdminSettingsOpen(false);
                                       alert('end date cannot be greater than current date');
                                       return;
                                   }
@@ -1656,7 +1717,6 @@ export default function Body({
                                   
                                   //validation check
                                   if(timeDiff  < 86400000){
-                                      setIsAdminSettingsOpen(false);
                                       alert('start date has to be at least 1 day apart from end date');
                                       return;
                                   }else{
@@ -1958,7 +2018,7 @@ export default function Body({
 
                         dropdowns.forEach(dropdown => {
                           if(dropdown.classList.contains('show')){
-                            dropdown.classList.add('hide');
+                            dropdown.classList.add('hide', 'hidden');
                             dropdown.classList.remove('show');
                           }
                         });
@@ -1967,12 +2027,12 @@ export default function Body({
                             if(!downAngle.classList.contains("ad-rotate")){
                                 downAngle.classList.add("ad-rotate");
                                 downAngle.classList.remove("ad-rotate-anticlock");
-                                actionsDropdown.classList.remove('hide');
+                                actionsDropdown.classList.remove('hide', 'hidden');
                                 actionsDropdown.classList.add('show');
                             }else{
                                 downAngle.classList.remove("ad-rotate");
                                 downAngle.classList.add("ad-rotate-anticlock");
-                                actionsDropdown.classList.add('hide');
+                                actionsDropdown.classList.add('hide', 'hidden');
                                 actionsDropdown.classList.remove('show');
                             }
                         }
@@ -1983,7 +2043,7 @@ export default function Body({
                         <span className="text-xs">Action</span>
                         <i className="fa-solid fa-angle-down text-xs actions-angle-down"></i>
                     </button>
-                    <ul id='actions-dropdown' className="absolute z-30 w-[130%] text-xs text-gray-600 font-medium bg-white rounded-md shadow-sm shadow-white flex-col hide">
+                    <ul id='actions-dropdown' className="absolute z-30 w-[130%] text-xs text-gray-600 font-medium bg-white rounded-md shadow-sm shadow-white flex-col hide hidden">
                         {[
                           'Mark As Read',
                           'Mark As Unread',
@@ -2028,7 +2088,7 @@ export default function Body({
                         
                         dropdowns.forEach(dropdown => {
                           if(dropdown.classList.contains('show')){
-                            dropdown.classList.add('hide');
+                            dropdown.classList.add('hide', 'hidden');
                             dropdown.classList.remove('show');
                           }
                         });
@@ -2037,12 +2097,12 @@ export default function Body({
                             if(!downAngle.classList.contains("ad-rotate")){
                                 downAngle.classList.add("ad-rotate");
                                 downAngle.classList.remove("ad-rotate-anticlock");
-                                calendarDropdown.classList.remove('hide');
+                                calendarDropdown.classList.remove('hide', 'hidden');
                                 calendarDropdown.classList.add('show');
                             }else{
                                 downAngle.classList.remove("ad-rotate");
                                 downAngle.classList.add("ad-rotate-anticlock");
-                                calendarDropdown.classList.add('hide');
+                                calendarDropdown.classList.add('hide', 'hidden');
                                 calendarDropdown.classList.remove('show');
                             }
                         }
@@ -2051,7 +2111,7 @@ export default function Body({
                         <i className="fa-regular fa-calendar-days"></i>
                         <i className="fa-solid fa-angle-down text-xs calendar-angle-down"></i>
                     </button>
-                    <div className="hide absolute z-30 flex-col gap-y-3 pt-5 pb-4 px-3 h-fit w-[1000%] bg-white rounded-md" id='calendar-dropdown'>
+                    <div className="hide hidden absolute z-30 flex-col gap-y-3 pt-5 pb-4 px-3 h-fit w-[1000%] bg-white rounded-md" id='calendar-dropdown'>
                       <div className="flex flex-row gap-x-1 mb-2">
                           <div className="relative">
                               <input 
@@ -2062,56 +2122,44 @@ export default function Body({
                                 let extractedDate, extractedYear;
                                 let extractedMonth = 0;
                                 
+                                //validtion check to keep spaces between date string
+                                if(e.target.value.split(' ').length <= 2){
+                                  e.target.value = startDate;
+                                  return;
+                                }
+                                
                                 extractedDate = parseInt(e.target.value.split(' ')[0]);
+
+                                //validation check to prevent characters from being used
+                                if(isNaN(extractedDate) || extractedDate < 1){
+                                  e.target.value = startDate;
+                                  return;
+                                }
                                 for(let i = 0; i < months.length; i++){
                                   if(months[i] === e.target.value.split(' ')[1]){
                                     extractedMonth = i; 
+                                  }else{
+                                    e.target.value = startDate;
+                                    return;
                                   }
                                 }
                                 extractedYear = parseInt(e.target.value.split(' ')[2]);
-                                //binding value to change event
-                                setStartDate(e.target.value);
-    
-                              const timeDiff = new Date(currentYear, currentMonth+1, currentDate).getTime() - new Date(extractedYear, extractedMonth!+1, extractedDate).getTime();
-                              //validation check
-                              if(timeDiff  < 86400000){
-                                alert('start date has to be at least 1 day apart from end date');
-                                return;
-                              }else{
-                                setStart(`${extractedYear}-${('0' + (extractedMonth! + 1)).slice(-2)}-${('0' + extractedDate).slice(-2)}`);
-    
-                                //clearing factory range and period
-                                setRange(null);
-                                setPeriod(null);
-    
-                                if(timeDiff <= 2505600000){
-                                  let range = timeDiff/86400000;
-    
-                                  setLineGraphData(Object.values(dailyData)[Math.round(range-1)]);
-                                  setProductTypeBarGraphData(Object.values(dailyProductTypeData)[Math.round(range-1)]);
-                                  setVisitorsBarGraphData(Object.values(dailyVisitorsData)[Math.round(range-1)]);
-                                  
-                                }
-    
-                                if(timeDiff > 31560000000 && timeDiff <= 378720000000){
-                                  let range = timeDiff/31560000000;
-    
-                                  setLineGraphData(Object.values(annualData)[Math.round(range-1)]);
-                                  setProductTypeBarGraphData(Object.values(annualProductTypeData)[Math.round(range-1)]);
-                                  setVisitorsBarGraphData(Object.values(annualVisitorsData)[Math.round(range-1)]);
-    
-                                }
-    
-                                if(timeDiff > 2505600000 && timeDiff <= 31560000000){
-                                  let range = timeDiff/2505600000;
-    
-                                  setLineGraphData(Object.values(monthData)[Math.round(range-1)]);
-                                  setProductTypeBarGraphData(Object.values(monthProductTypeData)[Math.round(range-1)]);
-                                  setVisitorsBarGraphData(Object.values(monthVisitorsData)[Math.round(range-1)]);
-    
+                                //validation check to prevent characters from being used or wrong year format
+                                if(isNaN(extractedYear) || extractedYear.toString().length < 4){
+                                  e.target.value = startDate;
+                                  return;
                                 }
                                 
-                              }
+                                const timeDiff = new Date(currentYear, currentMonth+1, currentDate).getTime() - new Date(extractedYear, extractedMonth!+1, extractedDate).getTime();
+                                //validation check
+                                if(timeDiff  < 86400000){
+                                  alert('start date has to be at least 1 day apart from end date');
+                                  return;
+                                }
+                                //binding value to change event
+                                setStartDate(e.target.value);
+                                //setting start value of calendar component
+                                setStartValue(new Date(e.target.value));
                             }}  id="start-date" placeholder="1 Jan 1960" className="peer rounded-md placeholder:text-xs focus:outline-secondary-400 p-2 text-xs focus:ring-1  border border-gray-400 focus:border-secondary-400 w-28"
                               />
                               <label className="text-xs font-bold absolute peer-focus:text-secondary-400 top-[-6px] left-[10px] bg-white px-[5px] text-gray-400 ">Start date</label>
@@ -2126,6 +2174,12 @@ export default function Body({
                                   let extractedEndMonth = 0;
                                   let extractedStartMonth = 0;
                                   
+                                  //validtion check to keep spaces between date string
+                                  if(e.target.value.split(' ').length <= 2){
+                                    e.target.value = endDate;
+                                    return;
+                                  }
+                                  
                                   extractedStartDate = parseInt(start.split(' ')[0]);
                                   for(let i = 0; i < months.length; i++){
                                       if(months[i] === start.split(' ')[1]){
@@ -2135,20 +2189,31 @@ export default function Body({
                                   extractedStartYear = parseInt(start.split(' ')[2]);
                                   
                                   extractedEndDate = parseInt(e.target.value.split(' ')[0]);
+                                  //validation check to prevent characters from being used
+                                  if(isNaN(extractedEndDate) || extractedEndDate < 1){
+                                    e.target.value = endDate;
+                                    return;
+                                  }
+
                                   for(let i = 0; i < months.length; i++){
                                       if(months[i] === e.target.value.split(' ')[1]){
                                           extractedEndMonth = i; 
+                                      }else{
+                                        e.target.value = endDate;
+                                        return;
                                       }
                                   }
                                   extractedEndYear = parseInt(e.target.value.split(' ')[2]);
-                                  //binding value to change event
-                                  setEndDate(e.target.value);
-      
-                                  const currentTime = new Date(extractedEndYear, extractedEndMonth+1, extractedEndDate).getTime() - new Date(currentYear, currentMonth+1, currentDate).getTime();
-      
+                                  //validation check to prevent characters from being used or wrong year format
+                                  if(isNaN(extractedEndYear) || extractedEndYear.toString().length < 4){
+                                    e.target.value = endDate;
+                                    return;
+                                  }
+                                  
+                                  const currentTime = new Date(extractedEndYear, extractedEndMonth+1, extractedEndDate).getTime() - new Date().getTime();
+                                  
                                   //validation check to prevent user from inputing an end date greater than current time
                                   if(currentTime > 0){
-                                      setIsAdminSettingsOpen(false);
                                       alert('end date cannot be greater than current date');
                                       return;
                                   }
@@ -2156,44 +2221,13 @@ export default function Body({
                                   
                                   //validation check
                                   if(timeDiff  < 86400000){
-                                      setIsAdminSettingsOpen(false);
                                       alert('start date has to be at least 1 day apart from end date');
                                       return;
-                                  }else{
-                                    setStart(`${extractedStartYear}-${('0' + (extractedStartMonth + 1)).slice(-2)}-${('0' + extractedStartDate).slice(-2)}`);
-                                    setEnd(`${extractedEndYear}-${('0' + (extractedEndMonth + 1)).slice(-2)}-${('0' + extractedEndDate).slice(-2)}`);
-    
-                                    //clearing factory range and period
-                                    setRange(null);
-                                    setPeriod(null);
-    
-                                    if(timeDiff <= 2505600000){
-                                      let range = timeDiff/86400000;
-    
-                                      setLineGraphData(Object.values(dailyData)[Math.round(range-1)]);
-                                      setProductTypeBarGraphData(Object.values(dailyProductTypeData)[Math.round(range-1)]);
-                                      setVisitorsBarGraphData(Object.values(dailyVisitorsData)[Math.round(range-1)]);
-                                      
-                                    }
-    
-                                    if(timeDiff > 31560000000 && timeDiff <= 378720000000){
-                                      let range = timeDiff/31560000000;
-    
-                                      setLineGraphData(Object.values(annualData)[Math.round(range-1)]);
-                                      setProductTypeBarGraphData(Object.values(annualProductTypeData)[Math.round(range-1)]);
-                                      setVisitorsBarGraphData(Object.values(annualVisitorsData)[Math.round(range-1)]);
-    
-                                    }
-    
-                                    if(timeDiff > 2505600000 && timeDiff <= 31560000000){
-                                      let range = timeDiff/2505600000;
-    
-                                      setLineGraphData(Object.values(monthData)[Math.round(range-1)]);
-                                      setProductTypeBarGraphData(Object.values(monthProductTypeData)[Math.round(range-1)]);
-                                      setVisitorsBarGraphData(Object.values(monthVisitorsData)[Math.round(range-1)]);
-    
-                                    }
                                   }
+                                  //binding value to change event
+                                  setEndDate(e.target.value);
+                                  //setting end value of calendar component
+                                  setEndValue(new Date(e.target.value));
                                 }} 
                                 type="text" 
                                 id="end-date" 
@@ -2235,7 +2269,7 @@ export default function Body({
 
                         dropdowns.forEach(dropdown => {
                           if(dropdown.classList.contains('show')){
-                            dropdown.classList.add('hide');
+                            dropdown.classList.add('hide', 'hidden');
                             dropdown.classList.remove('show');
                           }
                         });
@@ -2244,12 +2278,12 @@ export default function Body({
                             if(!downAngle.classList.contains("ad-rotate")){
                                 downAngle.classList.add("ad-rotate");
                                 downAngle.classList.remove("ad-rotate-anticlock");
-                                filterDropdown.classList.remove('hide');
+                                filterDropdown.classList.remove('hide', 'hidden');
                                 filterDropdown.classList.add('show');
                             }else{
                                 downAngle.classList.remove("ad-rotate");
                                 downAngle.classList.add("ad-rotate-anticlock");
-                                filterDropdown.classList.add('hide');
+                                filterDropdown.classList.add('hide', 'hidden');
                                 filterDropdown.classList.remove('show');
                             }
                         }
@@ -2260,7 +2294,7 @@ export default function Body({
                         <span className="text-xs">Filter</span>
                         <i className="fa-solid fa-angle-down text-xs filter-angle-down"></i>
                     </button>
-                    <ul id='filter-dropdown' className="absolute z-30 w-[130%] text-gray-600 font-medium text-xs bg-white pt-3 pb-2 rounded-md shadow-sm shadow-white flex-col hide">
+                    <ul id='filter-dropdown' className="absolute z-30 w-[130%] text-gray-600 font-medium text-xs bg-white pt-3 pb-2 rounded-md shadow-sm shadow-white flex-col hide hidden">
                         <li className="mb-2 pl-4 text-gray-700">State</li>
                         {[
                           'Read',
@@ -2320,13 +2354,13 @@ export default function Body({
                 <div className="md:w-[40%] w-[30%] font-medium">Date</div>
               </div>
               <hr className="border-secondary-400/30 border" />
-              {(appts.length === 0 ? [{
+              {(enquiries.length === 0 ? [{
                 createdAt: new Date(),
                 author: {
                   fullName: 'Josh',
                   email: 'test@test.com'
                 }
-              }] : appts).map((appt: any, i: number) => {
+              }] : enquiries).map((enq: any, i: number) => {
 
                 return (
                   <div key={i} className="w-full inline-flex flex-row -my-1 text-sm">
@@ -2340,40 +2374,23 @@ export default function Body({
                         checked:after:rotate-45"
                       />
                       <span className="font-light">
-                        <i className="fa-regular fa-envelope-open text-accent/30"></i>&nbsp;&nbsp;Appointment by {appt.author.fullName}
+                        <i className="fa-regular fa-envelope-open text-accent/30"></i>&nbsp;&nbsp;{enq.appointment ? `Appointment by ${enq.author.fullName}` : enq.contact ? enq.contact.subject : `Testing by ${enq.author.fullName}`}
                       </span>
                       <div className="md:hidden inline-block w-[35%] absolute left-0 top-10">
                           <div className="w-[156%] rounded-sm font-medium bg-transparent inline-flex flex-row items-center">
                               <button className="text-xs border-secondary-400 border px-2 py-[6px] hover:ring-1 hover:ring-secondary-400" onClick={() => {
-                                let activeActionAngleDown = document.querySelector("i.active-action-dropdown-for-sm-screen");
-                                let calendarAngleDown = document.querySelector('i.calendar-angle-down');
-                                let actionsAngleDown = document.querySelector('i.actions-angle-down');
-                                let filterAngleDown = document.querySelector('i.filter-angle-down');
-                                let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown-for-sm-screen)');
+                                let activeActionAngleDown = document.querySelector("i.active-action-angle-down-for-sm-screen");
+                                let dropdown = document.getElementById('active-action-dropdown-for-sm-screen');
 
-                                if(calendarAngleDown?.classList.contains('ad-rotate')){
-                                  calendarAngleDown?.classList.remove("ad-rotate");
-                                  calendarAngleDown?.classList.add("ad-rotate-anticlock");
-                                }
-                                if(filterAngleDown?.classList.contains('ad-rotate')){
-                                  filterAngleDown?.classList.remove("ad-rotate");
-                                  filterAngleDown?.classList.add("ad-rotate-anticlock");
-                                }
-                                if(actionsAngleDown?.classList.contains('ad-rotate')){
-                                  actionsAngleDown?.classList.remove("ad-rotate");
-                                  actionsAngleDown?.classList.add("ad-rotate-anticlock");
-                                }
                                 if(activeActionAngleDown?.classList.contains('ad-rotate')){
                                   activeActionAngleDown?.classList.remove("ad-rotate");
                                   activeActionAngleDown?.classList.add("ad-rotate-anticlock");
                                 }
 
-                                dropdowns.forEach(dropdown => {
-                                  if(dropdown.classList.contains('show')){
-                                    dropdown.classList.add('hide');
-                                    dropdown.classList.remove('show');
-                                  }
-                                });
+                                if(dropdown?.classList.contains('show')){
+                                  dropdown?.classList.add('hide', 'hidden');
+                                  dropdown?.classList.remove('show');
+                                }
                                 
                                 setIsAdminSettingsOpen(true);
                                 setIsReading(true);
@@ -2383,41 +2400,17 @@ export default function Body({
                                   onClick={(e) => {
                                     let downAngle = e.currentTarget.querySelector("i.active-action-angle-down-for-sm-screen");
                                     let activeActionDropdown = document.getElementById("active-action-dropdown-for-sm-screen");
-                                    let calendarAngleDown = document.querySelector('i.calendar-angle-down');
-                                    let actionsAngleDown = document.querySelector('i.actions-angle-down');
-                                    let filterAngleDown = document.querySelector('i.filter-angle-down');
-                                    let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown-for-sm-screen)');
-
-                                    if(calendarAngleDown?.classList.contains('ad-rotate')){
-                                      calendarAngleDown?.classList.remove("ad-rotate");
-                                      calendarAngleDown?.classList.add("ad-rotate-anticlock");
-                                    }
-                                    if(filterAngleDown?.classList.contains('ad-rotate')){
-                                      filterAngleDown?.classList.remove("ad-rotate");
-                                      filterAngleDown?.classList.add("ad-rotate-anticlock");
-                                    }
-                                    if(actionsAngleDown?.classList.contains('ad-rotate')){
-                                      actionsAngleDown?.classList.remove("ad-rotate");
-                                      actionsAngleDown?.classList.add("ad-rotate-anticlock");
-                                    }
-
-                                    dropdowns.forEach(dropdown => {
-                                      if(dropdown.classList.contains('show')){
-                                        dropdown.classList.add('hide');
-                                        dropdown.classList.remove('show');
-                                      }
-                                    });
 
                                     if(downAngle && activeActionDropdown){
                                         if(!downAngle.classList.contains("ad-rotate")){
                                             downAngle.classList.add("ad-rotate");
                                             downAngle.classList.remove("ad-rotate-anticlock");
-                                            activeActionDropdown.classList.remove('hide');
+                                            activeActionDropdown.classList.remove('hide', 'hidden');
                                             activeActionDropdown.classList.add('show');
                                         }else{
                                             downAngle.classList.remove("ad-rotate");
                                             downAngle.classList.add("ad-rotate-anticlock");
-                                            activeActionDropdown.classList.add('hide');
+                                            activeActionDropdown.classList.add('hide', 'hidden');
                                             activeActionDropdown.classList.remove('show');
                                         }
                                     }
@@ -2426,7 +2419,7 @@ export default function Body({
                                 <i className="fa-solid fa-angle-down text-xs active-action-angle-down-for-sm-screen cursor-pointer"></i>
                               </div>
                           </div>
-                          <ul id='active-action-dropdown-for-sm-screen' className="absolute z-30 w-[150%] text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white flex-col hide">
+                          <ul id='active-action-dropdown-for-sm-screen' className="absolute z-30 w-[150%] text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white flex-col hide hidden">
                               {[
                                 'Reply',
                                 'Unread',
@@ -2438,23 +2431,9 @@ export default function Body({
                                       key={action}
                                       onClick={(e) => {
                                         let activeActionAngleDown = document.querySelector("i.active-action-angle-down-for-sm-screen");
-                                        let calendarAngleDown = document.querySelector('i.calendar-angle-down');
-                                        let actionsAngleDown = document.querySelector('i.actions-angle-down');
-                                        let filterAngleDown = document.querySelector('i.filter-angle-down');
                                         let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown-for-sm-screen)');
 
-                                        if(calendarAngleDown?.classList.contains('ad-rotate')){
-                                          calendarAngleDown?.classList.remove("ad-rotate");
-                                          calendarAngleDown?.classList.add("ad-rotate-anticlock");
-                                        }
-                                        if(filterAngleDown?.classList.contains('ad-rotate')){
-                                          filterAngleDown?.classList.remove("ad-rotate");
-                                          filterAngleDown?.classList.add("ad-rotate-anticlock");
-                                        }
-                                        if(actionsAngleDown?.classList.contains('ad-rotate')){
-                                          actionsAngleDown?.classList.remove("ad-rotate");
-                                          actionsAngleDown?.classList.add("ad-rotate-anticlock");
-                                        }
+                                        
                                         if(activeActionAngleDown?.classList.contains('ad-rotate')){
                                           activeActionAngleDown?.classList.remove("ad-rotate");
                                           activeActionAngleDown?.classList.add("ad-rotate-anticlock");
@@ -2462,7 +2441,7 @@ export default function Body({
 
                                         dropdowns.forEach(dropdown => {
                                           if(dropdown.classList.contains('show')){
-                                            dropdown.classList.add('hide');
+                                            dropdown.classList.add('hide', 'hidden');
                                             dropdown.classList.remove('show');
                                           }
                                         });
@@ -2488,7 +2467,7 @@ export default function Body({
                           </ul>
                       </div>
                     </div>
-                    <div className="md:w-[40%] w-[30%] font-light relative"><span>{`${months[new Date(appt.createdAt).getMonth()]} ${new Date(appt.createdAt).getDate()}, ${new Date(appt.createdAt).getFullYear()}`}</span>
+                    <div className="md:w-[40%] w-[30%] font-light relative"><span>{`${months[new Date(enq.createdAt).getMonth()]} ${new Date(enq.createdAt).getDate()}, ${new Date(enq.createdAt).getFullYear()}`}</span>
                       <div className="md:inline-block w-[21%] absolute md:right-[10%] hidden">
                           <div className="w-[156%] rounded-sm font-medium bg-transparent inline-flex flex-row items-center">
                               <button className="text-xs border-secondary-400 border px-2 py-[6px] hover:ring-1 hover:ring-secondary-400" onClick={() => {
@@ -2518,7 +2497,7 @@ export default function Body({
 
                                 dropdowns.forEach(dropdown => {
                                   if(dropdown.classList.contains('show')){
-                                    dropdown.classList.add('hide');
+                                    dropdown.classList.add('hide', 'hidden');
                                     dropdown.classList.remove('show');
                                   }
                                 });
@@ -2551,7 +2530,7 @@ export default function Body({
 
                                   dropdowns.forEach(dropdown => {
                                     if(dropdown.classList.contains('show')){
-                                      dropdown.classList.add('hide');
+                                      dropdown.classList.add('hide', 'hidden');
                                       dropdown.classList.remove('show');
                                     }
                                   });
@@ -2560,12 +2539,12 @@ export default function Body({
                                       if(!downAngle.classList.contains("ad-rotate")){
                                           downAngle.classList.add("ad-rotate");
                                           downAngle.classList.remove("ad-rotate-anticlock");
-                                          activeActionDropdown.classList.remove('hide');
+                                          activeActionDropdown.classList.remove('hide', 'hidden');
                                           activeActionDropdown.classList.add('show');
                                       }else{
                                           downAngle.classList.remove("ad-rotate");
                                           downAngle.classList.add("ad-rotate-anticlock");
-                                          activeActionDropdown.classList.add('hide');
+                                          activeActionDropdown.classList.add('hide', 'hidden');
                                           activeActionDropdown.classList.remove('show');
                                       }
                                   }
@@ -2573,7 +2552,7 @@ export default function Body({
                                 <i className="fa-solid fa-angle-down text-xs active-action-angle-down cursor-pointer"></i>
                               </div>
                           </div>
-                          <ul id='active-action-dropdown' className="hide flex-col absolute z-30 w-[150%] text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white">
+                          <ul id='active-action-dropdown' className="hide hidden flex-col absolute z-30 w-[150%] text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white">
                               {[
                                 'Reply',
                                 'Unread',
@@ -2609,7 +2588,7 @@ export default function Body({
 
                                         dropdowns.forEach(dropdown => {
                                           if(dropdown.classList.contains('show')){
-                                            dropdown.classList.add('hide');
+                                            dropdown.classList.add('hide', 'hidden');
                                             dropdown.classList.remove('show');
                                           }
                                         });
@@ -2638,9 +2617,9 @@ export default function Body({
                     {
                       isAdminSettingsOpen && pathName === "email" && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white'>
                         <section className="flex flex-col items-start gap-x-2 w-full h-full px-5 pb-6 pt-16 font-sans gap-y-9">
-                              <header className="text-sm flex flex-row justify-between items-center w-full">
-                                <h2>From:&nbsp;<span className="font-normal">{isReading ? appt.author.email : 'hello@oyinye.com'}</span></h2>
-                                <h2>{`${months[new Date(isReading ? appt.createdAt: new Date()).getMonth()]} ${new Date(isReading ? appt.createdAt: new Date()).getDate()}, ${new Date(isReading ? appt.createdAt: new Date()).getFullYear()}, ${new Date(new Date(isReading ? appt.createdAt: new Date()).getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000).toISOString().substring(11, 16)}${new Date(isReading ? appt.createdAt: new Date()).getHours() >= 11 ? 'PM' : 'AM'}`}</h2>
+                              <header className="text-sm flex md:flex-row flex-col items-start md:justify-between md:items-center w-full">
+                                <h2>From:&nbsp;<span className="font-normal">{isReading ? enq.author.email : 'hello@oyinye.com'}</span></h2>
+                                <h2>{`${months[new Date(isReading ? enq.createdAt: new Date()).getMonth()]} ${new Date(isReading ? enq.createdAt: new Date()).getDate()}, ${new Date(isReading ? enq.createdAt: new Date()).getFullYear()}, ${new Date(new Date(isReading ? enq.createdAt: new Date()).getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000).toISOString().substring(11, 16)}${new Date(isReading ? enq.createdAt: new Date()).getHours() >= 11 ? 'PM' : 'AM'}`}</h2>
                               </header>
                               <form onSubmit={async (e) => {
                                 e.preventDefault();
@@ -2651,10 +2630,10 @@ export default function Body({
                                 try {
                                   setLoader(true);
                                   await axios.post('/api/admin/send-reminder', {
-                                    email: appt.author.email,
+                                    email: enq.author.email,
                                     message: adminContent?.value,
-                                    contact: appt.author.fullName,
-                                    date: `${months[new Date(isReading ? appt.createdAt: new Date()).getMonth()]} ${new Date(isReading ? appt.createdAt: new Date()).getDate()}. ${new Date(isReading ? appt.createdAt: new Date()).getFullYear()}`
+                                    contact: enq.author.fullName,
+                                    date: `${months[new Date(isReading ? enq.createdAt: new Date()).getMonth()]} ${new Date(isReading ? enq.createdAt: new Date()).getDate()}. ${new Date(isReading ? enq.createdAt: new Date()).getFullYear()}`
                                   });
                                 } catch (error: any) {
                                   toast.error(error.message);
@@ -2666,25 +2645,27 @@ export default function Body({
                                 }
                               }} className="flex flex-col items-start gap-y-4 text-gray-600 font-sans w-full">
                                 <p className="leading-tight tracking-wider text-sm font-medium cursive">
-                                  Hi {isReading ? 'Oyinye Couture team' : appt.author.fullName},
+                                  Hi {isReading ? 'Oyinye Couture team' : enq.author.fullName},
                                 </p>
                                 
                                   {isReading 
                                   ? <p className="text-base leading-relaxed text-wrap tracking-wider text-gray-500 w-full">
-                                      {appt.content ?? 'I am writing to inform you.'} 
+                                      {enq.appointment ? enq.appointment.content : enq.contact ? enq.contact.message : 'I am writing to inform you.'} 
                                     </p>
                                   : <textarea cols={50} rows={5} placeholder="Compose letter here..." id='admin-letter' className="focus:outline-none w-full border border-gray-300 rounded-md p-2 text-base leading-relaxed text-wrap tracking-wider text-gray-500">
                                     
                                     </textarea>}
                                 {isReading 
-                                  ? <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br/>{appt.author.fullName}<br/>Phone:&nbsp;<Link href={`tel:${appt.author.phoneNo ?? '070333748920'}`}>{appt.author.phoneNo ?? '070333748920'}</Link><br/>Standard Size: {appt.author.size ?? 8}</p>
+                                  ? <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br/>{enq.author.fullName}<br/>
+                                  {enq.appointment && <span>Phone:&nbsp;<Link href={`tel:${enq.author.appointment.phoneNo ?? '070333748920'}`}>{enq.author.appointment.phoneNo ?? '070333748920'}</Link><br/>Standard Size: {enq.author.appointment.size ?? 8}</span>}
+                                  </p>
                                   : <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br />Oyinye Couture Team</p>}
                                 
                                   {isReplying && <div className="w-full flex justify-end flex-row">
                                     <button type='submit' className="px-7 py-2 text-sm bg-accent text-white hover:ring-1 hover:ring-accent rounded-md">{loader ? 'Sending..' : 'Send'}</button>
                                   </div>}
                               </form>
-                              {appt.author.styles && isReading && appt.author.styles.length > 0 && appt.author.styles.map(((data: any) => <div className="flex flex-row flex-wrap gap-x-3 gap-y-2 w-full">
+                              {enq.author.appointment && isReading && enq.author.appointment.styles.length > 0 && enq.author.appointment.styles.map(((data: any) => <div className="flex flex-row flex-wrap gap-x-3 gap-y-2 w-full">
                                 <div className="flex flex-col items-center gap-y-1">
                                   <div className="w-24 h-24 rounded-md" style={{backgroundImage: `url(${data.image})`}}></div>
                                   <p className="font-sans text-xs">{data.fileName}</p>
@@ -2698,7 +2679,7 @@ export default function Body({
                   </div>
                 );
               })}
-              {appts.length > 0 && <AdminPagination {...appointmentsData} />}
+              {enquiries.length > 0 && <AdminPagination {...enquiriesData} />}
 
             </section>
           )
