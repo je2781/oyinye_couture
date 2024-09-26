@@ -44,7 +44,8 @@ export default function PagesComponent({name}: any){
                 message
             });
         } catch (error: any) {
-            toast.error(error.message);
+            setLoader(false);
+            return toast.error(error.message);
         }finally{
             setLoader(false);
             toast.success('Contact Request has been sent');
@@ -65,7 +66,7 @@ export default function PagesComponent({name}: any){
                                 Oyinye Couture LLC.<br/>Flat 4 Park Avenue Cooperative Villas,<br/> Lekki, Lagos, Nigeria
                             </p>
                             <p className="font-light">
-                                Please call us on +2349061681807 or email us if you would like to visit our studio<br/><Link href='mailto:hello@oyinye.com' className='underline underline-offset-2 text-checkout-300'>hello@oyinye.com</Link>
+                                Please call us on <Link href='tel:+2349061681807' className="underline underline-offset-2 text-checkout-300">+2349061681807</Link> or email us if you would like to visit our studio<br/><Link href='mailto:hello@oyinye.com' className='underline underline-offset-2 text-checkout-300'>hello@oyinye.com</Link>
                             </p>
                         </div>
                         <div className="w-full flex flex-col gap-y-6">

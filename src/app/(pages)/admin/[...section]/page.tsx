@@ -74,7 +74,7 @@ export default async function Admin({
 
       const bodyProps = {
         visitors: visitorsData.visitors,
-        enquiriesData,
+        enquiriesData: enquiriesData,
         data: orderData,
         extractedOrders: orderData.orders,
         pathName

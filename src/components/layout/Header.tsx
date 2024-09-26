@@ -7,7 +7,6 @@ import logo from "../../../public/oyinye.png";
 import useAuth from "../../store/useAuth";
 import HeaderCartButton from "./HeaderCartButton";
 import SearchBar from "../ui/SearchBar";
-import useProduct from "@/store/useProduct";
 import useWindowWidth from "../helpers/getWindowWidth";
 import { MobileModal } from "../ui/Modal";
 import useCart from "@/store/useCart";
@@ -23,12 +22,12 @@ const menuItems = [
     href: "/collections/all",
   },
   {
-    name: "Reviews",
-    href: "pages/reviews",
+    name: "About",
+    href: "/pages/about",
   },
   {
-    name: "About",
-    href: "pages/about",
+    name: "Contact",
+    href: "/pages/contact",
   },
 ];
 
@@ -40,7 +39,9 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
   const {updateCart, items} = useCart();
   const {isMobileModalOpen, setIsMobileModalOpen} = useGlobal();
   let windowWidth = useWindowWidth();
+
   let timerId: NodeJS.Timeout | null  = null;
+
 
   useEffect(() => {
     window.addEventListener("scroll", handleScroll);

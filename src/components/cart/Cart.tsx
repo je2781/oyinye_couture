@@ -79,7 +79,8 @@ export default function CartInfo({
                 
 
                 } catch (error: any) {
-                    toast.error(error.message);
+                    setLoader(false);
+                    return toast.error(error.message);
                 }finally{
                     setLoader(false);
                     setIsIncrementingCart(undefined);
@@ -115,7 +116,8 @@ export default function CartInfo({
                     setItemTotalAmounts(Object.values(cartItemObj).map((item: any) => item.quantity * item.price));
                     setTotalAmount(res.data.totalAmount);
                 } catch (error: any) {
-                    toast.error(error.message);
+                    setLoader(false);
+                    return toast.error(error.message);
                 }finally{
                     setLoader(false);
                     setIsDeductingCart(undefined);
@@ -144,7 +146,8 @@ export default function CartInfo({
                         });
                     }
                 } catch (error: any) {
-                    toast.error(error.message);
+                    setIsCreatingUserProfile(false);
+                    return toast.error(error.message);
                 }finally{
                     setIsCreatingUserProfile(false);
                 }
@@ -232,7 +235,7 @@ export default function CartInfo({
                 <h1 className="font-sans text-2xl italic">Cart is Empty!</h1>
                 <button className="bg-gray-700 text-[1rem] font-sans text-white px-7 py-3 hover:ring-2 ring-gray-700 border-0">Start shopping</button>
             </main>
-            : <main className="min-h-screen w-full container mx-auto md:pl-16 px-8 md:pt-12 py-5 flex flex-col gap-y-9">
+            : <main className="min-h-screen w-full container mx-auto md:pl-16 px-8 md:pt-12 pt-5 pb-9 flex flex-col gap-y-9">
                 <header className="flex md:flex-row flex-col gap-y-5 justify-between items-start md:items-center pt-6 w-full">
                     <h1 className="font-sans md:text-4xl text-2xl text-gray-600">Your Cart</h1>
                     <div className="inline-flex flex-col gap-y-1 md:w-[40%] w-full text-gray-600">

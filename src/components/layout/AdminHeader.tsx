@@ -112,28 +112,28 @@ export default function AdminHeader({sectionName, pathName}: any) {
       <Sidebar pathName={pathName} />
       <nav
         id="main-nav"
-        className={`fixed top-0 w-full h-[96px] bg-primary-950 lg:pl-64 pl-3 pr-3 z-20`}
+        className={`fixed top-0 w-full h-[96px] bg-primary-950 lg:pl-64 md:pl-52 pl-3 pr-3 z-20`}
       >
-        <div className="flex items-center justify-between lg:justify-start lg:py-4 py-2 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full border border-l-0 border-r-0 border-t-0 border-secondary-400/20">
+        <div className="flex items-center justify-between md:justify-start md:py-4 py-2 max-w-7xl mx-auto px-4 sm:px-6 md:px-8 w-full border border-l-0 border-r-0 border-t-0 border-secondary-400/20">
           <button
             id="toggle-button"
-            className="hover:bg-gray-600/10 focus:bg-gray-600/10  px-2 py-1 bg-transparent rounded-md lg:hidden inline-block"
+            className="hover:bg-gray-600/10 focus:bg-gray-600/10  px-2 py-1 bg-transparent rounded-md md:hidden inline-block"
             aria-haspopup="true"
             aria-expanded="false"
             onClick={() => setIsMobileModalOpen(true)}
           >
-            <i className="fa-solid fa-bars text-white text-lg"></i>
+            <i className="fa-solid fa-bars text-white text-md"></i>
             <span className="sr-only">Open insight mobile navbar</span>
           </button>
 
-          <div className="grow items-start lg:inline-block hidden">
+          <div className="grow items-start md:inline-block hidden">
             <h1 className="text-white text-xl">
               {sectionName}
             </h1>
           </div>
-          <div className="flex flex-row items-center lg:gap-x-7 gap-x-4">
+          <div className="flex flex-row items-center md:gap-x-7 gap-x-4">
             <i
-              className="fa-solid cursor-pointer fa-search text-lg text-white transition-all duration-300 ease-out transform hover:scale-110"
+              className="fa-solid cursor-pointer fa-search text-md text-white transition-all duration-300 ease-out transform hover:scale-110"
               onClick={showSearchModalHandler}
             ></i>
             <div className="relative">
@@ -149,7 +149,7 @@ export default function AdminHeader({sectionName, pathName}: any) {
                   <Image width={30} height={30} className="rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="profile-pic"/>
               </button>
   
-              <div id='admin-menu' className="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md text-secondary-400 bg-primary-800 shadow-lg ring-1 ring-black ring-opacity-5 py-3 px-2 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" >
+              <div id='admin-menu' className="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md text-secondary-400 bg-primary-800 shadow-md ring-1 ring-black ring-opacity-5 py-3 px-2 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" >
                   <div className="inline-flex flex-row items-center gap-x-3 px-4 py-2 hover:text-accent">
                     <i className="fa-regular fa-user"></i>
                     <Link href="#" className="text-[1rem] font-sans" role="menuitem"  id="user-menu-item-0">Profile</Link>
@@ -280,7 +280,7 @@ export default function AdminHeader({sectionName, pathName}: any) {
                             {appsList.map((item: any, i: number) => (
                                 <li
                                 onClick={() => {
-                                    router.push(`/admin/${routeNames[i]}`);
+                                  router.push(`/admin/${routeNames[i] === 'emails' ? `${routeNames[i]}?page=1` : routeNames[i]}`);
                                 }} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2" key={i}>
                                     <div 

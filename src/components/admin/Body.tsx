@@ -84,8 +84,8 @@ export default function Body({
     }[]
   >([]);
   const [sizeData, setSizeData] = React.useState<SizeData[]>([]);
-  const [start, setStart] = React.useState<string>(`${(currentDate - 29) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}-${(currentDate - 29) <= 0 ? ('0' + (currentMonth === 0 ? 8 : currentMonth-4)).slice(-2) : ('0' + (currentMonth -3)).slice(-2)}-${(currentDate - 29) <= 0 ? ('0' + (new Date(currentDate -29 <= 0 && currentMonth === 0 ? currentYear-1 : currentYear, currentDate -29 <= 0 && currentMonth === 0 ? 8 : currentMonth-4, 0).getDate() - Math.abs(currentDate - 29))).slice(-2) : ('0' + (currentDate - 29)).slice(-2)}`);
-  const [end, setEnd] = React.useState<string>(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
+  const [calendarStart, setCalendarStart] = React.useState<string>(`${(currentDate - 29) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}-${(currentDate - 29) <= 0 ? ('0' + (currentMonth === 0 ? 8 : currentMonth-4)).slice(-2) : ('0' + (currentMonth -3)).slice(-2)}-${(currentDate - 29) <= 0 ? ('0' + (new Date(currentDate -29 <= 0 && currentMonth === 0 ? currentYear-1 : currentYear, currentDate -29 <= 0 && currentMonth === 0 ? 8 : currentMonth-4, 0).getDate() - Math.abs(currentDate - 29))).slice(-2) : ('0' + (currentDate - 29)).slice(-2)}`);
+  const [calendarEnd, setCalendarEnd] = React.useState<string>(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
   const [startDate, setStartDate] = React.useState(`${(currentDate - 29) <= 0 ? new Date(currentDate -29 <= 0 && currentMonth === 0 ? currentYear-1 : currentYear, currentDate -29 <= 0 && currentMonth === 0 ? 8 : currentMonth-4, 0).getDate() - Math.abs(currentDate - 29) : currentDate - 29} ${(currentDate - 29) <= 0 ? (currentMonth === 0 ? months[7] : months[currentMonth-5]) : months[currentMonth -4]} ${(currentDate - 29) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}`);
   const [endDate, setEndDate] = React.useState(`${new Date().getDate()} ${months[currentMonth]} ${new Date().getFullYear()}`);
   const [endValue, setEndValue] = React.useState<Value>(new Date(endDate));
@@ -345,7 +345,8 @@ export default function Body({
           const res = await axios.get(`/api/orders/${orderListLength}?page=1`);
           setOrders(res.data.orders);
         } catch (error: any) {
-          toast.error(error.message);
+          setLoader(false);
+          return toast.error(error.message);
         }finally{
           setLoader(false);
         }
@@ -377,10 +378,6 @@ export default function Body({
       mobileNav.classList.remove("backward");
     }
   }, [isMobileModalOpen]);
-
-  React.useEffect(() => {
-    
-  },[endValue, startValue]);
 
   const hideAdminSettingsModalHandler = () => {
       const optionsMenus = document.querySelectorAll('[id^=options-menu]');
@@ -472,13 +469,13 @@ export default function Body({
 
   return (
       <main
-        className="bg-primary-950 min-h-screen pt-4 md:pl-64 pl-7 lg:pr-3 pr-7 w-full py-12"
+        className="bg-primary-950 min-h-screen pt-4 lg:pl-64 md:pl-52 pl-7 md:pr-3 pr-7 w-full py-12"
         id="admin-content"
         role="main"
       >
         {pathName === "product-listing" && (
-          <section className="flex lg:flex-row flex-col gap-y-12 lg:gap-x-6 pl-5 pr-1 w-full h-full">
-            <section className="lg:flex flex-col gap-y-6 items-start xl:w-[22%] lg:w-[30%] hidden">
+          <section className="flex md:flex-row flex-col gap-y-12 md:gap-x-6 pl-5 pr-1 w-full h-full">
+            <section className="md:flex flex-col gap-y-6 items-start xl:w-[22%] md:w-[30%] hidden">
               <form
                 onSubmit={(e) =>
                   handleSubmit(
@@ -714,7 +711,7 @@ export default function Body({
                 </ul>
               </div>
             </section>
-            <section className="lg:w-[70%] w-full h-full flex flex-col gap-y-16">
+            <section className="md:w-[70%] w-full h-full flex flex-col gap-y-16">
               {imgData.length > 0 && (
                 <Swiper
                   slidesPerView={width < 1024 ? 2 : 4}
@@ -741,13 +738,13 @@ export default function Body({
                   ))}
                 </Swiper>
               )}
-              <div className="flex flex-col items-start lg:gap-y-10 gap-y-5 font-sans w-full">
-                <h1 className="font-medium lg:text-lg text-white text-[1rem]">
+              <div className="flex flex-col items-start md:gap-y-10 gap-y-5 font-sans w-full">
+                <h1 className="font-medium md:text-lg text-white text-[1rem]">
                   Folders
                 </h1>
-                <div className="flex flex-row gap-x-4 text-secondary-400 lg:pl-5 items-center">
-                  <i className="fa-regular fa-folder-open lg:text-4xl text-3xl"></i>
-                  <header className="flex flex-col items-start lg:text-[1rem] text-sm">
+                <div className="flex flex-row gap-x-4 text-secondary-400 md:pl-5 items-center">
+                  <i className="fa-regular fa-folder-open md:text-4xl text-3xl"></i>
+                  <header className="flex flex-col items-start md:text-[1rem] text-sm">
                     <h2>Photos</h2>
                     <p>
                       {imgData.length}files,&nbsp;
@@ -761,18 +758,18 @@ export default function Body({
                   </header>
                 </div>
               </div>
-              <div className="flex flex-col items-start lg:gap-y-4 gap-y-2 font-sans w-full">
-                <h1 className="font-medium lg:text-lg text-white text-[1rem] text-left">
+              <div className="flex flex-col items-start md:gap-y-4 gap-y-2 font-sans w-full">
+                <h1 className="font-medium md:text-lg text-white text-[1rem] text-left">
                   Files
                 </h1>
-                <div className="text-secondary-400 lg:text-[1rem] text-sm">
+                <div className="text-secondary-400 md:text-[1rem] text-sm">
                   {imgData.length === 0 ? (
                     <p>No files uploaded.</p>
                   ) : (
                     <div className="flex flex-row justify-start flex-wrap items-center gap-x-5 gap-y-9 w-full">
                       {imgData.map((datum, index) => (
                         <article className="flex flex-col gap-y-3" key={index}>
-                          <div className="flex flex-row justify-center items-center bg-primary-800 lg:px-[5.8rem] px-16 py-8 lg:py-11 h-fit rounded-sm">
+                          <div className="flex flex-row justify-center items-center bg-primary-800 md:px-[5.8rem] px-16 py-8 md:py-11 h-fit rounded-sm">
                             <i className="fa-solid fa-file-image text-red-400 text-[2.5rem] leading-tight"></i>
                           </div>
                           <footer className="flex flex-col px-4 font-sans">
@@ -788,7 +785,7 @@ export default function Body({
                 </div>
               </div>
             </section>
-            <section className="lg:hidden flex flex-col gap-y-6 items-start w-full">
+            <section className="md:hidden flex flex-col gap-y-6 items-start w-full">
               <form
                 onSubmit={(e) =>
                   handleSubmit(
@@ -1169,7 +1166,8 @@ export default function Body({
                                     throw new Error(res.data.message);
                                   }
                                 } catch (error: any) {
-                                  toast.error(error.message);
+                                  setIsLoading(false);
+                                  return toast.error(error.message);
                                 }finally{
                                   setIsLoading(false);
                                   toast.success('reminder sent', {
@@ -1221,7 +1219,8 @@ export default function Body({
                                         paymentStatus: selectedStatus.value
                                       });
                                     } catch (error: any) {
-                                      toast.error(error.message);
+                                      setIsLoading(false);
+                                      return toast.error(error.message);
                                     }finally{
                                       setIsLoading(false);
                                       //resetting payment status
@@ -1265,7 +1264,8 @@ export default function Body({
                                             total: order.sales
                                           });
                                         } catch (error: any) {
-                                          toast.error(error.message);
+                                          setIsLoading(false);
+                                          return toast.error(error.message);
                                         }finally{
                                           setIsLoading(false);
                                           //restting payment link
@@ -1362,7 +1362,8 @@ export default function Body({
                                       throw new Error(res.data.message);
                                     }
                                   } catch (error: any) {
-                                    toast.error(error.message);
+                                    setIsLoading(false);
+                                    return toast.error(error.message);
                                   }finally{
                                     setIsLoading(false);
                                     toast.success('reminder sent', {
@@ -1511,7 +1512,7 @@ export default function Body({
         )}
         {
           pathName === 'summary' && (
-            <section className="flex flex-col gap-y-12 md:gap-y-8 w-full relative justify-between lg:pr-8">
+            <section className="flex flex-col gap-y-8 md:gap-y-8 w-full relative justify-between md:pr-8">
               <span id="report-settings" onClick={() => {
                 setIsAdminSettingsOpen(true);
               }} className="cursor-pointer flex flex-row items-center absolute md:right-10 right-4 -top-4">
@@ -1519,31 +1520,40 @@ export default function Body({
                   <i className="text-sm fa-solid fa-wrench text-gray-400"></i>&nbsp;
                   <i className="text-sm fa-solid fa-caret-down text-gray-400"></i>
               </span>
-              <article className="w-full h-[32%] md:h-[32vh]" id='total-sales-graph'>
+              <article className="w-full h-[33%] md:h-[25vh] xl:h-[32vh]" id='total-sales-graph'>
                   <Line options={lineGraphOptions}
                     data={lineGraphData}
                   >
                   </Line>
               </article>
-              <article className="flex md:flex-row flex-col w-full h-[35%] md:h-[35vh] gap-y-8">
-                <div className={`${paymentTypeData.datasets[0].data.reduce((a: number,b: number) => a+b, 0) > 0 ? 'md:w-[40%]' : 'md:w-[50%]'} w-full md:pr-3`}>
+              <article className="flex md:flex-row flex-col w-full h-[33%] xl:h-[35vh] md:h-[25vh] gap-y-8">
+                <div className={`md:w-[50%] w-full md:pr-3 h-full`}>
                   <Bar options={productTypeGraphOptions}
                     data={productTypeBarGraphData}
                   >
                   </Bar>
                 </div>
-                <div className={`${paymentTypeData.datasets[0].data.reduce((a: number,b: number) => a+b, 0) > 0 ? 'md:w-[35%]' : 'md:w-[50%]'} w-full md:pl-3 h-[92%]`}>
+                <div className='md:w-[50%] w-full md:pl-3 h-[92%]'>
                   <Bar options={verticalBarGraphOptions}
                     data={visitorsBarGraphData}
                   >
                   </Bar>
                 </div>
-                {paymentTypeData.datasets[0].data.reduce((a: number,b: number) => a+b, 0) > 0 && <div className="md:w-[25%] w-full flex flex-row items-center md:justify-start justify-center gap-x-2">
-                  <div className="md:w-[70%] w-full">
+              </article>
+              <article className={`w-full h-[34%] xl:h-[33vh] md:h-[26vh] flex md:flex-row flex-col gap-y-7 items-start lg:items-center gap-x-2 lg:gap-0`}>
+                <div className="w-full md:w-[50%] lg:h-full">
+                  <Bar options={deliveryOptionsGraphOptions}
+                    data={deliveryOptionsData}
+                  >
+
+                  </Bar>
+                </div>
+                {paymentTypeData.datasets[0].data.reduce((a: number,b: number) => a+b, 0) > 0 && <div className="flex md:w-[50%] w-full flex-row items-center md:justify-start justify-center gap-x-2">
+                  <div className="md:w-[60%] lg:w-[70%] w-full h-full">
                     <Doughnut options={{
                           plugins: {
                               legend: {
-                                  display: width <= 768 ? true : false
+                                  display: width < 768 ? true : false
                               },
                           },
                           responsive: true,
@@ -1554,19 +1564,13 @@ export default function Body({
 
                     </Doughnut>
                   </div>
-                  <ul className="md:inline-flex flex-col items-start gap-y-2 w-[30%] hidden">
+                  <ul className="md:inline-flex flex-col items-start gap-y-2 lg:w-[30%] md:w-[40%] hidden">
                       <li className="flex flex-row gap-x-2 items-center"><i className="fa-solid fa-circle text-[#FFA500] text-[8px] align-middle"></i><span className="text-xs font-sans text-secondary-400">Streetzwyze</span></li>
                       <li className="flex flex-row gap-x-2 items-center"><i className="fa-solid fa-circle text-[#51b2ca] text-[8px] align-middle"></i><span className="text-xs font-sans text-secondary-400">Interswitch</span></li>
                       {/* <li className="flex flex-row gap-x-2 items-center"><i className="fa-solid fa-circle text-[#4a48c7] text-[8px] align-middle"></i><span className="text-xs font-sans text-secondary-400">Opera</span></li> */}
                   </ul>
                 </div>}
-              </article>
-              <article className={`${paymentTypeData.datasets[0].data.reduce((a: number,b: number) => a+b, 0) > 0 ? 'md:w-[40%]' : 'md:w-[50%]'} w-full h-[33%] md:h-[33vh]`}>
-                <Bar options={deliveryOptionsGraphOptions}
-                  data={deliveryOptionsData}
-                >
-
-                </Bar>
+                
               </article>
               {
                 isAdminSettingsOpen && pathName === "summary" && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white'>
@@ -1600,27 +1604,26 @@ export default function Body({
                                 for(let i = 0; i < months.length; i++){
                                   if(months[i] === e.target.value.split(' ')[1]){
                                     extractedMonth = i; 
-                                  }else{
-                                    e.target.value = startDate;
-                                    return;
                                   }
                                 }
                                 extractedYear = parseInt(e.target.value.split(' ')[2]);
                                 //validation check to prevent characters from being used or wrong year format
-                                if(isNaN(extractedYear) || extractedYear.toString().length < 4){
+                                if(isNaN(extractedYear)){
                                   e.target.value = startDate;
                                   return;
                                 }
-                                //binding value to change event
-                                setStartDate(e.target.value);
-
+                                
                                 const timeDiff = new Date(currentYear, currentMonth+1, currentDate).getTime() - new Date(extractedYear, extractedMonth!+1, extractedDate).getTime();
                                 //validation check
                                 if(timeDiff  < 86400000){
+                                  e.target.value = startDate;
                                   alert('start date has to be at least 1 day apart from end date');
                                   return;
                                 }else{
-                                  setStart(`${extractedYear}-${('0' + (extractedMonth! + 1)).slice(-2)}-${('0' + extractedDate).slice(-2)}`);
+                                  //binding value to change event
+                                  setStartDate(e.target.value);
+
+                                  setCalendarStart(`${extractedYear}-${('0' + (extractedMonth! + 1)).slice(-2)}-${('0' + extractedDate).slice(-2)}`);
 
                                   //clearing factory range and period
                                   setRange(null);
@@ -1674,13 +1677,13 @@ export default function Body({
                                     return;
                                   }
                                   
-                                  extractedStartDate = parseInt(start.split(' ')[0]);
+                                  extractedStartDate = parseInt(calendarStart.split(' ')[0]);
                                   for(let i = 0; i < months.length; i++){
-                                      if(months[i] === start.split(' ')[1]){
+                                      if(months[i] === calendarStart.split(' ')[1]){
                                           extractedStartMonth = i; 
                                       }
                                   }
-                                  extractedStartYear = parseInt(start.split(' ')[2]);
+                                  extractedStartYear = parseInt(calendarStart.split(' ')[2]);
                                   
                                   extractedEndDate = parseInt(e.target.value.split(' ')[0]);
                                   //validation check to prevent characters from being used
@@ -1692,36 +1695,44 @@ export default function Body({
                                   for(let i = 0; i < months.length; i++){
                                       if(months[i] === e.target.value.split(' ')[1]){
                                           extractedEndMonth = i; 
-                                      }else{
-                                        e.target.value = endDate;
-                                        return;
                                       }
                                   }
                                   extractedEndYear = parseInt(e.target.value.split(' ')[2]);
                                   //validation check to prevent characters from being used or wrong year format
-                                  if(isNaN(extractedEndYear) || extractedEndYear.toString().length < 4){
+                                  if(isNaN(extractedEndYear)){
                                     e.target.value = endDate;
                                     return;
                                   }
-                                  //binding value to change event
-                                  setEndDate(e.target.value);
       
                                   const currentTime = new Date(extractedEndYear, extractedEndMonth+1, extractedEndDate).getTime() - new Date(currentYear, currentMonth+1, currentDate).getTime();
       
                                   //validation check to prevent user from inputing an end date greater than current time
                                   if(currentTime > 0){
+                                      e.target.value = endDate;
                                       alert('end date cannot be greater than current date');
+                                      
                                       return;
+                                  }else if(currentTime < 0){
+                                    e.target.value = endDate;
+                                    alert('end date cannot be less than current date');
+                                    
+                                    return;
                                   }
                                   const timeDiff = new Date(extractedEndYear,extractedEndMonth+1,extractedEndDate).getTime() - new Date(extractedStartYear, extractedStartMonth+1, extractedStartDate).getTime();
                                   
                                   //validation check
-                                  if(timeDiff  < 86400000){
+                                  if(timeDiff  < 86400000 && timeDiff >= 0){
+                                      e.target.value = endDate;
+
                                       alert('start date has to be at least 1 day apart from end date');
                                       return;
                                   }else{
-                                    setStart(`${extractedStartYear}-${('0' + (extractedStartMonth + 1)).slice(-2)}-${('0' + extractedStartDate).slice(-2)}`);
-                                    setEnd(`${extractedEndYear}-${('0' + (extractedEndMonth + 1)).slice(-2)}-${('0' + extractedEndDate).slice(-2)}`);
+                                    
+                                    //binding value to change event
+                                    setEndDate(e.target.value);
+
+                                    setCalendarStart(`${extractedStartYear}-${('0' + (extractedStartMonth + 1)).slice(-2)}-${('0' + extractedStartDate).slice(-2)}`);
+                                    setCalendarEnd(`${extractedEndYear}-${('0' + (extractedEndMonth + 1)).slice(-2)}-${('0' + extractedEndDate).slice(-2)}`);
 
                                     //clearing factory range and period
                                     setRange(null);
@@ -1786,8 +1797,8 @@ export default function Body({
 
                                 
                                 let startDate = `${(currentDate - 1) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}-${(currentDate - 1) <= 0 ? ('0' + (currentMonth === 0 ? 12 : currentMonth)).slice(-2) : ('0' + (currentMonth + 1)).slice(-2)}-${(currentDate - 1) <= 0 ? ('0' + (new Date(currentMonth === 0 ? currentYear-1 : currentYear, currentMonth === 0 ? 11 : currentMonth, 0).getDate() - Math.abs(currentDate - 1))).slice(-2) : ('0' + (currentDate - 1)).slice(-2)}`;
-                                setStart(startDate);
-                                setEnd(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
+                                setCalendarStart(startDate);
+                                setCalendarEnd(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
                                 setStartDate(`${startDate.split('-')[2].slice(-2).split('')[0] === '0' ? startDate.split('-')[2].slice(-1) : startDate.split('-')[2].slice(-2)} ${months[parseInt(startDate.split('-')[1].slice(-1))-1]} ${startDate.split('-')[0]}`);
 
                               
@@ -1810,8 +1821,8 @@ export default function Body({
                                 setVisitorsBarGraphData(Object.values(dailyVisitorsData)[6]);
 
                                 let startDate = `${(currentDate - 7) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}-${(currentDate - 7) <= 0 ? ('0' + (currentMonth === 0 ? 12 : currentMonth)).slice(-2) : ('0' + (currentMonth + 1)).slice(-2)}-${(currentDate - 7) <= 0 ? ('0' + (new Date(currentMonth === 0 ? currentYear-1 : currentYear, currentMonth === 0 ? 12 : currentMonth, 0).getDate() - Math.abs(currentDate - 7))).slice(-2) : ('0' + (currentDate - 7)).slice(-2)}`;
-                                setStart(startDate);
-                                setEnd(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
+                                setCalendarStart(startDate);
+                                setCalendarEnd(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
                                 setStartDate(`${startDate.split('-')[2].slice(-2).split('')[0] === '0' ? startDate.split('-')[2].slice(-1) : startDate.split('-')[2].slice(-2)} ${months[parseInt(startDate.split('-')[1].slice(-1))-1]} ${startDate.split('-')[0]}`);
                               }}
                               className={`${range === 7 && period === 'daily' ? 'active-range': ''} text-xs text-gray-600 hover:text-primary-800/70 px-3 py-2 hover:bg-primary-50 cursor-pointer`} id="last-7d">last 7 days</li>
@@ -1833,8 +1844,8 @@ export default function Body({
                                 setVisitorsBarGraphData(Object.values(dailyVisitorsData)[27]);
 
                                 let startDate = `${(currentDate - 28) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}-${(currentDate - 28) <= 0 ? ('0' + (currentMonth === 0 ? 12 : currentMonth)).slice(-2) : ('0' + (currentMonth + 1)).slice(-2)}-${(currentDate - 28) <= 0 ? ('0' + (new Date(currentMonth === 0 ? currentYear-1 : currentYear, currentMonth === 0 ? 12 : currentMonth, 0).getDate() - Math.abs(currentDate - 28))).slice(-2) : ('0' + (currentDate - 28)).slice(-2)}`;
-                                setStart(startDate);
-                                setEnd(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
+                                setCalendarStart(startDate);
+                                setCalendarEnd(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
                                 setStartDate(`${startDate.split('-')[2].slice(-2).split('')[0] === '0' ? startDate.split('-')[2].slice(-1) : startDate.split('-')[2].slice(-2)} ${months[parseInt(startDate.split('-')[1].slice(-1))-1]} ${startDate.split('-')[0]}`);
                               
                               }} className={`${range === 28 && period === 'daily' ? 'active-range': ''} text-xs text-gray-600 hover:text-primary-800/70 px-3 py-2 hover:bg-primary-50 cursor-pointer`} id="last-28d">last 28 days</li>
@@ -1856,8 +1867,8 @@ export default function Body({
                                 setVisitorsBarGraphData(Object.values(monthVisitorsData)[1]);
 
                                 let startDate = `${(currentDate - 29) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}-${(currentDate - 29) <= 0 ? ('0' + (currentMonth === 0 ? 11 : currentMonth-1)).slice(-2) : ('0' + (currentMonth -1)).slice(-2)}-${(currentDate - 29) <= 0 ? ('0' + (new Date(currentDate -29 <= 0 && currentMonth === 0 ? currentYear-1 : currentYear, currentDate -29 <= 0 && currentMonth === 0 ? 11 : currentMonth-1, 0).getDate() - Math.abs(currentDate - 29))).slice(-2) : ('0' + (currentDate - 29)).slice(-2)}`;
-                                setStart(startDate);
-                                setEnd(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
+                                setCalendarStart(startDate);
+                                setCalendarEnd(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
                                 setStartDate(`${startDate.split('-')[2].slice(-2).split('')[0] === '0' ? startDate.split('-')[2].slice(-1) : startDate.split('-')[2].slice(-2)} ${months[parseInt(startDate.split('-')[1].slice(-1))-1]} ${startDate.split('-')[0]}`);
                               
                               }}
@@ -1880,8 +1891,8 @@ export default function Body({
                                 setVisitorsBarGraphData(Object.values(monthVisitorsData)[4]);
 
                                 let startDate = `${(currentDate - 29) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}-${(currentDate - 29) <= 0 ? ('0' + (currentMonth === 0 ? 8 : currentMonth-4)).slice(-2) : ('0' + (currentMonth -3)).slice(-2)}-${(currentDate - 29) <= 0 ? ('0' + (new Date(currentDate -29 <= 0 && currentMonth === 0 ? currentYear-1 : currentYear, currentDate -29 <= 0 && currentMonth === 0 ? 8 : currentMonth-4, 0).getDate() - Math.abs(currentDate - 29))).slice(-2) : ('0' + (currentDate - 29)).slice(-2)}`;
-                                setStart(startDate);
-                                setEnd(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
+                                setCalendarStart(startDate);
+                                setCalendarEnd(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
                                 setStartDate(`${startDate.split('-')[2].slice(-2).split('')[0] === '0' ? startDate.split('-')[2].slice(-1) : startDate.split('-')[2].slice(-2)} ${months[parseInt(startDate.split('-')[1].slice(-1))-1]} ${startDate.split('-')[0]}`);
                               }}
                               className={`${range === 5 && period === 'monthly' ? 'active-range': ''} text-gray-600 text-xs hover:text-primary-800/70 px-3 py-2 hover:bg-primary-50 cursor-pointer`} id="last-5m">last 5 months</li>
@@ -1903,8 +1914,8 @@ export default function Body({
                                 setVisitorsBarGraphData(Object.values(monthVisitorsData)[12]);
 
                                 let startDate = `${currentYear - 1}-${(currentDate - 29) <= 0 ? ('0' + (currentMonth === 0 ? 1 : currentMonth)).slice(-2) : ('0' + (currentMonth+1)).slice(-2)}-${(currentDate - 29) <= 0 ? ('0' + (new Date(currentYear-1, currentMonth === 0 ? 1 : currentMonth, 0).getDate() - Math.abs(currentDate - 29))).slice(-2) : ('0' + (currentDate - 29)).slice(-2)}`;
-                                setStart(startDate);
-                                setEnd(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
+                                setCalendarStart(startDate);
+                                setCalendarEnd(`${currentYear}-${('0' + (currentMonth + 1)).slice(-2)}-${('0' + currentDate).slice(-2)}`);
                                 setStartDate(`${startDate.split('-')[2].slice(-2).split('')[0] === '0' ? startDate.split('-')[2].slice(-1) : startDate.split('-')[2].slice(-2)} ${months[parseInt(startDate.split('-')[1].slice(-1))-1]} ${startDate.split('-')[0]}`);
                               }}
                               className={`${range === 13 && period === 'monthly' ? 'active-range': ''} text-xs text-gray-600 hover:text-primary-800/70 px-3 py-2 hover:bg-primary-50 cursor-pointer`} id="last-12m">last 12 months</li>
@@ -1912,7 +1923,7 @@ export default function Body({
                           <div className="w-full md:w-[75%] h-full overflow-hidden">
                             <FullCalendar
                               plugins={[multiMonthPlugin, interactionPlugin]}
-                              key={start + end}
+                              key={calendarStart + calendarEnd}
                               initialView='multiMonthYear'
                               headerToolbar={{
                                 left: "title",
@@ -1925,8 +1936,8 @@ export default function Body({
                               slotMaxTime={new Date(new Date().getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000).toISOString().substring(11, 19)}
                               events={[
                                 {
-                                    start: start,
-                                    end: end,
+                                    start: calendarStart,
+                                    end: calendarEnd,
                                     allDay: true,
                                 }
                               ]}
@@ -1986,14 +1997,14 @@ export default function Body({
           )
         }
         {
-          pathName === 'email' && (
-            <section className="flex flex-col w-full gap-y-5 lg:px-8 text-secondary-400 font-sans">
+          pathName === 'emails' && (
+            <section className="flex flex-col w-full gap-y-5 md:px-8 text-secondary-400 font-sans">
               <header className="text-lg pb-4 border font-medium border-l-0 border-t-0 border-r-0 border-secondary-400/20">
                   Inbox
               </header>
               <p className="text-[.8rem]">This page contains messages from clients regarding appointments and other enquiries</p>
-              <section className='md:w-[45%] w-full flex flex-row flex-wrap justify-start items-center text-sm gap-x-2 gap-y-2 mt-6'>
-                <div className="md:inline-block md:w-[21%] hidden relative">
+              <section className='md:max-w-[60%] w-full flex flex-row flex-wrap lg:flex-nowrap justify-start items-center text-sm gap-x-2 gap-y-2 mt-6'>
+                <div className="lg:inline-block lg:max-w-[28%] hidden relative">
                     <button 
                     onClick={(e) => {
                         let downAngle = e.currentTarget.querySelector("i.actions-angle-down");
@@ -2050,10 +2061,53 @@ export default function Body({
                           'Save Messages',
                           'Remove'
                         ].map((action: string, i: number) => (
-                            <div>
+                            <div key={i}>
                                 <li
-                                key={action}
-                                // onClick={(e) => handleSelect(rating, e)}
+                                onClick={async (e) => {
+                                  const emailItems = document.querySelectorAll('#email-item')  as NodeListOf<HTMLDivElement>;
+                                  const newEmailItems = Array.from(emailItems);
+                                  const subjectCheck = document.getElementById('all') as HTMLInputElement;
+                                  const emailItemChecks = document.querySelectorAll('#single') as NodeListOf<HTMLInputElement>;
+
+                                  subjectCheck.checked = !subjectCheck.checked;
+
+                                  emailItemChecks.forEach(itemCheck => itemCheck.checked = !itemCheck.checked);
+
+                                  try {
+                                    
+                                    if(action === 'Mark As Read'){
+                                      for(let item of newEmailItems){
+
+                                        item.classList.add('bg-primary-500');
+
+                                        await axios.patch(`/api/enquiries/update/${item.dataset.enqId}`, {
+                                          isRead: true,
+                                          isUnRead: false,
+                                          isBooking: item.dataset.hasAppointment === 'true',
+                                          isContact: item.dataset.hasContact === 'true'
+                                        });
+                                      }
+                                      
+                                    }
+                                    if(action === 'Mark As Unread'){
+                                      for(let item of newEmailItems){
+
+                                        item.classList.remove('bg-primary-500');
+
+                                        await axios.patch(`/api/enquiries/update/${item.dataset.enqId}`, {
+                                          isRead: false,
+                                          isUnRead: true,
+                                          isBooking: item.dataset.hasAppointment === 'true',
+                                          isContact: item.dataset.hasContact === 'true'
+                                        });
+                                      }
+                                    }
+                                  } catch (error) {
+                                    
+                                  }
+
+                                  
+                                }}
                                 className="cursor-pointer flex flex-row items-center justify-between p-2"
                               >
                                   {action}
@@ -2063,7 +2117,7 @@ export default function Body({
                         ))}
                     </ul>
                 </div>
-                <div className="md:inline-block md:w-[12%] hidden relative">
+                <div className="lg:inline-block lg:max-w-[15%] hidden relative">
                     <button 
                       onClick={(e) => {
                         let downAngle = e.currentTarget.querySelector("i.calendar-angle-down");
@@ -2111,8 +2165,9 @@ export default function Body({
                         <i className="fa-regular fa-calendar-days"></i>
                         <i className="fa-solid fa-angle-down text-xs calendar-angle-down"></i>
                     </button>
-                    <div className="hide hidden absolute z-30 flex-col gap-y-3 pt-5 pb-4 px-3 h-fit w-[1000%] bg-white rounded-md" id='calendar-dropdown'>
-                      <div className="flex flex-row gap-x-1 mb-2">
+                    <div className="hide hidden absolute z-30 flex-col gap-y-3 pt-5 pb-4 px-3 h-fit w-[1100%] bg-white rounded-md" id='calendar-dropdown'>
+                      <div className="flex flex-row gap-x-2 mb-2 items-center">
+                          <span>From</span>
                           <div className="relative">
                               <input 
                               type="text"
@@ -2138,14 +2193,11 @@ export default function Body({
                                 for(let i = 0; i < months.length; i++){
                                   if(months[i] === e.target.value.split(' ')[1]){
                                     extractedMonth = i; 
-                                  }else{
-                                    e.target.value = startDate;
-                                    return;
                                   }
                                 }
                                 extractedYear = parseInt(e.target.value.split(' ')[2]);
                                 //validation check to prevent characters from being used or wrong year format
-                                if(isNaN(extractedYear) || extractedYear.toString().length < 4){
+                                if(isNaN(extractedYear)){
                                   e.target.value = startDate;
                                   return;
                                 }
@@ -2153,6 +2205,7 @@ export default function Body({
                                 const timeDiff = new Date(currentYear, currentMonth+1, currentDate).getTime() - new Date(extractedYear, extractedMonth!+1, extractedDate).getTime();
                                 //validation check
                                 if(timeDiff  < 86400000){
+                                  e.target.value = startDate;
                                   alert('start date has to be at least 1 day apart from end date');
                                   return;
                                 }
@@ -2164,7 +2217,7 @@ export default function Body({
                               />
                               <label className="text-xs font-bold absolute peer-focus:text-secondary-400 top-[-6px] left-[10px] bg-white px-[5px] text-gray-400 ">Start date</label>
                           </div>
-                          <div className="text-lg text-gray-400">-</div>
+                          <span>To</span>
                           <div className="relative">
                               <input 
                                 onChange={(e) => {
@@ -2180,13 +2233,13 @@ export default function Body({
                                     return;
                                   }
                                   
-                                  extractedStartDate = parseInt(start.split(' ')[0]);
+                                  extractedStartDate = parseInt(calendarStart.split(' ')[0]);
                                   for(let i = 0; i < months.length; i++){
-                                      if(months[i] === start.split(' ')[1]){
+                                      if(months[i] === calendarStart.split(' ')[1]){
                                           extractedStartMonth = i; 
                                       }
                                   }
-                                  extractedStartYear = parseInt(start.split(' ')[2]);
+                                  extractedStartYear = parseInt(calendarStart.split(' ')[2]);
                                   
                                   extractedEndDate = parseInt(e.target.value.split(' ')[0]);
                                   //validation check to prevent characters from being used
@@ -2198,14 +2251,11 @@ export default function Body({
                                   for(let i = 0; i < months.length; i++){
                                       if(months[i] === e.target.value.split(' ')[1]){
                                           extractedEndMonth = i; 
-                                      }else{
-                                        e.target.value = endDate;
-                                        return;
                                       }
                                   }
                                   extractedEndYear = parseInt(e.target.value.split(' ')[2]);
                                   //validation check to prevent characters from being used or wrong year format
-                                  if(isNaN(extractedEndYear) || extractedEndYear.toString().length < 4){
+                                  if(isNaN(extractedEndYear)){
                                     e.target.value = endDate;
                                     return;
                                   }
@@ -2214,13 +2264,20 @@ export default function Body({
                                   
                                   //validation check to prevent user from inputing an end date greater than current time
                                   if(currentTime > 0){
+                                      e.target.value = endDate;
                                       alert('end date cannot be greater than current date');
                                       return;
+                                  }else if(currentTime < 0){
+                                    e.target.value = endDate;
+                                    alert('end date cannot be less than current date');
+                                    
+                                    return;
                                   }
                                   const timeDiff = new Date(extractedEndYear,extractedEndMonth+1,extractedEndDate).getTime() - new Date(extractedStartYear, extractedStartMonth+1, extractedStartDate).getTime();
                                   
                                   //validation check
                                   if(timeDiff  < 86400000){
+                                      e.target.value = endDate;
                                       alert('start date has to be at least 1 day apart from end date');
                                       return;
                                   }
@@ -2237,14 +2294,46 @@ export default function Body({
                                 />
                               <label className="text-xs font-bold absolute peer-focus:text-secondary-400 top-[-6px] left-[10px] bg-white px-[5px] text-gray-400">End date</label>
                           </div>
+                          <div className="inline-flex flex-row gap-x-4 justify-center px-2">
+                            <button onClick={() => setEnquiries(prevEnqs => {
+                              let newEnqs = [...prevEnqs];
+                              newEnqs = newEnqs.filter(enq => new Date(enq.createdAt).getTime() >= new Date(startDate).getTime() && new Date(enq.createdAt).getTime() <= new Date(endDate).getTime());
+                              return newEnqs;
+                            })} className="bg-accent text-white px-3 py-2 rounded-md hover:ring-1 hover:ring-accent">Apply</button>
+                            <button onClick={() => {
+                              //resetting calendar and enquiries
+                              setStartDate(`${(currentDate - 29) <= 0 ? new Date(currentDate -29 <= 0 && currentMonth === 0 ? currentYear-1 : currentYear, currentDate -29 <= 0 && currentMonth === 0 ? 8 : currentMonth-4, 0).getDate() - Math.abs(currentDate - 29) : currentDate - 29} ${(currentDate - 29) <= 0 ? (currentMonth === 0 ? months[7] : months[currentMonth-5]) : months[currentMonth -4]} ${(currentDate - 29) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}`);
+                              //setting start value of calStartar component
+                              setStartValue(new Date(`${(currentDate - 29) <= 0 ? new Date(currentDate -29 <= 0 && currentMonth === 0 ? currentYear-1 : currentYear, currentDate -29 <= 0 && currentMonth === 0 ? 8 : currentMonth-4, 0).getDate() - Math.abs(currentDate - 29) : currentDate - 29} ${(currentDate - 29) <= 0 ? (currentMonth === 0 ? months[7] : months[currentMonth-5]) : months[currentMonth -4]} ${(currentDate - 29) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}`));
+
+                              setEndDate(`${new Date().getDate()} ${months[currentMonth]} ${new Date().getFullYear()}`);
+                              //setting end value of calendar component
+                              setEndValue(new Date(`${new Date().getDate()} ${months[currentMonth]} ${new Date().getFullYear()}`));
+                            
+                              setEnquiries(enquiriesData.enquiries);
+                            }} className="text-accent bg-transparen">Clear</button>
+                        </div>
                       </div>
                       <div className="flex flex-row gap-x-4 w-full">
-                          <Calendar onChange={setStartValue} value={startValue} maxDate={new Date(new Date().getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000 - 3600000)}/>
-                          <Calendar onChange={setEndValue} value={endValue} maxDate={new Date(new Date().getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000)}/>
+                          <Calendar onChange={(val, e) => {
+                            let date = val!.toString().split(' ')[2].split('')[0] === '0' ? val!.toString().split(' ')[2].slice(-1) : val!.toString().split(' ')[2];
+                            let month = val!.toString().split(' ')[1];
+                            let year = val!.toString().split(' ')[3];
+                            setStartDate(`${date} ${month} ${year}`);
+
+                            setStartValue(val);
+                          }} value={startValue} maxDate={new Date(new Date().getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000 - 3600000)}/>
+                          <Calendar onChange={(val, e) => {
+                            let date = val!.toString().split(' ')[2].split('')[0] === '0' ? val!.toString().split(' ')[2].slice(-1) : val!.toString().split(' ')[2];
+                            let month = val!.toString().split(' ')[1];
+                            let year = val!.toString().split(' ')[3];
+                            setEndDate(`${date} ${month} ${year}`);
+                            setEndValue(val);
+                          }} value={endValue} maxDate={new Date(new Date().getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000)}/>
                       </div>
                     </div>
                 </div>
-                <div className="md:inline-block md:w-[21%] hidden relative">
+                <div className="lg:inline-block lg:max-w-[27%] hidden relative">
                     <button 
                     onClick={(e) => {
                         let downAngle = e.currentTarget.querySelector("i.filter-angle-down");
@@ -2319,17 +2408,17 @@ export default function Body({
                         <hr className="bg-gray-400 mt-3 h-[2px]" />
                         <div className="inline-flex flex-row gap-x-4 justify-center mt-3 px-2">
                             <button className="bg-accent text-white px-3 py-2 rounded-md hover:ring-1 hover:ring-accent">Apply</button>
-                            <button className="text-accent bg-transparent hover:text-red-700">Clear</button>
+                            <button className="text-accent bg-transparen">Clear</button>
                         </div>
                     </ul>
                 </div>
-                <div className="inline-flex md:w-[40%] w-[60%] relative flex-row items-center border border-secondary-400 rounded-sm px-2">
+                <div className="inline-flex w-[60%] relative flex-row items-center border border-secondary-400 rounded-sm px-2">
                     <input className="bg-transparent py-[5px] focus:outline-none w-full placeholder:text-secondary-400" placeholder="search"/>
                     <i className="fa-solid fa-magnifying-glass text-secondary-400 cursor-pointer"></i>
                 </div>
               </section>
               <hr className="border-secondary-400/30 border -mt-2" />
-              <div className="w-full inline-flex flex-row -my-1 text-sm">
+              <div className="w-full inline-flex flex-row -my-1 text-sm pl-3">
                 <div className="md:w-[60%] w-[70%] inline-flex flex-row gap-x-2 items-center">
                   <input
                     type="checkbox"
@@ -2354,52 +2443,212 @@ export default function Body({
                 <div className="md:w-[40%] w-[30%] font-medium">Date</div>
               </div>
               <hr className="border-secondary-400/30 border" />
-              {(enquiries.length === 0 ? [{
-                createdAt: new Date(),
-                author: {
-                  fullName: 'Josh',
-                  email: 'test@test.com'
-                }
-              }] : enquiries).map((enq: any, i: number) => {
+              {enquiries.map((enq: any, i: number) => {
 
                 return (
-                  <div key={i} className="w-full inline-flex flex-row -my-1 text-sm">
-                    <div className="md:w-[60%] w-[70%] inline-flex flex-row gap-x-2 items-center relative">
-                      <input
-                        type="checkbox"
-                        id='single'
-                        className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-300 rounded-sm relative
-                        cursor-pointer outline-none checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
-                        checked:after:border-accent checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
-                        checked:after:rotate-45"
-                      />
-                      <span className="font-light">
-                        <i className="fa-regular fa-envelope-open text-accent/30"></i>&nbsp;&nbsp;{enq.appointment ? `Appointment by ${enq.author.fullName}` : enq.contact ? enq.contact.subject : `Testing by ${enq.author.fullName}`}
-                      </span>
-                      <div className="md:hidden inline-block w-[35%] absolute left-0 top-10">
-                          <div className="w-[156%] rounded-sm font-medium bg-transparent inline-flex flex-row items-center">
-                              <button className="text-xs border-secondary-400 border px-2 py-[6px] hover:ring-1 hover:ring-secondary-400" onClick={() => {
-                                let activeActionAngleDown = document.querySelector("i.active-action-angle-down-for-sm-screen");
-                                let dropdown = document.getElementById('active-action-dropdown-for-sm-screen');
+                  <>
+                    <div id='email-item' 
+                    data-enq-id={enq._id.toString()}
+                    data-has-contact={!!enq.contact.message}
+                     data-has-appointment={!!enq.appointment.content} key={i} className={`${enq.contact.read  || enq.appointment.read ? 'bg-primary-500' : ''} w-full inline-flex flex-row -my-5 text-sm py-4 items-center pl-3`}>
+                      <div className="md:w-[60%] w-[70%] inline-flex flex-row gap-x-2 items-center relative">
+                        <input
+                          type="checkbox"
+                          id='single'
+                          className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-300 rounded-sm relative
+                          cursor-pointer outline-none checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
+                          checked:after:border-accent checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
+                          checked:after:rotate-45"
+                        />
+                        <span className="font-light">
+                          <i className="fa-regular fa-envelope-open text-accent/30"></i>&nbsp;&nbsp;{enq.appointment.content ? `Appointment by ${enq.author.fullName}` : enq.contact.message ? enq.contact.subject : `Testing by ${enq.author.fullName}`}
+                        </span>
+                        <div className="lg:hidden inline-block w-[40%] absolute left-0 top-10">
+                            <div className="w-[156%] rounded-sm font-medium bg-transparent inline-flex flex-row items-center">
+                                <button className="text-xs border-secondary-400 border px-2 py-[6px] hover:ring-1 hover:ring-secondary-400" onClick={async () => {
+                                  let activeActionAngleDown = document.querySelector("i.active-action-angle-down-for-sm-screen");
+                                  let dropdown = document.getElementById('active-action-dropdown-for-sm-screen');
 
-                                if(activeActionAngleDown?.classList.contains('ad-rotate')){
-                                  activeActionAngleDown?.classList.remove("ad-rotate");
-                                  activeActionAngleDown?.classList.add("ad-rotate-anticlock");
-                                }
+                                  if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                                    activeActionAngleDown?.classList.remove("ad-rotate");
+                                    activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                                  }
 
-                                if(dropdown?.classList.contains('show')){
-                                  dropdown?.classList.add('hide', 'hidden');
-                                  dropdown?.classList.remove('show');
-                                }
-                                
-                                setIsAdminSettingsOpen(true);
-                                setIsReading(true);
-                                setIsReplying(false);
-                                }}>READ MESSAGE</button>
-                              <div className="px-2 py-[4px] border border-secondary-400"
-                                  onClick={(e) => {
-                                    let downAngle = e.currentTarget.querySelector("i.active-action-angle-down-for-sm-screen");
-                                    let activeActionDropdown = document.getElementById("active-action-dropdown-for-sm-screen");
+                                  if(dropdown?.classList.contains('show')){
+                                    dropdown?.classList.add('hide', 'hidden');
+                                    dropdown?.classList.remove('show');
+                                  }
+                                  
+
+                                  try {
+                                    setLoader(true);
+                                    await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
+                                      isRead: true,
+                                      isUnRead: false,
+                                      isBooking: !!enq.appointment.content,
+                                      isContact: !!enq.contact.message
+                                    });
+                                  } catch (error: any) {
+                                    setLoader(false);
+                                    return toast.error(error.message);
+                                  }finally{
+                                    setLoader(false);
+                                    setIsAdminSettingsOpen(true);
+                                    setIsReading(true);
+                                    setIsReplying(false);
+                                  }
+                                  }}>{loader ? 'OPENING...' : 'READ MESSAGE'}</button>
+                                <div className="px-2 py-[4px] border border-secondary-400"
+                                    onClick={(e) => {
+                                      let downAngle = e.currentTarget.querySelector("i.active-action-angle-down-for-sm-screen");
+                                      let activeActionDropdown = document.getElementById("active-action-dropdown-for-sm-screen");
+
+                                      if(downAngle && activeActionDropdown){
+                                          if(!downAngle.classList.contains("ad-rotate")){
+                                              downAngle.classList.add("ad-rotate");
+                                              downAngle.classList.remove("ad-rotate-anticlock");
+                                              activeActionDropdown.classList.remove('hide', 'hidden');
+                                              activeActionDropdown.classList.add('show');
+                                          }else{
+                                              downAngle.classList.remove("ad-rotate");
+                                              downAngle.classList.add("ad-rotate-anticlock");
+                                              activeActionDropdown.classList.add('hide', 'hidden');
+                                              activeActionDropdown.classList.remove('show');
+                                          }
+                                      }
+                                  }}
+                                >
+                                  <i className="fa-solid fa-angle-down text-xs active-action-angle-down-for-sm-screen cursor-pointer"></i>
+                                </div>
+                            </div>
+                            <ul id='active-action-dropdown-for-sm-screen' className="absolute z-30 w-[132%] text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white flex-col hide hidden">
+                                {[
+                                  'Reply',
+                                  'Unread',
+                                  'Save Message',
+                                  'Remove'
+                                ].map((action: string, i: number) => (
+                                    <div key={i}>
+                                        <li
+                                        onClick={(e) => {
+                                          let activeActionAngleDown = document.querySelector("i.active-action-angle-down-for-sm-screen");
+                                          let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown-for-sm-screen)');
+
+                                          
+                                          if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                                            activeActionAngleDown?.classList.remove("ad-rotate");
+                                            activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                                          }
+
+                                          dropdowns.forEach(dropdown => {
+                                            if(dropdown.classList.contains('show')){
+                                              dropdown.classList.add('hide', 'hidden');
+                                              dropdown.classList.remove('show');
+                                            }
+                                          });
+
+                                          switch (action) {
+                                            case 'Reply':
+                                              setIsAdminSettingsOpen(true);
+                                              setIsReplying(true);
+                                              setIsReading(false);
+                                              break;
+                                          
+                                            default:
+                                              break;
+                                          }
+                                        }}
+                                        className="cursor-pointer flex flex-row items-center justify-between p-2"
+                                      >
+                                          {action}
+                                      </li>
+                                      {action !== 'Remove' && <hr className="border-secondary-400"/>}
+                                    </div>
+                                ))}
+                            </ul>
+                        </div>
+                      </div>
+                      <div className="md:w-[40%] w-[30%] font-light relative flex flex-row items-center"><span>{`${months[new Date(enq.createdAt).getMonth()]} ${new Date(enq.createdAt).getDate()}, ${new Date(enq.createdAt).getFullYear()}`}</span>
+                        <div className="lg:inline-block max-w-[33%] absolute md:right-8 xl:right-1 hidden">
+                            <div className="w-[156%] rounded-sm font-medium bg-transparent inline-flex flex-row items-center">
+                                <button className="text-xs border-secondary-400 border px-2 py-[6px] hover:ring-1 hover:ring-secondary-400" onClick={async () => {
+                                  
+                                  let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
+                                  let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                                  let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                                  let filterAngleDown = document.querySelector('i.filter-angle-down');
+                                  let dropdowns = document.querySelectorAll('[id$=-dropdown]');
+
+                                  if(calendarAngleDown?.classList.contains('ad-rotate')){
+                                    calendarAngleDown?.classList.remove("ad-rotate");
+                                    calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                                  }
+                                  if(filterAngleDown?.classList.contains('ad-rotate')){
+                                    filterAngleDown?.classList.remove("ad-rotate");
+                                    filterAngleDown?.classList.add("ad-rotate-anticlock");
+                                  }
+                                  if(actionsAngleDown?.classList.contains('ad-rotate')){
+                                    actionsAngleDown?.classList.remove("ad-rotate");
+                                    actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                                  }
+                                  if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                                    activeActionAngleDown?.classList.remove("ad-rotate");
+                                    activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                                  }
+
+                                  dropdowns.forEach(dropdown => {
+                                    if(dropdown.classList.contains('show')){
+                                      dropdown.classList.add('hide', 'hidden');
+                                      dropdown.classList.remove('show');
+                                    }
+                                  });
+
+                                  try {
+                                    setLoader(true);
+                                    await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
+                                      isRead: true,
+                                      isUnRead: false,
+                                      isBooking: !!enq.appointment.content,
+                                      isContact: !!enq.contact.message
+                                    });
+                                  } catch (error: any) {
+                                    setLoader(false);
+                                    return toast.error(error.message);
+                                  }finally{
+                                    setLoader(false);
+                                    setIsAdminSettingsOpen(true);
+                                    setIsReading(true);
+                                    setIsReplying(false);
+                                  }
+                                }}>{loader ? 'OPENING...' : 'READ MESSAGE'}</button>
+                                <div className="px-2 py-[4px] border border-secondary-400" 
+                                    onClick={(e) => {
+                                    let downAngle = e.currentTarget.querySelector("i.active-action-angle-down");
+                                    let activeActionDropdown = document.getElementById("active-action-dropdown");
+                                    let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                                    let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                                    let filterAngleDown = document.querySelector('i.filter-angle-down');
+                                    let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown)');
+
+                                    if(calendarAngleDown?.classList.contains('ad-rotate')){
+                                      calendarAngleDown?.classList.remove("ad-rotate");
+                                      calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                                    }
+                                    if(filterAngleDown?.classList.contains('ad-rotate')){
+                                      filterAngleDown?.classList.remove("ad-rotate");
+                                      filterAngleDown?.classList.add("ad-rotate-anticlock");
+                                    }
+                                    if(actionsAngleDown?.classList.contains('ad-rotate')){
+                                      actionsAngleDown?.classList.remove("ad-rotate");
+                                      actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                                    }
+
+                                    dropdowns.forEach(dropdown => {
+                                      if(dropdown.classList.contains('show')){
+                                        dropdown.classList.add('hide', 'hidden');
+                                        dropdown.classList.remove('show');
+                                      }
+                                    });
 
                                     if(downAngle && activeActionDropdown){
                                         if(!downAngle.classList.contains("ad-rotate")){
@@ -2414,208 +2663,74 @@ export default function Body({
                                             activeActionDropdown.classList.remove('show');
                                         }
                                     }
-                                }}
-                              >
-                                <i className="fa-solid fa-angle-down text-xs active-action-angle-down-for-sm-screen cursor-pointer"></i>
-                              </div>
-                          </div>
-                          <ul id='active-action-dropdown-for-sm-screen' className="absolute z-30 w-[150%] text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white flex-col hide hidden">
-                              {[
-                                'Reply',
-                                'Unread',
-                                'Save Message',
-                                'Remove'
-                              ].map((action: string, i: number) => (
-                                  <div>
-                                      <li
-                                      key={action}
-                                      onClick={(e) => {
-                                        let activeActionAngleDown = document.querySelector("i.active-action-angle-down-for-sm-screen");
-                                        let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown-for-sm-screen)');
+                                    }}>
+                                  <i className="fa-solid fa-angle-down text-xs active-action-angle-down cursor-pointer"></i>
+                                </div>
+                            </div>
+                            <ul id='active-action-dropdown' className="hide hidden flex-col absolute z-30 w-full text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white">
+                                {[
+                                  'Reply',
+                                  'Unread',
+                                  'Save Message',
+                                  'Remove'
+                                ].map((action: string, i: number) => (
+                                    <div key={i}>
+                                        <li
+                                        onClick={async (e) => {
+                                          let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
+                                          let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                                          let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                                          let filterAngleDown = document.querySelector('i.filter-angle-down');
+                                          let dropdowns = document.querySelectorAll('[id$=-dropdown]');
 
-                                        
-                                        if(activeActionAngleDown?.classList.contains('ad-rotate')){
-                                          activeActionAngleDown?.classList.remove("ad-rotate");
-                                          activeActionAngleDown?.classList.add("ad-rotate-anticlock");
-                                        }
-
-                                        dropdowns.forEach(dropdown => {
-                                          if(dropdown.classList.contains('show')){
-                                            dropdown.classList.add('hide', 'hidden');
-                                            dropdown.classList.remove('show');
+                                          if(calendarAngleDown?.classList.contains('ad-rotate')){
+                                            calendarAngleDown?.classList.remove("ad-rotate");
+                                            calendarAngleDown?.classList.add("ad-rotate-anticlock");
                                           }
-                                        });
-
-                                        switch (action) {
-                                          case 'Reply':
-                                            setIsAdminSettingsOpen(true);
-                                            setIsReplying(true);
-                                            setIsReading(false);
-                                            break;
-                                        
-                                          default:
-                                            break;
-                                        }
-                                      }}
-                                      className="cursor-pointer flex flex-row items-center justify-between p-2"
-                                    >
-                                        {action}
-                                    </li>
-                                    {action !== 'Remove' && <hr className="border-secondary-400"/>}
-                                  </div>
-                              ))}
-                          </ul>
-                      </div>
-                    </div>
-                    <div className="md:w-[40%] w-[30%] font-light relative"><span>{`${months[new Date(enq.createdAt).getMonth()]} ${new Date(enq.createdAt).getDate()}, ${new Date(enq.createdAt).getFullYear()}`}</span>
-                      <div className="md:inline-block w-[21%] absolute md:right-[10%] hidden">
-                          <div className="w-[156%] rounded-sm font-medium bg-transparent inline-flex flex-row items-center">
-                              <button className="text-xs border-secondary-400 border px-2 py-[6px] hover:ring-1 hover:ring-secondary-400" onClick={() => {
-                                
-                                let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
-                                let calendarAngleDown = document.querySelector('i.calendar-angle-down');
-                                let actionsAngleDown = document.querySelector('i.actions-angle-down');
-                                let filterAngleDown = document.querySelector('i.filter-angle-down');
-                                let dropdowns = document.querySelectorAll('[id$=-dropdown]');
-
-                                if(calendarAngleDown?.classList.contains('ad-rotate')){
-                                  calendarAngleDown?.classList.remove("ad-rotate");
-                                  calendarAngleDown?.classList.add("ad-rotate-anticlock");
-                                }
-                                if(filterAngleDown?.classList.contains('ad-rotate')){
-                                  filterAngleDown?.classList.remove("ad-rotate");
-                                  filterAngleDown?.classList.add("ad-rotate-anticlock");
-                                }
-                                if(actionsAngleDown?.classList.contains('ad-rotate')){
-                                  actionsAngleDown?.classList.remove("ad-rotate");
-                                  actionsAngleDown?.classList.add("ad-rotate-anticlock");
-                                }
-                                if(activeActionAngleDown?.classList.contains('ad-rotate')){
-                                  activeActionAngleDown?.classList.remove("ad-rotate");
-                                  activeActionAngleDown?.classList.add("ad-rotate-anticlock");
-                                }
-
-                                dropdowns.forEach(dropdown => {
-                                  if(dropdown.classList.contains('show')){
-                                    dropdown.classList.add('hide', 'hidden');
-                                    dropdown.classList.remove('show');
-                                  }
-                                });
-
-                                setIsAdminSettingsOpen(true);
-                                setIsReading(true);
-                                setIsReplying(false);
-                              }}>READ MESSAGE</button>
-                              <div className="px-2 py-[4px] border border-secondary-400" 
-                                  onClick={(e) => {
-                                  let downAngle = e.currentTarget.querySelector("i.active-action-angle-down");
-                                  let activeActionDropdown = document.getElementById("active-action-dropdown");
-                                  let calendarAngleDown = document.querySelector('i.calendar-angle-down');
-                                  let actionsAngleDown = document.querySelector('i.actions-angle-down');
-                                  let filterAngleDown = document.querySelector('i.filter-angle-down');
-                                  let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown)');
-
-                                  if(calendarAngleDown?.classList.contains('ad-rotate')){
-                                    calendarAngleDown?.classList.remove("ad-rotate");
-                                    calendarAngleDown?.classList.add("ad-rotate-anticlock");
-                                  }
-                                  if(filterAngleDown?.classList.contains('ad-rotate')){
-                                    filterAngleDown?.classList.remove("ad-rotate");
-                                    filterAngleDown?.classList.add("ad-rotate-anticlock");
-                                  }
-                                  if(actionsAngleDown?.classList.contains('ad-rotate')){
-                                    actionsAngleDown?.classList.remove("ad-rotate");
-                                    actionsAngleDown?.classList.add("ad-rotate-anticlock");
-                                  }
-
-                                  dropdowns.forEach(dropdown => {
-                                    if(dropdown.classList.contains('show')){
-                                      dropdown.classList.add('hide', 'hidden');
-                                      dropdown.classList.remove('show');
-                                    }
-                                  });
-
-                                  if(downAngle && activeActionDropdown){
-                                      if(!downAngle.classList.contains("ad-rotate")){
-                                          downAngle.classList.add("ad-rotate");
-                                          downAngle.classList.remove("ad-rotate-anticlock");
-                                          activeActionDropdown.classList.remove('hide', 'hidden');
-                                          activeActionDropdown.classList.add('show');
-                                      }else{
-                                          downAngle.classList.remove("ad-rotate");
-                                          downAngle.classList.add("ad-rotate-anticlock");
-                                          activeActionDropdown.classList.add('hide', 'hidden');
-                                          activeActionDropdown.classList.remove('show');
-                                      }
-                                  }
-                                  }}>
-                                <i className="fa-solid fa-angle-down text-xs active-action-angle-down cursor-pointer"></i>
-                              </div>
-                          </div>
-                          <ul id='active-action-dropdown' className="hide hidden flex-col absolute z-30 w-[150%] text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white">
-                              {[
-                                'Reply',
-                                'Unread',
-                                'Save Message',
-                                'Remove'
-                              ].map((action: string, i: number) => (
-                                  <div>
-                                      <li
-                                      key={action}
-                                      onClick={async (e) => {
-                                        let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
-                                        let calendarAngleDown = document.querySelector('i.calendar-angle-down');
-                                        let actionsAngleDown = document.querySelector('i.actions-angle-down');
-                                        let filterAngleDown = document.querySelector('i.filter-angle-down');
-                                        let dropdowns = document.querySelectorAll('[id$=-dropdown]');
-
-                                        if(calendarAngleDown?.classList.contains('ad-rotate')){
-                                          calendarAngleDown?.classList.remove("ad-rotate");
-                                          calendarAngleDown?.classList.add("ad-rotate-anticlock");
-                                        }
-                                        if(filterAngleDown?.classList.contains('ad-rotate')){
-                                          filterAngleDown?.classList.remove("ad-rotate");
-                                          filterAngleDown?.classList.add("ad-rotate-anticlock");
-                                        }
-                                        if(actionsAngleDown?.classList.contains('ad-rotate')){
-                                          actionsAngleDown?.classList.remove("ad-rotate");
-                                          actionsAngleDown?.classList.add("ad-rotate-anticlock");
-                                        }
-                                        if(activeActionAngleDown?.classList.contains('ad-rotate')){
-                                          activeActionAngleDown?.classList.remove("ad-rotate");
-                                          activeActionAngleDown?.classList.add("ad-rotate-anticlock");
-                                        }
-
-                                        dropdowns.forEach(dropdown => {
-                                          if(dropdown.classList.contains('show')){
-                                            dropdown.classList.add('hide', 'hidden');
-                                            dropdown.classList.remove('show');
+                                          if(filterAngleDown?.classList.contains('ad-rotate')){
+                                            filterAngleDown?.classList.remove("ad-rotate");
+                                            filterAngleDown?.classList.add("ad-rotate-anticlock");
                                           }
-                                        });
+                                          if(actionsAngleDown?.classList.contains('ad-rotate')){
+                                            actionsAngleDown?.classList.remove("ad-rotate");
+                                            actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                                          }
+                                          if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                                            activeActionAngleDown?.classList.remove("ad-rotate");
+                                            activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                                          }
 
-                                        switch (action) {
-                                          case 'Reply':
-                                            setIsAdminSettingsOpen(true);
-                                            setIsReplying(true);
-                                            setIsReading(false);
-                                            break;
-                                        
-                                          default:
-                                            break;
-                                        }
-                                      }}
-                                      className="cursor-pointer flex flex-row items-center justify-between p-2"
-                                    >
-                                        {action}
-                                    </li>
-                                    {action !== 'Remove' && <hr className="border-secondary-400"/>}
-                                  </div>
-                              ))}
-                          </ul>
+                                          dropdowns.forEach(dropdown => {
+                                            if(dropdown.classList.contains('show')){
+                                              dropdown.classList.add('hide', 'hidden');
+                                              dropdown.classList.remove('show');
+                                            }
+                                          });
+
+                                          switch (action) {
+                                            case 'Reply':
+                                              setIsAdminSettingsOpen(true);
+                                              setIsReplying(true);
+                                              setIsReading(false);
+                                              break;
+                                          
+                                            default:
+                                              break;
+                                          }
+                                        }}
+                                        className="cursor-pointer flex flex-row items-center justify-between p-2"
+                                      >
+                                          {action}
+                                      </li>
+                                      {action !== 'Remove' && <hr className="border-secondary-400"/>}
+                                    </div>
+                                ))}
+                            </ul>
+                        </div>
                       </div>
                     </div>
                     {
-                      isAdminSettingsOpen && pathName === "email" && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white'>
+                      isAdminSettingsOpen && pathName === "emails" && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white'>
                         <section className="flex flex-col items-start gap-x-2 w-full h-full px-5 pb-6 pt-16 font-sans gap-y-9">
                               <header className="text-sm flex md:flex-row flex-col items-start md:justify-between md:items-center w-full">
                                 <h2>From:&nbsp;<span className="font-normal">{isReading ? enq.author.email : 'hello@oyinye.com'}</span></h2>
@@ -2636,7 +2751,8 @@ export default function Body({
                                     date: `${months[new Date(isReading ? enq.createdAt: new Date()).getMonth()]} ${new Date(isReading ? enq.createdAt: new Date()).getDate()}. ${new Date(isReading ? enq.createdAt: new Date()).getFullYear()}`
                                   });
                                 } catch (error: any) {
-                                  toast.error(error.message);
+                                  setLoader(false);
+                                  return toast.error(error.message);
                                 }finally{
                                   setLoader(false);
                                   toast.success('reminder sent', {
@@ -2650,14 +2766,14 @@ export default function Body({
                                 
                                   {isReading 
                                   ? <p className="text-base leading-relaxed text-wrap tracking-wider text-gray-500 w-full">
-                                      {enq.appointment ? enq.appointment.content : enq.contact ? enq.contact.message : 'I am writing to inform you.'} 
+                                      {enq.appointment.content ? enq.appointment.content : enq.contact.message ? enq.contact.message : 'I am writing to inform you.'} 
                                     </p>
                                   : <textarea cols={50} rows={5} placeholder="Compose letter here..." id='admin-letter' className="focus:outline-none w-full border border-gray-300 rounded-md p-2 text-base leading-relaxed text-wrap tracking-wider text-gray-500">
                                     
                                     </textarea>}
                                 {isReading 
                                   ? <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br/>{enq.author.fullName}<br/>
-                                  {enq.appointment && <span>Phone:&nbsp;<Link href={`tel:${enq.author.appointment.phoneNo ?? '070333748920'}`}>{enq.author.appointment.phoneNo ?? '070333748920'}</Link><br/>Standard Size: {enq.author.appointment.size ?? 8}</span>}
+                                  {enq.appointment.content && <span>Phone:&nbsp;<Link href={`tel:${enq.author.appointment.phoneNo ?? '070333748920'}`}>{enq.author.appointment.phoneNo ?? '070333748920'}</Link><br/>Standard Size: {enq.author.appointment.size ?? 8}</span>}
                                   </p>
                                   : <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br />Oyinye Couture Team</p>}
                                 
@@ -2665,18 +2781,18 @@ export default function Body({
                                     <button type='submit' className="px-7 py-2 text-sm bg-accent text-white hover:ring-1 hover:ring-accent rounded-md">{loader ? 'Sending..' : 'Send'}</button>
                                   </div>}
                               </form>
-                              {enq.author.appointment && isReading && enq.author.appointment.styles.length > 0 && enq.author.appointment.styles.map(((data: any) => <div className="flex flex-row flex-wrap gap-x-3 gap-y-2 w-full">
+                              {enq.appointment.content && isReading && enq.author.appointment.styles.length > 0 && enq.author.appointment.styles.map((data: any, i:number) => <div key={i} className="flex flex-row flex-wrap gap-x-3 gap-y-2 w-full">
                                 <div className="flex flex-col items-center gap-y-1">
                                   <div className="w-24 h-24 rounded-md" style={{backgroundImage: `url(${data.image})`}}></div>
                                   <p className="font-sans text-xs">{data.fileName}</p>
                                 </div>
                               </div>
-                            ))}
+                            )}
                             
                         </section>
                       </AdminSettingsModal>
                     }
-                  </div>
+                  </>
                 );
               })}
               {enquiries.length > 0 && <AdminPagination {...enquiriesData} />}

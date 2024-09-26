@@ -9,7 +9,7 @@ export default function AdminPagination({
   nextPage,
   isActivePage}: any) {
   return (
-    <section className="no-underline space-x-2 text-center mt-2">
+    <section className="no-underline space-x-2 text-center mt-9">
       {currentPage !== 1 && (
         <Link
           className={`${

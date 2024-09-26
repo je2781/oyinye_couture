@@ -68,7 +68,8 @@ export default function LoginPage({message, success}: any) {
         throw new Error(res.data.message);
       }
     } catch (error: any) {
-      toast.error(error.message);
+      setIsLoading(false);
+      return toast.error(error.message);
     } finally {
       setIsLoading(false);
     }

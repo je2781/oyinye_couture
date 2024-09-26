@@ -1,5 +1,6 @@
 
 
+import Footer from '@/components/footer/Footer';
 import Header from '@/components/layout/Header';
 import SearchResults from '@/components/search/SearchResults';
 import { cookies } from 'next/headers';
@@ -80,6 +81,7 @@ const SearchPage = async ({ params, searchParams}: any) => {
       availability,
       page
     }} />
+    <Footer />
     </>
   );
 };

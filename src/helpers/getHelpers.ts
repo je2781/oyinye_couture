@@ -329,7 +329,7 @@ export const months = [
   'Jun',
   'Jul',
   'Aug',
-  'Sept',
+  'Sep',
   'Oct',
   'Nov',
   'Dec'
@@ -484,7 +484,7 @@ export const extractProductDetails = (
   }
 };
 
-export const appsList = ["Email", "Calendar", "Product Listing"];
+export const appsList = ["Emails", "Calendar", "Product Listing"];
 
 export const viewsList = ["Orders"];
 
@@ -1080,38 +1080,40 @@ export const getDataset = (orders: any[]) => {
 
     let labels: string[] = [];
         
-    labels[0] = days.slice(currentDay-7, currentDay-6 !== 0 ? currentDay-6 : undefined)[0];
-    labels[1] = days.slice(currentDay-6, currentDay-5 !== 0 ? currentDay-5 : undefined)[0];
-    labels[2] = days.slice(currentDay-5, currentDay-4 !== 0 ? currentDay-4 : undefined)[0];
-    labels[3] = days.slice(currentDay-4, currentDay-3 !== 0 ? currentDay-3 : undefined)[0];
-    labels[4] = days.slice(currentDay-3, currentDay-2 !== 0 ? currentDay-2 : undefined)[0];
-    labels[5] = days.slice(currentDay-2, currentDay-1 !== 0 ? currentDay-1 : undefined)[0];
-    labels[6] = days.slice(currentDay-1, currentDay !== 0 ? currentDay : undefined)[0];
-    labels[7] = days.slice(currentDay-7, currentDay-6 !== 0 ? currentDay-6 : undefined)[0];
-    labels[8] = days.slice(currentDay-6, currentDay-5 !== 0 ? currentDay-5 : undefined)[0];
-    labels[9] = days.slice(currentDay-5, currentDay-4 !== 0 ? currentDay-4 : undefined)[0];
-    labels[10] = days.slice(currentDay-4, currentDay-3 !== 0 ? currentDay-3 : undefined)[0];
-    labels[11] = days.slice(currentDay-3, currentDay-2 !== 0 ? currentDay-2 : undefined)[0];
-    labels[12] = days.slice(currentDay-2, currentDay-1 !== 0 ? currentDay-1 : undefined)[0];
-    labels[13] = days.slice(currentDay-1, currentDay !== 0 ? currentDay : undefined)[0];
-    labels[14] = days.slice(currentDay-7, currentDay-6 !== 0 ? currentDay-6 : undefined)[0];
-    labels[15] = days.slice(currentDay-6, currentDay-5 !== 0 ? currentDay-5 : undefined)[0];
-    labels[16] = days.slice(currentDay-5, currentDay-4 !== 0 ? currentDay-4 : undefined)[0];
-    labels[17] = days.slice(currentDay-4, currentDay-3 !== 0 ? currentDay-3 : undefined)[0];
-    labels[18] = days.slice(currentDay-3, currentDay-2 !== 0 ? currentDay-2 : undefined)[0];
-    labels[19] = days.slice(currentDay-2, currentDay-1 !== 0 ? currentDay-1 : undefined)[0];
-    labels[20] = days.slice(currentDay-1, currentDay !== 0 ? currentDay : undefined)[0];
-    labels[21] = days.slice(currentDay-7, currentDay-6 !== 0 ? currentDay-6 : undefined)[0];
-    labels[22] = days.slice(currentDay-6, currentDay-5 !== 0 ? currentDay-5 : undefined)[0];
-    labels[23] = days.slice(currentDay-5, currentDay-4 !== 0 ? currentDay-4 : undefined)[0];
-    labels[24] = days.slice(currentDay-4, currentDay-3 !== 0 ? currentDay-3 : undefined)[0];
-    labels[25] = days.slice(currentDay-3, currentDay-2 !== 0 ? currentDay-2 : undefined)[0];
-    labels[26] = days.slice(currentDay-2, currentDay-1 !== 0 ? currentDay-1 : undefined)[0];
-    labels[27] = days.slice(currentDay-1, currentDay !== 0 ? currentDay : undefined)[0];
-    labels[28] = days[currentDay];
+    labels[0] = days.slice(currentDay-2, currentDay-1 !== 0 ? currentDay-1 : undefined)[0];
+    labels[1] = days.slice(currentDay-1, currentDay !== 0 ? currentDay : undefined)[0];
+    labels[2] = days.slice(currentDay-7, currentDay-6 !== 0 ? currentDay-6 : undefined)[0];
+    labels[3] = days.slice(currentDay-6, currentDay-5 !== 0 ? currentDay-5 : undefined)[0];
+    labels[4] = days.slice(currentDay-5, currentDay-4 !== 0 ? currentDay-4 : undefined)[0];
+    labels[5] = days.slice(currentDay-4, currentDay-3 !== 0 ? currentDay-3 : undefined)[0];
+    labels[6] = days.slice(currentDay-3, currentDay-2 !== 0 ? currentDay-2 : undefined)[0];
+    labels[7] = days.slice(currentDay-2, currentDay-1 !== 0 ? currentDay-1 : undefined)[0];
+    labels[8] = days.slice(currentDay-1, currentDay !== 0 ? currentDay : undefined)[0];
+    labels[9] = days.slice(currentDay-7, currentDay-6 !== 0 ? currentDay-6 : undefined)[0];
+    labels[10] = days.slice(currentDay-6, currentDay-5 !== 0 ? currentDay-5 : undefined)[0];
+    labels[11] = days.slice(currentDay-5, currentDay-4 !== 0 ? currentDay-4 : undefined)[0];
+    labels[12] = days.slice(currentDay-4, currentDay-3 !== 0 ? currentDay-3 : undefined)[0];
+    labels[13] = days.slice(currentDay-3, currentDay-2 !== 0 ? currentDay-2 : undefined)[0];
+    labels[14] = days.slice(currentDay-2, currentDay-1 !== 0 ? currentDay-1 : undefined)[0];
+    labels[15] = days.slice(currentDay-1, currentDay !== 0 ? currentDay : undefined)[0];
+    labels[16] = days.slice(currentDay-7, currentDay-6 !== 0 ? currentDay-6 : undefined)[0];
+    labels[17] = days.slice(currentDay-6, currentDay-5 !== 0 ? currentDay-5 : undefined)[0];
+    labels[18] = days.slice(currentDay-5, currentDay-4 !== 0 ? currentDay-4 : undefined)[0];
+    labels[19] = days.slice(currentDay-4, currentDay-3 !== 0 ? currentDay-3 : undefined)[0];
+    labels[20] = days.slice(currentDay-3, currentDay-2 !== 0 ? currentDay-2 : undefined)[0];
+    labels[21] = days.slice(currentDay-2, currentDay-1 !== 0 ? currentDay-1 : undefined)[0];
+    labels[22] = days.slice(currentDay-1, currentDay !== 0 ? currentDay : undefined)[0];
+    labels[23] = days.slice(currentDay-7, currentDay-6 !== 0 ? currentDay-6 : undefined)[0];
+    labels[24] = days.slice(currentDay-6, currentDay-5 !== 0 ? currentDay-5 : undefined)[0];
+    labels[25] = days.slice(currentDay-5, currentDay-4 !== 0 ? currentDay-4 : undefined)[0];
+    labels[26] = days.slice(currentDay-4, currentDay-3 !== 0 ? currentDay-3 : undefined)[0];
+    labels[27] = days.slice(currentDay-3, currentDay-2 !== 0 ? currentDay-2 : undefined)[0];
+    labels[28] = days.slice(currentDay-2, currentDay-1 !== 0 ? currentDay-1 : undefined)[0];
+    labels[29] = days.slice(currentDay-1, currentDay !== 0 ? currentDay : undefined)[0];
+    labels[30] = days[currentDay];
 
 
-    for(let j = 0; j < 28; j++){
+    for(let j = 0; j < 30; j++){
       dailyDataLabels[j+1] = labels.slice(-(j+2));
 
       //sorting data labels for use in sales data calculation
@@ -1175,7 +1177,7 @@ export const getDataset = (orders: any[]) => {
 
   //extracting order items to generate sales data
 
-  for (let i = 0; i < 28; i++) {
+  for (let i = 0; i < 30; i++) {
     if (!dailyNoOfAddToCart[i + 1]) {
       dailyNoOfAddToCart[i + 1] = {};
     }

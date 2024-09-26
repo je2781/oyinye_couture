@@ -1,5 +1,6 @@
 
 
+import Footer from "@/components/footer/Footer";
 import Header from "@/components/layout/Header";
 import PagesComponent from "@/components/pages/Pages";
 import { cookies } from "next/headers";
@@ -31,6 +32,7 @@ export default async function Pages({params}:{
       <>
         <Header cartItems={cartItems} />
         <PagesComponent name={params.name}/>
+        <Footer />
     </>
   );
 }

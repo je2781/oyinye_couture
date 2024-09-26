@@ -11,6 +11,77 @@ import { EmailType } from '@/interfaces';
 
 connect();
 
+export async function PATCH(req: NextRequest, { params }: { params: { slug?: string[] } }) {
+    try {
+
+        const {
+            isRead,
+            isUnRead,
+            isBooking,
+            isContact,
+            saved
+        } = await req.json();
+
+        const newEnqId = mongoose.Types.ObjectId.createFromHexString(params.slug![1]);
+
+        
+        if(mongoose.Types.ObjectId.isValid(newEnqId)){
+          const enq = await Enquiries.findById(newEnqId);
+
+          if(!enq ){
+            
+            return NextResponse.json(
+              {
+                message: "Enquiry doesn't exist",
+                success: false,
+              },
+              { status: 200 }
+            );
+          }else{
+            if(isBooking){
+              enq.appointment.read = isRead ?? false;
+              enq.appointment.unRead = isUnRead ?? true;
+              enq.appointment.saved = saved ?? false;
+  
+              await enq.save();
+            }
+            if(isContact){
+              enq.contact.read = isRead ?? false;
+              enq.contact.unRead = isUnRead ?? true;
+              enq.contact.saved = saved ?? false;
+  
+              await enq.save();
+            }
+      
+            return NextResponse.json(
+              {
+                message: "enquiry updated",
+                success: true,
+              },
+              { status: 201 }
+            );
+          }
+        }else{
+          return NextResponse.json(
+            {
+                message: 'invalid enquiry id',
+                success: false
+            },
+            { status: 400 }
+          );
+        }
+        
+
+    } catch (error: any) {
+        return NextResponse.json(
+            {
+                error: error.message,
+            },
+            { status: 500 }
+        );
+    }
+}
+
 export async function POST(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
 
@@ -95,6 +166,11 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             { status: 201 }
           );
         }else{
+          user.firstName = name.split(' ').length === 2 ? name.split(' ')[0] : name,
+          user.lastName = name.split(' ').length === 2 ? name.split(' ')[1] : name,
+
+          await user.save();
+
           if(params.slug![0] === 'bookings'){
 
             //updating product with user review
@@ -143,7 +219,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
 
 export async function GET(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
-        let authors = [];
+        let updatedEnquiries = [];
 
         if(params.slug){
           const searchParams = req.nextUrl.searchParams;
@@ -180,22 +256,18 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
           for(let enq of enquiries){
             const updatedEnq = await enq.populate('author.authorId');
             const authorData = {...updatedEnq.author.authorId._doc};
-            authors.push(authorData);
-          }
-  
-          const updatedEnquiries = enquiries.map((enq) => {
-            const extractedAuthor = authors.find((author: any) => author._id.toString() === enq.author.authorId.toString());
-          
-            return {
-              ...enq,
+            updatedEnquiries.push({
+              ...enq._doc,
               author: {
                 ...enq.author,
-                fullName: `${extractedAuthor.firstName} ${extractedAuthor.lastName}`,
-                email: extractedAuthor.email,
+                fullName: `${authorData.firstName} ${authorData.lastName}`,
+                email: authorData.email,
               }
-            };
-          });
+            });
+          }
+  
       
+          console.log('updated', updatedEnquiries);
           return NextResponse.json(
             {
               message: "enquiries retrieved",

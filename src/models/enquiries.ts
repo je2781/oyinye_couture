@@ -24,16 +24,34 @@ const EnquiriesSchema = new Schema({
     appointment: {
         content: String,
         eventDate: Date,
-        read: Boolean,
-        unRead: Boolean,
-        saved: Boolean
+        read: {
+            type: Boolean,
+            default: false
+        },
+        unRead: {
+            type: Boolean,
+            default: true
+        },
+        saved: {
+            type: Boolean,
+            default: false
+        }
     },
     contact: {
         subject: String,
         message: String,
-        read: Boolean,
-        unRead: Boolean,
-        saved: Boolean
+        read: {
+            type: Boolean,
+            default: false
+        },
+        unRead: {
+            type: Boolean,
+            default: true
+        },
+        saved: {
+            type: Boolean,
+            default: false
+        }
     }
 }, {
     timestamps: true

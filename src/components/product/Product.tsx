@@ -89,7 +89,7 @@ const Product = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDet
               alt="featured-Image"
               width={imageW ??  300}
               height={imageH ?? 450}
-              className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && isGridView && isSearchProduct ? 'w-[160px] h-[200px]': width < 768 && !isGridView && isSearchProduct ? 'w-full h-[400px]':''}`}
+              className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && isGridView && isSearchProduct ? 'w-[160px] h-[200px]': width < 768 && !isGridView && isSearchProduct ? 'w-full h-[400px]': width >= 768 && width < 1024 ? 'w-[270px]' : ''}`}
               role="presentation"
           />
           <section className={`${isSearchProduct  ? 'items-start': 'items-center'} flex flex-col gap-y-1`}>

@@ -2,6 +2,7 @@ import Header from "@/components/layout/Header";
 import Cart from "@/components/cart/Cart";
 import dynamic from "next/dynamic";
 import { cookies } from "next/headers";
+import Footer from "@/components/footer/Footer";
 
 const CartComponent = dynamic(() => import('../../../components/cart/Cart'),{
   loading: () => <div className="flex justify-center items-center flex-col gap-y-2 bg-white h-screen w-full md:px-16 px-8 md:pt-12 pt-5 " >
@@ -46,6 +47,7 @@ async function CartPage() {
     <>
       <Header cartItems={data.cartItems} />
       <CartComponent {...data} />
+      <Footer />
     </>
   );
 }

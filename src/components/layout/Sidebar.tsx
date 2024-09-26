@@ -44,6 +44,7 @@ export default function Sidebar({pathName}: any){
         let appsContent = document.querySelector('#apps-content');
         let viewsContent = document.querySelector('#views-content');
         let insightContent = document.querySelector('#insight-content');
+        let sidebar = document.querySelector('nav');
         let mainNav = document.querySelector('#main-nav');
         let body = document.querySelector('#admin-content');
         let headerSections = document.querySelectorAll('header section');
@@ -61,7 +62,7 @@ export default function Sidebar({pathName}: any){
             });
         }
 
-        if(!parentElementRef.current?.classList.contains('collapse-bar') && arrowLeft && mainNav && body){
+        if(!parentElementRef.current?.classList.contains('collapse-bar') && arrowLeft && mainNav && body && sidebar){
             timerId = setTimeout(() => {
                 setIsCollapsed(true);
             }, 50);
@@ -70,9 +71,11 @@ export default function Sidebar({pathName}: any){
             arrowLeft.classList.add('arrowl-rotate');
             arrowLeft.classList.remove('arrowl-rotate-clock');
             mainNav.classList.remove('lg:pl-64');
-            mainNav.classList.add('lg:pl-32');
+            mainNav.classList.remove('md:pl-52');
+            mainNav.classList.add('md:pl-32');
             body.classList.remove('lg:pl-64');
-            body.classList.add('lg:pl-32');
+            body.classList.remove('md:pl-52');
+            body.classList.add('md:pl-32');
         }else{
             timerId = setTimeout(() => {
                 setIsCollapsed(false);
@@ -81,15 +84,17 @@ export default function Sidebar({pathName}: any){
             parentElementRef.current?.classList.remove('collapse-bar');
             arrowLeft?.classList.remove('arrowl-rotate');
             arrowLeft?.classList.add('arrowl-rotate-clock');
-            mainNav?.classList.add('lg:pl-64');
-            mainNav?.classList.remove('lg:pl-32');
-            body?.classList.add('lg:pl-64');
-            body?.classList.remove('lg:pl-32');
+            mainNav?.classList.add('md:pl-64');
+            mainNav?.classList.add('md:pl-52');
+            mainNav?.classList.remove('md:pl-32');
+            body?.classList.add('md:pl-64');
+            body?.classList.add('md:pl-52');
+            body?.classList.remove('md:pl-32');
         }
     }
     return(
-        <nav id='sidebar' ref={parentElementRef} className="bg-primary-800 fixed left-0 top-0 z-30 h-full py-6 px-3 hidden w-[16%] 
-        shadow-2xl lg:flex flex-col justify-between">
+        <nav id='sidebar' ref={parentElementRef} className="bg-primary-800 fixed left-0 top-0 z-30 h-full py-6 px-3 hidden xl:w-[16%] md:w-[23%] 
+        shadow-2xl md:flex flex-col justify-between">
             <section className="gap-y-12 flex flex-col items-center">
                 <Link href='/admin/summary' className="inline-block w-[150px] max-w-[170px]">
                     <h1 className="text-3xl italic text-accent font-sans text-center"><span>O</span>{!isCollapsed && <span>yinye</span>}</h1>
@@ -251,8 +256,8 @@ export default function Sidebar({pathName}: any){
                                     className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2"
                                     key={i}
                                     onClick={() => {
-                                        router.push(`/admin/${routeNames[i]}`);
-                                      }}
+                                        router.push(`/admin/${routeNames[i] === 'emails' ? `${routeNames[i]}?page=1` : routeNames[i]}`);
+                                    }}
                                 >
                                     <div 
                                     className={`${pathName == routeNames[i] ? 'text-white' : 'text-secondary-400'} inline-flex flex-row gap-x-4 items-center`}>
@@ -272,7 +277,7 @@ export default function Sidebar({pathName}: any){
                             {appsList.map((item: any, i: number) => (
                                 <li
                                 onClick={() => {
-                                    router.push(`/admin/${routeNames[i]}`);
+                                    router.push(`/admin/${routeNames[i] === 'emails' ? `${routeNames[i]}?page=1` : routeNames[i]}`);
                                 }} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2" key={i}>
                                     <div 

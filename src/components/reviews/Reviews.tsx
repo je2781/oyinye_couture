@@ -295,7 +295,8 @@ const Reviews = ({productReviews, product}: any) => {
                 reviewId: review._id
             });
         } catch (error: any) {
-            toast.error(error.message);
+            setLoader(false);
+            return toast.error(error.message);
         }finally{
             setLoader(false);
         }

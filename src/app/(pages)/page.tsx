@@ -4,6 +4,8 @@ import Header from "@/components/layout/Header";
 import Hero from "@/components/Hero";
 import { cookies, headers } from "next/headers";
 import About from "@/components/about/AboutUs";
+import Footer from "@/components/footer/Footer";
+import Head from "next/head";
 
 
 
@@ -35,6 +37,7 @@ export default async function Home() {
       <Hero/>
       <About />
       <FeaturedProducts featuredProducts={products}/>
+      <Footer />
     </>
   );
 }

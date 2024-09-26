@@ -14,17 +14,30 @@ connect();
 export async function POST(req: NextRequest) {
   try {
     const reqBody = await req.json();
-    const { firstName, lastName, email, password} = reqBody;
+    const { firstName, lastName, email, password, enableEmailMarketing} = reqBody;
 
     const user = await User.findOne({ email });
     //check if user laready exists
     if (user) {
-      return NextResponse.json(
-        { error: "User already exists"},
-        {
-          status: 200
-        }
-      );
+      if(enableEmailMarketing){
+        user.enableEmailMarketing = enableEmailMarketing;
+        await user.save();
+
+        return NextResponse.json(
+          { message: "User has joined mailing list"},
+          {
+            status: 201
+          }
+        );
+      }else{
+
+        return NextResponse.json(
+          { message: "User already exists"},
+          {
+            status: 200
+          }
+        );
+      }
     }
 
     const visitId = getVisitData(req);
@@ -63,14 +76,15 @@ export async function POST(req: NextRequest) {
     }else{
       const newUser = new User({
         email,
-        'visitor.visitId': mongoose.Types.ObjectId.isValid(newVisitId) ? newVisitId : null 
+        'visitor.visitId': mongoose.Types.ObjectId.isValid(newVisitId) ? newVisitId : null,
+        enableEmailMarketing: enableEmailMarketing ? true : false
       });
   
       const savedUser = await newUser.save();
 
       return NextResponse.json(
         {
-          message: "User created successfully",
+          message: `${enableEmailMarketing ? 'user has joined mailing list' : 'User created successfully'}`,
           success: true,
           id: savedUser._id.toString(),
         },

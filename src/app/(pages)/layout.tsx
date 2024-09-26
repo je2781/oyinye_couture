@@ -72,7 +72,6 @@ export default function RootLayout({
           value={{ allProducts}}
         >
           {children}
-          <Footer />
         </ProductContextProvider>
       </CartContextProvider>
     </AuthContextProvider>

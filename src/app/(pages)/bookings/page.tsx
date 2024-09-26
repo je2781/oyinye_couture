@@ -1,6 +1,7 @@
 
 
 import Bookings from "@/components/bookings/Bookings";
+import Footer from "@/components/footer/Footer";
 import Header from "@/components/layout/Header";
 import { cookies } from "next/headers";
 
@@ -34,6 +35,8 @@ export default async function BookingsPage() {
       <>
         <Header cartItems={cartItems} />
         <Bookings country={country}/>
+        <Footer />
+
     </>
   );
 }

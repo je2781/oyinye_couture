@@ -163,7 +163,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 export async function GET(req: NextRequest, { params }: { params: { slug: string[] } }) {
   try {
     let relatedProducts: any[] = [];
-    let reviewAuthors: any[] = [];
+    let authors: any[] = [];
 
     const title = params.slug[0].charAt(0).toUpperCase() + params.slug[0].replace('-', ' ').slice(1);
 
@@ -219,19 +219,19 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 
       for (let review of reviews){
         const user = await User.findById(review.author.authorId);
-        reviewAuthors.push(user);
+        authors.push(user);
       }
-      //sorting reviews with the most likes in descending order
-      reviews.sort((a: any, b: any) => b.likes - a.likes);
 
       const updatedReviews = reviews.map((review: any) => {
-        const author = reviewAuthors.find((author: any) => author._id.toString() === review.author.authorId.toString());
+        const extractedAuthor = authors.find(author => author._id.toString() === review.author.authorId.toString());
 
         return {
           ...review,
-          author: author
+          author: extractedAuthor
         };
       });
+      //sorting reviews with the most likes in descending order
+      reviews.sort((a: any, b: any) => b.likes - a.likes);;
       
       const res = NextResponse.json({
         productSizes: extractedColorObj.sizes,

@@ -22,7 +22,7 @@ const Hero = () => {
     return (
           <Swiper
               slidesPerView={1}
-              className="lg:h-[640px] h-72 w-full"
+              className="lg:h-[640px] md:h-96 h-72 w-full"
               autoplay={{ 
                 delay: 6000, // 3 seconds delay between slides
                 disableOnInteraction: false // Keeps autoplay after user interactions

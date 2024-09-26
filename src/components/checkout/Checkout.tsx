@@ -202,7 +202,8 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
   
       
     } catch (error: any) {
-      toast.error(error.message);
+      setLoader(false);
+      return toast.error(error.message);
     }finally{
       setLoader(false);
       if(paymentMethod === 'streetzwyze'){

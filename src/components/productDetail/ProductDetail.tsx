@@ -19,9 +19,9 @@ import useCart from "@/store/useCart";
 import { regex, sizes } from "@/helpers/getHelpers";
 import Header from "@/components/layout/Header";
 
-import Ruler from '../../public/ruler.svg';
-import Truck from '../../public/truck.svg';
-import Logo from '../../public/oyinye.png';
+import Ruler from '../../../public/ruler.svg';
+import Truck from '../../../public/truck.svg';
+import Logo from '../../../public/oyinye.png';
 import './ProductDetail.css';
 import toast from "react-hot-toast";
 import Product from "../product/Product";

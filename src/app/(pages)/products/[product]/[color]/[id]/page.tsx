@@ -1,4 +1,5 @@
 
+import Footer from "@/components/footer/Footer";
 import Header from "@/components/layout/Header";
 import dynamic from "next/dynamic";
 import { cookies } from "next/headers";
@@ -53,7 +54,7 @@ const ProductPage = async ({
     <>
       <Header cartItems={cartItems}/>
       <ProductDetailComponent {...data} />
-      
+      <Footer />
     </>
   );
 };

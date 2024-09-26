@@ -67,7 +67,8 @@ export default function Bookings({country}: any){
                 }))
             });
         } catch (error: any) {
-            toast.error(error.message);
+            setLoader(false);
+            return toast.error(error.message);
         }finally{
             setLoader(false);
             toast.success('Appointment Request Sent');
