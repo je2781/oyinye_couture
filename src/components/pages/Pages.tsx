@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React from "react";
 import toast from "react-hot-toast";
+import useGlobal from "@/store/useGlobal";
 
 
 export default function PagesComponent({name}: any){
@@ -16,7 +17,14 @@ export default function PagesComponent({name}: any){
     const [message, setMessage] = React.useState('');
     const [subject, setSubject] = React.useState('');
     const router = useRouter();
+    const {locale} = useGlobal();
     let content: JSX.Element = <></>;
+
+    React.useEffect(() => {
+        if(locale !== 'en'){
+            history.pushState(null, '', `/${locale}${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1]}`);
+        }
+    }, []);
 
     async function handleFormSubmit(e: React.FormEvent){
         e.preventDefault();
@@ -49,7 +57,7 @@ export default function PagesComponent({name}: any){
         }finally{
             setLoader(false);
             toast.success('Contact Request has been sent');
-            router.replace('/');
+            router.replace(`/`);
         }
 
     }
@@ -188,7 +196,6 @@ export default function PagesComponent({name}: any){
                         <div className="w-[500px] h-[500px] rounded-[50%] bg-contain bg-center bg-red-500" 
                         // style={{backgroundImage: `url(${StudioDress})`}}
                         >
-                        {/* <Image src={StudioDress} height={500} width={500} alt='studio-dress' className="rounded-[50%] h-full w-full"/> */}
 
                         </div>
                     </div>

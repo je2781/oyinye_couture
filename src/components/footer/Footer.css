@@ -1,0 +1,75 @@
+.hide-dropdown {
+    animation: hide-content 200ms ease-out forwards;
+    -webkit-animation: hide-content 200ms ease-out forwards;
+}
+
+.show-dropdown {
+animation: show-content 200ms ease-out forwards;
+-webkit-animation: show-content 200ms ease-out forwards;
+}
+
+@keyframes show-content {
+    0% {
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(0);
+      display: none;
+  
+    }
+    100% {
+      max-height: 1050px;
+      opacity: 1;
+      transform: translateY(25px);
+      display: flex;
+  
+    }
+  }
+  
+  @keyframes hide-content {
+    0% {
+      max-height: 1050px;
+      opacity: 1;
+      transform: translateY(25px);
+      display: flex;
+    }
+    100% {
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(0);
+      display: none;
+  
+    }
+  }
+
+@-webkit-keyframes show-content {
+    0% {
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(0);
+      display: none;
+  
+    }
+    100% {
+      max-height: 1050px;
+      opacity: 1;
+      transform: translateY(25px);
+      display: flex;
+  
+    }
+  }
+  
+  @-webkit-keyframes hide-content {
+    0% {
+      max-height: 1050px;
+      opacity: 1;
+      transform: translateY(25px);
+      display: flex;
+    }
+    100% {
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(0);
+      display: none;
+  
+    }
+  }

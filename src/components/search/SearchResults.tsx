@@ -13,6 +13,7 @@ import "./SearchResults.css";
 import FilterSettings from "../filter/Settings";
 import SecondaryHeader from "../filter/SecondaryHeader";
 import useWindowWidth from "../helpers/getWindowWidth";
+import useGlobal from "@/store/useGlobal";
 
 export default function SearchResults({
   searchCat,
@@ -44,15 +45,16 @@ export default function SearchResults({
   const [query, setQuery] = React.useState(keyword);
   const router = useRouter();
   const { allProducts } = useProduct();
+  const { locale } = useGlobal();
   const [isLoading, setIsLoading] = React.useState(false);
   const [isGridView, setIsGridView] = React.useState(true);
   const [filter, setFilter] = React.useState({
-    noOfFilters: data.filterSettings.length > 0 ? data.filterSettings[0].noOfFilters : 0,
-    isVisible: data.filterSettings.length > 0 ? data.filterSettings[0].isVisible : true,
-    showOutOfStock: data.filterSettings.length > 0 ? data.filterSettings[0].showOutOfStock : true,
-    productType: data.filterSettings.length > 0 ? data.filterSettings[0].productType : '',
-    priceRange: data.filterSettings.length > 0 ? data.filterSettings[0].priceRange : '',
-    currentPriceBoundary: data.filterSettings.length > 0 ? data.filterSettings[0].currentPriceBoundary : Math.floor(data.highestPrice)
+    noOfFilters: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.noOfFilters : 0,
+    isVisible: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.isVisible : true,
+    showOutOfStock: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.showOutOfStock : true,
+    productType: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.productType : '',
+    priceRange: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.priceRange : '',
+    currentPriceBoundary: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.currentPriceBoundary : Math.floor(data.highestPrice)
   });
   const [isTyping, setIsTyping] = React.useState(false);
   const [sort, setSort] = React.useState<string>(
@@ -111,7 +113,7 @@ export default function SearchResults({
     async function reloadPage(){
       if (isLoading) {
         if(filter.noOfFilters > 0){
-          await fetch('/api/products/filter',{
+          await fetch('/api/products/filter?type=search',{
             method: 'POST',
             body: JSON.stringify(filter)
           })
@@ -165,11 +167,14 @@ export default function SearchResults({
   data.upperBoundary = upperBoundary;
 
   const pages = [
-    { title: "Contact Us", route: "/contact" },
-    { title: "About", route: "/about" },
-    { title: "Login", route: "/login" },
-    { title: "Signup", route: "/signup" },
-    { title: "Shipping Policy", route: "/policies/shipping-policy" },
+    { title: "Contact Us", route: `/pages/contact` },
+    { title: "About", route: `/pages/about` },
+    { title: "Login", route: `/login` },
+    { title: "Signup", route: `/signup` },
+    { title: "Shipping Policy", route: `/pages/shipping-policy` },
+    {title: "Returns Policy", route: `/pages/returns-policy`},
+    {title: "Privacy Policy", route: `/pages/privacy-policy`},
+    {title: "Size Guide", route: `/pages/size-guide`},
   ];
 
   let productSuggestions = allProducts
@@ -212,7 +217,7 @@ export default function SearchResults({
           /> 
       </section>
       <main
-        className={`bg-white w-full min-h-screen md:pt-12 pt-5 pb-6 flex flex-col px-8 max-w-7xl relative ${
+        className={`bg-white w-full min-h-screen md:pt-12 pt-5 pb-6 flex flex-col px-8 max-w-7xl relative no-products-section ${
           data.products.length === 0  && !lowerBoundary && !upperBoundary && !productType && filter.showOutOfStock ? "space-y-36" : "space-y-6"
         }`}
       >
@@ -287,7 +292,7 @@ export default function SearchResults({
                                   key={i}
                                   onClick={() =>
                                     router.push(
-                                      `/products/${product.title
+                                      `/${locale !== 'en' ? `${locale}/` : ''}products/${product.title
                                         .replace(" ", "-")
                                         .toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product
                                         .colors[0].sizes[0].variantId!}`
@@ -349,7 +354,7 @@ export default function SearchResults({
                           <article
                             onClick={() =>
                               router.push(
-                                `/products/${product.title
+                                `/${locale !== 'en' ? `${locale}/` : ''}products/${product.title
                                   .replace(" ", "-")
                                   .toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product
                                   .colors[0].sizes[0].variantId!}`
@@ -428,7 +433,7 @@ export default function SearchResults({
           } flex items-center w-full flex-wrap md:gap-x-5 gap-y-9`}
         >
           {data.products.length === 0 && !lowerBoundary && !upperBoundary && !productType && filter.showOutOfStock ? (
-            <section className="flex items-center flex-col no-products-section">
+            <section className="flex items-center flex-col">
               <h1 className="font-sans text-xl">No {searchCat} available!</h1>
               <h1 className="font-sans text-sm">
                 Try a different search parameter
@@ -451,7 +456,7 @@ export default function SearchResults({
               sliderVal={sliderVal}
             
             />}
-            <section className={`${filter.isVisible ? 'md:w-[50%]': 'w-full'} flex items-center flex-col mt-24 no-products-section `}>
+            <section className={`${filter.isVisible ? 'md:w-[50%]': 'w-full'} flex items-center flex-col mt-24`}>
               <h1 className="font-sans text-xl">No {searchCat} available!</h1>
               <h1 className="font-sans text-sm">
                 Try a different search parameter
@@ -491,7 +496,8 @@ export default function SearchResults({
             </section>
           )}
         </section>
-        {isLoading && <section className="absolute top-[110px] z-20 left-0 bg-white/50 w-full h-full">
+        {isLoading && <section className="absolute top-[60px] z-20 left-0 bg-white/50 w-full h-full">
+          <div className="loader absolute top-4 right-2"></div>
         </section>}
         {data.products.length > 0 && <Pagination {...data} />}
       </main>

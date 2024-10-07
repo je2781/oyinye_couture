@@ -43,7 +43,13 @@ const Reviews = ({productReviews, product}: any) => {
             const selected = e?.currentTarget ?? document.getElementById("all");
             const allRatings = document.getElementById("ratings-dropdown")?.querySelectorAll('li');
             let ratingsDropdown = document.getElementById("ratings-dropdown");
-            let downAngle = document.querySelector("#ratings-button i.fa-angle-down");
+            let downAngle = document.querySelector("i.ratings-angle-down");
+            let mediaSelected = document.querySelector("i.media-selected");
+
+            if(mediaSelected?.classList.contains('fa-circle-check')){
+                mediaSelected?.classList.add("fa-circle", 'fa-regular', 'text-gray-300');
+                mediaSelected?.classList.remove("fa-circle-check", 'fa-solid', 'text-accent');
+            }
     
             if(allRatings){
                 allRatings.forEach(li => {
@@ -353,7 +359,7 @@ const Reviews = ({productReviews, product}: any) => {
             <div className="relative inline-block w-[50%]">
                 <button 
                 onClick={(e) => {
-                    let downAngle = e.currentTarget.querySelector("button i.in-dropdown");
+                    let downAngle = e.currentTarget.querySelector("i.ratings-angle-down");
                     let ratingsDropdown = document.getElementById("ratings-dropdown");
                     if(downAngle && ratingsDropdown){
                         if(!downAngle.classList.contains("ad-rotate")){
@@ -381,7 +387,7 @@ const Reviews = ({productReviews, product}: any) => {
                             <li><i key={i} className='fa-regular fa-star text-lg text-yellow-400'></i></li>
                         ))}
                     </ul> }
-                    <i className="fa-solid fa-angle-down in-dropdown absolute right-4 text-xs top-3"></i>
+                    <i className="fa-solid fa-angle-down ratings-angle-down absolute right-4 text-xs top-[14px]"></i>
                 </button>
                 <ul id='ratings-dropdown' className="absolute z-30 w-full bg-white rounded-md shadow-lg flex-col p-3 hide">
                     <li onClick={(e) => handleSelect('all', e)} id='all' className="cursor-pointer p-3 font-semibold text-xs bg-yellow-400/10 hover:bg-yellow-400/10 flex flex-row justify-between items-center">
@@ -412,21 +418,30 @@ const Reviews = ({productReviews, product}: any) => {
             <div className="relative inline-block w-[50%]">
                 <button 
                 onClick={(e) => {
-                    let circle = e.currentTarget.querySelector("button i");
-                    if(circle){
-                        if(!circle.classList.contains("fa-circle-check")){
-                            circle.classList.remove("fa-circle", 'fa-regular', 'text-gray-300');
-                            circle.classList.add("fa-circle-check", 'fa-solid', 'text-accent');
-                            handleSelect('media');
-                        }else{
-                            circle.classList.add("fa-circle", 'fa-regular', 'text-gray-300');
-                            circle.classList.remove("fa-circle-check", 'fa-solid', 'text-accent');
-                            handleSelect('all');
-                        }
+                    let mediaSelected = e.currentTarget.querySelector("i.media-selected");
+                    let downAngle = e.currentTarget.querySelector("i.ratings-angle-down");
+                    let ratingsDropdown = document.getElementById("ratings-dropdown");
+
+                    if(ratingsDropdown?.classList.contains('show')){
+                        downAngle?.classList.remove("ad-rotate");
+                        downAngle?.classList.add("ad-rotate-anticlock");
+                        ratingsDropdown?.classList.add('hide');
+                        ratingsDropdown?.classList.remove('show');
                     }
+
+                    if(!mediaSelected?.classList.contains("fa-circle-check")){
+                        mediaSelected?.classList.remove("fa-circle", 'fa-regular', 'text-gray-300');
+                        mediaSelected?.classList.add("fa-circle-check", 'fa-solid', 'text-accent');
+                        handleSelect('media');
+                    }else{
+                        mediaSelected?.classList.add("fa-circle", 'fa-regular', 'text-gray-300');
+                        mediaSelected?.classList.remove("fa-circle-check", 'fa-solid', 'text-accent');
+                        handleSelect('all');
+                    }
+                    
                 }}
                 className="w-full relative text-left rounded-3xl hover:border-detail-500 focus:border-detail-500 px-3 py-2 cursor-pointer bg-white border border-gray-300 font-medium">
-                    With media<i className="fa-regular fa-circle absolute right-4 text-[1rem] text-gray-300 top-3"></i>
+                    With media<i className="fa-regular fa-circle media-selected absolute right-4 text-[1rem] text-gray-300 top-3"></i>
                 </button>
             </div>
         </section>

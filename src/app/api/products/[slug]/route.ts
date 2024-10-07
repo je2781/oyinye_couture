@@ -10,6 +10,12 @@ connect();
 export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
     try {
 
+      let priceList: number[] = [];
+      let filterSettings = [];
+      const ITEMS_PER_PAGE = 21;
+
+      if(params.slug === 'search'){
+
         const searchParams = request.nextUrl.searchParams;
         let query = searchParams.get('q');
         let page = searchParams.get('page');
@@ -19,20 +25,16 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         let availability = searchParams.get('filter.v.availability');
         let productType = searchParams.get('filter.p.product_type');
         const updatedPage = +page! || 1;
-        const ITEMS_PER_PAGE = 21;
-        let priceList: number[] = [];
-      
-        let filterSettings = [];
       
         let totalItems =  await Product.find().countDocuments();
         let products = await Product.find({title: new RegExp(`\\b${query}[^\\s]*$`, 'i')})
         .skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
-
+  
         //filtering products by product type
         if(productType){
           products = products.filter(product => product.type === productType);
         }
-
+  
         //getting prices of products to determine the most expensive
         for(let product of products){
           for(let color of product.colors){
@@ -41,19 +43,19 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         }
         
         const highestPrice = Math.max(...priceList);
-
+  
         //retrieving filter settings
         if(availability || lte || gte || productType){
           filterSettings =  await Filter.find();
         }
-
+  
         const currentPage = updatedPage;
         const hasPreviousPage = currentPage > 1;
         const hasNextPage =
             totalItems > currentPage * ITEMS_PER_PAGE;
         const lastPage = 
              Math.ceil(totalItems / ITEMS_PER_PAGE);
-
+  
         if (products.length === 0) {
           return NextResponse.json(
             {
@@ -94,8 +96,8 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
             }
           }
         }
-
-
+  
+  
          //sorting sizes of product in ascending order
         for(let product of products){
           
@@ -104,22 +106,26 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
             if(availability){
               color.sizes = color.sizes.filter((size: any) => size.stock > 0);
             }
-            color.sizes.sort((a: any, b: any) => a.number - b.number);
+            color.sizes.sort((a: any, b: any) => (a?.number || 0) - (b?.number || 0));
+            
           }
         }
-
-
+  
+  
         //sorting products according to price
         switch (sort) {
           case 'price-descending':
             products.sort((a, b) => {
-              return b.colors[0].sizes[0].price - a.colors[0].sizes[0].price;
+              const priceA = a.colors?.[0]?.sizes?.[0]?.price || 0;  // Default to 0 if undefined
+              const priceB = b.colors?.[0]?.sizes?.[0]?.price || 0;
+              return priceB - priceA;
             });
-
             break;
           case 'price-ascending':
             products.sort((a, b) => {
-              return a.colors[0].sizes[0].price - b.colors[0].sizes[0].price;
+              const priceA = a.colors?.[0]?.sizes?.[0]?.price || 0;
+              const priceB = b.colors?.[0]?.sizes?.[0]?.price || 0;
+              return priceA - priceB;
             });
             break;
         
@@ -136,7 +142,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
               }
               return b.noOfOrders - a.noOfOrders;
             });
-
+  
             break;
         }        
       
@@ -155,7 +161,133 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         }, {
           status: 200
         });
+      }
+
+      if(params.slug === 'collections'){
+        const searchParams = request.nextUrl.searchParams;
+        let page = searchParams.get('page');
+        let sort = searchParams.get('sort_by');
+        let dressColor = searchParams.get('filter.p.m.custom.colors');
+        let dressFeature = searchParams.get('filter.p.m.custom.feature');
+        let dressLength = searchParams.get('filter.p.m.custom.dress_length');
+        let fabric = searchParams.get('filter.p.m.custom.fabric');
+        let neckLine = searchParams.get('filter.p.m.custom.neckline');
+        let sleeveLength = searchParams.get('filter.p.m.custom.sleeve_length');
+        const updatedPage = +page! || 1;
       
+        let totalItems =  await Product.find().countDocuments();
+        let products = await Product.find()
+        .skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+  
+  
+        //retrieving filter settings
+        if(dressColor || dressFeature || dressLength || fabric || neckLine){
+          filterSettings =  await Filter.find();
+        }
+  
+        const currentPage = updatedPage;
+        const hasPreviousPage = currentPage > 1;
+        const hasNextPage =
+            totalItems > currentPage * ITEMS_PER_PAGE;
+        const lastPage = 
+             Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+        if (products.length === 0) {
+          return NextResponse.json(
+            {
+              products,
+              hasNextPage,
+              hasPreviousPage,
+              lastPage,
+              currentPage,
+              isActivePage: updatedPage,
+              nextPage: currentPage + 1,
+              previousPage: currentPage - 1,
+              filterSettings,
+            },
+            { status: 200 }
+          );
+        }
+
+        //sorting products
+        switch (sort) {
+          case 'created-ascending':
+            products.sort((a, b) => {
+              const productA = new Date(a.createdAt).getTime();  
+              const productB = new Date(b.createdAt).getTime();
+              return productA - productB;
+            });
+            break;
+          case 'created-descending':
+            products.sort((a, b) => {
+              const productA = new Date(a.createdAt).getTime();  
+              const productB = new Date(b.createdAt).getTime();
+              return productB - productA;
+            });
+            break;
+          case 'title-ascending':
+            products.sort((a, b) => {
+              if (a.title < b.title) return 1;
+              return 0;
+            });
+            break;
+          case 'title-descending':
+            products.sort((a, b) => {
+              if (a.title > b.title) return -1;
+              return 0;
+            });
+            break;
+          case 'price-descending':
+            products.sort((a, b) => {
+              const priceA = a.colors?.[0]?.sizes?.[0]?.price || 0;  
+              const priceB = b.colors?.[0]?.sizes?.[0]?.price || 0;
+              return priceB - priceA;
+            });
+            break;
+          case 'price-ascending':
+            products.sort((a, b) => {
+              const priceA = a.colors?.[0]?.sizes?.[0]?.price || 0;
+              const priceB = b.colors?.[0]?.sizes?.[0]?.price || 0;
+              return priceA - priceB;
+            });
+            break;
+          case 'best-selling':
+            for(let product of products){
+              let noOfOrders = await Order.find({'items.product._id': product._id}).countDocuments();
+    
+              product.set('noOfOrders', noOfOrders, { strict: false });
+            }
+    
+            products.sort((a, b) => {
+              if (b.noOfOrders === a.noOfOrders) {
+                return b.reviews.length - a.reviews.length;
+              }
+              return b.noOfOrders - a.noOfOrders;
+            });
+  
+            break;
+        
+          default:
+            products = products.filter((product: any) => product.isFeature === true);
+  
+            break;
+        } 
+        
+        return NextResponse.json({
+          products,
+          hasNextPage,
+          hasPreviousPage,
+          lastPage,
+          currentPage,
+          isActivePage: updatedPage,
+          nextPage: currentPage + 1,
+          previousPage: currentPage - 1,
+          filterSettings,
+          success: true
+        }, {
+          status: 200
+        });
+      }
       
        
     } catch (error: any) {

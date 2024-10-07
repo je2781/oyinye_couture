@@ -11,7 +11,6 @@ import {
   handleBackImageupload,
   handleFrontImagesupload,
   handlePriceChange,
-  handleStockChange,
   handleSubmit,
   lineGraphOptions,
   months,
@@ -68,7 +67,8 @@ export default function Body({
     colorsReducer,
     []
   );
-  const [isChecked, setIsChecked] = React.useState(false);
+  const [hasStock, setHasStock] = React.useState(false);
+  const [isFeature, setIsFeature] = React.useState(false);
   const [orders, setOrders] = React.useState<any[]>(extractedOrders);
   const [enquiries, setEnquiries] = React.useState<any[]>(enquiriesData.enquiries);
   const [orderListLength, setOrderListLength] = React.useState('10');
@@ -93,6 +93,11 @@ export default function Body({
   const [price, setPrice] = React.useState("");
   const [stock, setStock] = React.useState("");
   const [title, setTitle] = React.useState("");
+  const [fabric, setFabric] = React.useState("");
+  const [embelishment, setEmbelishment] = React.useState("");
+  const [dressLength, setDressLength] = React.useState("");
+  const [neckLine, setNeckLine] = React.useState("");
+  const [sleeveL, setSleeveL] = React.useState("");
   const [type, setType] = React.useState("");
   const [desc, setDesc] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
@@ -150,7 +155,7 @@ export default function Body({
         if (activeSizes.length >= 1) {
           setSizeData(updatedSizeData);
           setPrice(updatedSizeData[updatedSizeData.length - 1].price!);
-          setIsChecked(
+          setHasStock(
             updatedSizeData[updatedSizeData.length - 1].stock
               ? updatedSizeData[updatedSizeData.length - 1].stock! > 0
               : false
@@ -164,7 +169,7 @@ export default function Body({
           //updating price and stock input elements for active size
 
           setPrice("");
-          setIsChecked(false);
+          setHasStock(false);
           setStock("");
 
           setSizeData(updatedSizeData);
@@ -201,7 +206,7 @@ export default function Body({
 
         // reseting price and stock input element value for active size
         setPrice("");
-        setIsChecked(false);
+        setHasStock(false);
         setStock("");
 
         selectedSize.classList.remove("text-black", "bg-white");
@@ -262,7 +267,7 @@ export default function Body({
             ? updatedSizeData[updatedSizeData.length - 1].stock!.toString()
             : ""
         );
-        setIsChecked(
+        setHasStock(
           updatedSizeData[updatedSizeData.length - 1].stock
             ? updatedSizeData[updatedSizeData.length - 1].stock! > 0
             : false
@@ -282,7 +287,7 @@ export default function Body({
         // reseting price, stock input element values for zero selected colors
         setPrice("");
         setStock("");
-        setIsChecked(false);
+        setHasStock(false);
       }
 
       dispatchAction({
@@ -323,7 +328,7 @@ export default function Body({
       // reseting price, stock input element values and image names for active color
       setPrice("");
       setStock("");
-      setIsChecked(false);
+      setHasStock(false);
       setBackFilename(null);
       setFrontFilename(null);
 
@@ -371,23 +376,28 @@ export default function Body({
     };
   }, [isAdminSettingsOpen]);
 
-  React.useEffect(() => {
-    let mobileNav = document.querySelector("#mobile-nav") as HTMLElement;
-    if (isMobileModalOpen && mobileNav) {
-      mobileNav.classList.add("forward");
-      mobileNav.classList.remove("backward");
-    }
-  }, [isMobileModalOpen]);
 
   const hideAdminSettingsModalHandler = () => {
       const optionsMenus = document.querySelectorAll('[id^=options-menu]');
+      let adminModal = document.querySelector('#admin-settings-modal') as HTMLElement;
 
       optionsMenus.forEach(menu => {
         if(!menu.classList.contains('hidden')){
           menu.classList.add("hidden");
         }
-      })
-      setIsAdminSettingsOpen(false);
+      });
+
+      if (adminModal) {
+        adminModal.classList.remove('slide-down');
+        adminModal.classList.add('slide-up');
+        timerId = setTimeout(() => {
+          setIsAdminSettingsOpen(false);
+
+        }, 300); 
+      } else {
+        setIsAdminSettingsOpen(false);
+
+      }
   }
 
   const hideMobileModalHandler = () => {
@@ -455,7 +465,22 @@ export default function Body({
     // Set the sorted orders state to trigger a re-render
     setOrders(sortedOrders);
   };
+
+  React.useEffect(() => {
+    let mobileNav = document.querySelector("#mobile-nav") as HTMLElement;
+    if (isMobileModalOpen && mobileNav) {
+      mobileNav.classList.add("forward");
+      mobileNav.classList.remove("backward");
+    }
+  }, [isMobileModalOpen]);
   
+  React.useEffect(() => {
+    let adminModal = document.querySelector('#admin-settings-modal') as HTMLElement;
+    if (isAdminSettingsOpen && adminModal) {
+      adminModal.classList.add('slide-down');
+      adminModal.classList.remove('slide-up');
+    }
+  }, [isAdminSettingsOpen]);
 
   // const browserUsageData = {
   //   chrome: visitors.filter((visitor: any) => visitor.browser === 'Chrome').length,
@@ -483,6 +508,12 @@ export default function Body({
                     title,
                     desc,
                     type,
+                    embelishment,
+                    fabric,
+                    sleeveL, 
+                    dressLength,
+                    neckLine,
+                    isFeature,
                     dressColorsState,
                     currentBgColors,
                     sizeData,
@@ -559,29 +590,460 @@ export default function Body({
                   </div>
                 </div>
                 <div className="text-secondary-400 flex flex-col gap-y-7 text-sm w-full">
-                  <input
-                    placeholder="Title"
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full focus:outline-none h-8 border border-t-0 border-l-0 border-r-0 border-secondary-400 bg-transparent placeholder:text-secondary-400"
-                  />
-                  <textarea
-                    className="w-full bg-transparent focus:outline-none border border-t-0 border-l-0 border-r-0 border-secondary-400"
-                    cols={15}
-                    rows={5}
-                    id="description"
-                    placeholder="Description..."
-                    value={desc}
-                    onChange={(e) => setDesc(e.target.value)}
-                  ></textarea>
-                  <input
-                    placeholder="Type"
-                    id="type"
-                    value={type}
-                    onChange={(e) => setType(e.target.value)}
-                    className="w-full focus:outline-none h-8 border border-t-0 border-l-0 border-r-0 border-secondary-400 bg-transparent placeholder:text-secondary-400"
-                  />
+                  <div className="flex flex-col justify-center gap-y-1 focus:outline-none w-full h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                    <label htmlFor="title" className="text-xs hide-label text-gray-500">
+                      Title
+                    </label>
+                    <input
+                      placeholder="Title"
+                      onBlur={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "Title";
+                        let label = item.previousElementSibling;
+                        if (label && item.value.length === 0) {
+                          label.classList.add("hide-label");
+                          label.classList.remove("show-label");
+                        }
+
+                      }}
+                      onKeyDown={(e) => {
+                        let item = e.currentTarget;
+                        let label = item.previousElementSibling;
+                        if (e.key === "Backspace" && label) {
+                          label.classList.remove("hide-label");
+                          label.classList.add("show-label");
+                        }
+                      }}
+                      onInput={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "";
+                        let label = item.previousElementSibling;
+                        if (label) {
+                          if (item.value.length === 1) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }
+                      }}
+                      id="title"
+                      value={title}
+                      onChange={(e) => {
+                        
+                        let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                        setTitle(e.target.value)
+                      }}
+                      className="w-full h-6 bg-transparent focus:outline-none placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col justify-center gap-y-1 focus:outline-none w-full border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                    <label htmlFor="desc" className="text-xs hide-label text-gray-500">
+                      Description
+                    </label>
+                    <textarea
+                      cols={15}
+                      rows={5}
+                      placeholder="Description..."
+                      onBlur={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "Description...";
+                        let label = item.previousElementSibling;
+                        if (label && item.value.length === 0) {
+                          label.classList.add("hide-label");
+                          label.classList.remove("show-label");
+                        }
+
+                      }}
+                      onKeyDown={(e) => {
+                        let item = e.currentTarget;
+                        let label = item.previousElementSibling;
+                        if (e.key === "Backspace" && label) {
+                          label.classList.remove("hide-label");
+                          label.classList.add("show-label");
+                        }
+                      }}
+                      onInput={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "";
+                        let label = item.previousElementSibling;
+                        if (label) {
+                          if (item.value.length === 1) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }
+                      }}
+                      id="desc"
+                      value={desc}
+                      onChange={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "";
+                        let label = item.previousElementSibling;
+                        if (label) {
+                          if (item.value.length >= 1) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }
+
+                        setDesc(e.target.value);
+
+                      }}
+                      className="w-full bg-transparent focus:outline-none placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                    ></textarea>
+                  </div>
+                  <div className="w-full flex flex-row">
+                    <div className="flex flex-col justify-center w-[45%] gap-y-1 focus:outline-none h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                      <label
+                        htmlFor="type"
+                        className="text-xs hide-label text-gray-500"
+                      >
+                        Type
+                      </label>
+                      <input
+                        placeholder="Type"
+                        
+                        onBlur={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "Type";
+                          let label = item.previousElementSibling;
+                          if (label && item.value.length === 0) {
+                            label.classList.add("hide-label");
+                            label.classList.remove("show-label");
+                          }
+
+                        }}
+                        onKeyDown={(e) => {
+                          let item = e.currentTarget;
+                          let label = item.previousElementSibling;
+                          if (e.key === "Backspace" && label) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }}
+                        onInput={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length === 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+
+                        }}
+                        id="type"
+                        value={type}
+                        onChange={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          setType(e.target.value);
+                        }}
+                        className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                      />
+                    </div>
+                    <div className="w-[10%]"></div>
+                    <div className="flex flex-col w-[45%] justify-center gap-y-1 focus:outline-none h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                      <label
+                        htmlFor="slength"
+                        className="text-xs hide-label text-gray-500"
+                      >
+                        Sleeve length
+                      </label>
+                      <input
+                        placeholder="Sleeve length"
+                        onBlur={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "Sleeve length";
+                          let label = item.previousElementSibling;
+                          if (label && item.value.length === 0) {
+                            label.classList.add("hide-label");
+                            label.classList.remove("show-label");
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          let item = e.currentTarget;
+                          let label = item.previousElementSibling;
+                          if (e.key === "Backspace" && label) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }}
+                        onInput={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length === 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+
+                        }}
+                        id="slength"
+                        value={sleeveL}
+                        onChange={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          setSleeveL(e.target.value);
+                        }}
+                        className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="w-full flex flex-row">
+                    <div className="flex flex-col justify-center w-[45%] gap-y-1 focus:outline-none h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                      <label
+                        htmlFor="embelish"
+                        className="text-xs hide-label text-gray-500"
+                      >
+                        Embelishment
+                      </label>
+                      <input
+                        placeholder="Embelishment"
+                        
+                        onBlur={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "Embelishment";
+                          let label = item.previousElementSibling;
+                          if (label && item.value.length === 0) {
+                            label.classList.add("hide-label");
+                            label.classList.remove("show-label");
+                          }
+
+                        }}
+                        onKeyDown={(e) => {
+                          let item = e.currentTarget;
+                          let label = item.previousElementSibling;
+                          if (e.key === "Backspace" && label) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }}
+                        onInput={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length === 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+
+                        }}
+                        id="embelish"
+                        value={embelishment}
+                        onChange={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          setEmbelishment(e.target.value);
+                        }}
+                        className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                      />
+                    </div>
+                    <div className="w-[10%]"></div>
+                    <div className="flex flex-col w-[45%] justify-center gap-y-1 focus:outline-none h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                      <label
+                        htmlFor="fabric"
+                        className="text-xs hide-label text-gray-500"
+                      >
+                        Fabric
+                      </label>
+                      <input
+                        placeholder="Fabric"
+                        onBlur={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "Fabric";
+                          let label = item.previousElementSibling;
+                          if (label && item.value.length === 0) {
+                            label.classList.add("hide-label");
+                            label.classList.remove("show-label");
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          let item = e.currentTarget;
+                          let label = item.previousElementSibling;
+                          if (e.key === "Backspace" && label) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }}
+                        onInput={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length === 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+
+                        }}
+                        id="fabric"
+                        value={fabric}
+                        onChange={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          setFabric(e.target.value);
+                        }}
+                        className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="w-full flex flex-row">
+                    <div className="flex flex-col justify-center w-[45%] gap-y-1 focus:outline-none h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                      <label
+                        htmlFor="dresslength"
+                      className="text-xs hide-label text-gray-500"
+                      >
+                        Dress length
+                      </label>
+                      <input
+                        placeholder="Dress length"
+                        
+                        onBlur={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "dress Length";
+                          let label = item.previousElementSibling;
+                          if (label && item.value.length === 0) {
+                            label.classList.add("hide-label");
+                            label.classList.remove("show-label");
+                          }
+
+                        }}
+                        onKeyDown={(e) => {
+                          let item = e.currentTarget;
+                          let label = item.previousElementSibling;
+                          if (e.key === "Backspace" && label) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }}
+                        onInput={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length === 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+
+                        }}
+                        id="dresslength"
+                      value={dressLength}
+                        onChange={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          setDressLength(e.target.value);
+                        }}
+                        className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                      />
+                    </div>
+                    <div className="w-[10%]"></div>
+                    <div className="flex flex-col w-[45%] justify-center gap-y-1 focus:outline-none h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                      <label
+                        htmlFor="neckLine"
+                        className="text-xs hide-label text-gray-500"
+                      >
+                        Neck line
+                      </label>
+                      <input
+                        placeholder="Neck line"
+                        onBlur={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "Neck line";
+                          let label = item.previousElementSibling;
+                          if (label && item.value.length === 0) {
+                            label.classList.add("hide-label");
+                            label.classList.remove("show-label");
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          let item = e.currentTarget;
+                          let label = item.previousElementSibling;
+                          if (e.key === "Backspace" && label) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }}
+                        onInput={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length === 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+
+                        }}
+                        id="neckLine"
+                        value={neckLine}
+                        onChange={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          setNeckLine(e.target.value);
+                        }}
+                        className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                      />
+                    </div>
+                  </div>
                   <section className="flex flex-col gap-y-2 items-start w-full">
                     <h5>Color</h5>
                     <div
@@ -616,37 +1078,91 @@ export default function Body({
                       ))}
                     </div>
                   </section>
-                  <input
-                    placeholder="Price"
-                    type="number"
-                    min={0}
-                    step={50}
-                    id="price"
-                    onChange={(e) =>
-                      handlePriceChange(
-                        e,
-                        currentBgColors,
-                        sizeData,
-                        setSizeData,
-                        setPrice
-                      )
-                    }
-                    value={price}
-                    className="w-full focus:outline-none border border-t-0 border-l-0 border-r-0 border-secondary-400 bg-transparent placeholder:text-secondary-400"
-                  />
-                  <section className="flex flex-row w-full items-end h-8">
-                    <div className="flex flex-row gap-x-2 w-[40%]">
-                      <h5>In Stock</h5>
-                      <input
-                        onChange={(e) =>
-                          handleStockChange(
+                  <div className="flex flex-col justify-center gap-y-1 h-10 focus:outline-none w-full border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                    <label htmlFor="price" className="text-xs hide-label focus:outline-none text-gray-500">
+                      Price
+                    </label>
+                    <input
+                      onBlur={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "Price";
+                        let label = item.previousElementSibling;
+                        if (label && item.value.length === 0) {
+                          label.classList.add("hide-label");
+                          label.classList.remove("show-label");
+                        }
+
+                      }}
+                      onKeyDown={(e) => {
+                        let item = e.currentTarget;
+                        let label = item.previousElementSibling;
+                        if (e.key === "Backspace" && label) {
+                          label.classList.remove("hide-label");
+                          label.classList.add("show-label");
+                        }
+                      }}
+                      onInput={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "";
+                        let label = item.previousElementSibling;
+                        if (label) {
+                          if (item.value.length === 1) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }
+                      }}
+                      id="price"
+                      placeholder="Price"
+                      type="number"
+                      min={0}
+                      step={50}
+                      value={price}
+                      onChange={(e) => {
+                        
+                        let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          handlePriceChange(
                             e,
                             currentBgColors,
                             sizeData,
-                            setIsChecked
-                          )
-                        }
-                        checked={isChecked}
+                            setSizeData,
+                            setPrice
+                          );
+                      }}
+                      className="w-full h-6 bg-transparent focus:outline-none placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                    />
+                  </div>
+                  
+                  <div className="flex flex-row w-full items-end h-8">
+                    <div className="flex flex-row gap-x-2 w-[40%]">
+                      <h5>In Stock</h5>
+                      <input
+                        onChange={(e) => {
+                          if (currentBgColors.length === 0) {
+                            return toast.error(`Select a dress color`, {
+                              position: "top-center",
+                            });
+                          }
+                          if (currentBgColors.length > 0 && sizeData.length === 0) {
+                            return toast.error(
+                              `Select a dress size for ${currentBgColors[currentBgColors.length - 1]}`,
+                              {
+                                position: "top-center",
+                              }
+                            );
+                          }
+                        
+                          setHasStock(e.currentTarget.checked!);
+                        }}
+                        checked={hasStock}
                         id="stock-check"
                         type="checkbox"
                         className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-500 rounded-sm relative
@@ -655,7 +1171,7 @@ export default function Body({
                       checked:after:rotate-45"
                       />
                     </div>
-                    {isChecked && (
+                    {hasStock && (
                       <input
                         placeholder="Stock"
                         type="number"
@@ -678,7 +1194,36 @@ export default function Body({
                         className="w-[60%] focus:outline-none h-8 border border-t-0 border-l-0 border-r-0 border-secondary-400 bg-transparent placeholder:text-secondary-400"
                       />
                     )}
-                  </section>
+                  </div>
+                  <div className="flex flex-row gap-x-2 w-[70%]">
+                    <h5>Set As Feature</h5>
+                    <input
+                      onChange={(e) => {
+                        if (currentBgColors.length === 0) {
+                          return toast.error(`Select a dress color`, {
+                            position: "top-center",
+                          });
+                        }
+                        if (currentBgColors.length > 0 && sizeData.length === 0) {
+                          return toast.error(
+                            `Select a dress size for ${currentBgColors[currentBgColors.length - 1]}`,
+                            {
+                              position: "top-center",
+                            }
+                          );
+                        }
+                      
+                        setIsFeature(e.currentTarget.checked!);
+                      }}
+                      checked={isFeature}
+                      id="feature-check"
+                      type="checkbox"
+                      className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-500 rounded-sm relative
+                    cursor-pointer outline-none checked:bg-accent checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
+                    checked:after:border-white checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
+                    checked:after:rotate-45"
+                    />
+                  </div>
                   <button
                     type="submit"
                     className="flex flex-row justify-center items-center bg-white mt-7 w-full text-accent text-[1rem] py-3 px-5 rounded-lg hover:bg-accent hover:text-white font-medium"
@@ -793,6 +1338,12 @@ export default function Body({
                     title,
                     desc,
                     type,
+                    embelishment,
+                    fabric,
+                    sleeveL, 
+                    dressLength,
+                    neckLine,
+                    isFeature,
                     dressColorsState,
                     currentBgColors,
                     sizeData,
@@ -869,29 +1420,460 @@ export default function Body({
                   </div>
                 </section>
                 <div className="text-secondary-400 flex flex-col gap-y-7 text-sm w-full">
-                  <input
-                    placeholder="Title"
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full focus:outline-none h-8 border border-t-0 border-l-0 border-r-0 border-secondary-400 bg-transparent placeholder:text-secondary-400"
-                  />
-                  <textarea
-                    className="w-full bg-transparent focus:outline-none border border-t-0 border-l-0 border-r-0 border-secondary-400"
-                    cols={15}
-                    rows={5}
-                    id="description"
-                    placeholder="Description..."
-                    value={desc}
-                    onChange={(e) => setDesc(e.target.value)}
-                  ></textarea>
-                  <input
-                    placeholder="Type"
-                    id="type"
-                    value={type}
-                    onChange={(e) => setType(e.target.value)}
-                    className="w-full focus:outline-none h-8 border border-t-0 border-l-0 border-r-0 border-secondary-400 bg-transparent placeholder:text-secondary-400"
-                  />
+                  <div className="flex flex-col justify-center gap-y-1 focus:outline-none w-full h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                    <label htmlFor="title" className="text-xs hide-label text-gray-500">
+                      Title
+                    </label>
+                    <input
+                      placeholder="Title"
+                      onBlur={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "Title";
+                        let label = item.previousElementSibling;
+                        if (label && item.value.length === 0) {
+                          label.classList.add("hide-label");
+                          label.classList.remove("show-label");
+                        }
+
+                      }}
+                      onKeyDown={(e) => {
+                        let item = e.currentTarget;
+                        let label = item.previousElementSibling;
+                        if (e.key === "Backspace" && label) {
+                          label.classList.remove("hide-label");
+                          label.classList.add("show-label");
+                        }
+                      }}
+                      onInput={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "";
+                        let label = item.previousElementSibling;
+                        if (label) {
+                          if (item.value.length === 1) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }
+                      }}
+                      id="title"
+                      value={title}
+                      onChange={(e) => {
+                        
+                        let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                        setTitle(e.target.value)
+                      }}
+                      className="w-full h-6 bg-transparent focus:outline-none placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col justify-center gap-y-1 focus:outline-none w-full border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                    <label htmlFor="desc" className="text-xs hide-label text-gray-500">
+                      Description
+                    </label>
+                    <textarea
+                      cols={15}
+                      rows={5}
+                      placeholder="Description..."
+                      onBlur={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "Description...";
+                        let label = item.previousElementSibling;
+                        if (label && item.value.length === 0) {
+                          label.classList.add("hide-label");
+                          label.classList.remove("show-label");
+                        }
+
+                      }}
+                      onKeyDown={(e) => {
+                        let item = e.currentTarget;
+                        let label = item.previousElementSibling;
+                        if (e.key === "Backspace" && label) {
+                          label.classList.remove("hide-label");
+                          label.classList.add("show-label");
+                        }
+                      }}
+                      onInput={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "";
+                        let label = item.previousElementSibling;
+                        if (label) {
+                          if (item.value.length === 1) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }
+                      }}
+                      id="desc"
+                      value={desc}
+                      onChange={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "";
+                        let label = item.previousElementSibling;
+                        if (label) {
+                          if (item.value.length >= 1) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }
+
+                        setDesc(e.target.value);
+
+                      }}
+                      className="w-full bg-transparent focus:outline-none placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                    ></textarea>
+                  </div>
+                  <div className="w-full flex flex-row">
+                    <div className="flex flex-col justify-center w-[45%] gap-y-1 focus:outline-none h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                      <label
+                        htmlFor="type"
+                        className="text-xs hide-label text-gray-500"
+                      >
+                        Type
+                      </label>
+                      <input
+                        placeholder="Type"
+                        
+                        onBlur={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "Type";
+                          let label = item.previousElementSibling;
+                          if (label && item.value.length === 0) {
+                            label.classList.add("hide-label");
+                            label.classList.remove("show-label");
+                          }
+
+                        }}
+                        onKeyDown={(e) => {
+                          let item = e.currentTarget;
+                          let label = item.previousElementSibling;
+                          if (e.key === "Backspace" && label) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }}
+                        onInput={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length === 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+
+                        }}
+                        id="type"
+                        value={type}
+                        onChange={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          setType(e.target.value);
+                        }}
+                        className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                      />
+                    </div>
+                    <div className="w-[10%]"></div>
+                    <div className="flex flex-col w-[45%] justify-center gap-y-1 focus:outline-none h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                      <label
+                        htmlFor="slength"
+                        className="text-xs hide-label text-gray-500"
+                      >
+                        Sleeve length
+                      </label>
+                      <input
+                        placeholder="Sleeve length"
+                        onBlur={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "Sleeve length";
+                          let label = item.previousElementSibling;
+                          if (label && item.value.length === 0) {
+                            label.classList.add("hide-label");
+                            label.classList.remove("show-label");
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          let item = e.currentTarget;
+                          let label = item.previousElementSibling;
+                          if (e.key === "Backspace" && label) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }}
+                        onInput={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length === 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+
+                        }}
+                        id="slength"
+                        value={sleeveL}
+                        onChange={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          setSleeveL(e.target.value);
+                        }}
+                        className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="w-full flex flex-row">
+                    <div className="flex flex-col justify-center w-[45%] gap-y-1 focus:outline-none h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                      <label
+                        htmlFor="embelish"
+                        className="text-xs hide-label text-gray-500"
+                      >
+                        Embelishment
+                      </label>
+                      <input
+                        placeholder="Embelishment"
+                        
+                        onBlur={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "Embelishment";
+                          let label = item.previousElementSibling;
+                          if (label && item.value.length === 0) {
+                            label.classList.add("hide-label");
+                            label.classList.remove("show-label");
+                          }
+
+                        }}
+                        onKeyDown={(e) => {
+                          let item = e.currentTarget;
+                          let label = item.previousElementSibling;
+                          if (e.key === "Backspace" && label) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }}
+                        onInput={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length === 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+
+                        }}
+                        id="embelish"
+                        value={embelishment}
+                        onChange={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          setEmbelishment(e.target.value);
+                        }}
+                        className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                      />
+                    </div>
+                    <div className="w-[10%]"></div>
+                    <div className="flex flex-col w-[45%] justify-center gap-y-1 focus:outline-none h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                      <label
+                        htmlFor="fabric"
+                        className="text-xs hide-label text-gray-500"
+                      >
+                        Fabric
+                      </label>
+                      <input
+                        placeholder="Fabric"
+                        onBlur={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "Fabric";
+                          let label = item.previousElementSibling;
+                          if (label && item.value.length === 0) {
+                            label.classList.add("hide-label");
+                            label.classList.remove("show-label");
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          let item = e.currentTarget;
+                          let label = item.previousElementSibling;
+                          if (e.key === "Backspace" && label) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }}
+                        onInput={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length === 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+
+                        }}
+                        id="fabric"
+                        value={fabric}
+                        onChange={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          setFabric(e.target.value);
+                        }}
+                        className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="w-full flex flex-row">
+                    <div className="flex flex-col justify-center w-[45%] gap-y-1 focus:outline-none h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                      <label
+                        htmlFor="dresslength"
+                      className="text-xs hide-label text-gray-500"
+                      >
+                        Dress length
+                      </label>
+                      <input
+                        placeholder="Dress length"
+                        
+                        onBlur={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "dress Length";
+                          let label = item.previousElementSibling;
+                          if (label && item.value.length === 0) {
+                            label.classList.add("hide-label");
+                            label.classList.remove("show-label");
+                          }
+
+                        }}
+                        onKeyDown={(e) => {
+                          let item = e.currentTarget;
+                          let label = item.previousElementSibling;
+                          if (e.key === "Backspace" && label) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }}
+                        onInput={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length === 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+
+                        }}
+                        id="dresslength"
+                      value={dressLength}
+                        onChange={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          setDressLength(e.target.value);
+                        }}
+                        className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                      />
+                    </div>
+                    <div className="w-[10%]"></div>
+                    <div className="flex flex-col w-[45%] justify-center gap-y-1 focus:outline-none h-10 border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                      <label
+                        htmlFor="neckLine"
+                        className="text-xs hide-label text-gray-500"
+                      >
+                        Neck line
+                      </label>
+                      <input
+                        placeholder="Neck line"
+                        onBlur={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "Neck line";
+                          let label = item.previousElementSibling;
+                          if (label && item.value.length === 0) {
+                            label.classList.add("hide-label");
+                            label.classList.remove("show-label");
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          let item = e.currentTarget;
+                          let label = item.previousElementSibling;
+                          if (e.key === "Backspace" && label) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }}
+                        onInput={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length === 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+
+                        }}
+                        id="neckLine"
+                        value={neckLine}
+                        onChange={(e) => {
+                          let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          setNeckLine(e.target.value);
+                        }}
+                        className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                      />
+                    </div>
+                  </div>
                   <section className="flex flex-col gap-y-2 items-start w-full">
                     <h5>Color</h5>
                     <div
@@ -926,46 +1908,100 @@ export default function Body({
                       ))}
                     </div>
                   </section>
-                  <input
-                    placeholder="Price"
-                    type="number"
-                    min={0}
-                    step={50}
-                    id="price"
-                    onChange={(e) =>
-                      handlePriceChange(
-                        e,
-                        currentBgColors,
-                        sizeData,
-                        setSizeData,
-                        setPrice
-                      )
-                    }
-                    value={price}
-                    className="w-full focus:outline-none border border-t-0 border-l-0 border-r-0 border-secondary-400 bg-transparent placeholder:text-secondary-400"
-                  />
-                  <section className="flex flex-row w-full items-end h-8">
-                    <div className="flex flex-row gap-x-2 w-[40%]">
-                      <h5>In Stock</h5>
-                      <input
-                        onChange={(e) =>
-                          handleStockChange(
+                  <div className="flex flex-col justify-center gap-y-1 h-10 focus:outline-none w-full border border-t-0 border-l-0 border-r-0 border-secondary-400">
+                    <label htmlFor="price" className="text-xs hide-label focus:outline-none text-gray-500">
+                      Price
+                    </label>
+                    <input
+                      onBlur={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "Price";
+                        let label = item.previousElementSibling;
+                        if (label && item.value.length === 0) {
+                          label.classList.add("hide-label");
+                          label.classList.remove("show-label");
+                        }
+
+                      }}
+                      onKeyDown={(e) => {
+                        let item = e.currentTarget;
+                        let label = item.previousElementSibling;
+                        if (e.key === "Backspace" && label) {
+                          label.classList.remove("hide-label");
+                          label.classList.add("show-label");
+                        }
+                      }}
+                      onInput={(e) => {
+                        let item = e.currentTarget;
+                        item.placeholder = "";
+                        let label = item.previousElementSibling;
+                        if (label) {
+                          if (item.value.length === 1) {
+                            label.classList.remove("hide-label");
+                            label.classList.add("show-label");
+                          }
+                        }
+                      }}
+                      id="price"
+                      placeholder="Price"
+                      type="number"
+                      min={0}
+                      step={50}
+                      value={price}
+                      onChange={(e) => {
+                        
+                        let item = e.currentTarget;
+                          item.placeholder = "";
+                          let label = item.previousElementSibling;
+                          if (label) {
+                            if (item.value.length >= 1) {
+                              label.classList.remove("hide-label");
+                              label.classList.add("show-label");
+                            }
+                          }
+                          handlePriceChange(
                             e,
                             currentBgColors,
                             sizeData,
-                            setIsChecked
-                          )
-                        }
-                        checked={isChecked}
+                            setSizeData,
+                            setPrice
+                          );
+                      }}
+                      className="w-full h-6 bg-transparent focus:outline-none placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
+                    />
+                  </div>
+                  
+                  <div className="flex flex-row w-full items-end h-8">
+                    <div className="flex flex-row gap-x-2 w-[40%]">
+                      <h5>In Stock</h5>
+                      <input
+                        onChange={(e) => {
+                          if (currentBgColors.length === 0) {
+                            return toast.error(`Select a dress color`, {
+                              position: "top-center",
+                            });
+                          }
+                          if (currentBgColors.length > 0 && sizeData.length === 0) {
+                            return toast.error(
+                              `Select a dress size for ${currentBgColors[currentBgColors.length - 1]}`,
+                              {
+                                position: "top-center",
+                              }
+                            );
+                          }
+                        
+                          setHasStock(e.currentTarget.checked!);
+                        }}
+                        checked={hasStock}
                         id="stock-check"
                         type="checkbox"
                         className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-500 rounded-sm relative
-                        cursor-pointer outline-none checked:bg-accent checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
-                        checked:after:border-white checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
-                        checked:after:rotate-45"
+                      cursor-pointer outline-none checked:bg-accent checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
+                      checked:after:border-white checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
+                      checked:after:rotate-45"
                       />
                     </div>
-                    {isChecked && (
+                    {hasStock && (
                       <input
                         placeholder="Stock"
                         type="number"
@@ -988,7 +2024,36 @@ export default function Body({
                         className="w-[60%] focus:outline-none h-8 border border-t-0 border-l-0 border-r-0 border-secondary-400 bg-transparent placeholder:text-secondary-400"
                       />
                     )}
-                  </section>
+                  </div>
+                  <div className="flex flex-row gap-x-2 w-[70%]">
+                    <h5>Set As Feature</h5>
+                    <input
+                      onChange={(e) => {
+                        if (currentBgColors.length === 0) {
+                          return toast.error(`Select a dress color`, {
+                            position: "top-center",
+                          });
+                        }
+                        if (currentBgColors.length > 0 && sizeData.length === 0) {
+                          return toast.error(
+                            `Select a dress size for ${currentBgColors[currentBgColors.length - 1]}`,
+                            {
+                              position: "top-center",
+                            }
+                          );
+                        }
+                      
+                        setIsFeature(e.currentTarget.checked!);
+                      }}
+                      checked={isFeature}
+                      id="feature-check"
+                      type="checkbox"
+                      className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-500 rounded-sm relative
+                    cursor-pointer outline-none checked:bg-accent checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
+                    checked:after:border-white checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
+                    checked:after:rotate-45"
+                    />
+                  </div>
                   <button
                     type="submit"
                     className="flex flex-row justify-center items-center bg-white mt-7 w-full text-accent text-[1rem] py-3 px-5 rounded-lg hover:bg-accent hover:text-white font-medium"
@@ -2035,17 +3100,17 @@ export default function Body({
                         });
 
                         if(downAngle && actionsDropdown){
-                            if(!downAngle.classList.contains("ad-rotate")){
-                                downAngle.classList.add("ad-rotate");
-                                downAngle.classList.remove("ad-rotate-anticlock");
-                                actionsDropdown.classList.remove('hide', 'hidden');
-                                actionsDropdown.classList.add('show');
-                            }else{
-                                downAngle.classList.remove("ad-rotate");
-                                downAngle.classList.add("ad-rotate-anticlock");
-                                actionsDropdown.classList.add('hide', 'hidden');
-                                actionsDropdown.classList.remove('show');
-                            }
+                          if(!downAngle.classList.contains("ad-rotate")){
+                              downAngle.classList.add("ad-rotate");
+                              downAngle.classList.remove("ad-rotate-anticlock");
+                              actionsDropdown.classList.remove('hide', 'hidden');
+                              actionsDropdown.classList.add('show');
+                          }else{
+                              downAngle.classList.remove("ad-rotate");
+                              downAngle.classList.add("ad-rotate-anticlock");
+                              actionsDropdown.classList.add('hide', 'hidden');
+                              actionsDropdown.classList.remove('show');
+                          }
                         }
                     }}
                     id='actions-button'
@@ -2064,46 +3129,57 @@ export default function Body({
                             <div key={i}>
                                 <li
                                 onClick={async (e) => {
+                                  let downAngle = e.currentTarget.querySelector("i.actions-angle-down");
+                                  let actionsDropdown = document.getElementById("actions-dropdown");
                                   const emailItems = document.querySelectorAll('#email-item')  as NodeListOf<HTMLDivElement>;
                                   const newEmailItems = Array.from(emailItems);
                                   const subjectCheck = document.getElementById('all') as HTMLInputElement;
                                   const emailItemChecks = document.querySelectorAll('#single') as NodeListOf<HTMLInputElement>;
 
-                                  subjectCheck.checked = !subjectCheck.checked;
+                                  subjectCheck.checked = true;
+                                  
+                                  emailItemChecks.forEach(itemCheck => itemCheck.checked = true);
 
-                                  emailItemChecks.forEach(itemCheck => itemCheck.checked = !itemCheck.checked);
+                                  if(downAngle && actionsDropdown){
+                                    if(!downAngle.classList.contains("ad-rotate")){
+                                        downAngle.classList.add("ad-rotate");
+                                        downAngle.classList.remove("ad-rotate-anticlock");
+                                        actionsDropdown.classList.remove('hide', 'hidden');
+                                        actionsDropdown.classList.add('show');
+                                    }else{
+                                        downAngle.classList.remove("ad-rotate");
+                                        downAngle.classList.add("ad-rotate-anticlock");
+                                        actionsDropdown.classList.add('hide', 'hidden');
+                                        actionsDropdown.classList.remove('show');
+                                    }
+                                  }
 
                                   try {
                                     
-                                    if(action === 'Mark As Read'){
                                       for(let item of newEmailItems){
+                                        if(action === 'Remove'){
+                                          setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== item.dataset.enqId));
+                                          await axios.delete(`/api/enquiries/delete/${item.dataset.enqId}`);
+                                        }else{
 
-                                        item.classList.add('bg-primary-500');
-
-                                        await axios.patch(`/api/enquiries/update/${item.dataset.enqId}`, {
-                                          isRead: true,
-                                          isUnRead: false,
-                                          isBooking: item.dataset.hasAppointment === 'true',
-                                          isContact: item.dataset.hasContact === 'true'
-                                        });
+                                          if(action === 'Mark As Read'){
+                                            item.classList.add('bg-primary-500');
+                                          }
+                                          if(action === 'Mark As Unread'){
+                                            item.classList.remove('bg-primary-500');
+                                          }
+  
+                                          await axios.patch(`/api/enquiries/update/${item.dataset.enqId}`, {
+                                            isRead: action === 'Mark As Read' ? true : false,
+                                            isUnRead: action === 'Mark As Unread' ? true : false,
+                                            isBooking: item.dataset.hasAppointment === 'true',
+                                            isContact: item.dataset.hasContact === 'true'
+                                          });
+                                        }
                                       }
                                       
-                                    }
-                                    if(action === 'Mark As Unread'){
-                                      for(let item of newEmailItems){
-
-                                        item.classList.remove('bg-primary-500');
-
-                                        await axios.patch(`/api/enquiries/update/${item.dataset.enqId}`, {
-                                          isRead: false,
-                                          isUnRead: true,
-                                          isBooking: item.dataset.hasAppointment === 'true',
-                                          isContact: item.dataset.hasContact === 'true'
-                                        });
-                                      }
-                                    }
-                                  } catch (error) {
-                                    
+                                  } catch (error: any) {
+                                    toast.error(error.message);
                                   }
 
                                   
@@ -2148,17 +3224,17 @@ export default function Body({
                         });
 
                         if(downAngle && calendarDropdown){
-                            if(!downAngle.classList.contains("ad-rotate")){
-                                downAngle.classList.add("ad-rotate");
-                                downAngle.classList.remove("ad-rotate-anticlock");
-                                calendarDropdown.classList.remove('hide', 'hidden');
-                                calendarDropdown.classList.add('show');
-                            }else{
-                                downAngle.classList.remove("ad-rotate");
-                                downAngle.classList.add("ad-rotate-anticlock");
-                                calendarDropdown.classList.add('hide', 'hidden');
-                                calendarDropdown.classList.remove('show');
-                            }
+                          if(!downAngle.classList.contains("ad-rotate")){
+                              downAngle.classList.add("ad-rotate");
+                              downAngle.classList.remove("ad-rotate-anticlock");
+                              calendarDropdown.classList.remove('hide', 'hidden');
+                              calendarDropdown.classList.add('show');
+                          }else{
+                              downAngle.classList.remove("ad-rotate");
+                              downAngle.classList.add("ad-rotate-anticlock");
+                              calendarDropdown.classList.add('hide', 'hidden');
+                              calendarDropdown.classList.remove('show');
+                          }
                         }
                       }}
                     className="w-full rounded-sm font-medium px-2 py-[7px] gap-x-2 cursor-pointer bg-transparent border border-secondary-400 inline-flex flex-row items-end">
@@ -2295,11 +3371,30 @@ export default function Body({
                               <label className="text-xs font-bold absolute peer-focus:text-secondary-400 top-[-6px] left-[10px] bg-white px-[5px] text-gray-400">End date</label>
                           </div>
                           <div className="inline-flex flex-row gap-x-4 justify-center px-2">
-                            <button onClick={() => setEnquiries(prevEnqs => {
-                              let newEnqs = [...prevEnqs];
-                              newEnqs = newEnqs.filter(enq => new Date(enq.createdAt).getTime() >= new Date(startDate).getTime() && new Date(enq.createdAt).getTime() <= new Date(endDate).getTime());
-                              return newEnqs;
-                            })} className="bg-accent text-white px-3 py-2 rounded-md hover:ring-1 hover:ring-accent">Apply</button>
+                            <button onClick={() => {
+                              let downAngle = document.querySelector("i.calendar-angle-down");
+                              let calendarDropdown = document.getElementById("calendar-dropdown");
+
+                              setEnquiries(prevEnqs => {
+                                let newEnqs = [...prevEnqs];
+                                newEnqs = newEnqs.filter(enq => new Date(enq.createdAt).getTime() >= new Date(startDate).getTime() && new Date(enq.createdAt).getTime() <= new Date(endDate).getTime());
+                                return newEnqs;
+                              });
+
+                              if(downAngle && calendarDropdown){
+                                if(!downAngle.classList.contains("ad-rotate")){
+                                    downAngle.classList.add("ad-rotate");
+                                    downAngle.classList.remove("ad-rotate-anticlock");
+                                    calendarDropdown.classList.remove('hide', 'hidden');
+                                    calendarDropdown.classList.add('show');
+                                }else{
+                                    downAngle.classList.remove("ad-rotate");
+                                    downAngle.classList.add("ad-rotate-anticlock");
+                                    calendarDropdown.classList.add('hide', 'hidden');
+                                    calendarDropdown.classList.remove('show');
+                                }
+                              }
+                            }} className="bg-accent text-white px-3 py-2 rounded-md hover:ring-1 hover:ring-accent">Apply</button>
                             <button onClick={() => {
                               //resetting calendar and enquiries
                               setStartDate(`${(currentDate - 29) <= 0 ? new Date(currentDate -29 <= 0 && currentMonth === 0 ? currentYear-1 : currentYear, currentDate -29 <= 0 && currentMonth === 0 ? 8 : currentMonth-4, 0).getDate() - Math.abs(currentDate - 29) : currentDate - 29} ${(currentDate - 29) <= 0 ? (currentMonth === 0 ? months[7] : months[currentMonth-5]) : months[currentMonth -4]} ${(currentDate - 29) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}`);
@@ -2468,6 +3563,7 @@ export default function Body({
                                 <button className="text-xs border-secondary-400 border px-2 py-[6px] hover:ring-1 hover:ring-secondary-400" onClick={async () => {
                                   let activeActionAngleDown = document.querySelector("i.active-action-angle-down-for-sm-screen");
                                   let dropdown = document.getElementById('active-action-dropdown-for-sm-screen');
+                                  document.getElementById('email-item')?.classList.add('bg-primary-500');
 
                                   if(activeActionAngleDown?.classList.contains('ad-rotate')){
                                     activeActionAngleDown?.classList.remove("ad-rotate");
@@ -2479,9 +3575,11 @@ export default function Body({
                                     dropdown?.classList.remove('show');
                                   }
                                   
+                                  setIsAdminSettingsOpen(true);
+                                  setIsReading(true);
+                                  setIsReplying(false);
 
                                   try {
-                                    setLoader(true);
                                     await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
                                       isRead: true,
                                       isUnRead: false,
@@ -2489,15 +3587,9 @@ export default function Body({
                                       isContact: !!enq.contact.message
                                     });
                                   } catch (error: any) {
-                                    setLoader(false);
-                                    return toast.error(error.message);
-                                  }finally{
-                                    setLoader(false);
-                                    setIsAdminSettingsOpen(true);
-                                    setIsReading(true);
-                                    setIsReplying(false);
+                                    toast.error(error.message);
                                   }
-                                  }}>{loader ? 'OPENING...' : 'READ MESSAGE'}</button>
+                                  }}>READ MESSAGE</button>
                                 <div className="px-2 py-[4px] border border-secondary-400"
                                     onClick={(e) => {
                                       let downAngle = e.currentTarget.querySelector("i.active-action-angle-down-for-sm-screen");
@@ -2530,7 +3622,7 @@ export default function Body({
                                 ].map((action: string, i: number) => (
                                     <div key={i}>
                                         <li
-                                        onClick={(e) => {
+                                        onClick={async (e) => {
                                           let activeActionAngleDown = document.querySelector("i.active-action-angle-down-for-sm-screen");
                                           let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown-for-sm-screen)');
 
@@ -2553,7 +3645,29 @@ export default function Body({
                                               setIsReplying(true);
                                               setIsReading(false);
                                               break;
-                                          
+
+                                            case 'Unread':
+                                              document.getElementById('email-item')?.classList.remove('bg-primary-500');
+
+                                              try {
+                                                await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
+                                                  isRead: false,
+                                                  isUnRead: true,
+                                                  isBooking: !!enq.appointment.content,
+                                                  isContact: !!enq.contact.message
+                                                });
+                                              } catch (error: any) {
+                                                toast.error(error.message);
+                                              }
+                                              break;
+                                            case 'Remove':
+                                              try {
+                                                setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== enq._id.toString()));
+                                                await axios.delete(`/api/enquiries/delete/${enq._id.toString()}`);
+                                              } catch (error: any) {
+                                                toast.error(error.message);
+
+                                              }
                                             default:
                                               break;
                                           }
@@ -2578,6 +3692,8 @@ export default function Body({
                                   let actionsAngleDown = document.querySelector('i.actions-angle-down');
                                   let filterAngleDown = document.querySelector('i.filter-angle-down');
                                   let dropdowns = document.querySelectorAll('[id$=-dropdown]');
+                                  document.getElementById('email-item')?.classList.add('bg-primary-500');
+
 
                                   if(calendarAngleDown?.classList.contains('ad-rotate')){
                                     calendarAngleDown?.classList.remove("ad-rotate");
@@ -2603,8 +3719,11 @@ export default function Body({
                                     }
                                   });
 
+                                  setIsAdminSettingsOpen(true);
+                                  setIsReading(true);
+                                  setIsReplying(false);
+
                                   try {
-                                    setLoader(true);
                                     await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
                                       isRead: true,
                                       isUnRead: false,
@@ -2612,15 +3731,9 @@ export default function Body({
                                       isContact: !!enq.contact.message
                                     });
                                   } catch (error: any) {
-                                    setLoader(false);
-                                    return toast.error(error.message);
-                                  }finally{
-                                    setLoader(false);
-                                    setIsAdminSettingsOpen(true);
-                                    setIsReading(true);
-                                    setIsReplying(false);
+                                    toast.error(error.message);
                                   }
-                                }}>{loader ? 'OPENING...' : 'READ MESSAGE'}</button>
+                                }}>READ MESSAGE</button>
                                 <div className="px-2 py-[4px] border border-secondary-400" 
                                     onClick={(e) => {
                                     let downAngle = e.currentTarget.querySelector("i.active-action-angle-down");
@@ -2713,7 +3826,29 @@ export default function Body({
                                               setIsReplying(true);
                                               setIsReading(false);
                                               break;
-                                          
+                                            case 'Unread':
+                                              document.getElementById('email-item')?.classList.remove('bg-primary-500');
+
+                                              try {
+                                                await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
+                                                  isRead: false,
+                                                  isUnRead: true,
+                                                  isBooking: !!enq.appointment.content,
+                                                  isContact: !!enq.contact.message
+                                                });
+                                              } catch (error: any) {
+                                                toast.error(error.message);
+                                              }
+                                              break;
+                                            case 'Remove':
+                                                try {
+                                                  setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== enq._id.toString()));
+                                                  await axios.delete(`/api/enquiries/delete/${enq._id.toString()}`);
+                                                } catch (error: any) {
+                                                  toast.error(error.message);
+
+                                                }
+                                              
                                             default:
                                               break;
                                           }
@@ -2773,7 +3908,7 @@ export default function Body({
                                     </textarea>}
                                 {isReading 
                                   ? <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br/>{enq.author.fullName}<br/>
-                                  {enq.appointment.content && <span>Phone:&nbsp;<Link href={`tel:${enq.author.appointment.phoneNo ?? '070333748920'}`}>{enq.author.appointment.phoneNo ?? '070333748920'}</Link><br/>Standard Size: {enq.author.appointment.size ?? 8}</span>}
+                                  {enq.appointment.content && <span>Phone:&nbsp;<Link href={`tel:${enq.author.appointment.phoneNo ?? '070333748920'}`}>{enq.author.appointment.phoneNo ?? '070333748920'}</Link><br/>Standard Size: {enq.author.appointment.size ?? 8}<br/>Date of Event: {`${new Date(enq.appointment.eventDate).getDate()} ${months[new Date(enq.appointment.eventDate).getMonth()]}, ${new Date(enq.appointment.eventDate).getFullYear()}` ?? '10 Sep, 1970'}</span>}
                                   </p>
                                   : <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br />Oyinye Couture Team</p>}
                                 

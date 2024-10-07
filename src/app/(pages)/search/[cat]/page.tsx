@@ -31,7 +31,6 @@ async function getSearchData(query: string, sortBy: string, page: string, lowerB
   
   let uri = `${process.env.DOMAIN}/api/products/search?${queryString}`;
 
-
   const res = await fetch(
     uri, {cache: 'no-cache'}
     );

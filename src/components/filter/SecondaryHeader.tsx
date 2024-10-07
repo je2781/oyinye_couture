@@ -115,7 +115,7 @@ export default function SecondaryHeader({
     return(
         <>
             <header className={`${headerClass} flex flex-row justify-between items-start w-full relative mb-2`} >
-                <section
+                <div
                     id='toggle-settings'
                     className="hidden md:inline-flex flex-row gap-x-4 items-center cursor-pointer absolute left-0"
                     onClick={(e) => {
@@ -151,8 +151,8 @@ export default function SecondaryHeader({
                         <i className="fa-solid fa-angle-left text-[1.2rem]"></i>
                     </div>
                         
-                </section>
-                <section
+                </div>
+                <div
                     className="md:hidden inline-flex flex-row gap-x-4 items-center cursor-pointer absolute left-0"
                     onClick={showFilterModalHandler}
                     >
@@ -166,11 +166,11 @@ export default function SecondaryHeader({
                         <i className="fa-solid fa-angle-left text-[1.2rem]"></i>
                     </div>
                         
-                </section>
+                </div>
                 <h3 className="font-sans text-[.9rem] text-gray-500 absolute left-[40%]">
                 We found {productsLength} result(s)
                 </h3>
-                <section
+                <div
                     className="flex-col gap-y-2 cursor-pointer absolute pb-3 pt-14 right-0 w-[205px] z-10 md:inline-flex hidden"
                         onClick={(e) => {
                             let downAngle = e.currentTarget.querySelector("header i");
@@ -226,15 +226,15 @@ export default function SecondaryHeader({
                         </li>
                         ))}
                     </ul>
-                </section>
-                <section className="inline-flex flex-row gap-x-2 md:hidden absolute right-0">
+                </div>
+                <div className="inline-flex flex-row gap-x-2 md:hidden absolute right-0">
                     <i onClick={() => setIsGridView((prevState: any) => !prevState)} className={`fa-solid fa-grip cursor-pointer text-[1.35rem] ${isGridView ? 'text-gray-500': 'text-gray-300'}`}></i>
                     <i onClick={() => setIsGridView((prevState: any) => !prevState)} className={`fa-regular fa-square cursor-pointer text-[1.35rem] ${!isGridView ? 'text-gray-500': 'text-gray-300'}`}></i>
-                </section>
+                </div>
             </header>
             {isFilterModalOpen && windowWidth < 768  && <FilterModal onClose={hideFilterModalHandler}>
-            <div className="w-full inline-flex flex-col gap-y-7">
-                <section className="flex flex-row justify-between items-center w-full">
+            <section className="w-full inline-flex flex-col gap-y-7">
+                <div className="flex flex-row justify-between items-center w-full">
                     <h5 className="font-sans text-[.9rem] text-gray-500 font-semibold">
                     Out of stock
                     </h5>
@@ -284,8 +284,8 @@ export default function SecondaryHeader({
                         Hide
                     </span>
                     </div>
-                </section>
-                <section className="flex flex-col gap-y-5">
+                </div>
+                <div className="flex flex-col gap-y-5">
                     <div className="flex flex-col gap-y-5">
                         <header
                             className="flex flex-row justify-between items-center cursor-pointer"
@@ -314,7 +314,7 @@ export default function SecondaryHeader({
                             </h5>
                             <i className="fa-solid fa-angle-up text-[1.2rem]"></i>
                         </header>
-                        <section
+                        <div
                         id="price-content"
                         className="flex flex-col gap-y-5"
                         >
@@ -465,7 +465,7 @@ export default function SecondaryHeader({
                             />
                             <div className="w-[7%]"></div>
                         </div>
-                        </section>
+                        </div>
                     </div>
                     <div className="flex flex-col gap-y-5">
                         <header
@@ -495,7 +495,7 @@ export default function SecondaryHeader({
                             </h5>
                             <i className="fa-solid fa-angle-up text-[1.2rem]"></i>
                         </header>
-                        <section
+                        <div
                         id="sortby-content"
                         className="flex flex-col gap-y-5"
                         >
@@ -520,7 +520,7 @@ export default function SecondaryHeader({
                                 </li>
                             ))}
                             </ul>
-                        </section>
+                        </div>
                     </div>
                     <div className="flex flex-col gap-y-5">
                         <header
@@ -550,7 +550,7 @@ export default function SecondaryHeader({
                             </h5>
                             <i className="fa-solid fa-angle-up text-[1.2rem]"></i>
                         </header>
-                        <section
+                        <div
                         id="productType-content"
                         className="flex flex-col gap-y-5"
                         >
@@ -584,10 +584,10 @@ export default function SecondaryHeader({
                                 </li>
                             ))}
                             </ul>
-                        </section>
+                        </div>
                     </div>
-                </section>
-            </div>
+                </div>
+            </section>
             </FilterModal>}
         </>
     );

@@ -20,6 +20,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import useWindowWidth from "../helpers/getWindowWidth";
 import { useRouter } from "next/navigation";
+import useGlobal from "@/store/useGlobal";
 
 export default function Checkout({ cartItems, total, orderId, country, userEmail, userId, billingInfo, shippingInfo, saveBillingInfo, saveShippingInfo }: any) {
   let cartItemObj: CartItemObj = {};
@@ -83,6 +84,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
     `Phone: +${Country.getCountryByCode(country)!.phonecode}...`
   );
   let windowWidth = useWindowWidth();
+  const {locale} = useGlobal();
 
   if (cartItems.length > 0) {
     //extracting product details to populate the cart page
@@ -94,6 +96,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
   const itemTotalAmounts = Object.values(cartItemObj).map(
     (item: any) => parseFloat(item.quantity) * parseFloat(item.price)
   );
+  
 
   React.useEffect(() => {
     (document.querySelector(".within-lagos-island-container > div > input") as HTMLInputElement).checked = true;
@@ -154,7 +157,8 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
         firstName,
         lastName,
         password: randomReference(),
-        enableEmailMarketing
+        enableEmailMarketing,
+        checkingOut: true
       });
 
       //updating order
@@ -228,7 +232,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
               } catch (error: any) {
                 toast.error(error.message);
               }finally{
-                router.replace('/');
+                router.replace(`/`);
               }
             }
           }
@@ -351,7 +355,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
             <header className="flex flex-row justify-between items-center font-sans">
               <h1 className="font-semibold text-xl">Contact</h1>
               <Link
-                href={"/login"}
+                href={`/login`}
                 className="underline text-[.9rem] text-checkout-200 hover:text-checkout-300"
               >
                 Log in

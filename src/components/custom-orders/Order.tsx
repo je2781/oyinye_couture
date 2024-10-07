@@ -2,6 +2,7 @@
 'use client';
 
 import { generateBase64FromMedia } from "@/helpers/getHelpers";
+import useGlobal from "@/store/useGlobal";
 import axios from "axios";
 import { Country, State, City } from "country-state-city";
 import { useRouter } from "next/navigation";
@@ -9,7 +10,7 @@ import React from "react";
 import toast from "react-hot-toast";
 
 
-export default function Bookings({country}: any){
+export default function Order({country}: any){
     const [countryName, setCountryName] = React.useState(Country.getCountryByCode(country)!.name); 
     const [uploadedFiles, setUploadedFiles] = React.useState<string[]>([]); 
     const [base64Images, setBase64Images] = React.useState<string[]>([]); 
@@ -17,6 +18,7 @@ export default function Bookings({country}: any){
         `Phone: +${Country.getCountryByCode(country)!.phonecode}...`
       );
     const router = useRouter();
+    const {locale} = useGlobal();
     const [loader, setLoader] = React.useState(false);
     const [content, setContent] = React.useState('');
     const [size, setSize] = React.useState('');
@@ -25,6 +27,12 @@ export default function Bookings({country}: any){
     const [email, setEmail] = React.useState('');
     const [firstName, setFirstName] = React.useState('');
     const [lastName, setLastName] = React.useState('');
+
+    React.useEffect(() => {
+        if(locale !== 'en'){
+            history.pushState(null, '', `/${locale}${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1]}`);
+        }
+    }, []);
 
     async function handleUploads(e: React.ChangeEvent<HTMLInputElement>){
         const file = e.target.files![0];
@@ -53,7 +61,7 @@ export default function Bookings({country}: any){
 
         try {
             setLoader(true);
-            await axios.post(`/api/enquiries/bookings`, {
+            await axios.post(`/api/enquiries/custom-order`, {
                 email,
                 name: `${firstName} ${lastName}`,
                 content,
@@ -72,7 +80,7 @@ export default function Bookings({country}: any){
         }finally{
             setLoader(false);
             toast.success('Appointment Request Sent');
-            router.replace('/');
+            router.replace(`/`);
         }
 
     }
@@ -80,8 +88,8 @@ export default function Bookings({country}: any){
     return <main className="container mx-auto bg-white w-full min-h-screen max-w-7xl lg:py-12 py-8 lg:px-12 px-8 flex flex-col gap-y-9 items-center">
         <article className="space-y-11">
             <header className="flex flex-col md:items-start items-center gap-y-4">
-                <h1 className='text-4xl font-serif'>Your Appointment</h1>
-                <p className="font-sans text-[1rem] text-center">Please complete the form below to make your appointment. We aim to respond to all bookings within 24 - 48 hours.</p>
+                <h1 className='text-4xl font-serif'>Your Bespoke Order</h1>
+                <p className="font-sans text-[1rem] text-center">Please complete the form below to place your order. We aim to respond to all requests within 24 - 48 hours.</p>
             </header>
             <form className="space-y-5 text-gray-500 font-sans text-sm" onSubmit={handleFormSubmit}>
                 <div className="w-full flex md:flex-row flex-col gap-y-4">
@@ -231,7 +239,7 @@ export default function Bookings({country}: any){
                 </div>
                 <div className="w-full flex flex-col gap-y-2">
                     <div className="w-full flex flex-col gap-y-2">
-                        <label htmlFor="info" className="tracking-widest">WHY ARE YOU MAKING AN APPOINTMENT?</label>
+                        <label htmlFor="info" className="tracking-widest">WHAT WOULD YOU LIKE TO ORDER FROM OYINYE?</label>
                         <textarea 
                             onChange={(e) => setContent(e.target.value)}
                             value={content}
@@ -247,7 +255,7 @@ export default function Bookings({country}: any){
                             rows={5} 
                             className="focus:outline-none text-[1rem] focus:rounded-md placeholder:text-[1rem] placeholder:font-light focus:border-2 focus:border-gray-600 font-light px-3 py-2 border border-gray-300"></textarea>
                     </div>
-                    <p id='content-error' className="text-red-600 text-xs font-sans hidden -mt-1">What&apos;s the reason for your appointment</p>
+                    <p id='content-error' className="text-red-600 text-xs font-sans hidden -mt-1">What would you like to order from oyinye?</p>
                 </div>
                 <div className="w-full flex flex-col gap-y-2 ">
                     <label htmlFor="info" className="tracking-widest text-gray-700 font-medium text-[1rem]">Do you have any style ideas?</label>
@@ -284,6 +292,14 @@ export default function Bookings({country}: any){
                             id='no'
                             onChange={() => {
                                 (document.getElementById('yes') as HTMLInputElement).checked = false;
+                                let uploads = document.getElementById('upload-container');
+
+                                uploads?.classList.add('hidden');
+                                uploads?.classList.remove('inline-flex');
+
+                                setUploadedFiles([]);
+                                setBase64Images([]);
+                                
                             }}
                             className="text-white bg-white appearance-none w-[16px] h-[16px] border border-checkout-200 rounded-sm relative
                                 cursor-pointer outline-none checked:bg-checkout-200 checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
@@ -317,7 +333,7 @@ export default function Bookings({country}: any){
                     </div>
                 </div>
                 <div className="pt-7 w-full">
-                    <button type='submit' className="text-white bg-gray-700 py-4 hover:ring-gray-700 hover:ring-1 w-full text-[1rem]">{loader ? 'Processing' : 'Submit Appointment Request'}</button>
+                    <button type='submit' className="text-white bg-gray-700 py-4 hover:ring-gray-700 hover:ring-1 w-full text-[1rem]">{loader ? 'Processing' : 'Submit Order Request'}</button>
                 </div>
             </form>
         </article>

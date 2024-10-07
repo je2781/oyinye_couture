@@ -1,6 +1,6 @@
 
 
-import Bookings from "@/components/bookings/Bookings";
+import Order from "@/components/custom-orders/Order";
 import Footer from "@/components/footer/Footer";
 import Header from "@/components/layout/Header";
 import { cookies } from "next/headers";
@@ -28,13 +28,13 @@ async function getData() {
     }
 }
 
-export default async function BookingsPage() {
+export default async function OrdersPage() {
     const [country, cartItems] = await getData();
 
     return (
       <>
         <Header cartItems={cartItems} />
-        <Bookings country={country}/>
+        <Order country={country}/>
         <Footer />
 
     </>

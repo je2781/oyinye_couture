@@ -30,9 +30,9 @@
     "react": "^18",
     "react-calendar": "^5.0.0",
     "react-chartjs-2": "^5.2.0",
-    "react-doc-viewer": "^0.1.14",
     "react-dom": "^18",
     "react-hot-toast": "^2.4.1",
+    "react-intl": "^6.7.0",
     "swiper": "^11.1.4"
   },
   "devDependencies": {

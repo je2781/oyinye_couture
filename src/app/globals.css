@@ -35,19 +35,6 @@ body {
   }
 }
 
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-textarea:-webkit-autofill,
-textarea:-webkit-autofill:hover,
-textarea:-webkit-autofill:focus,
-select:-webkit-autofill,
-select:-webkit-autofill:hover,
-select:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px white inset !important;
-  -webkit-text-fill-color: black !important;
-}
-
 .backdrop {
   width: 100%;
   height: 100vh;
@@ -80,7 +67,11 @@ select:-webkit-autofill:focus {
 }
 
 .leading-text {
-  animation: slide-text-up 300ms ease-out forwards;
+  animation: slide-text-up 700ms ease-out forwards;
+}
+
+.slide-left {
+  animation: slide-left 1s ease-out;
 }
 
 #zoom-hint,
@@ -360,6 +351,17 @@ select:-webkit-autofill:focus {
   }
 }
 
+@keyframes slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(200%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes slide-text-up {
   from {
     opacity: 0;
@@ -489,6 +491,17 @@ select:-webkit-autofill:focus {
   }
   100% {
     transform: rotate(0deg);
+  }
+}
+
+@-webkit-keyframes slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(200%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0%);
   }
 }
 

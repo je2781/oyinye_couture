@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Header from "@/components/layout/Header";
+import useGlobal from "@/store/useGlobal";
 
 export default function ResetPasswordPage() {
   const [user, setUser] = React.useState({
@@ -20,6 +21,7 @@ export default function ResetPasswordPage() {
   const [buttonDisabled, setButtonDisabled] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
+  const {locale} = useGlobal();
 
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function ResetPasswordPage() {
         duration: 5000,
         position: 'top-center'
       });
-      router.push("/login");
+      router.push(`/login`);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -68,7 +70,7 @@ export default function ResetPasswordPage() {
           position: 'top-center'
         });
       }
-      router.push("/login");
+      router.push(`/login`);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -151,7 +153,7 @@ export default function ResetPasswordPage() {
             : "Submit"}
           </button>
           {token.length === 0 && <Link
-            href="/login"
+            href={`/login`}
             className=" text-center text-gray-700 underline-offset-4 underline font-sans hover:decoration-2"
           >
             Cancel

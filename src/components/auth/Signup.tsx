@@ -5,6 +5,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
+import useGlobal from "@/store/useGlobal";
 
 export default function LoginPage() {
   const [user, setUser] = React.useState({
@@ -19,7 +20,7 @@ export default function LoginPage() {
   const [buttonDisabled, setButtonDisabled] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
-
+  const {locale} = useGlobal();
 
   useEffect(() => {
     if (
@@ -40,7 +41,7 @@ export default function LoginPage() {
         const res = await axios.post("/api/users/signup", user);
 
         if(res.data.success){
-          router.push('/login');
+          router.push(`/login`);
         }else{
           toast.error(res.data.error);
         }

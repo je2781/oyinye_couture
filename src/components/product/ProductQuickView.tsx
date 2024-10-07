@@ -18,6 +18,7 @@ import { extractProductDetails, regex, sizes } from "@/helpers/getHelpers";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import useGlobal from "@/store/useGlobal";
 
 
 const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPage}: any) => {
@@ -29,6 +30,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
     const [isSavingCart, setIsSavingCart] = React.useState(false);
     const [toastError, setToastError] = React.useState(false);
     const router = useRouter();
+    const {locale} = useGlobal();
 
     let sizesJsxObj: DressSizesJsxObj  = {};
     let sizesObj: DressSizesObj  = {};

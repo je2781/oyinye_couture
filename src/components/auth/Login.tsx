@@ -7,6 +7,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import useCart from "@/store/useCart";
 import Header from "@/components/layout/Header";
+import useGlobal from "@/store/useGlobal";
 
 
 export default function LoginPage({message, success}: any) {
@@ -17,10 +18,10 @@ export default function LoginPage({message, success}: any) {
   });
 
   const router = useRouter();
-  const {items} = useCart();
   const [buttonDisabled, setButtonDisabled] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
+  
 
   useEffect(() => {
     if (user.email.length > 0 && user.password.length > 0) {
@@ -59,9 +60,9 @@ export default function LoginPage({message, success}: any) {
         }else{
           toast.success("Login successful!");
           if(extractedUser.isAdmin){
-            router.push('/admin/summary');
+            router.replace('/admin/summary');
           }else{
-            router.replace('/');
+            router.replace(`/`);
           }
         }
       }else{
@@ -109,7 +110,7 @@ export default function LoginPage({message, success}: any) {
           </section>
           <section className="flex flex-row justify-start">
             <Link
-                href="/resetpassword"
+                href={`/resetpassword`}
                 className="btn text-center text-gray-700 font-sans underline underline-offset-4 hover:decoration-2"
               >
                 Forgot your password?
@@ -130,7 +131,7 @@ export default function LoginPage({message, success}: any) {
             : "Sign In"}
           </button>
           <Link
-            href="/signup"
+            href={`/signup`}
             className=" text-center text-gray-700 underline-offset-4 underline font-sans hover:decoration-2"
           >
             Create account

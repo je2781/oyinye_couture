@@ -6,12 +6,14 @@ import { SearchModal } from "./Modal";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useProduct from "@/store/useProduct";
+import useGlobal from "@/store/useGlobal";
 
 const SearchBar = ({ onHideModal}: any) => {
   const [query, setQuery] = React.useState("");
   const router = useRouter();
   const {allProducts} = useProduct();
   const [isLoading, setIsLoading] = React.useState(false);
+  const {locale} = useGlobal();
 
   let currentUrl = `/search/products?q=${query}&options[prefix]=last&sort_by=relevance&page=1`;
 
@@ -22,21 +24,20 @@ const SearchBar = ({ onHideModal}: any) => {
       }else{
         router.push(`/search/products?q=${query}&options[prefix]=last&sort_by=relevance&page=1`);
       }
-
     }
 
   }, [isLoading]);
 
 
   const pages = [
-    {title: "Contact Us", route: '/pages/contact'}, 
-    {title: "About", route: '/pages/about'}, 
-    {title: "Login", route: '/login'}, 
-    {title: "Signup", route: '/signup'}, 
-    {title: "Shipping Policy", route: '/pages/shipping-policy'},
-    {title: "Returns Policy", route: '/pages/returns-policy'},
-    {title: "Privacy Policy", route: '/pages/privacy-policy'},
-    {title: "Size Guide", route: '/pages/size-guide'},
+    { title: "Contact Us", route: `/pages/contact` },
+    { title: "About", route: `/pages/about` },
+    { title: "Login", route: `/login` },
+    { title: "Signup", route: `/signup` },
+    { title: "Shipping Policy", route: `/pages/shipping-policy` },
+    {title: "Returns Policy", route: `/pages/returns-policy`},
+    {title: "Privacy Policy", route: `/pages/privacy-policy`},
+    {title: "Size Guide", route: `/pages/size-guide`},
   ];
 
   let productSuggestions = allProducts.slice(0, 6).some((product: any)=> product.title.includes(query.charAt(0).toUpperCase() + query.slice(1)));

@@ -9,11 +9,13 @@ import { useRouter } from "next/navigation";
 import { useMediaQuery } from "@mui/material";
 import useWindowWidth from "../helpers/getWindowWidth";
 import toast from "react-hot-toast";
+import useGlobal from "@/store/useGlobal";
 
 const Product = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDetailPage}: any) => {
     const[isModalOpen, setIsModalOpen] = React.useState(false);
     let width = useWindowWidth();
     const router = useRouter();
+    const {locale} = useGlobal();
     //sorting out the sizes of the first dress
     if(!isSearchProduct){
       product.colors[0].sizes = product.colors[0].sizes.filter((size: any) => size.stock > 0);

@@ -11,6 +11,43 @@ import { EmailType } from '@/interfaces';
 
 connect();
 
+export async function DELETE(req: NextRequest, { params }: { params: { slug?: string[] } }) {
+    try {
+
+        const newEnqId = mongoose.Types.ObjectId.createFromHexString(params.slug![1]);
+
+        
+        if(mongoose.Types.ObjectId.isValid(newEnqId)){
+          await Enquiries.findByIdAndUpdate(newEnqId);
+
+          return NextResponse.json(
+            {
+              message: "enquiry deleted",
+              success: true,
+            },
+            { status: 201 }
+          );
+        }else{
+          return NextResponse.json(
+            {
+                message: 'invalid enquiry id',
+                success: false
+            },
+            { status: 400 }
+          );
+        }
+        
+
+    } catch (error: any) {
+        return NextResponse.json(
+            {
+                error: error.message,
+            },
+            { status: 500 }
+        );
+    }
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
 
@@ -39,9 +76,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug?: str
             );
           }else{
             if(isBooking){
-              enq.appointment.read = isRead ?? false;
-              enq.appointment.unRead = isUnRead ?? true;
-              enq.appointment.saved = saved ?? false;
+              enq.order.read = isRead ?? false;
+              enq.order.unRead = isUnRead ?? true;
+              enq.order.saved = saved ?? false;
   
               await enq.save();
             }
@@ -133,16 +170,16 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             userId: user._id
           });
     
-          if(params.slug![0] === 'bookings'){
+          if(params.slug![0] === 'custom-order'){
             //creating new appointment
             const newEquiry = new Enquiries({
               'author.authorId': savedUser._id,
-              'author.appointment.styles': styles,
-              'author.appointment.size': size,
-              'author.appointment.residence': country,
-              'author.appointment.phoneNo': phone,
-              'appointment.eventDate': eventDate,
-              'appointment.content': content
+              'author.order.styles': styles,
+              'author.order.size': size,
+              'author.order.residence': country,
+              'author.order.phoneNo': phone,
+              'order.eventDate': eventDate,
+              'order.content': content
             });
 
             await newEquiry.save();
@@ -171,21 +208,21 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
 
           await user.save();
 
-          if(params.slug![0] === 'bookings'){
+          if(params.slug![0] === 'custom-order'){
 
             //updating product with user review
             //creating new appointment
-            const newAppointment = new Enquiries({
+            const newOrder = new Enquiries({
               'author.authorId': user._id,
-              'author.appointment.styles': styles,
-              'author.appointment.size': size,
-              'author.appointment.residence': country,
-              'author.appointment.phoneNo': phone,
-              'appointment.eventDate': eventDate,
-              'appointment.content': content,
+              'author.order.styles': styles,
+              'author.order.size': size,
+              'author.order.residence': country,
+              'author.order.phoneNo': phone,
+              'order.eventDate': eventDate,
+              'order.content': content,
             });
       
-            await newAppointment.save();
+            await newOrder.save();
           }else{
               const newEquiry = new Enquiries({
                 'author.authorId': user._id,
@@ -267,7 +304,6 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
           }
   
       
-          console.log('updated', updatedEnquiries);
           return NextResponse.json(
             {
               message: "enquiries retrieved",

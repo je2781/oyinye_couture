@@ -10,7 +10,7 @@ const EnquiriesSchema = new Schema({
             ref: "users",
             required: true,
         },
-        appointment: {
+        order: {
             phoneNo: String,
             residence: String,
             size: Number,
@@ -21,7 +21,7 @@ const EnquiriesSchema = new Schema({
             ],
         }
     },
-    appointment: {
+    order: {
         content: String,
         eventDate: Date,
         read: {

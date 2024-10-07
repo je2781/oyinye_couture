@@ -9,12 +9,21 @@ const ProductSchema = new Schema({
         type: String,
         required: true
     },
+    isFeature: {
+        type: Boolean,
+        default: false
+    },
     colors: [
         {
             type: {
                 type: String,
                 required: true
             },
+            embelishment: String,
+            fabric: String,
+            length: String,
+            neckLine: String,
+            sleeveLength: String,
             isAvailable: {
                 type: Boolean,
                 required: true
@@ -72,8 +81,8 @@ const ProductSchema = new Schema({
         }
     ],
     
-    
-
+}, {
+    timestamps: true
 });
 
 const Product = mongoose.models.products ?? mongoose.model('products', ProductSchema);

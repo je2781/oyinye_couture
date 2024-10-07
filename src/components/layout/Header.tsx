@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import React, { useEffect, useLayoutEffect } from "react";
+import {FormattedMessage } from 'react-intl';
 import logo from "../../../public/oyinye.png";
 import useAuth from "../../store/useAuth";
 import HeaderCartButton from "./HeaderCartButton";
@@ -12,24 +13,6 @@ import { MobileModal } from "../ui/Modal";
 import useCart from "@/store/useCart";
 import useGlobal from "@/store/useGlobal";
 
-const menuItems = [
-  {
-    name: "Home",
-    href: "/",
-  },
-  {
-    name: "Collections",
-    href: "/collections/all",
-  },
-  {
-    name: "About",
-    href: "/pages/about",
-  },
-  {
-    name: "Contact",
-    href: "/pages/contact",
-  },
-];
 
 export default function Header({cartItems, isCheckout, isAuth}: any) {
   const { authStatus } = useAuth();
@@ -39,6 +22,26 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
   const {updateCart, items} = useCart();
   const {isMobileModalOpen, setIsMobileModalOpen} = useGlobal();
   let windowWidth = useWindowWidth();
+  const {locale} = useGlobal();
+  
+  const menuItems = [
+    {
+      name: <FormattedMessage id="app.header.item1" defaultMessage="Home" />,
+      href: `/`,
+    },
+    {
+      name: <FormattedMessage id="app.header.item2" defaultMessage="Collections" />,
+      href: `/collections/all`,
+    },
+    {
+      name: <FormattedMessage id="app.header.item3" defaultMessage="About" />,
+      href: `/pages/about`,
+    },
+    {
+      name: <FormattedMessage id="app.header.item4" defaultMessage="Contact" />,
+      href: `/pages/contact`,
+    },
+  ];
 
   let timerId: NodeJS.Timeout | null  = null;
 
@@ -56,6 +59,34 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
       updateCart(cartItems);
     }
   }, []);
+
+  //updating route history to reflect new language
+  // useEffect(() => {
+  //   const handleBeforeUnload = () => {
+  //     history.pushState(null, '', `${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1]}`);
+
+  //   };
+
+  //   window.addEventListener('beforeunload', handleBeforeUnload);
+
+  //   return () => {
+  //     window.removeEventListener('beforeunload', handleBeforeUnload);
+  //   };
+  // }, []);
+
+  // useEffect(() => {
+  //   timerId = setTimeout(() => {
+  //     if(locale !== 'en'){
+  //       history.pushState(null, '', `/${locale}${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1]}`);
+  //     }
+  //   }, 400);
+
+  //   return () => {
+  //     if(timerId){
+  //       clearTimeout(timerId);
+  //     }
+  //   };
+  // }, []);
   
   // Handling scroll
   const handleScroll = () => {
@@ -131,7 +162,7 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
             <i className="fa-solid fa-bars text-gray-600 text-lg"></i>
             <span className="sr-only">Open dashboard mobile navbar</span>
           </button>
-          <Link href={"/"} className="inline-block max-w-[170px]">
+          <Link href={`/`} className="inline-block max-w-[170px]">
             {isCheckout ?
             <Image src={logo} alt="logo" className="bg-cover" width={1240}/>
           : <Image src={logo} alt="logo" className="bg-cover" />}
@@ -139,8 +170,8 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
           <div className="grow items-start lg:flex hidden">
             {!isCheckout && <ul className="inline-flex flex-row gap-x-8 items-center">
               {menuItems.map((item) => (
-                <li key={item.name} className={`${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1] === item.href ? '-mt-1' : ''} cursor-pointer relative`}>
-                  {item.name !== 'Collections' ? <Link
+                <li key={item.name.props.defaultMessage} className={`${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1] === item.href ? '-mt-1' : ''} cursor-pointer relative`}>
+                  {item.name.props.defaultMessage !== 'Collections' ? <Link
                     href={item.href}
                     style={{textDecorationThickness: '2px'}}
                     className={`${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1] === item.href ? 'underline underline-offset-4' : ''} hover:underline hover:underline-offset-4 text-[1rem] font-medium text-gray-600 font-sans`}
@@ -178,14 +209,15 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
                     <ul id='collections-dropdown' className="hide hidden absolute right-0 z-10 top-8 left-[70px] w-36 origin-top-right flex-col p-1 text-sm bg-white rounded-md text-gray-600 font-light shadow-sm shadow-gray-400">
                       {[
                         'All Dresses',
-                        'Wedding',
-                        'Business'
+                        'Basics',
+                        'Made To Order',
+                        'Bespoke'
                       ].map((item: string, i: number) => (
                           <li
                             key={item}
                             className="cursor-pointer flex flex-row items-center justify-between p-2"
                           >
-                              <Link href={`/collections/${item.split(' ')[0].charAt(0).toLowerCase() + item.split(' ')[0].slice(1)}`}>{item}</Link>
+                              <Link href={`${item !== 'Bespoke' ? `/collections/${item.split(' ')[0].charAt(0).toLowerCase() + item.split(' ')[0].slice(1).toLowerCase().trim()}` : `/order`}`}>{item}</Link>
                           </li>
                       ))}
                     </ul>
@@ -199,7 +231,7 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
               onClick={showSearchModalHandler}
             ></i>}
             {!isCheckout && <Link
-              href={authStatus ? "/profile" : "/login"}
+              href={authStatus ? `/profile` : `/login`}
               className="hidden lg:inline-block"
             >
               <i className="fa-solid cursor-pointer fa-user text-lg text-gray-600 transition-all duration-300 ease-out transform hover:scale-110"></i>
@@ -213,8 +245,8 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
       {isMobileModalOpen && <MobileModal onClose={hideModalHandler}>
         <ul className="inline-flex flex-col gap-y-6">
                 {menuItems.map((item) => (
-                  <li key={item.name}>
-                    {item.name !== 'Collections' 
+                  <li key={item.name.props.defaultMessage}>
+                    {item.name.props.defaultMessage !== 'Collections' 
                     ? <Link
                       href={item.href}
                       className="text-lg font-medium text-gray-500 font-sans"
@@ -252,14 +284,15 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
                         <ul id='collections-dropdown-for-sm-screen' className="hide hidden flex-col p-1 text-[1rem] bg-white text-gray-500 font-light">
                           {[
                             'All Dresses',
-                            'Wedding',
-                            'Business'
+                            'Basics',
+                            'Made To Order',
+                            'Bespoke'
                           ].map((item: string, i: number) => (
                               <li
                                 key={item}
                                 className="cursor-pointer flex flex-row items-center justify-between p-2"
                               >
-                                  <Link href={`/collections/${item.split(' ')[0].charAt(0).toLowerCase() + item.split(' ')[0].slice(1)}`}>{item}</Link>
+                              <Link href={`${item !== 'Bespoke' ? `/collections/${item.split(' ')[0].charAt(0).toLowerCase() + item.split(' ')[0].slice(1).toLowerCase().trim()}` : `/order`}`}>{item}</Link>
                               </li>
                           ))}
                         </ul>

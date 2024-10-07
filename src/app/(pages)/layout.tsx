@@ -7,7 +7,23 @@ import { ProductContextProvider } from "@/store/productContext";
 import Header from "@/components/layout/Header";
 import { cartReducer, defaultCartState } from "@/helpers/getHelpers";
 import { GlobalContextProvider } from "@/store/globalContext";
-import Footer from "@/components/footer/Footer";
+import messagesEn from '../../locales/en/messages.json';
+import messagesFr from '../../locales/fr/messages.json';
+import messagesCh from '../../locales/zh-TW/messages.json';
+import messagesPg from '../../locales/pt-PT/messages.json';
+import messagesEs from '../../locales/es/messages.json';
+import messagesNl from '../../locales/nl/messages.json';
+import './public.css';
+import { IntlProvider } from "react-intl";
+
+const messages: Record<string, { [key: string]: any }> = {
+  'en': messagesEn,
+  'fr': messagesFr,
+  'nl': messagesNl,
+  'pt-PT': messagesPg,
+  'zh-TW': messagesCh,
+  'es': messagesEs
+};
 
 export default function RootLayout({
   children,
@@ -17,11 +33,23 @@ export default function RootLayout({
   const [authStatus, setAuthStatus] = useState(false);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
-
+  const [locale, setLocale] = useState('en');
   const [cartState, dispatchCartAction] = useReducer(
     cartReducer,
     defaultCartState
   );
+
+  useEffect(() => {
+    const storedLocale = localStorage.getItem('locale');
+    if (storedLocale) {
+      setLocale(storedLocale);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Update <html lang> attribute to match current locale
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   useEffect(() => {
     async function fetchAllProducts() {
@@ -38,7 +66,6 @@ export default function RootLayout({
     fetchAllProducts();
     
   }, []);
-
 
   const deductItemHandler = (variantId: string,  quantity: number, price: number) => {
     dispatchCartAction({ type: "REMOVE", item: {
@@ -65,16 +92,21 @@ export default function RootLayout({
   };
 
   return (
-    <GlobalContextProvider value={{isMobileModalOpen, setIsMobileModalOpen}}>
-      <AuthContextProvider value={{ authStatus, setAuthStatus }}>
-      <CartContextProvider value={cartContext}>
-        <ProductContextProvider
-          value={{ allProducts}}
-        >
-          {children}
-        </ProductContextProvider>
-      </CartContextProvider>
-    </AuthContextProvider>
+    <GlobalContextProvider value={{isMobileModalOpen, setIsMobileModalOpen, setLocale, locale}}>
+      <IntlProvider locale={locale} messages={messages[locale]}>
+          <AuthContextProvider value={{ authStatus, setAuthStatus }}>
+          <CartContextProvider value={cartContext}>
+            <ProductContextProvider
+              value={{ allProducts}}
+            >
+              {children}
+              <div>
+                
+              </div>
+            </ProductContextProvider>
+          </CartContextProvider>
+        </AuthContextProvider>
+      </IntlProvider>
     </GlobalContextProvider>
   );
 }

@@ -11,52 +11,40 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import useGlobal from "@/store/useGlobal";
-import { MobileModal } from "../ui/Modal";
-import { appsList, getRouteNames, insightList, viewsList } from "@/helpers/getHelpers";
+import { AdminSettingsModal, MobileModal } from "../ui/Modal";
+import { appsList, generateBase64FromMedia, getRouteNames, insightList, viewsList } from "@/helpers/getHelpers";
 
-export default function AdminHeader({sectionName, pathName}: any) {
+export default function AdminHeader({sectionName, pathName, userName, userEmail, title, id}: any) {
   let timerId: NodeJS.Timeout | null  = null;
 
   const { authStatus } = useAuth();
+  const [isAdminSettingsOpen, setIsAdminSettingsOpen] = React.useState({
+    profile: false,
+    settings: false
+  });
   const [isSearchModalOpen, setIsSearchModalOpen] = React.useState(false);
   const router = useRouter();
   const {isMobileModalOpen, setIsMobileModalOpen} = useGlobal();
   let width = useWindowWidth();
+  const [imageBase64, setImageBase64] = React.useState('');
+  const [email, setEmail] = React.useState(userEmail);
+  const [password, setPassword] = React.useState('*********');
+  const [name, setName] = React.useState(userName);
+  const [loader, setLoader] = React.useState(false);
+  const {locale, setLocale} = useGlobal();
 
   useEffect(() => {
     setIsMobileModalOpen(false);
     
-  }, [width]);
-
-  
-  useEffect(() => {
-    const adminMenu = document.querySelector('#admin-menu');
-    const orderManagementOptions = document.querySelector('#options-menu');
-    const orderManagementOptionsForSmScreens = document.querySelector('#options-menu-sm-screen');
-    const mainContent = document.querySelector('#admin-content') as HTMLElement;
-
-    const handleContentClick = (event: MouseEvent) => {
-      if(adminMenu && !adminMenu.classList.contains('hidden')){
-        adminMenu.classList.add('hidden');
-      }
-      if(orderManagementOptions && !orderManagementOptions.classList.contains('hidden')){
-        orderManagementOptions.classList.add('hidden');
-      }
-      if(orderManagementOptionsForSmScreens && !orderManagementOptionsForSmScreens.classList.contains('hidden')){
-        orderManagementOptionsForSmScreens.classList.add('hidden');
-      }
-    };
-
-
-    // Adding the event listener to the body element
-    mainContent.addEventListener('click', handleContentClick);
-
-
-    // Cleanup the event listener when the component unmounts
-    return () => {
-      mainContent.removeEventListener('click', handleContentClick);
-    };
   }, []);
+
+  useEffect(() => {
+    let adminModal = document.querySelector('#admin-settings-modal') as HTMLElement;
+    if (isAdminSettingsOpen && adminModal) {
+      adminModal.classList.add('slide-down');
+      adminModal.classList.remove('slide-up');
+    }
+  }, [isAdminSettingsOpen]);
 
   useEffect(() => {
     let mobileNav = document.querySelector('#mobile-nav') as HTMLElement;
@@ -93,6 +81,42 @@ export default function AdminHeader({sectionName, pathName}: any) {
     }
   };
 
+  React.useEffect(() => {
+    if (isAdminSettingsOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+    };
+  }, [isAdminSettingsOpen]);
+
+
+  const hideAdminSettingsModalHandler = (item: string) => {
+    let adminModal = document.querySelector('#admin-settings-modal') as HTMLElement;
+    if (adminModal) {
+      adminModal.classList.remove('slide-down');
+      adminModal.classList.add('slide-up');
+      timerId = setTimeout(() => {
+      setIsAdminSettingsOpen({
+        settings: false,
+        profile: false,
+      });
+      }, 300); 
+    } else {
+      setIsAdminSettingsOpen({
+        settings: false,
+        profile: false,
+      });
+    }
+
+  }
+
   const onLogout = async () => {
     try {
       await axios.get("/api/users/logout");
@@ -102,10 +126,7 @@ export default function AdminHeader({sectionName, pathName}: any) {
     }
   };
 
-
-  
   let routeNames = getRouteNames(appsList);
-
 
   return (
     <nav className="flex flex-row w-full ">
@@ -152,21 +173,168 @@ export default function AdminHeader({sectionName, pathName}: any) {
               <div id='admin-menu' className="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md text-secondary-400 bg-primary-800 shadow-md ring-1 ring-black ring-opacity-5 py-3 px-2 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" >
                   <div className="inline-flex flex-row items-center gap-x-3 px-4 py-2 hover:text-accent">
                     <i className="fa-regular fa-user"></i>
-                    <Link href="#" className="text-[1rem] font-sans" role="menuitem"  id="user-menu-item-0">Profile</Link>
+                    <button onClick={() => {
+                      setIsAdminSettingsOpen(prevState => ({
+                        ...prevState,
+                        profile: true
+                      }));
+                      document.querySelector('#admin-menu')?.classList.add('hidden');
+                    }} className="text-[1rem] font-sans" role="menuitem"  id="user-menu-item-0">Profile</button>
                   </div>
                   <div className="inline-flex flex-row items-center gap-x-3 px-4 py-2 hover:text-accent">
                     <i className="fa-solid fa-gear"></i>
-                    <Link href="#" className="text-[1rem] font-sans" role="menuitem"  id="user-menu-item-1">Settings</Link>
+                    <button onClick={() => {
+                      setIsAdminSettingsOpen(prevState => ({
+                        ...prevState,
+                        settings: true
+                      }));
+                      document.querySelector('#admin-menu')?.classList.add('hidden');
+                    }} className="text-[1rem] font-sans" role="menuitem"  id="user-menu-item-1">Settings</button>
                   </div>
-                  <div className="px-4 py-2 hover:text-accent text-[1rem] font-sans inline-flex flex-row items-center gap-x-3">
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    await onLogout();
+                  }} className="px-4 py-2 hover:text-accent text-[1rem] font-sans inline-flex flex-row items-center gap-x-3">
                     <i className="fa-solid fa-arrow-right-from-bracket"></i>
                     <button
-                      onClick={onLogout}
+                      type='submit'
                       role="menuitem"  id="user-menu-item-2"
                     >
                     Logout
                     </button>
-                  </div>
+                  </form>
+                  {
+                      (isAdminSettingsOpen.profile || isAdminSettingsOpen.settings) && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white !top-[7vh]'>
+                            {
+                              isAdminSettingsOpen.profile ? 
+                                  <section className='font-sans font-light flex flex-col gap-y-11 text-gray-500 pb-6 pt-16'>
+                              
+                                    <form onSubmit={async (e) => {
+                                      e.preventDefault();
+                                      try {
+                                        setLoader(true);
+                                        await axios.patch(`/api/users/${id}`, {
+                                          firstName: name.split(' ')[0],
+                                          lastName: name.split(' ')[1],
+                                          password,
+                                          email,
+                                          avatar: imageBase64
+                                        });
+                                      } catch (error) {
+                                        
+                                      }finally{
+                                        setLoader(false);
+                                        setIsAdminSettingsOpen({
+                                          settings: false,
+                                          profile: false
+                                        });
+                                      }
+                                    }}  className='flex flex-col gap-y-9 max-h-[75vh]' encType="multipart/form-data">
+                                        <div className="flex flex-row w-full items-start px-5">
+                                          <div className='flex flex-row justify-center w-[30%]'>
+                                              <label htmlFor='avatar' id='avatar-container' className='rounded-[50%] w-40 h-40 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                                                  <i className="fa-solid fa-camera text-2xl text-white"></i>
+                                              </label>
+                                              <input type='file' className='hidden' id='avatar' onChange={async(e) => {
+                                                  const base64String = await generateBase64FromMedia(e.target.files![0]);
+                                                  const picContainer = document.getElementById('avatar-container') as HTMLLabelElement;
+                                                  //clearing reviewer picture container
+                                                  picContainer.innerHTML = '';
+
+                                                  if(picContainer){
+                                                      setImageBase64(base64String as string);
+                                                      picContainer.style.backgroundImage = `url(${base64String})`;
+                                                  }
+
+                                              }}/>
+                                          </div>
+                                          <div className="w-[10%]"></div>
+                                          <div className="w-[60%] flex flex-col justify-start gap-y-3 font-sans font-normal">
+                                            <h1 className="leading-5 text-3xl font-medium">{userName ?? 'Tester'}</h1>
+                                            <p >
+                                              <Link className="text-blue-600" href={`mailto:${userEmail ?? 'test@test.com'}`}>{userEmail ?? 'test@test.com'}</Link>
+                                              &nbsp;-&nbsp;Administrator
+                                            </p>
+                                          </div>
+                                        </div>
+                                        
+                                        <section className="flex flex-col items-start w-full max-h-[500px] overflow-y-auto hide-scrollbar">
+                                          <header className="font-medium font-sans text-lg px-5">Account</header>
+                                          <hr className="border border-gray-100 mt-3 w-full border-l-0 border-r-0 border-t-0" />
+                                          <div className="p-5 w-full text-gray-400 font-medium font-sans text-sm flex flex-col gap-y-5">
+                                              <div className="w-full flex flex-row items-center">
+                                                <h3 className="w-[50%]">Email</h3>
+                                                <input value={email} className="focus:outline-none font-normal border border-gray-200 p-2 rounded-sm h-8 w-[50%]"/>
+                                              </div>
+                                              <div className="w-full flex flex-row items-center">
+                                                <h3 className="w-[50%]">Password</h3>
+                                                <input value={password} className="focus:outline-none font-normal border border-gray-200 p-2 bg-gray-50 rounded-sm h-8 w-[50%]"/>
+                                              </div>
+                                              <div className="w-full flex flex-row items-center">
+                                                <h3 className="w-[50%]">Full Name</h3>
+                                                <input value={name} className="focus:outline-none font-normal border border-gray-200 bg-gray-50 p-2 rounded-sm h-8 w-[50%]"/>
+                                              </div>
+                                              <div className="w-full flex flex-row items-center">
+                                                <h3 className="w-[50%]">Title</h3>
+                                                <input value={title ?? 'Administrator'} disabled className="focus:outline-none font-normal border border-gray-200 bg-gray-50 p-2 rounded-sm h-8 w-[50%]"/>
+                                              </div>
+                                              <div className="w-full flex flex-row items-center">
+                                                <h3 className="w-[50%]">Language</h3>
+                                                <div 
+                                                  onClick={() => {
+                                                      let downAngle = document.querySelector('i.lang-angle-down');
+                                                      if(!downAngle?.classList.contains("ad-rotate")){
+                                                          downAngle?.classList.add("ad-rotate");
+                                                          downAngle?.classList.remove("ad-rotate-anticlock");
+                                                      }else{
+                                                          downAngle?.classList.remove("ad-rotate");
+                                                          downAngle?.classList.add("ad-rotate-anticlock");
+                                                      }
+                                                  }}
+                                                  className="relative border border-gray-400 rounded-sm p-1 focus:border-gray-600 w-[30%]">
+                                                      <select 
+                                                      id='lang-select'
+                                                      className="focus:outline-none p-2 appearance-none"
+                                                      onChange={(e) => {
+                                                          setLocale(e.target.value);
+                                                          localStorage.setItem('locale', e.target.value);
+                                                          history.pushState(null, '', `/${e.target.value}`);
+
+                                                      }}>
+                                                          <option hidden selected value=''>{locale === 'en' ? 'English' : locale === 'fr' ? 'French' : locale === 'nl' ? 'Dutch' : locale === 'pt-PT' ? 'Portugese (Portugal)' : locale === 'zh-TW' ? 'Chinese (traditional)' : 'Spanish'}</option>
+                                                          {
+                                                              ['en',
+                                                              'fr',
+                                                              'nl',
+                                                              'pt-PT',
+                                                              'zh-TW',
+                                                              'es'].map((val, i) => <option className='underline underline-offset-1' value={val} key={i}>
+                                                                  {val === 'en' ? 'English' : val === 'fr' ? 'French' : val === 'nl' ? 'Dutch' : val === 'pt-PT' ? 'Portugese (Portugal)' : val === 'zh-TW' ? 'Chinese (traditional)' : 'Spanish'}
+                                                              </option>)
+                                                          }
+                                                      </select>
+                                                      <i onClick={(e) => {
+                                                          e.preventDefault();
+                                                          e.stopPropagation();
+                                                      }} className="fa-solid fa-angle-down lang-angle-down absolute top-[40%] right-3"
+
+                                                      ></i>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                        </section>
+                                        <div className='flex flex-row justify-end px-5 w-full'>
+                                          <button type='submit' className='px-10 py-2 rounded-md bg-accent text-white outline-none'>{loader ? 'Processing' : 'Edit Profile'}</button>
+                                        </div>
+                                        
+                                    </form>
+                              </section>
+                              : <section>
+
+                              </section>
+                            }
+                      </AdminSettingsModal>
+                    }
               </div>
           </div>
           </div>
@@ -177,7 +345,7 @@ export default function AdminHeader({sectionName, pathName}: any) {
         {isMobileModalOpen && <MobileModal onClose={hideModalHandler} classes='bg-primary-800 px-4 pt-8'>
           
             <section className="gap-y-12 flex flex-col items-start">
-                <Link href='/admin/insight/summary' className="inline-block w-[150px] max-w-[170px]">
+                <Link href='/admin/summary' className="inline-block w-[150px] max-w-[170px]">
                     <h1 className="text-3xl italic text-accent font-sans text-center">Oyinye</h1>
                 </Link>
                 <ul className={`inline-flex items-start flex-col gap-y-6 w-full`}>

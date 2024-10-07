@@ -36,7 +36,9 @@ export async function GET(
       {
         success: true,
         userEmail: user.email,
+        title: user.isAdmin ? 'Administrator' : 'Guest',
         userId: user._id.toString(),
+        userName: `${user.firstName} ${user.lastName}`,
         shippingInfo: user.shippingInfo ?? "",
         billingInfo: user.billingInfo ?? "",
         saveBillingInfo: user.saveBillingInfo,
@@ -46,7 +48,6 @@ export async function GET(
     );
 
   } catch (error: any) {
-    console.error('Error in GET /api/users/[id]:', error);
     return NextResponse.json(
       {
         error: error?.message || "An unexpected error occurred",
@@ -71,42 +72,53 @@ export async function PATCH(
 
     const newUserId = mongoose.Types.ObjectId.createFromHexString(params.id);
     const reqBody = await req.json();
-    const { firstName, lastName, password, enableEmailMarketing } = reqBody;
+    const { firstName, lastName, password, enableEmailMarketing = false, avatar, checkingOut, email} = reqBody;
 
     const user = await User.findById(newUserId);
 
     // Check if user exists
     if (!user) {
       return NextResponse.json(
-        { message: "Go back to cart and register your email" },
+        { message: "user doesn't exist" },
         { status: 200 }
       );
     }
-
-    // Hash the password
-    const hash = await argon.hash(password);
-
+    
     // Update user fields
-    user.password = hash;
+    if(password && password.length > 0){
+      // Hash the password
+      const hash = await argon.hash(password);
+      user.password = hash;
+    }
     user.enableEmailMarketing = enableEmailMarketing;
     user.firstName = firstName;
     user.lastName = lastName;
+    if(avatar){
+      user.avatar = avatar;
+    }
+    if(email){
+      user.email = email;
+    }
 
     const savedUser = await user.save();
 
-    // Send password creation email
-    await sendMail({
-      password,
-      email: savedUser.email,
-      emailType: EmailType.reminder,
-    });
+    if(checkingOut){
 
-    //sending verification email
-    await sendMail({
-      email: savedUser.email,
-      emailType: EmailType.verify_buyer,
-      userId: savedUser._id
-    });
+      // Send password creation email
+      await sendMail({
+        password,
+        email: savedUser.email,
+        emailType: EmailType.reminder,
+      });
+
+      //sending verification email
+      await sendMail({
+        email: savedUser.email,
+        emailType: EmailType.verify_buyer,
+        userId: savedUser._id
+      });
+    }
+
 
     return NextResponse.json(
       {

@@ -78,10 +78,17 @@ export async function POST(req: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
     });
 
+    if(user.isAdmin){
+      res.cookies.set('admin', user._id.toString(), {
+        httpOnly: true,
+        expires: expiryDate,
+        secure: process.env.NODE_ENV === 'production',
+      });
+    }
+
     return res;
 
   } catch (error: any) {
-    console.error('Error during login:', error);
     return NextResponse.json(
       { error: error.message },
       { status: 500 }

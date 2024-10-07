@@ -11,6 +11,7 @@ import './Cart.css';
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import useWindowWidth from "../helpers/getWindowWidth";
+import useGlobal from "@/store/useGlobal";
 
 interface InitialCartData {
     price: number, 

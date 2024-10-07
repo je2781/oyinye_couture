@@ -27,6 +27,7 @@ import toast from "react-hot-toast";
 import Product from "../product/Product";
 import Reviews from "../reviews/Reviews";
 import { createViewedProductsAction } from "@/app/actions";
+import useGlobal from "@/store/useGlobal";
 
 {/* <main className="min-h-screen w-full flex flex-col items-center justify-center bg-white hide-scrollbar">
             <section className="flex flex-col items-center gap-y-2">
@@ -65,6 +66,13 @@ const ProductDetail = ({
     const [isSavingCart, setIsSavingCart] = React.useState(false);
     const [toastError, setToastError] = React.useState(false);
     const [articleIsNotSticky, setArticleIsNotSticky] = React.useState(false);
+    const {locale} = useGlobal();
+
+    React.useEffect(() => {
+        if(locale !== 'en'){
+            history.pushState(null, '', `/${locale}${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1]}`);
+        }
+    }, []);
 
     React.useEffect(() => {
         window.addEventListener("scroll", handleScroll);
@@ -453,7 +461,7 @@ const ProductDetail = ({
                     </div>
                     <p className="text-sm">
                         <Link
-                        href="/policies/shipping-policy"
+                        href={`/pages/shipping-policy`}
                         className="underline text-gray-500 text-sm font-sans"
                         >
                         Shipping

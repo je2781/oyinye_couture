@@ -578,6 +578,12 @@ export async function handleSubmit(
   title: string,
   desc: string,
   type: string,
+  embelishment: string,
+  fabric: string,
+  sleeveL: string,
+  dresslength: string,
+  neckLine: string,
+  isFeature: boolean,
   dressColorsState: DressColorObj[],
   currentBgColors: string[],
   sizeData: SizeData[],
@@ -603,6 +609,36 @@ export async function handleSubmit(
       position: "top-center",
     });
   }
+
+  // if (embelishment.length === 0) {
+  //   return toast.error(`embelishment missing`, {
+  //     position: "top-center",
+  //   });
+  // }
+
+  // if (fabric.length === 0) {
+  //   return toast.error(`fabric missing`, {
+  //     position: "top-center",
+  //   });
+  // }
+
+  // if (dresslength.length === 0) {
+  //   return toast.error(`dress length missing`, {
+  //     position: "top-center",
+  //   });
+  // }
+
+  // if (sleeveL.length === 0) {
+  //   return toast.error(`sleeve length missing`, {
+  //     position: "top-center",
+  //   });
+  // }
+
+  // if (neckLine.length === 0) {
+  //   return toast.error(`neck line missing`, {
+  //     position: "top-center",
+  //   });
+  // }
 
   if (
     Object.values(dressColorsState[dressColorsState.length - 1])[0].imageFront
@@ -638,13 +674,19 @@ export async function handleSubmit(
     description: desc,
     noOfOrders: 0,
     type,
-    noOfReviews: 0,
+    reviews: [],
+    isFeature,
     colors: currentBgColors.map((bgColor) => {
       let updatedSizeData = sizeDataArray
         .filter((datum) => datum !== undefined)
         .filter((datum) => datum.color === bgColor);
       return {
         type: bgColor,
+        embelishment,
+        sleeveLength: sleeveL,
+        length: dresslength,
+        fabric,
+        neckLine,
         imageFrontBase64: Object.values(
           dressColorsState[dressColorsState.length - 1]
         )[0].imageFront,
@@ -782,32 +824,6 @@ export function handlePriceChange(
       price: e.target.value,
     },
   ]);
-}
-
-export function handleStockChange(
-  e: React.ChangeEvent<HTMLInputElement>,
-  currentBgColors: string[],
-  sizeData: SizeData[],
-  setIsChecked: React.Dispatch<React.SetStateAction<boolean>>
-) {
-  let sizes = document.querySelectorAll("[id^=size]") as NodeListOf<
-    HTMLSpanElement
-  >;
-  if (currentBgColors.length === 0) {
-    return toast.error(`Select a dress color`, {
-      position: "top-center",
-    });
-  }
-  if (currentBgColors.length > 0 && sizeData.length === 0) {
-    return toast.error(
-      `Select a dress size for ${currentBgColors[currentBgColors.length - 1]}`,
-      {
-        position: "top-center",
-      }
-    );
-  }
-
-  setIsChecked(e.currentTarget.checked!);
 }
 
 export const cartReducer = (state: CartState, action: any) => {
