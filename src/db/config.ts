@@ -8,7 +8,7 @@ export async function connect(){
     try{
         if (connection.isConnected === mongoose.ConnectionStates.connected) return;
 
-        const db = await mongoose.connect(process.env.DATABASE_URL!);
+        const db = await mongoose.connect(`${process.env.NODE_ENV === 'production' ? process.env.MONGO_URI! : process.env.DATABASE_URL!}`);
 
         connection.isConnected = db.connections[0].readyState;
         const mConnection = mongoose.connection;
