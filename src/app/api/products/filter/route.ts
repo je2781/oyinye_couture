@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     let type = searchParams.get('type');
 
-    const { noOfFilters, isVisible, showOutOfStock, productType, priceRange, currentPriceBoundary, color } = reqBody;
+    const { noOfFilters, isVisible, showOutOfStock, productType, priceRange, currentPriceBoundary, color, customProp } = reqBody;
 
 
     const filterSettings = await Filter.find();
@@ -37,16 +37,17 @@ export async function POST(req: NextRequest) {
           
         );
       }
-      if(type === 'collection'){
+      if(type === 'collections'){
 
         await Filter.updateMany(
           {},
           {
             $set: {
-              collection: {
+              collections: {
                 color,
                 noOfFilters,
-                isVisible
+                isVisible,
+                customProperty: customProp
               },
             }
             
@@ -69,12 +70,13 @@ export async function POST(req: NextRequest) {
   
         await newSettings.save();
       }
-      if(type === 'collection'){
+      if(type === 'collections'){
         const newSettings = new Filter({
-          collection: {
+          collections: {
               color,
               noOfFilters,
-              isVisible
+              isVisible,
+              customProperty: customProp
             },
         });
   

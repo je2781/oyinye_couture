@@ -15,7 +15,7 @@ async function getCheckout() {
   const orderId = cookieStore.get("order")?.value;
   const userId = cookieStore.get("user")?.value;
 
-  if(cartId && cartId.length > 0){
+  if(cartId && cartId.length > 0 && userId){
     const [userDataRes, countryDataRes,cartDataRes] = await Promise.all([
       fetch(`${process.env.DOMAIN}/api/users/${userId}`),
       fetch(`https://ipinfo.io?token=${process.env.IPINFO_TOKEN}`),

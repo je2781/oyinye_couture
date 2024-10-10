@@ -19,11 +19,6 @@ const ProductSchema = new Schema({
                 type: String,
                 required: true
             },
-            embelishment: String,
-            fabric: String,
-            length: String,
-            neckLine: String,
-            sleeveLength: String,
             isAvailable: {
                 type: Boolean,
                 required: true
@@ -71,6 +66,11 @@ const ProductSchema = new Schema({
         type: String,
         required: true
     },
+    features: [
+        {
+            name: String
+        }
+    ],
     reviews: [
         {
             reviewId: {

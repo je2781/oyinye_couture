@@ -18,7 +18,7 @@ export async function createViewedProductsAction(variantId: string) {
     cookieStore.set({
       name: 'viewed_p',
       value: JSON.stringify([variantId]),
-      expires: new Date(new Date().getTime() + 2629746000), // Expires in 1 month,
+      expires: new Date(new Date().getTime() + 5184000000), // Expires in 2 month,
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
     });

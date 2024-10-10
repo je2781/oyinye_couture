@@ -165,6 +165,8 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
 
       if(params.slug === 'collections'){
         const searchParams = request.nextUrl.searchParams;
+        let products: any[] = [];
+        let totalItems = 0;
         let page = searchParams.get('page');
         let sort = searchParams.get('sort_by');
         let dressColor = searchParams.get('filter.p.m.custom.colors');
@@ -175,13 +177,31 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         let sleeveLength = searchParams.get('filter.p.m.custom.sleeve_length');
         const updatedPage = +page! || 1;
       
-        let totalItems =  await Product.find().countDocuments();
-        let products = await Product.find()
-        .skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
-  
-  
+        if(dressColor){
+          totalItems =  await Product.find({'colors.type': dressColor}).countDocuments();
+          products = await Product.find({'colors.type': dressColor}).skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+        }else if(dressFeature){
+          totalItems =  await Product.find({'features.name': dressColor}).countDocuments();
+          products = await Product.find({'features.name': dressFeature}).skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+        }else if(dressLength){
+          totalItems =  await Product.find({'features.name': dressColor}).countDocuments();
+          products = await Product.find({'features.name': dressLength}).skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+        }else if(fabric){
+          totalItems =  await Product.find({'features.name': dressColor}).countDocuments();
+          products = await Product.find({'features.name': fabric}).skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+        }else if(neckLine){
+          totalItems =  await Product.find({'features.name': dressColor}).countDocuments();
+          products = await Product.find({'features.name': neckLine}).skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+        }else if(sleeveLength){
+          totalItems =  await Product.find({'features.name': dressColor}).countDocuments();
+          products = await Product.find({'features.name': sleeveLength}).skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+        }else{
+          totalItems =  await Product.find().countDocuments();
+          products = await Product.find().skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+        }
+        
         //retrieving filter settings
-        if(dressColor || dressFeature || dressLength || fabric || neckLine){
+        if(dressColor || dressFeature || dressLength || fabric || neckLine || sleeveLength){
           filterSettings =  await Filter.find();
         }
   
@@ -225,16 +245,15 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
               return productB - productA;
             });
             break;
-          case 'title-ascending':
-            products.sort((a, b) => {
-              if (a.title < b.title) return 1;
-              return 0;
-            });
-            break;
           case 'title-descending':
             products.sort((a, b) => {
-              if (a.title > b.title) return -1;
-              return 0;
+              return b.title.charAt(0).localeCompare(a.title.charAt(0));
+
+            });
+            break;
+          case 'title-ascending':
+            products.sort((a, b) => {
+              return a.title.charAt(0).localeCompare(b.title.charAt(0));
             });
             break;
           case 'price-descending':

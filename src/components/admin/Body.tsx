@@ -3131,14 +3131,104 @@ export default function Body({
                                 onClick={async (e) => {
                                   let downAngle = e.currentTarget.querySelector("i.actions-angle-down");
                                   let actionsDropdown = document.getElementById("actions-dropdown");
-                                  const emailItems = document.querySelectorAll('#email-item')  as NodeListOf<HTMLDivElement>;
-                                  const newEmailItems = Array.from(emailItems);
                                   const subjectCheck = document.getElementById('all') as HTMLInputElement;
                                   const emailItemChecks = document.querySelectorAll('#single') as NodeListOf<HTMLInputElement>;
+                                  const emailItems = document.querySelectorAll('#email-item') as NodeListOf<HTMLDivElement>;
+                                  const newEmailItems = Array.from(emailItems);
+                                  const newEmailItemChecks = Array.from(emailItemChecks);
+                                  //clearing email checks
+                                  newEmailItemChecks.forEach(itemCheck => itemCheck.checked = false);
 
                                   subjectCheck.checked = true;
                                   
-                                  emailItemChecks.forEach(itemCheck => itemCheck.checked = true);
+                                  for(let i = 0; i < newEmailItems.length; i++){
+                                      try {
+                                        
+                                        if(action === 'Remove'){
+                                          setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== newEmailItems[i].dataset.enqId));
+                                          await axios.delete(`/api/enquiries/delete/${newEmailItems[i].dataset.enqId}`);
+                                        }else{
+                                          
+                                          if(action === 'Mark As Read'){
+                                            if(newEmailItems[i].dataset.read === 'false'){
+                                              newEmailItems[i].classList.add('bg-primary-500');
+
+                                              newEmailItemChecks[i].checked = true;
+                                              
+                                              setEnquiries(prevEnqs => {
+                                                const updatedEnqs = [...prevEnqs];
+                                                const extractedIndex = updatedEnqs.findIndex(enq => enq._id.toString() === newEmailItems[i].dataset.enqId);
+                                                let updatedEnq = updatedEnqs[extractedIndex];
+    
+                                                updatedEnqs[extractedIndex] = {
+                                                  ...updatedEnq,
+                                                  order: {
+                                                    ...updatedEnq.order,
+                                                    read: newEmailItems[i].dataset.hasOrder === 'true'
+                                                  },
+                                                  contact: {
+                                                    ...updatedEnq.contact,
+                                                    read: newEmailItems[i].dataset.hasContact === 'true'
+                                                  }
+                                                };
+                                                return  updatedEnqs;
+                                              });
+
+                                              await axios.patch(`/api/enquiries/update/${newEmailItems[i].dataset.enqId}`, {
+                                                isRead: true,
+                                                isUnRead: false,
+                                                isBooking: newEmailItems[i].dataset.hasOrder === 'true',
+                                                isContact: newEmailItems[i].dataset.hasContact === 'true'
+                                              });
+                                            }
+  
+                                          }
+                                          if(action === 'Mark As Unread'){
+                                            if(newEmailItems[i].dataset.unread === 'false'){
+                                              
+                                              newEmailItems[i].classList.remove('bg-primary-500');
+
+                                              newEmailItemChecks[i].checked = true;
+    
+                                              setEnquiries(prevEnqs => {
+                                                const updatedEnqs = [...prevEnqs];
+                                                const extractedIndex = updatedEnqs.findIndex(enq => enq._id.toString() === newEmailItems[i].dataset.enqId);
+                                                let updatedEnq = updatedEnqs[extractedIndex];
+        
+                                                updatedEnqs[extractedIndex] = {
+                                                  ...updatedEnq,
+                                                  order: {
+                                                    ...updatedEnq.order,
+                                                    unRead: newEmailItems[i].dataset.hasOrder === 'true'
+                                                  },
+                                                  contact: {
+                                                    ...updatedEnq.contact,
+                                                    unRead: newEmailItems[i].dataset.hasContact === 'true'
+                                                  }
+                                                };
+                                                return  updatedEnqs;
+                                              });
+
+                                              await axios.patch(`/api/enquiries/update/${newEmailItems[i].dataset.enqId}`, {
+                                                isRead: false,
+                                                isUnRead: true,
+                                                isBooking: newEmailItems[i].dataset.hasOrder === 'true',
+                                                isContact: newEmailItems[i].dataset.hasContact === 'true'
+                                              });
+                                            }
+
+                                          }
+                                          
+                                          
+                                        }
+                                        
+                                        
+                                      } catch (error: any) {
+                                        toast.error(error.message);
+                                      }
+                                    
+                                    
+                                  }
 
                                   if(downAngle && actionsDropdown){
                                     if(!downAngle.classList.contains("ad-rotate")){
@@ -3153,36 +3243,7 @@ export default function Body({
                                         actionsDropdown.classList.remove('show');
                                     }
                                   }
-
-                                  try {
-                                    
-                                      for(let item of newEmailItems){
-                                        if(action === 'Remove'){
-                                          setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== item.dataset.enqId));
-                                          await axios.delete(`/api/enquiries/delete/${item.dataset.enqId}`);
-                                        }else{
-
-                                          if(action === 'Mark As Read'){
-                                            item.classList.add('bg-primary-500');
-                                          }
-                                          if(action === 'Mark As Unread'){
-                                            item.classList.remove('bg-primary-500');
-                                          }
-  
-                                          await axios.patch(`/api/enquiries/update/${item.dataset.enqId}`, {
-                                            isRead: action === 'Mark As Read' ? true : false,
-                                            isUnRead: action === 'Mark As Unread' ? true : false,
-                                            isBooking: item.dataset.hasAppointment === 'true',
-                                            isContact: item.dataset.hasContact === 'true'
-                                          });
-                                        }
-                                      }
-                                      
-                                  } catch (error: any) {
-                                    toast.error(error.message);
-                                  }
-
-                                  
+                                                                    
                                 }}
                                 className="cursor-pointer flex flex-row items-center justify-between p-2"
                               >
@@ -3502,15 +3563,43 @@ export default function Body({
                         ))}
                         <hr className="bg-gray-400 mt-3 h-[2px]" />
                         <div className="inline-flex flex-row gap-x-4 justify-center mt-3 px-2">
-                            <button className="bg-accent text-white px-3 py-2 rounded-md hover:ring-1 hover:ring-accent">Apply</button>
-                            <button className="text-accent bg-transparen">Clear</button>
+                            <button 
+                            onClick={(e) => {
+                              const readFilter = document.querySelector('#filter-dropdown > li > #Read') as HTMLInputElement;
+                              const unReadFilter = document.querySelector('#filter-dropdown > li > #Unread') as HTMLInputElement;
+                              const savedFilter = document.querySelector('#filter-dropdown > li > #Saved') as HTMLInputElement;
+
+                              if(readFilter.checked){
+                                setEnquiries(prevEnqs => prevEnqs.filter((enq: any) => enq.order.read === true || enq.contact.read === true));
+                              }
+
+                              if(unReadFilter.checked){
+                                setEnquiries(prevEnqs => prevEnqs.filter((enq: any) =>  enq.order.unRead === true || enq.contact.unRead === true));
+                              }
+
+                              if(savedFilter.checked){
+                                setEnquiries(prevEnqs => prevEnqs.filter((enq: any) =>  enq.order.saved === true || enq.contact.saved === true));
+                              }
+
+                            }}
+                            className="bg-accent text-white px-3 py-2 rounded-md hover:ring-1 hover:ring-accent">Apply</button>
+                            <button onClick={() => {
+                                setEnquiries(enquiriesData.enquiries);
+                            }} className="text-accent bg-transparen">Clear</button>
                         </div>
                     </ul>
                 </div>
-                <div className="inline-flex w-[60%] relative flex-row items-center border border-secondary-400 rounded-sm px-2">
-                    <input className="bg-transparent py-[5px] focus:outline-none w-full placeholder:text-secondary-400" placeholder="search"/>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  let item = e.currentTarget;
+                  const inputValue = item.search.value;
+
+                  setEnquiries(prevEnqs => prevEnqs.filter((enq: any) =>  enq.order.content.includes(inputValue) || enq.contact.subject.includes(inputValue)));
+
+                }} className="inline-flex w-[60%] relative flex-row items-center border border-secondary-400 rounded-sm px-2">
+                    <input name='search' type='search' className="bg-transparent py-[5px] focus:outline-none w-full placeholder:text-secondary-400" placeholder="search"/>
                     <i className="fa-solid fa-magnifying-glass text-secondary-400 cursor-pointer"></i>
-                </div>
+                </form>
               </section>
               <hr className="border-secondary-400/30 border -mt-2" />
               <div className="w-full inline-flex flex-row -my-1 text-sm pl-3">
@@ -3545,7 +3634,9 @@ export default function Body({
                     <div id='email-item' 
                     data-enq-id={enq._id.toString()}
                     data-has-contact={!!enq.contact.message}
-                     data-has-appointment={!!enq.appointment.content} key={i} className={`${enq.contact.read  || enq.appointment.read ? 'bg-primary-500' : ''} w-full inline-flex flex-row -my-5 text-sm py-4 items-center pl-3`}>
+                    data-read={!!enq.contact.message ? enq.contact.read : enq.order.read}
+                    data-unread={!!enq.contact.message ? enq.contact.unRead : enq.order.unRead}
+                     data-has-order={!!enq.order.content} key={i} className={`${enq.contact.read  || enq.order.read ? 'bg-primary-500' : ''} w-full inline-flex flex-row -my-5 text-sm py-4 items-center pl-3`}>
                       <div className="md:w-[60%] w-[70%] inline-flex flex-row gap-x-2 items-center relative">
                         <input
                           type="checkbox"
@@ -3556,7 +3647,7 @@ export default function Body({
                           checked:after:rotate-45"
                         />
                         <span className="font-light">
-                          <i className="fa-regular fa-envelope-open text-accent/30"></i>&nbsp;&nbsp;{enq.appointment.content ? `Appointment by ${enq.author.fullName}` : enq.contact.message ? enq.contact.subject : `Testing by ${enq.author.fullName}`}
+                          <i className="fa-regular fa-envelope-open text-accent/30"></i>&nbsp;&nbsp;{enq.order.content ? `Appointment by ${enq.author.fullName}` : enq.contact.message ? enq.contact.subject : `Testing by ${enq.author.fullName}`}
                         </span>
                         <div className="lg:hidden inline-block w-[40%] absolute left-0 top-10">
                             <div className="w-[156%] rounded-sm font-medium bg-transparent inline-flex flex-row items-center">
@@ -3579,11 +3670,31 @@ export default function Body({
                                   setIsReading(true);
                                   setIsReplying(false);
 
+                                  setEnquiries(prevEnqs => {
+                                    const updatedEnqs = [...prevEnqs];
+                                    const extractedIndex = updatedEnqs.findIndex(updatedEnq => updatedEnq._id.toString() === enq._id.toString());
+                                    let updatedEnq = updatedEnqs[extractedIndex];
+
+                                    updatedEnqs[extractedIndex] = {
+                                      ...updatedEnq,
+                                      order: {
+                                        ...updatedEnq.order,
+                                        read: !!enq.order.content
+                                      },
+                                      contact: {
+                                        ...updatedEnq.contact,
+                                        read: !!enq.contact.message
+                                      }
+                                    };
+                                    return  updatedEnqs;
+                                  });
+
+
                                   try {
                                     await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
                                       isRead: true,
                                       isUnRead: false,
-                                      isBooking: !!enq.appointment.content,
+                                      isBooking: !!enq.order.content,
                                       isContact: !!enq.contact.message
                                     });
                                   } catch (error: any) {
@@ -3649,11 +3760,30 @@ export default function Body({
                                             case 'Unread':
                                               document.getElementById('email-item')?.classList.remove('bg-primary-500');
 
+                                              setEnquiries(prevEnqs => {
+                                                const updatedEnqs = [...prevEnqs];
+                                                const extractedIndex = updatedEnqs.findIndex(updatedEnq => updatedEnq._id.toString() === enq._id.toString());
+                                                let updatedEnq = updatedEnqs[extractedIndex];
+    
+                                                updatedEnqs[extractedIndex] = {
+                                                  ...updatedEnq,
+                                                  order: {
+                                                    ...updatedEnq.order,
+                                                    unRead: !!enq.order.content
+                                                  },
+                                                  contact: {
+                                                    ...updatedEnq.contact,
+                                                    unRead: !!enq.contact.message
+                                                  }
+                                                };
+                                                return  updatedEnqs;
+                                              });
+
                                               try {
                                                 await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
                                                   isRead: false,
                                                   isUnRead: true,
-                                                  isBooking: !!enq.appointment.content,
+                                                  isBooking: !!enq.order.content,
                                                   isContact: !!enq.contact.message
                                                 });
                                               } catch (error: any) {
@@ -3723,11 +3853,31 @@ export default function Body({
                                   setIsReading(true);
                                   setIsReplying(false);
 
+                                  setEnquiries(prevEnqs => {
+                                    const updatedEnqs = [...prevEnqs];
+                                    const extractedIndex = updatedEnqs.findIndex(updatedEnq => updatedEnq._id.toString() === enq._id.toString());
+                                    let updatedEnq = updatedEnqs[extractedIndex];
+
+                                    updatedEnqs[extractedIndex] = {
+                                      ...updatedEnq,
+                                      order: {
+                                        ...updatedEnq.order,
+                                        read: !!enq.order.content
+                                      },
+                                      contact: {
+                                        ...updatedEnq.contact,
+                                        read: !!enq.contact.message
+                                      }
+                                    };
+                                    return  updatedEnqs;
+                                  });
+
+
                                   try {
                                     await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
                                       isRead: true,
                                       isUnRead: false,
-                                      isBooking: !!enq.appointment.content,
+                                      isBooking: !!enq.order.content,
                                       isContact: !!enq.contact.message
                                     });
                                   } catch (error: any) {
@@ -3829,11 +3979,30 @@ export default function Body({
                                             case 'Unread':
                                               document.getElementById('email-item')?.classList.remove('bg-primary-500');
 
+                                              setEnquiries(prevEnqs => {
+                                                const updatedEnqs = [...prevEnqs];
+                                                const extractedIndex = updatedEnqs.findIndex(updatedEnq => updatedEnq._id.toString() === enq._id.toString());
+                                                let updatedEnq = updatedEnqs[extractedIndex];
+    
+                                                updatedEnqs[extractedIndex] = {
+                                                  ...updatedEnq,
+                                                  order: {
+                                                    ...updatedEnq.order,
+                                                    unRead: !!enq.order.content
+                                                  },
+                                                  contact: {
+                                                    ...updatedEnq.contact,
+                                                    unRead: !!enq.contact.message
+                                                  }
+                                                };
+                                                return  updatedEnqs;
+                                              });
+
                                               try {
                                                 await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
                                                   isRead: false,
                                                   isUnRead: true,
-                                                  isBooking: !!enq.appointment.content,
+                                                  isBooking: !!enq.order.content,
                                                   isContact: !!enq.contact.message
                                                 });
                                               } catch (error: any) {
@@ -3881,7 +4050,7 @@ export default function Body({
                                   setLoader(true);
                                   await axios.post('/api/admin/send-reminder', {
                                     email: enq.author.email,
-                                    message: adminContent?.value,
+                                    message: adminContent.value,
                                     contact: enq.author.fullName,
                                     date: `${months[new Date(isReading ? enq.createdAt: new Date()).getMonth()]} ${new Date(isReading ? enq.createdAt: new Date()).getDate()}. ${new Date(isReading ? enq.createdAt: new Date()).getFullYear()}`
                                   });
@@ -3890,6 +4059,7 @@ export default function Body({
                                   return toast.error(error.message);
                                 }finally{
                                   setLoader(false);
+                                  adminContent.value = '';
                                   toast.success('reminder sent', {
                                     position: 'top-center'
                                   });
@@ -3901,14 +4071,14 @@ export default function Body({
                                 
                                   {isReading 
                                   ? <p className="text-base leading-relaxed text-wrap tracking-wider text-gray-500 w-full">
-                                      {enq.appointment.content ? enq.appointment.content : enq.contact.message ? enq.contact.message : 'I am writing to inform you.'} 
+                                      {enq.order.content ? enq.order.content : enq.contact.message ? enq.contact.message : 'I am writing to inform you.'} 
                                     </p>
                                   : <textarea cols={50} rows={5} placeholder="Compose letter here..." id='admin-letter' className="focus:outline-none w-full border border-gray-300 rounded-md p-2 text-base leading-relaxed text-wrap tracking-wider text-gray-500">
                                     
                                     </textarea>}
                                 {isReading 
                                   ? <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br/>{enq.author.fullName}<br/>
-                                  {enq.appointment.content && <span>Phone:&nbsp;<Link href={`tel:${enq.author.appointment.phoneNo ?? '070333748920'}`}>{enq.author.appointment.phoneNo ?? '070333748920'}</Link><br/>Standard Size: {enq.author.appointment.size ?? 8}<br/>Date of Event: {`${new Date(enq.appointment.eventDate).getDate()} ${months[new Date(enq.appointment.eventDate).getMonth()]}, ${new Date(enq.appointment.eventDate).getFullYear()}` ?? '10 Sep, 1970'}</span>}
+                                  {enq.order.content && <span>Phone:&nbsp;<Link href={`tel:${enq.author.appointment.phoneNo ?? '070333748920'}`}>{enq.author.appointment.phoneNo ?? '070333748920'}</Link><br/>Standard Size: {enq.author.appointment.size ?? 8}<br/>Date of Event: {`${new Date(enq.order.eventDate).getDate()} ${months[new Date(enq.order.eventDate).getMonth()]}, ${new Date(enq.order.eventDate).getFullYear()}` ?? '10 Sep, 1970'}</span>}
                                   </p>
                                   : <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br />Oyinye Couture Team</p>}
                                 
@@ -3916,7 +4086,7 @@ export default function Body({
                                     <button type='submit' className="px-7 py-2 text-sm bg-accent text-white hover:ring-1 hover:ring-accent rounded-md">{loader ? 'Sending..' : 'Send'}</button>
                                   </div>}
                               </form>
-                              {enq.appointment.content && isReading && enq.author.appointment.styles.length > 0 && enq.author.appointment.styles.map((data: any, i:number) => <div key={i} className="flex flex-row flex-wrap gap-x-3 gap-y-2 w-full">
+                              {enq.order.content && isReading && enq.author.appointment.styles.length > 0 && enq.author.appointment.styles.map((data: any, i:number) => <div key={i} className="flex flex-row flex-wrap gap-x-3 gap-y-2 w-full">
                                 <div className="flex flex-col items-center gap-y-1">
                                   <div className="w-24 h-24 rounded-md" style={{backgroundImage: `url(${data.image})`}}></div>
                                   <p className="font-sans text-xs">{data.fileName}</p>

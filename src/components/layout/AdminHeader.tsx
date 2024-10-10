@@ -14,7 +14,7 @@ import useGlobal from "@/store/useGlobal";
 import { AdminSettingsModal, MobileModal } from "../ui/Modal";
 import { appsList, generateBase64FromMedia, getRouteNames, insightList, viewsList } from "@/helpers/getHelpers";
 
-export default function AdminHeader({sectionName, pathName, userName, userEmail, title, id}: any) {
+export default function AdminHeader({sectionName, pathName, userName, userEmail, title, id, avatar}: any) {
   let timerId: NodeJS.Timeout | null  = null;
 
   const { authStatus } = useAuth();
@@ -167,7 +167,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
               id="user-menu-button" aria-expanded="false" aria-haspopup="true" type="button" className="rounded-full bg-transparent p-1  focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-950">
                   <span className="absolute -inset-1.5"></span>
                   <span className="sr-only">Open admin menu</span>
-                  <Image width={30} height={30} className="rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="profile-pic"/>
+                  <Image width={40} height={40} className="rounded-full" src={`${avatar ?? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'}`} alt="profile-pic"/>
               </button>
   
               <div id='admin-menu' className="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md text-secondary-400 bg-primary-800 shadow-md ring-1 ring-black ring-opacity-5 py-3 px-2 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" >
@@ -301,7 +301,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                                           history.pushState(null, '', `/${e.target.value}`);
 
                                                       }}>
-                                                          <option hidden selected value=''>{locale === 'en' ? 'English' : locale === 'fr' ? 'French' : locale === 'nl' ? 'Dutch' : locale === 'pt-PT' ? 'Portugese (Portugal)' : locale === 'zh-TW' ? 'Chinese (traditional)' : 'Spanish'}</option>
+                                                          <option hidden value=''>{locale === 'en' ? 'English' : locale === 'fr' ? 'French' : locale === 'nl' ? 'Dutch' : locale === 'pt-PT' ? 'Portugese (Portugal)' : locale === 'zh-TW' ? 'Chinese (traditional)' : 'Spanish'}</option>
                                                           {
                                                               ['en',
                                                               'fr',

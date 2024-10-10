@@ -53,6 +53,13 @@ const ProductDetail = ({
     } = {};
     let frontBase64ImagesObj: Base64ImagesObj = {};
 
+    React.useEffect(() => {
+        async function getServerAction(){
+            await createViewedProductsAction(paramsId);
+        }
+        getServerAction();
+    }, []);
+
     const [colorsData, setColorsData] = useState<any[]>(productColors);
     const [imageFrontBase64, setImageFrontBase64] = useState<string[]>(productFrontBase64Images);
     const [selectedColor, setSelectedColor] = useState<string>(paramsColor.charAt(0).toUpperCase() + paramsColor.slice(1));
@@ -69,12 +76,6 @@ const ProductDetail = ({
     const {locale} = useGlobal();
 
     React.useEffect(() => {
-        if(locale !== 'en'){
-            history.pushState(null, '', `/${locale}${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1]}`);
-        }
-    }, []);
-
-    React.useEffect(() => {
         window.addEventListener("scroll", handleScroll);
 
         return () => window.removeEventListener("scroll", handleScroll);
@@ -87,13 +88,6 @@ const ProductDetail = ({
 
         setArticleIsNotSticky(docScrollPos === AScrollPos);
     };
-
-    React.useEffect(() => {
-        async function getServerAction(){
-            await createViewedProductsAction(paramsId);
-        }
-        getServerAction();
-    }, []);
 
     function getArticleBottomScrollYPosition() {
         const element = document.querySelector('article') as HTMLElement;
@@ -756,10 +750,12 @@ const ProductDetail = ({
                 </section>
             </section>
             <section className="flex flex-col lg:items-start items-center gap-y-5 font-sans">
-                <header className="text-2xl">You may also like</header>
-                <section className="flex flex-row items-center justify-evenly flex-wrap gap-x-2 gap-y-4">
-                {relatedProducts.slice(0, 4).map((product: any, i: number) => <Product key={i} product={product} isOnDetailPage={true}/>)}
-                </section>
+                {relatedProducts.length > 0 && <>
+                    <header className="text-2xl">You may also like</header>
+                    <section className="flex flex-row items-center justify-evenly flex-wrap gap-x-2 gap-y-4">
+                    {relatedProducts.slice(0, 4).map((product: any, i: number) => <Product key={i} product={product} isOnDetailPage={true}/>)}
+                    </section>
+                </>}
                 <Reviews productReviews={productReviews} product={paramsProduct}/>
             </section>
         </main>

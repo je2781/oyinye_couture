@@ -14,8 +14,8 @@ export default function Footer(){
     const [loader, setLoader] = React.useState(false);
     const {setLocale, locale} = useGlobal();
 
-    return <section className="flex flex-col lg:gap-y-8 gap-y-5 bg-white items-center font-sans pb-7 pt-14">
-        <header className="font-medium text-lg w-full flex lg:flex-row flex-col items-center gap-x-16 max-w-7xl px-8 mx-auto container">
+    return <section className={`flex flex-col lg:gap-y-8 gap-y-5 bg-white items-center font-sans pb-7 pt-14 px-6 mx-auto container`}>
+        <header className="font-medium text-lg w-full flex lg:flex-row flex-col items-center gap-x-16 max-w-7xl">
             <div className="inline-flex flex-col lg:w-{50%] w-full gap-y-3">
                 <h2><FormattedMessage id='app.footer.menu' defaultMessage='Menu' /></h2>
                 <hr className="border border-gray-200/50 inline-block"/>
@@ -25,7 +25,7 @@ export default function Footer(){
                 <hr className="border border-gray-200/50 inline-block"/>
             </div>
         </header>
-        <section className="text-gray-600 w-full flex lg:flex-row flex-col items-start gap-x-16 lg:text-[.9rem] text-sm max-w-7xl px-8 mx-auto container">
+        <section className="text-gray-600 w-full flex lg:flex-row flex-col items-start gap-x-16 lg:text-[.9rem] text-sm max-w-7xl">
             <ul className="flex flex-col gap-y-3 lg:w-[50%] w-full">
                 <li><Link href={`/pages/about`} className="hover:underline hover:underline-offset-4" style={{textDecorationThickness: '2px'}}><FormattedMessage id='app.footer.item1' defaultMessage='About Us' /></Link></li>
                 <li><Link href={`/pages/contact`} className="hover:underline hover:underline-offset-4" style={{textDecorationThickness: '2px'}}><FormattedMessage id='app.footer.item2' defaultMessage='Contact Us' /></Link></li>
@@ -47,7 +47,7 @@ export default function Footer(){
                             downAngle?.classList.add("ad-rotate-anticlock");
                         }
                     }}
-                    className="relative border border-gray-400 rounded-sm p-1 focus:border-gray-600 w-[30%]">
+                    className="relative border border-gray-400 rounded-sm p-1 focus:border-gray-600 w-[30%] cursor-pointer">
                         <select 
                         id='lang-select'
                         className="focus:outline-none p-2 appearance-none"
@@ -56,7 +56,7 @@ export default function Footer(){
                             localStorage.setItem('locale', e.target.value);
                             history.pushState(null, '', `/${e.target.value}`);
                         }}>
-                            <option hidden selected value=''>{locale === 'en' ? 'English' : locale === 'fr' ? 'French' : locale === 'nl' ? 'Dutch' : locale === 'pt-PT' ? 'Portugese (Portugal)' : locale === 'zh-TW' ? 'Chinese (traditional)' : 'Spanish'}</option>
+                            <option hidden value=''>{locale === 'en' ? 'English' : locale === 'fr' ? 'French' : locale === 'nl' ? 'Dutch' : locale === 'pt-PT' ? 'Portugese (Portugal)' : locale === 'zh-TW' ? 'Chinese (traditional)' : 'Spanish'}</option>
                             {
                                 ['en',
                                 'fr',

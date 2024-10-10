@@ -11,11 +11,10 @@ import useWindowWidth from "../helpers/getWindowWidth";
 import toast from "react-hot-toast";
 import useGlobal from "@/store/useGlobal";
 
-const Product = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDetailPage}: any) => {
+const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDetailPage}: any) => {
     const[isModalOpen, setIsModalOpen] = React.useState(false);
     let width = useWindowWidth();
     const router = useRouter();
-    const {locale} = useGlobal();
     //sorting out the sizes of the first dress
     if(!isSearchProduct){
       product.colors[0].sizes = product.colors[0].sizes.filter((size: any) => size.stock > 0);
@@ -85,15 +84,18 @@ const Product = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDet
           }
 
         }}
-      >
-          <Image
-              src={product.colors[0].imageFrontBase64[0]}
-              alt="featured-Image"
-              width={imageW ??  300}
-              height={imageH ?? 450}
-              className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && isGridView && isSearchProduct ? 'w-[160px] h-[200px]': width < 768 && !isGridView && isSearchProduct ? 'w-full h-[400px]': width >= 768 && width < 1024 ? 'w-[270px]' : ''}`}
-              role="presentation"
-          />
+      > 
+          <div className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && width > 375 && isGridView && isSearchProduct ? 'w-[168px] h-[200px]': width <= 375 && isGridView && isSearchProduct ? 'w-[150px] h-[200px]' : width < 768 && !isGridView && isSearchProduct ? 'w-full h-[380px]': width >= 768 && width < 1024 ? 'w-[270px]' : ``} group overflow-hidden`}>
+              <Image
+                  src={product.colors[0].imageFrontBase64[0]}
+                  alt="dress-Image"
+                  width={imageW ?? 300}
+                  height={imageH ?? 450}
+                  className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && width > 375 && isGridView && isSearchProduct ? 'w-[168px] h-[200px]': width <= 375 && isGridView && isSearchProduct ? 'w-[150px] h-[200px]' : width < 768 && !isGridView && isSearchProduct ? 'w-full h-[380px]': width >= 768 && width < 1024 ? 'w-[270px]' : ``} object-cover transform transition-transform duration-500 group-hover:scale-125`}
+                  role="presentation"
+              />
+          </div>
+
           <section className={`${isSearchProduct  ? 'items-start': 'items-center'} flex flex-col gap-y-1`}>
             <h2 className="text-gray-500 font-sans text-sm">{product.title}</h2>
             <h2 className="text-[1rem]">
@@ -101,7 +103,7 @@ const Product = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDet
             </h2>
           </section>
           {product.colors[0].sizes[0].stock === 0 && <section 
-            className={`${width > 768 && imageH && imageW ? 'bottom-[33.5%]' : width < 768 && !isGridView ? 'bottom-[20.5%]' : width < 768 && isGridView ? 'bottom-[33%]' : 'bottom-[26%]'} absolute font-sans bg-black px-4 py-1 rounded-3xl cursor-pointer text-white left-[4%] text-sm`}
+            className={`${width > 768 && imageH && imageW ? 'bottom-[31%]' : width < 768 && !isGridView ? 'bottom-[20.5%]' : width < 768 && isGridView ? 'bottom-[33%]' : 'bottom-[26%]'} absolute font-sans bg-black px-4 py-1 rounded-3xl cursor-pointer text-white left-[4%] text-sm`}
           >
             Sold out
           </section>}
@@ -136,4 +138,4 @@ const Product = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDet
   );
 };
 
-export default Product;
+export default ProductComponent;

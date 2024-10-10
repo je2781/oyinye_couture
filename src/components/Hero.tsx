@@ -11,8 +11,6 @@ import Link from "next/link";
 import useGlobal from "@/store/useGlobal";
 
 const Hero = () => {
-  const {locale} = useGlobal();
-
   useEffect(() => {
     
     async function createActions(){

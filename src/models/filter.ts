@@ -23,14 +23,18 @@ const FilterSchema = new Schema({
                 type: Number,
             }
         },
-        collection: {
+        collections: {
             noOfFilters: {
                 type: Number,
             },
             isVisible: {
                 type: Boolean,
             },
-            color: String
+            color: String,
+            customProperty: {
+                type: String,
+                name: String
+            }
         }
   
 });

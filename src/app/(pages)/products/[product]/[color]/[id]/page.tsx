@@ -20,17 +20,22 @@ export async function generateStaticParams() {
 async function getData(product: string, color: string, variantId: string) {
   const cookieStore = cookies();
   const cartId = cookieStore.get('cart')?.value;
+  const viewedProducts = cookieStore.get('viewed_p')?.value;
 
   if(cartId && cartId.length > 0){
     const [productDataRes, cartDataRes] = await Promise.all([fetch(
-      `${process.env.DOMAIN}/api/products/${product}/${color}/${variantId}`, {cache: 'no-cache'}
+      `${process.env.DOMAIN}/api/products/${product}/${color}/${variantId}?viewed_p=${viewedProducts}`, {cache: 'no-cache'}
       ), fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`)]);
 
     const [productData, cartData] = await Promise.all([productDataRes.json(), cartDataRes.json()]);
 
     return [productData, cartData.cartItems];
   }else{
-    return [[], []];
+    const productDataRes = await fetch(
+      `${process.env.DOMAIN}/api/products/${product}/${color}/${variantId}?viewed_p=${viewedProducts}`, {cache: 'no-cache'}
+      );
+    const productData = await productDataRes.json();
+    return [productData, []];
   }
 }
 
@@ -41,7 +46,6 @@ const ProductPage = async ({
   params: { product: string; color: string; id: string };
 }) => {
     const [productData, cartItems] = await getData(params.product, params.color, params.id);
-
 
     const data = {
         ...productData,

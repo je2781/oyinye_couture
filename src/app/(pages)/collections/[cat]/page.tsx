@@ -56,7 +56,7 @@ const CollectionsPage = async ({ params, searchParams}: any) => {
     let sortBy = searchParams.sort_by;
 
     if(!sortBy){
-      sortBy = params.cat === 'all' ? 'created-descending' : 'title-ascending';
+      sortBy = params.cat === 'all' ? 'created-descending' :  'title-ascending';
     }
     const page = searchParams.page;
     const dressColor = searchParams['filter.p.m.custom.colors'];
@@ -74,11 +74,19 @@ const CollectionsPage = async ({ params, searchParams}: any) => {
     <Header cartItems={cartItems}/>
     <Collections  {...{
       collectionsCat: params.cat,
-      data: collectionsData,
+      data: {
+        ...collectionsData,
+        dressColor,
+        dressFabric,
+        dressFeature,
+        dressLength,
+        neckLine,
+        sleeveLength
+      },
       sortBy,
       page
     }} />
-    <Footer />
+    <Footer/>
     </>
   );
 };

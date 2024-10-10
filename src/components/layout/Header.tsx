@@ -147,11 +147,11 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
   return (
     <>
       <nav
-        className={isCheckout ? 'w-full h-[96px] bg-white border border-gray-300 border-t-0 border-l-0 border-r-0' : `z-20 shadow-md fixed top-0 w-full h-[96px] bg-white ${windowWidth > 768 ? 'transition-transform duration-300': ''}  ${
+        className={isCheckout ? 'w-full h-[96px] bg-white border border-gray-300 border-t-0 border-l-0 border-r-0' : `z-20 md:shadow-md fixed top-0 w-full h-[96px] bg-white ${windowWidth > 768 ? 'transition-transform duration-300': ''}  ${
           visible && windowWidth > 768 ? "transform translate-y-0" : !visible && windowWidth > 768 ? "-translate-y-full" : ''
         }`}
       >
-        <div className="flex items-center justify-between md:py-5 py-1 max-w-7xl mx-auto sm:px-2 lg:pr-8 h-full">
+        <div className="flex items-center justify-between md:py-5 max-w-7xl mx-auto pl-2 pr-3 lg:pl-0 lg:pr-6 h-full">
           <button
             id="toggle-button"
             className="hover:bg-gray-600/10 focus:bg-gray-600/10  px-2 py-1 bg-transparent rounded-md lg:hidden inline-block"
@@ -170,7 +170,7 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
           <div className="grow items-start lg:flex hidden">
             {!isCheckout && <ul className="inline-flex flex-row gap-x-8 items-center">
               {menuItems.map((item) => (
-                <li key={item.name.props.defaultMessage} className={`${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1] === item.href ? '-mt-1' : ''} cursor-pointer relative`}>
+                <li key={item.name.props.defaultMessage} className={`${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1] === '/' ? '-mt-2' : ''} cursor-pointer relative`}>
                   {item.name.props.defaultMessage !== 'Collections' ? <Link
                     href={item.href}
                     style={{textDecorationThickness: '2px'}}
@@ -217,7 +217,14 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
                             key={item}
                             className="cursor-pointer flex flex-row items-center justify-between p-2"
                           >
-                              <Link href={`${item !== 'Bespoke' ? `/collections/${item.split(' ')[0].charAt(0).toLowerCase() + item.split(' ')[0].slice(1).toLowerCase().trim()}` : `/order`}`}>{item}</Link>
+                               <Link href={`${item !== 'Bespoke' ? `/collections/${item.split(' ').length === 2 
+                              ? `${item.split(' ')[0].charAt(0).toLowerCase() + item.split(' ')[0].slice(1)}-${item.split(' ')[1].charAt(0).toLowerCase() + item.split(' ')[1].slice(1)}` 
+                              :  item.split(' ').length === 3
+                              ? `${item.split(' ')[0].charAt(0).toLowerCase() + item.split(' ')[0].slice(1)}-${item.split(' ')[1].charAt(0).toLowerCase() + item.split(' ')[1].slice(1)}-${item.split(' ')[2].charAt(0).toLowerCase() + item.split(' ')[2].slice(1)}`
+                              : item.charAt(0).toLowerCase() + item.slice(1)}`
+                              : '/order' }`}>
+                                
+                              {item}</Link>
                           </li>
                       ))}
                     </ul>
@@ -292,7 +299,13 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
                                 key={item}
                                 className="cursor-pointer flex flex-row items-center justify-between p-2"
                               >
-                              <Link href={`${item !== 'Bespoke' ? `/collections/${item.split(' ')[0].charAt(0).toLowerCase() + item.split(' ')[0].slice(1).toLowerCase().trim()}` : `/order`}`}>{item}</Link>
+                              <Link href={`${item !== 'Bespoke' ? `/collections/${item.split(' ').length === 2 
+                              ? `${item.split(' ')[0].charAt(0).toLowerCase() + item.split(' ')[0].slice(1)}-${item.split(' ')[1].charAt(0).toLowerCase() + item.split(' ')[1].slice(1)}` 
+                              :  item.split(' ').length === 3
+                              ? `${item.split(' ')[0].charAt(0).toLowerCase() + item.split(' ')[0].slice(1)}-${item.split(' ')[1].charAt(0).toLowerCase() + item.split(' ')[1].slice(1)}-${item.split(' ')[2].charAt(0).toLowerCase() + item.split(' ')[2].slice(1)}`
+                              : item.charAt(0).toLowerCase() + item.slice(1)}`
+                              : '/order' }`}>
+                              {item}</Link>
                               </li>
                           ))}
                         </ul>

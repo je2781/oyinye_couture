@@ -1,11 +1,9 @@
 
-import FeaturedProducts from "@/components/collections/ViewCollection";
 import Header from "@/components/layout/Header";
 import Hero from "@/components/Hero";
 import { cookies, headers } from "next/headers";
 import About from "@/components/about/AboutUs";
 import Footer from "@/components/footer/Footer";
-import Head from "next/head";
 import ViewCollection from "@/components/collections/ViewCollection";
 
 
@@ -24,7 +22,9 @@ async function getData() {
   
     return [cartData.cartItems, productData.products];
   }else{
-    return [[], []];
+    const productDataRes = await fetch(`${process.env.DOMAIN}/api/products`, {next: {revalidate: 3600}});
+    const productData = await productDataRes.json();
+    return [[], productData.products];
   }
 }
 

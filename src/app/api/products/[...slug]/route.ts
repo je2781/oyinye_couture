@@ -162,8 +162,11 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string[] } }) {
   try {
-    let relatedProducts: any[] = [];
+    let extractedProductsArray: string[] = [];
     let authors: any[] = [];
+    let updatedProducts: any[] = [];
+    // Get the current viewed products from query params
+    const viewedProducts = req.nextUrl.searchParams.get('viewed_p');
 
     const title = params.slug[0].charAt(0).toUpperCase() + params.slug[0].replace('-', ' ').slice(1);
 
@@ -179,14 +182,8 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 
     if (extractedColorObj) {
 
-      // Get the current viewed products from the cookie
-      const viewedProducts = req.cookies.get('viewed_p')?.value;
-
-      let viewedProductsArray: string[] = [];
-      let extractedProductsArray: string[] = [];
-
       if (viewedProducts) {
-        viewedProductsArray = JSON.parse(viewedProducts);
+        const viewedProductsArray = JSON.parse(viewedProducts);
         //getting products attached to variant ids
         for (let viewedProduct of viewedProductsArray) {
           let extractedProduct = await Product.findOne({ 'colors.sizes.variantId': viewedProduct });
@@ -194,23 +191,23 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
         }
       }
 
-      let updatedProducts: any[] = [];
-
       //finding products similar in features to selected product
       const extractedProductsOfSimilarColor = await Product.find({ 'colors.type': extractedColorObj.type, 'colors.sizes.variantId': { $ne: params.slug[2] } });
 
         //finding related/grouped products of selected product
       let carts = await Cart.find({ 'items.productId': product._id });
-      for (let cart of carts) {
-        let updatedCart = await cart.populate('items.productId');
-        const products = updatedCart.items.map((item: any) => ({ ...item.productId._doc }));
-        updatedProducts.push(...products);
+      if(carts.length > 0){
+        for (let cart of carts) {
+          let updatedCart = await cart.populate('items.productId');
+          const products = updatedCart.items.map((item: any) => ({ ...item.productId._doc }));
+          updatedProducts.push(...products);
+        }
       }
 
       updatedProducts = [...updatedProducts, ...extractedProductsArray, ...extractedProductsOfSimilarColor];
 
        //removing duplicates and storing them
-      relatedProducts = updatedProducts.filter((prod: any) => prod._id.toString() !== product._id.toString());
+      const relatedProducts = updatedProducts.filter((prod: any) => prod._id.toString() !== product._id.toString());
 
       //getting product reviews
       const updatedProduct = await product.populate('reviews.reviewId');
@@ -233,7 +230,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       //sorting reviews with the most likes in descending order
       reviews.sort((a: any, b: any) => b.likes - a.likes);;
       
-      const res = NextResponse.json({
+      return NextResponse.json({
         productSizes: extractedColorObj.sizes,
         productFrontBase64Images: extractedColorObj.imageFrontBase64,
         productId: product._id.toString(),
@@ -243,14 +240,6 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
         success: true
       }, { status: 200 });
 
-      res.cookies.set('viewed_p', JSON.stringify(viewedProductsArray), {
-        expires: new Date(new Date().getTime() + 2629746000), // Expires in 1 month
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-      });
-
-
-      return res;
     } else {
       return NextResponse.json({ error: "product color doesn't exist" }, { status: 404 });
     }

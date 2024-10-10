@@ -318,42 +318,37 @@ export default function FilterSettings({
                 </h5>
                 <i className="fa-solid fa-angle-up text-[1.2rem]"></i>
             </header>
-            <section
-            id="productType-content"
-            className="flex flex-col gap-y-5"
-            >
-                <ul className="flex-col font-sans text-[.9rem] text-gray-500 flex gap-y-2">
-                {productTypeList.map((item: any, i: number) => (
-                    <li className="inline-flex flex-row gap-x-3 items-center " key={i}>
-                        <input 
-                        onChange={(e) => {
-                          let el = e.currentTarget;
+            <ul id="productType-content" className="flex-col font-sans text-[.9rem] text-gray-500 flex gap-y-2">
+            {productTypeList.map((item: any, i: number) => (
+                <li className="inline-flex flex-row gap-x-3 items-center " key={i}>
+                    <input 
+                    onChange={(e) => {
+                      let el = e.currentTarget;
 
-                          setFilter((prevState: any) => ({
-                            ...prevState,
-                            noOfFilters:
-                            prevState.noOfFilters < 3 && el.checked && !prodType
-                            ? prevState.noOfFilters + 1
-                            : prevState.noOfFilters > 0 && !el.checked && prodType
-                            ? prevState.noOfFilters - 1
-                            : prevState.noOfFilters,
-                            productType: el.checked ? item : '',
-                          }));
-                          //reloading page
-                          setIsLoading(true);
-                        }}
-                        type="checkbox" className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-500 rounded-sm relative
-                            cursor-pointer outline-none checked:bg-gray-500 checked:after:absolute checked:after:content-[''] checked:after:top-[1.5px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
-                            checked:after:border-white checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
-                            checked:after:rotate-45" checked={filter.productType === item ? true : false}/>
-                        <span
-                        >
-                            {item}
-                        </span>
-                    </li>
-                ))}
-                </ul>
-            </section>
+                      setFilter((prevState: any) => ({
+                        ...prevState,
+                        noOfFilters:
+                        prevState.noOfFilters < 3 && el.checked && !prodType
+                        ? prevState.noOfFilters + 1
+                        : prevState.noOfFilters > 0 && !el.checked && prodType
+                        ? prevState.noOfFilters - 1
+                        : prevState.noOfFilters,
+                        productType: el.checked ? item : '',
+                      }));
+                      //reloading page
+                      setIsLoading(true);
+                    }}
+                    type="checkbox" className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-500 rounded-sm relative
+                        cursor-pointer outline-none checked:bg-gray-500 checked:after:absolute checked:after:content-[''] checked:after:top-[1.5px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
+                        checked:after:border-white checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
+                        checked:after:rotate-45" checked={filter.productType === item ? true : false}/>
+                    <span
+                    >
+                        {item}
+                    </span>
+                </li>
+            ))}
+            </ul>
         </div>
       </section>
 

@@ -16,7 +16,7 @@ async function getCart() {
   const cartId = cookieStore.get('cart')?.value;
   const userId = cookieStore.get('user')?.value;
 
-  if(cartId && cartId.length > 0){
+  if(cartId && cartId.length > 0 && userId){
   
     const [userDataRes, cartDataRes] = await Promise.all([
       fetch(`${process.env.DOMAIN}/api/users/${userId}`),

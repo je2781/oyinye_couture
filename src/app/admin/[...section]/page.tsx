@@ -76,7 +76,8 @@ export default async function Admin({
         userName: userData.userName,
         userEmail: userData.userEmail,
         title: userData.title,
-        id: userData.userId
+        id: userData.userId,
+        avatar: userData.avatar
       };
 
       const bodyProps = {

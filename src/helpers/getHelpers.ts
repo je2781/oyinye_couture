@@ -676,17 +676,18 @@ export async function handleSubmit(
     type,
     reviews: [],
     isFeature,
+    features: [
+      embelishment,
+      sleeveL,
+      dresslength,
+      fabric,
+      neckLine].filter(element => element !== ""),
     colors: currentBgColors.map((bgColor) => {
       let updatedSizeData = sizeDataArray
         .filter((datum) => datum !== undefined)
         .filter((datum) => datum.color === bgColor);
       return {
         type: bgColor,
-        embelishment,
-        sleeveLength: sleeveL,
-        length: dresslength,
-        fabric,
-        neckLine,
         imageFrontBase64: Object.values(
           dressColorsState[dressColorsState.length - 1]
         )[0].imageFront,

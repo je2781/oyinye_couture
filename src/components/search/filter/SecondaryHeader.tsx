@@ -5,7 +5,7 @@ import Image from "next/image";
 import On from "../../../public/on.png";
 import Off from "../../../public/off.png";
 import React, { SyntheticEvent, useRef } from "react";
-import { FilterModal} from "../ui/Modal";
+import { FilterModal} from "../../ui/Modal";
 import { regex } from "@/helpers/getHelpers";
 import Slider from "@mui/material/Slider";
 import './SecondaryHeader.css';

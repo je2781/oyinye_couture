@@ -9,11 +9,10 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import ProductComponent from "../product/Product";
 import useProduct from "@/store/useProduct";
-import "./SearchResults.css";
-import FilterSettings from "../filter/Settings";
-import SecondaryHeader from "../filter/SecondaryHeader";
 import useWindowWidth from "../helpers/getWindowWidth";
 import useGlobal from "@/store/useGlobal";
+import SecondaryHeader from "./filter/SecondaryHeader";
+import FilterSettings from "./filter/Settings";
 
 export default function SearchResults({
   searchCat,
@@ -192,7 +191,7 @@ export default function SearchResults({
     <>
       <section className={`${
             visible ? "show" : "hide"
-          } mx-auto container px-7 fixed top-[60px] z-10 bg-white h-11 shadow-md py-2 md:hidden max-w-7xl`}>
+          } mx-auto container px-7 fixed top-[95px] z-10 bg-white h-[46px] shadow-md py-2 md:hidden max-w-7xl`}>
           <SecondaryHeader 
             setFilter={setFilter}
             filter={filter}
@@ -217,7 +216,7 @@ export default function SearchResults({
           /> 
       </section>
       <main
-        className={`bg-white w-full min-h-screen md:pt-12 pt-5 pb-6 flex flex-col px-8 max-w-7xl relative no-products-section ${
+        className={`bg-white w-full min-h-screen md:pt-12 pt-5 pb-6 flex flex-col md:pl-12 md:pr-0 pl-2 pr-3 max-w-7xl relative no-products-section ${
           data.products.length === 0  && !lowerBoundary && !upperBoundary && !productType && filter.showOutOfStock ? "space-y-36" : "space-y-6"
         }`}
       >
@@ -480,14 +479,14 @@ export default function SearchResults({
                   sliderVal={sliderVal}
                 
                 />}
-              <div className={`${filter.isVisible ? 'md:w-[80%]': 'w-full'} flex md:flex-row ${isGridView ? 'flex-row': 'flex-col'} items-center md:h-full md:overflow-y-auto hide-scrollbar justify-evenly flex-wrap gap-x-4 gap-y-3`}>
+              <div className={`${filter.isVisible ? 'md:w-[80%]': 'w-full'} flex md:flex-row ${isGridView ? 'flex-row': 'flex-col'} items-center md:h-full md:overflow-y-auto hide-scrollbar justify-evenly flex-wrap gap-x-2 gap-y-4`}>
                 {data.products.map((product: any, i: number) => (
                   <ProductComponent
                     key={i}
                     product={product}
                     isSearchProduct
-                    imageH={filter.isVisible ? 600: null}
-                    imageW={filter.isVisible ? 200: null}
+                    imageH={filter.isVisible ? 650: null}
+                    imageW={filter.isVisible ? 229: null}
                     isGridView={isGridView}
                     setIsGridView={setIsGridView}
                   />
@@ -497,7 +496,7 @@ export default function SearchResults({
           )}
         </section>
         {isLoading && <section className="absolute top-[60px] z-20 left-0 bg-white/50 w-full h-full">
-          <div className="loader absolute top-4 right-2"></div>
+          <div className="loader absolute top-4 right-4"></div>
         </section>}
         {data.products.length > 0 && <Pagination {...data} />}
       </main>
