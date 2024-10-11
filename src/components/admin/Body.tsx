@@ -3073,643 +3073,852 @@ export default function Body({
                   Inbox
               </header>
               <p className="text-[.8rem]">This page contains messages from clients regarding appointments and other enquiries</p>
-              <section className='md:max-w-[60%] w-full flex flex-row flex-wrap lg:flex-nowrap justify-start items-center text-sm gap-x-2 gap-y-2 mt-6'>
-                <div className="lg:inline-block lg:max-w-[28%] hidden relative">
-                    <button 
-                    onClick={(e) => {
-                        let downAngle = e.currentTarget.querySelector("i.actions-angle-down");
-                        let actionsDropdown = document.getElementById("actions-dropdown");
-                        let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#actions-dropdown)');
-                        let calendarAngleDown = document.querySelector('i.calendar-angle-down');
-                        let filterAngleDown = document.querySelector('i.filter-angle-down');
-                        let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
 
-                        if(calendarAngleDown?.classList.contains('ad-rotate')){
-                          calendarAngleDown?.classList.remove("ad-rotate");
-                          calendarAngleDown?.classList.add("ad-rotate-anticlock");
-                        }
-                        if(filterAngleDown?.classList.contains('ad-rotate')){
-                          filterAngleDown?.classList.remove("ad-rotate");
-                          filterAngleDown?.classList.add("ad-rotate-anticlock");
-                        }
-                        if(activeActionAngleDown?.classList.contains('ad-rotate')){
-                          activeActionAngleDown?.classList.remove("ad-rotate");
-                          activeActionAngleDown?.classList.add("ad-rotate-anticlock");
-                        }
-
-                        dropdowns.forEach(dropdown => {
-                          if(dropdown.classList.contains('show')){
-                            dropdown.classList.add('hide', 'hidden');
-                            dropdown.classList.remove('show');
-                          }
-                        });
-
-                        if(downAngle && actionsDropdown){
-                          if(!downAngle.classList.contains("ad-rotate")){
-                              downAngle.classList.add("ad-rotate");
-                              downAngle.classList.remove("ad-rotate-anticlock");
-                              actionsDropdown.classList.remove('hide', 'hidden');
-                              actionsDropdown.classList.add('show');
-                          }else{
-                              downAngle.classList.remove("ad-rotate");
-                              downAngle.classList.add("ad-rotate-anticlock");
-                              actionsDropdown.classList.add('hide', 'hidden');
-                              actionsDropdown.classList.remove('show');
-                          }
-                        }
-                    }}
-                    id='actions-button'
-                    className="w-full rounded-sm font-medium px-2 py-[6px] gap-x-2 cursor-pointer bg-transparent border border-secondary-400 inline-flex flex-row items-end">
-                        <i className="fa-solid fa-circle-play"></i>
-                        <span className="text-xs">Action</span>
-                        <i className="fa-solid fa-angle-down text-xs actions-angle-down"></i>
-                    </button>
-                    <ul id='actions-dropdown' className="absolute z-30 w-[130%] text-xs text-gray-600 font-medium bg-white rounded-md shadow-sm shadow-white flex-col hide hidden">
-                        {[
-                          'Mark As Read',
-                          'Mark As Unread',
-                          'Save Messages',
-                          'Remove'
-                        ].map((action: string, i: number) => (
-                            <div key={i}>
-                                <li
-                                onClick={async (e) => {
-                                  let downAngle = e.currentTarget.querySelector("i.actions-angle-down");
-                                  let actionsDropdown = document.getElementById("actions-dropdown");
-                                  const subjectCheck = document.getElementById('all') as HTMLInputElement;
-                                  const emailItemChecks = document.querySelectorAll('#single') as NodeListOf<HTMLInputElement>;
-                                  const emailItems = document.querySelectorAll('#email-item') as NodeListOf<HTMLDivElement>;
-                                  const newEmailItems = Array.from(emailItems);
-                                  const newEmailItemChecks = Array.from(emailItemChecks);
-                                  //clearing email checks
-                                  newEmailItemChecks.forEach(itemCheck => itemCheck.checked = false);
-
-                                  subjectCheck.checked = true;
-                                  
-                                  for(let i = 0; i < newEmailItems.length; i++){
-                                      try {
-                                        
-                                        if(action === 'Remove'){
-                                          setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== newEmailItems[i].dataset.enqId));
-                                          await axios.delete(`/api/enquiries/delete/${newEmailItems[i].dataset.enqId}`);
-                                        }else{
-                                          
-                                          if(action === 'Mark As Read'){
-                                            if(newEmailItems[i].dataset.read === 'false'){
-                                              newEmailItems[i].classList.add('bg-primary-500');
-
-                                              newEmailItemChecks[i].checked = true;
-                                              
-                                              setEnquiries(prevEnqs => {
-                                                const updatedEnqs = [...prevEnqs];
-                                                const extractedIndex = updatedEnqs.findIndex(enq => enq._id.toString() === newEmailItems[i].dataset.enqId);
-                                                let updatedEnq = updatedEnqs[extractedIndex];
-    
-                                                updatedEnqs[extractedIndex] = {
-                                                  ...updatedEnq,
-                                                  order: {
-                                                    ...updatedEnq.order,
-                                                    read: newEmailItems[i].dataset.hasOrder === 'true'
-                                                  },
-                                                  contact: {
-                                                    ...updatedEnq.contact,
-                                                    read: newEmailItems[i].dataset.hasContact === 'true'
-                                                  }
-                                                };
-                                                return  updatedEnqs;
-                                              });
-
-                                              await axios.patch(`/api/enquiries/update/${newEmailItems[i].dataset.enqId}`, {
-                                                isRead: true,
-                                                isUnRead: false,
-                                                isBooking: newEmailItems[i].dataset.hasOrder === 'true',
-                                                isContact: newEmailItems[i].dataset.hasContact === 'true'
-                                              });
-                                            }
-  
-                                          }
-                                          if(action === 'Mark As Unread'){
-                                            if(newEmailItems[i].dataset.unread === 'false'){
-                                              
-                                              newEmailItems[i].classList.remove('bg-primary-500');
-
-                                              newEmailItemChecks[i].checked = true;
-    
-                                              setEnquiries(prevEnqs => {
-                                                const updatedEnqs = [...prevEnqs];
-                                                const extractedIndex = updatedEnqs.findIndex(enq => enq._id.toString() === newEmailItems[i].dataset.enqId);
-                                                let updatedEnq = updatedEnqs[extractedIndex];
-        
-                                                updatedEnqs[extractedIndex] = {
-                                                  ...updatedEnq,
-                                                  order: {
-                                                    ...updatedEnq.order,
-                                                    unRead: newEmailItems[i].dataset.hasOrder === 'true'
-                                                  },
-                                                  contact: {
-                                                    ...updatedEnq.contact,
-                                                    unRead: newEmailItems[i].dataset.hasContact === 'true'
-                                                  }
-                                                };
-                                                return  updatedEnqs;
-                                              });
-
-                                              await axios.patch(`/api/enquiries/update/${newEmailItems[i].dataset.enqId}`, {
-                                                isRead: false,
-                                                isUnRead: true,
-                                                isBooking: newEmailItems[i].dataset.hasOrder === 'true',
-                                                isContact: newEmailItems[i].dataset.hasContact === 'true'
-                                              });
-                                            }
-
-                                          }
-                                          
-                                          
-                                        }
-                                        
-                                        
-                                      } catch (error: any) {
-                                        toast.error(error.message);
-                                      }
-                                    
-                                    
-                                  }
-
-                                  if(downAngle && actionsDropdown){
-                                    if(!downAngle.classList.contains("ad-rotate")){
-                                        downAngle.classList.add("ad-rotate");
-                                        downAngle.classList.remove("ad-rotate-anticlock");
-                                        actionsDropdown.classList.remove('hide', 'hidden');
-                                        actionsDropdown.classList.add('show');
-                                    }else{
-                                        downAngle.classList.remove("ad-rotate");
-                                        downAngle.classList.add("ad-rotate-anticlock");
-                                        actionsDropdown.classList.add('hide', 'hidden');
-                                        actionsDropdown.classList.remove('show');
-                                    }
-                                  }
-                                                                    
-                                }}
-                                className="cursor-pointer flex flex-row items-center justify-between p-2"
-                              >
-                                  {action}
-                              </li>
-                              {action !== 'Remove' && <hr className="border-secondary-400"/>}
-                            </div>
-                        ))}
-                    </ul>
-                </div>
-                <div className="lg:inline-block lg:max-w-[15%] hidden relative">
-                    <button 
+              {enquiries.length > 0 ? <>
+                <section className='md:max-w-[60%] w-full flex flex-row flex-wrap lg:flex-nowrap justify-start items-center text-sm gap-x-2 gap-y-2 mt-6'>
+                  <div className="lg:inline-block lg:max-w-[28%] hidden relative">
+                      <button 
                       onClick={(e) => {
-                        let downAngle = e.currentTarget.querySelector("i.calendar-angle-down");
-                        let calendarDropdown = document.getElementById("calendar-dropdown");
-                        let actionsAngleDown = document.querySelector('i.actions-angle-down');
-                        let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#calendar-dropdown)');
-                        let filterAngleDown = document.querySelector('i.filter-angle-down');
-                        let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
+                          let downAngle = e.currentTarget.querySelector("i.actions-angle-down");
+                          let actionsDropdown = document.getElementById("actions-dropdown");
+                          let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#actions-dropdown)');
+                          let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                          let filterAngleDown = document.querySelector('i.filter-angle-down');
+                          let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
 
-                        if(actionsAngleDown?.classList.contains('ad-rotate')){
-                          actionsAngleDown?.classList.remove("ad-rotate");
-                          actionsAngleDown?.classList.add("ad-rotate-anticlock");
-                        }
-                        if(filterAngleDown?.classList.contains('ad-rotate')){
-                          filterAngleDown?.classList.remove("ad-rotate");
-                          filterAngleDown?.classList.add("ad-rotate-anticlock");
-                        }
-                        if(activeActionAngleDown?.classList.contains('ad-rotate')){
-                          activeActionAngleDown?.classList.remove("ad-rotate");
-                          activeActionAngleDown?.classList.add("ad-rotate-anticlock");
-                        }
-                        
-                        dropdowns.forEach(dropdown => {
-                          if(dropdown.classList.contains('show')){
-                            dropdown.classList.add('hide', 'hidden');
-                            dropdown.classList.remove('show');
+                          if(calendarAngleDown?.classList.contains('ad-rotate')){
+                            calendarAngleDown?.classList.remove("ad-rotate");
+                            calendarAngleDown?.classList.add("ad-rotate-anticlock");
                           }
-                        });
-
-                        if(downAngle && calendarDropdown){
-                          if(!downAngle.classList.contains("ad-rotate")){
-                              downAngle.classList.add("ad-rotate");
-                              downAngle.classList.remove("ad-rotate-anticlock");
-                              calendarDropdown.classList.remove('hide', 'hidden');
-                              calendarDropdown.classList.add('show');
-                          }else{
-                              downAngle.classList.remove("ad-rotate");
-                              downAngle.classList.add("ad-rotate-anticlock");
-                              calendarDropdown.classList.add('hide', 'hidden');
-                              calendarDropdown.classList.remove('show');
+                          if(filterAngleDown?.classList.contains('ad-rotate')){
+                            filterAngleDown?.classList.remove("ad-rotate");
+                            filterAngleDown?.classList.add("ad-rotate-anticlock");
                           }
-                        }
-                      }}
-                    className="w-full rounded-sm font-medium px-2 py-[7px] gap-x-2 cursor-pointer bg-transparent border border-secondary-400 inline-flex flex-row items-end">
-                        <i className="fa-regular fa-calendar-days"></i>
-                        <i className="fa-solid fa-angle-down text-xs calendar-angle-down"></i>
-                    </button>
-                    <div className="hide hidden absolute z-30 flex-col gap-y-3 pt-5 pb-4 px-3 h-fit w-[1100%] bg-white rounded-md" id='calendar-dropdown'>
-                      <div className="flex flex-row gap-x-2 mb-2 items-center">
-                          <span>From</span>
-                          <div className="relative">
-                              <input 
-                              type="text"
-                              value={startDate}
-                              onChange={(e) => {
-                                //extracting date data from input
-                                let extractedDate, extractedYear;
-                                let extractedMonth = 0;
-                                
-                                //validtion check to keep spaces between date string
-                                if(e.target.value.split(' ').length <= 2){
-                                  e.target.value = startDate;
-                                  return;
-                                }
-                                
-                                extractedDate = parseInt(e.target.value.split(' ')[0]);
-
-                                //validation check to prevent characters from being used
-                                if(isNaN(extractedDate) || extractedDate < 1){
-                                  e.target.value = startDate;
-                                  return;
-                                }
-                                for(let i = 0; i < months.length; i++){
-                                  if(months[i] === e.target.value.split(' ')[1]){
-                                    extractedMonth = i; 
-                                  }
-                                }
-                                extractedYear = parseInt(e.target.value.split(' ')[2]);
-                                //validation check to prevent characters from being used or wrong year format
-                                if(isNaN(extractedYear)){
-                                  e.target.value = startDate;
-                                  return;
-                                }
-                                
-                                const timeDiff = new Date(currentYear, currentMonth+1, currentDate).getTime() - new Date(extractedYear, extractedMonth!+1, extractedDate).getTime();
-                                //validation check
-                                if(timeDiff  < 86400000){
-                                  e.target.value = startDate;
-                                  alert('start date has to be at least 1 day apart from end date');
-                                  return;
-                                }
-                                //binding value to change event
-                                setStartDate(e.target.value);
-                                //setting start value of calendar component
-                                setStartValue(new Date(e.target.value));
-                            }}  id="start-date" placeholder="1 Jan 1960" className="peer rounded-md placeholder:text-xs focus:outline-secondary-400 p-2 text-xs focus:ring-1  border border-gray-400 focus:border-secondary-400 w-28"
-                              />
-                              <label className="text-xs font-bold absolute peer-focus:text-secondary-400 top-[-6px] left-[10px] bg-white px-[5px] text-gray-400 ">Start date</label>
-                          </div>
-                          <span>To</span>
-                          <div className="relative">
-                              <input 
-                                onChange={(e) => {
-                                
-                                  //extracting date data from input
-                                  let extractedStartDate, extractedStartYear, extractedEndDate, extractedEndYear;
-                                  let extractedEndMonth = 0;
-                                  let extractedStartMonth = 0;
-                                  
-                                  //validtion check to keep spaces between date string
-                                  if(e.target.value.split(' ').length <= 2){
-                                    e.target.value = endDate;
-                                    return;
-                                  }
-                                  
-                                  extractedStartDate = parseInt(calendarStart.split(' ')[0]);
-                                  for(let i = 0; i < months.length; i++){
-                                      if(months[i] === calendarStart.split(' ')[1]){
-                                          extractedStartMonth = i; 
-                                      }
-                                  }
-                                  extractedStartYear = parseInt(calendarStart.split(' ')[2]);
-                                  
-                                  extractedEndDate = parseInt(e.target.value.split(' ')[0]);
-                                  //validation check to prevent characters from being used
-                                  if(isNaN(extractedEndDate) || extractedEndDate < 1){
-                                    e.target.value = endDate;
-                                    return;
-                                  }
-
-                                  for(let i = 0; i < months.length; i++){
-                                      if(months[i] === e.target.value.split(' ')[1]){
-                                          extractedEndMonth = i; 
-                                      }
-                                  }
-                                  extractedEndYear = parseInt(e.target.value.split(' ')[2]);
-                                  //validation check to prevent characters from being used or wrong year format
-                                  if(isNaN(extractedEndYear)){
-                                    e.target.value = endDate;
-                                    return;
-                                  }
-                                  
-                                  const currentTime = new Date(extractedEndYear, extractedEndMonth+1, extractedEndDate).getTime() - new Date().getTime();
-                                  
-                                  //validation check to prevent user from inputing an end date greater than current time
-                                  if(currentTime > 0){
-                                      e.target.value = endDate;
-                                      alert('end date cannot be greater than current date');
-                                      return;
-                                  }else if(currentTime < 0){
-                                    e.target.value = endDate;
-                                    alert('end date cannot be less than current date');
-                                    
-                                    return;
-                                  }
-                                  const timeDiff = new Date(extractedEndYear,extractedEndMonth+1,extractedEndDate).getTime() - new Date(extractedStartYear, extractedStartMonth+1, extractedStartDate).getTime();
-                                  
-                                  //validation check
-                                  if(timeDiff  < 86400000){
-                                      e.target.value = endDate;
-                                      alert('start date has to be at least 1 day apart from end date');
-                                      return;
-                                  }
-                                  //binding value to change event
-                                  setEndDate(e.target.value);
-                                  //setting end value of calendar component
-                                  setEndValue(new Date(e.target.value));
-                                }} 
-                                type="text" 
-                                id="end-date" 
-                                value={endDate}
-                                placeholder="1 Jan 1960" 
-                                className="peer rounded-md placeholder:text-xs focus:outline-secondary-400 p-2 text-xs focus:ring-1  border border-gray-400 focus:border-secondary-400 w-28"
-                                />
-                              <label className="text-xs font-bold absolute peer-focus:text-secondary-400 top-[-6px] left-[10px] bg-white px-[5px] text-gray-400">End date</label>
-                          </div>
-                          <div className="inline-flex flex-row gap-x-4 justify-center px-2">
-                            <button onClick={() => {
-                              let downAngle = document.querySelector("i.calendar-angle-down");
-                              let calendarDropdown = document.getElementById("calendar-dropdown");
-
-                              setEnquiries(prevEnqs => {
-                                let newEnqs = [...prevEnqs];
-                                newEnqs = newEnqs.filter(enq => new Date(enq.createdAt).getTime() >= new Date(startDate).getTime() && new Date(enq.createdAt).getTime() <= new Date(endDate).getTime());
-                                return newEnqs;
-                              });
-
-                              if(downAngle && calendarDropdown){
-                                if(!downAngle.classList.contains("ad-rotate")){
-                                    downAngle.classList.add("ad-rotate");
-                                    downAngle.classList.remove("ad-rotate-anticlock");
-                                    calendarDropdown.classList.remove('hide', 'hidden');
-                                    calendarDropdown.classList.add('show');
-                                }else{
-                                    downAngle.classList.remove("ad-rotate");
-                                    downAngle.classList.add("ad-rotate-anticlock");
-                                    calendarDropdown.classList.add('hide', 'hidden');
-                                    calendarDropdown.classList.remove('show');
-                                }
-                              }
-                            }} className="bg-accent text-white px-3 py-2 rounded-md hover:ring-1 hover:ring-accent">Apply</button>
-                            <button onClick={() => {
-                              //resetting calendar and enquiries
-                              setStartDate(`${(currentDate - 29) <= 0 ? new Date(currentDate -29 <= 0 && currentMonth === 0 ? currentYear-1 : currentYear, currentDate -29 <= 0 && currentMonth === 0 ? 8 : currentMonth-4, 0).getDate() - Math.abs(currentDate - 29) : currentDate - 29} ${(currentDate - 29) <= 0 ? (currentMonth === 0 ? months[7] : months[currentMonth-5]) : months[currentMonth -4]} ${(currentDate - 29) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}`);
-                              //setting start value of calStartar component
-                              setStartValue(new Date(`${(currentDate - 29) <= 0 ? new Date(currentDate -29 <= 0 && currentMonth === 0 ? currentYear-1 : currentYear, currentDate -29 <= 0 && currentMonth === 0 ? 8 : currentMonth-4, 0).getDate() - Math.abs(currentDate - 29) : currentDate - 29} ${(currentDate - 29) <= 0 ? (currentMonth === 0 ? months[7] : months[currentMonth-5]) : months[currentMonth -4]} ${(currentDate - 29) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}`));
-
-                              setEndDate(`${new Date().getDate()} ${months[currentMonth]} ${new Date().getFullYear()}`);
-                              //setting end value of calendar component
-                              setEndValue(new Date(`${new Date().getDate()} ${months[currentMonth]} ${new Date().getFullYear()}`));
-                            
-                              setEnquiries(enquiriesData.enquiries);
-                            }} className="text-accent bg-transparen">Clear</button>
-                        </div>
-                      </div>
-                      <div className="flex flex-row gap-x-4 w-full">
-                          <Calendar onChange={(val, e) => {
-                            let date = val!.toString().split(' ')[2].split('')[0] === '0' ? val!.toString().split(' ')[2].slice(-1) : val!.toString().split(' ')[2];
-                            let month = val!.toString().split(' ')[1];
-                            let year = val!.toString().split(' ')[3];
-                            setStartDate(`${date} ${month} ${year}`);
-
-                            setStartValue(val);
-                          }} value={startValue} maxDate={new Date(new Date().getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000 - 3600000)}/>
-                          <Calendar onChange={(val, e) => {
-                            let date = val!.toString().split(' ')[2].split('')[0] === '0' ? val!.toString().split(' ')[2].slice(-1) : val!.toString().split(' ')[2];
-                            let month = val!.toString().split(' ')[1];
-                            let year = val!.toString().split(' ')[3];
-                            setEndDate(`${date} ${month} ${year}`);
-                            setEndValue(val);
-                          }} value={endValue} maxDate={new Date(new Date().getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000)}/>
-                      </div>
-                    </div>
-                </div>
-                <div className="lg:inline-block lg:max-w-[27%] hidden relative">
-                    <button 
-                    onClick={(e) => {
-                        let downAngle = e.currentTarget.querySelector("i.filter-angle-down");
-                        let filterDropdown = document.getElementById("filter-dropdown");
-                        let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#filter-dropdown)');
-                        let calendarAngleDown = document.querySelector('i.calendar-angle-down');
-                        let actionsAngleDown = document.querySelector('i.actions-angle-down');
-                        let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
-
-                        if(calendarAngleDown?.classList.contains('ad-rotate')){
-                          calendarAngleDown?.classList.remove("ad-rotate");
-                          calendarAngleDown?.classList.add("ad-rotate-anticlock");
-                        }
-                        if(actionsAngleDown?.classList.contains('ad-rotate')){
-                          actionsAngleDown?.classList.remove("ad-rotate");
-                          actionsAngleDown?.classList.add("ad-rotate-anticlock");
-                        }
-                        if(activeActionAngleDown?.classList.contains('ad-rotate')){
-                          activeActionAngleDown?.classList.remove("ad-rotate");
-                          activeActionAngleDown?.classList.add("ad-rotate-anticlock");
-                        }
-
-                        dropdowns.forEach(dropdown => {
-                          if(dropdown.classList.contains('show')){
-                            dropdown.classList.add('hide', 'hidden');
-                            dropdown.classList.remove('show');
+                          if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                            activeActionAngleDown?.classList.remove("ad-rotate");
+                            activeActionAngleDown?.classList.add("ad-rotate-anticlock");
                           }
-                        });
 
-                        if(downAngle && filterDropdown){
+                          dropdowns.forEach(dropdown => {
+                            if(dropdown.classList.contains('show')){
+                              dropdown.classList.add('hide', 'hidden');
+                              dropdown.classList.remove('show');
+                            }
+                          });
+
+                          if(downAngle && actionsDropdown){
                             if(!downAngle.classList.contains("ad-rotate")){
                                 downAngle.classList.add("ad-rotate");
                                 downAngle.classList.remove("ad-rotate-anticlock");
-                                filterDropdown.classList.remove('hide', 'hidden');
-                                filterDropdown.classList.add('show');
+                                actionsDropdown.classList.remove('hide', 'hidden');
+                                actionsDropdown.classList.add('show');
                             }else{
                                 downAngle.classList.remove("ad-rotate");
                                 downAngle.classList.add("ad-rotate-anticlock");
-                                filterDropdown.classList.add('hide', 'hidden');
-                                filterDropdown.classList.remove('show');
+                                actionsDropdown.classList.add('hide', 'hidden');
+                                actionsDropdown.classList.remove('show');
                             }
-                        }
-                    }}
-                    id='filter-button'
-                    className="w-full rounded-sm font-medium px-2 py-[6px] gap-x-2 cursor-pointer bg-transparent border border-secondary-400 inline-flex flex-row items-end">
-                        <i className="fa-solid fa-filter"></i>
-                        <span className="text-xs">Filter</span>
-                        <i className="fa-solid fa-angle-down text-xs filter-angle-down"></i>
-                    </button>
-                    <ul id='filter-dropdown' className="absolute z-30 w-[130%] text-gray-600 font-medium text-xs bg-white pt-3 pb-2 rounded-md shadow-sm shadow-white flex-col hide hidden">
-                        <li className="mb-2 pl-4 text-gray-700">State</li>
-                        {[
-                          'Read',
-                          'Unread',
-                          'Saved',
-                        ].map((action: string, i: number) => (
-                              <li
-                                key={action}
-                                // onClick={(e) => handleSelect(rating, e)}
-                                className="cursor-pointer flex flex-row items-center gap-x-1 px-4 py-1"
-                              >
-                                  <input
-                                    type="checkbox"
-                                    id={action}
-                                    className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-300 rounded-sm relative
-                                      cursor-pointer outline-none checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
-                                      checked:after:border-accent checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
-                                      checked:after:rotate-45"
-                                  /><span>{action}</span>
-                              </li>
-                        ))}
-                        <hr className="bg-gray-400 mt-3 h-[2px]" />
-                        <div className="inline-flex flex-row gap-x-4 justify-center mt-3 px-2">
-                            <button 
-                            onClick={(e) => {
-                              const readFilter = document.querySelector('#filter-dropdown > li > #Read') as HTMLInputElement;
-                              const unReadFilter = document.querySelector('#filter-dropdown > li > #Unread') as HTMLInputElement;
-                              const savedFilter = document.querySelector('#filter-dropdown > li > #Saved') as HTMLInputElement;
+                          }
+                      }}
+                      id='actions-button'
+                      className="w-full rounded-sm font-medium px-2 py-[6px] gap-x-2 cursor-pointer bg-transparent border border-secondary-400 inline-flex flex-row items-end">
+                          <i className="fa-solid fa-circle-play"></i>
+                          <span className="text-xs">Action</span>
+                          <i className="fa-solid fa-angle-down text-xs actions-angle-down"></i>
+                      </button>
+                      <ul id='actions-dropdown' className="absolute z-30 w-[130%] text-xs text-gray-600 font-medium bg-white rounded-md shadow-sm shadow-white flex-col hide hidden">
+                          {[
+                            'Mark As Read',
+                            'Mark As Unread',
+                            'Save Messages',
+                            'Remove'
+                          ].map((action: string, i: number) => (
+                              <div key={i}>
+                                  <li
+                                  onClick={async (e) => {
+                                    let downAngle = e.currentTarget.querySelector("i.actions-angle-down");
+                                    let actionsDropdown = document.getElementById("actions-dropdown");
+                                    const subjectCheck = document.getElementById('all') as HTMLInputElement;
+                                    const emailItemChecks = document.querySelectorAll('#single') as NodeListOf<HTMLInputElement>;
+                                    const emailItems = document.querySelectorAll('#email-item') as NodeListOf<HTMLDivElement>;
+                                    const newEmailItems = Array.from(emailItems);
+                                    const newEmailItemChecks = Array.from(emailItemChecks);
+                                    //clearing email checks
+                                    newEmailItemChecks.forEach(itemCheck => itemCheck.checked = false);
 
-                              if(readFilter.checked){
-                                setEnquiries(prevEnqs => prevEnqs.filter((enq: any) => enq.order.read === true || enq.contact.read === true));
-                              }
+                                    subjectCheck.checked = true;
+                                    
+                                    for(let i = 0; i < newEmailItems.length; i++){
+                                        try {
+                                          
+                                          if(action === 'Remove'){
+                                            setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== newEmailItems[i].dataset.enqId));
+                                            await axios.delete(`/api/enquiries/delete/${newEmailItems[i].dataset.enqId}`);
+                                          }else{
+                                            
+                                            if(action === 'Mark As Read'){
+                                              if(newEmailItems[i].dataset.read === 'false'){
+                                                newEmailItems[i].classList.add('bg-primary-500');
 
-                              if(unReadFilter.checked){
-                                setEnquiries(prevEnqs => prevEnqs.filter((enq: any) =>  enq.order.unRead === true || enq.contact.unRead === true));
-                              }
+                                                newEmailItemChecks[i].checked = true;
+                                                
+                                                setEnquiries(prevEnqs => {
+                                                  const updatedEnqs = [...prevEnqs];
+                                                  const extractedIndex = updatedEnqs.findIndex(enq => enq._id.toString() === newEmailItems[i].dataset.enqId);
+                                                  let updatedEnq = updatedEnqs[extractedIndex];
+      
+                                                  updatedEnqs[extractedIndex] = {
+                                                    ...updatedEnq,
+                                                    order: {
+                                                      ...updatedEnq.order,
+                                                      read: newEmailItems[i].dataset.hasOrder === 'true'
+                                                    },
+                                                    contact: {
+                                                      ...updatedEnq.contact,
+                                                      read: newEmailItems[i].dataset.hasContact === 'true'
+                                                    }
+                                                  };
+                                                  return  updatedEnqs;
+                                                });
 
-                              if(savedFilter.checked){
-                                setEnquiries(prevEnqs => prevEnqs.filter((enq: any) =>  enq.order.saved === true || enq.contact.saved === true));
-                              }
+                                                await axios.patch(`/api/enquiries/update/${newEmailItems[i].dataset.enqId}`, {
+                                                  isRead: true,
+                                                  isUnRead: false,
+                                                  isBooking: newEmailItems[i].dataset.hasOrder === 'true',
+                                                  isContact: newEmailItems[i].dataset.hasContact === 'true'
+                                                });
+                                              }
+    
+                                            }
+                                            if(action === 'Mark As Unread'){
+                                              if(newEmailItems[i].dataset.unread === 'false'){
+                                                
+                                                newEmailItems[i].classList.remove('bg-primary-500');
 
-                            }}
-                            className="bg-accent text-white px-3 py-2 rounded-md hover:ring-1 hover:ring-accent">Apply</button>
-                            <button onClick={() => {
-                                setEnquiries(enquiriesData.enquiries);
-                            }} className="text-accent bg-transparen">Clear</button>
-                        </div>
-                    </ul>
-                </div>
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  let item = e.currentTarget;
-                  const inputValue = item.search.value;
+                                                newEmailItemChecks[i].checked = true;
+      
+                                                setEnquiries(prevEnqs => {
+                                                  const updatedEnqs = [...prevEnqs];
+                                                  const extractedIndex = updatedEnqs.findIndex(enq => enq._id.toString() === newEmailItems[i].dataset.enqId);
+                                                  let updatedEnq = updatedEnqs[extractedIndex];
+          
+                                                  updatedEnqs[extractedIndex] = {
+                                                    ...updatedEnq,
+                                                    order: {
+                                                      ...updatedEnq.order,
+                                                      unRead: newEmailItems[i].dataset.hasOrder === 'true'
+                                                    },
+                                                    contact: {
+                                                      ...updatedEnq.contact,
+                                                      unRead: newEmailItems[i].dataset.hasContact === 'true'
+                                                    }
+                                                  };
+                                                  return  updatedEnqs;
+                                                });
 
-                  setEnquiries(prevEnqs => prevEnqs.filter((enq: any) =>  enq.order.content.includes(inputValue) || enq.contact.subject.includes(inputValue)));
+                                                await axios.patch(`/api/enquiries/update/${newEmailItems[i].dataset.enqId}`, {
+                                                  isRead: false,
+                                                  isUnRead: true,
+                                                  isBooking: newEmailItems[i].dataset.hasOrder === 'true',
+                                                  isContact: newEmailItems[i].dataset.hasContact === 'true'
+                                                });
+                                              }
 
-                }} className="inline-flex w-[60%] relative flex-row items-center border border-secondary-400 rounded-sm px-2">
-                    <input name='search' type='search' className="bg-transparent py-[5px] focus:outline-none w-full placeholder:text-secondary-400" placeholder="search"/>
-                    <i className="fa-solid fa-magnifying-glass text-secondary-400 cursor-pointer"></i>
-                </form>
-              </section>
-              <hr className="border-secondary-400/30 border -mt-2" />
-              <div className="w-full inline-flex flex-row -my-1 text-sm pl-3">
-                <div className="md:w-[60%] w-[70%] inline-flex flex-row gap-x-2 items-center">
-                  <input
-                    type="checkbox"
-                    id='all'
-                    onChange={(e) => {
-                      let msgs = document.querySelectorAll('[id=single]') as NodeListOf<HTMLInputElement>;
+                                            }
+                                            
+                                            
+                                          }
+                                          
+                                          
+                                        } catch (error: any) {
+                                          toast.error(error.message);
+                                        }
+                                      
+                                      
+                                    }
 
-                      msgs.forEach(msg => {
-                        if(e.currentTarget.checked){
-                          msg.checked = true;
-                        }else{
-                          msg.checked = false;
-                        }
-                      });
-                    }}
-                    className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-300 rounded-sm relative
-                    cursor-pointer outline-none checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
-                    checked:after:border-accent checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
-                    checked:after:rotate-45"
-                  /><span className="font-medium">Subject</span>
-                </div>
-                <div className="md:w-[40%] w-[30%] font-medium">Date</div>
-              </div>
-              <hr className="border-secondary-400/30 border" />
-              {enquiries.map((enq: any, i: number) => {
+                                    if(downAngle && actionsDropdown){
+                                      if(!downAngle.classList.contains("ad-rotate")){
+                                          downAngle.classList.add("ad-rotate");
+                                          downAngle.classList.remove("ad-rotate-anticlock");
+                                          actionsDropdown.classList.remove('hide', 'hidden');
+                                          actionsDropdown.classList.add('show');
+                                      }else{
+                                          downAngle.classList.remove("ad-rotate");
+                                          downAngle.classList.add("ad-rotate-anticlock");
+                                          actionsDropdown.classList.add('hide', 'hidden');
+                                          actionsDropdown.classList.remove('show');
+                                      }
+                                    }
+                                                                      
+                                  }}
+                                  className="cursor-pointer flex flex-row items-center justify-between p-2"
+                                >
+                                    {action}
+                                </li>
+                                {action !== 'Remove' && <hr className="border-secondary-400"/>}
+                              </div>
+                          ))}
+                      </ul>
+                  </div>
+                  <div className="lg:inline-block lg:max-w-[15%] hidden relative">
+                      <button 
+                        onClick={(e) => {
+                          let downAngle = e.currentTarget.querySelector("i.calendar-angle-down");
+                          let calendarDropdown = document.getElementById("calendar-dropdown");
+                          let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                          let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#calendar-dropdown)');
+                          let filterAngleDown = document.querySelector('i.filter-angle-down');
+                          let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
 
-                return (
-                  <>
-                    <div id='email-item' 
-                    data-enq-id={enq._id.toString()}
-                    data-has-contact={!!enq.contact.message}
-                    data-read={!!enq.contact.message ? enq.contact.read : enq.order.read}
-                    data-unread={!!enq.contact.message ? enq.contact.unRead : enq.order.unRead}
-                     data-has-order={!!enq.order.content} key={i} className={`${enq.contact.read  || enq.order.read ? 'bg-primary-500' : ''} w-full inline-flex flex-row -my-5 text-sm py-4 items-center pl-3`}>
-                      <div className="md:w-[60%] w-[70%] inline-flex flex-row gap-x-2 items-center relative">
-                        <input
-                          type="checkbox"
-                          id='single'
-                          className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-300 rounded-sm relative
-                          cursor-pointer outline-none checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
-                          checked:after:border-accent checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
-                          checked:after:rotate-45"
-                        />
-                        <span className="font-light">
-                          <i className="fa-regular fa-envelope-open text-accent/30"></i>&nbsp;&nbsp;{enq.order.content ? `Appointment by ${enq.author.fullName}` : enq.contact.message ? enq.contact.subject : `Testing by ${enq.author.fullName}`}
-                        </span>
-                        <div className="lg:hidden inline-block w-[40%] absolute left-0 top-10">
-                            <div className="w-[156%] rounded-sm font-medium bg-transparent inline-flex flex-row items-center">
-                                <button className="text-xs border-secondary-400 border px-2 py-[6px] hover:ring-1 hover:ring-secondary-400" onClick={async () => {
-                                  let activeActionAngleDown = document.querySelector("i.active-action-angle-down-for-sm-screen");
-                                  let dropdown = document.getElementById('active-action-dropdown-for-sm-screen');
-                                  document.getElementById('email-item')?.classList.add('bg-primary-500');
+                          if(actionsAngleDown?.classList.contains('ad-rotate')){
+                            actionsAngleDown?.classList.remove("ad-rotate");
+                            actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                          }
+                          if(filterAngleDown?.classList.contains('ad-rotate')){
+                            filterAngleDown?.classList.remove("ad-rotate");
+                            filterAngleDown?.classList.add("ad-rotate-anticlock");
+                          }
+                          if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                            activeActionAngleDown?.classList.remove("ad-rotate");
+                            activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                          }
+                          
+                          dropdowns.forEach(dropdown => {
+                            if(dropdown.classList.contains('show')){
+                              dropdown.classList.add('hide', 'hidden');
+                              dropdown.classList.remove('show');
+                            }
+                          });
 
-                                  if(activeActionAngleDown?.classList.contains('ad-rotate')){
-                                    activeActionAngleDown?.classList.remove("ad-rotate");
-                                    activeActionAngleDown?.classList.add("ad-rotate-anticlock");
-                                  }
-
-                                  if(dropdown?.classList.contains('show')){
-                                    dropdown?.classList.add('hide', 'hidden');
-                                    dropdown?.classList.remove('show');
+                          if(downAngle && calendarDropdown){
+                            if(!downAngle.classList.contains("ad-rotate")){
+                                downAngle.classList.add("ad-rotate");
+                                downAngle.classList.remove("ad-rotate-anticlock");
+                                calendarDropdown.classList.remove('hide', 'hidden');
+                                calendarDropdown.classList.add('show');
+                            }else{
+                                downAngle.classList.remove("ad-rotate");
+                                downAngle.classList.add("ad-rotate-anticlock");
+                                calendarDropdown.classList.add('hide', 'hidden');
+                                calendarDropdown.classList.remove('show');
+                            }
+                          }
+                        }}
+                      className="w-full rounded-sm font-medium px-2 py-[7px] gap-x-2 cursor-pointer bg-transparent border border-secondary-400 inline-flex flex-row items-end">
+                          <i className="fa-regular fa-calendar-days"></i>
+                          <i className="fa-solid fa-angle-down text-xs calendar-angle-down"></i>
+                      </button>
+                      <div className="hide hidden absolute z-30 flex-col gap-y-3 pt-5 pb-4 px-3 h-fit w-[1100%] bg-white rounded-md" id='calendar-dropdown'>
+                        <div className="flex flex-row gap-x-2 mb-2 items-center">
+                            <span>From</span>
+                            <div className="relative">
+                                <input 
+                                type="text"
+                                value={startDate}
+                                onChange={(e) => {
+                                  //extracting date data from input
+                                  let extractedDate, extractedYear;
+                                  let extractedMonth = 0;
+                                  
+                                  //validtion check to keep spaces between date string
+                                  if(e.target.value.split(' ').length <= 2){
+                                    e.target.value = startDate;
+                                    return;
                                   }
                                   
-                                  setIsAdminSettingsOpen(true);
-                                  setIsReading(true);
-                                  setIsReplying(false);
+                                  extractedDate = parseInt(e.target.value.split(' ')[0]);
 
-                                  setEnquiries(prevEnqs => {
-                                    const updatedEnqs = [...prevEnqs];
-                                    const extractedIndex = updatedEnqs.findIndex(updatedEnq => updatedEnq._id.toString() === enq._id.toString());
-                                    let updatedEnq = updatedEnqs[extractedIndex];
-
-                                    updatedEnqs[extractedIndex] = {
-                                      ...updatedEnq,
-                                      order: {
-                                        ...updatedEnq.order,
-                                        read: !!enq.order.content
-                                      },
-                                      contact: {
-                                        ...updatedEnq.contact,
-                                        read: !!enq.contact.message
-                                      }
-                                    };
-                                    return  updatedEnqs;
-                                  });
-
-
-                                  try {
-                                    await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
-                                      isRead: true,
-                                      isUnRead: false,
-                                      isBooking: !!enq.order.content,
-                                      isContact: !!enq.contact.message
-                                    });
-                                  } catch (error: any) {
-                                    toast.error(error.message);
+                                  //validation check to prevent characters from being used
+                                  if(isNaN(extractedDate) || extractedDate < 1){
+                                    e.target.value = startDate;
+                                    return;
                                   }
+                                  for(let i = 0; i < months.length; i++){
+                                    if(months[i] === e.target.value.split(' ')[1]){
+                                      extractedMonth = i; 
+                                    }
+                                  }
+                                  extractedYear = parseInt(e.target.value.split(' ')[2]);
+                                  //validation check to prevent characters from being used or wrong year format
+                                  if(isNaN(extractedYear)){
+                                    e.target.value = startDate;
+                                    return;
+                                  }
+                                  
+                                  const timeDiff = new Date(currentYear, currentMonth+1, currentDate).getTime() - new Date(extractedYear, extractedMonth!+1, extractedDate).getTime();
+                                  //validation check
+                                  if(timeDiff  < 86400000){
+                                    e.target.value = startDate;
+                                    alert('start date has to be at least 1 day apart from end date');
+                                    return;
+                                  }
+                                  //binding value to change event
+                                  setStartDate(e.target.value);
+                                  //setting start value of calendar component
+                                  setStartValue(new Date(e.target.value));
+                              }}  id="start-date" placeholder="1 Jan 1960" className="peer rounded-md placeholder:text-xs focus:outline-secondary-400 p-2 text-xs focus:ring-1  border border-gray-400 focus:border-secondary-400 w-28"
+                                />
+                                <label className="text-xs font-bold absolute peer-focus:text-secondary-400 top-[-6px] left-[10px] bg-white px-[5px] text-gray-400 ">Start date</label>
+                            </div>
+                            <span>To</span>
+                            <div className="relative">
+                                <input 
+                                  onChange={(e) => {
+                                  
+                                    //extracting date data from input
+                                    let extractedStartDate, extractedStartYear, extractedEndDate, extractedEndYear;
+                                    let extractedEndMonth = 0;
+                                    let extractedStartMonth = 0;
+                                    
+                                    //validtion check to keep spaces between date string
+                                    if(e.target.value.split(' ').length <= 2){
+                                      e.target.value = endDate;
+                                      return;
+                                    }
+                                    
+                                    extractedStartDate = parseInt(calendarStart.split(' ')[0]);
+                                    for(let i = 0; i < months.length; i++){
+                                        if(months[i] === calendarStart.split(' ')[1]){
+                                            extractedStartMonth = i; 
+                                        }
+                                    }
+                                    extractedStartYear = parseInt(calendarStart.split(' ')[2]);
+                                    
+                                    extractedEndDate = parseInt(e.target.value.split(' ')[0]);
+                                    //validation check to prevent characters from being used
+                                    if(isNaN(extractedEndDate) || extractedEndDate < 1){
+                                      e.target.value = endDate;
+                                      return;
+                                    }
+
+                                    for(let i = 0; i < months.length; i++){
+                                        if(months[i] === e.target.value.split(' ')[1]){
+                                            extractedEndMonth = i; 
+                                        }
+                                    }
+                                    extractedEndYear = parseInt(e.target.value.split(' ')[2]);
+                                    //validation check to prevent characters from being used or wrong year format
+                                    if(isNaN(extractedEndYear)){
+                                      e.target.value = endDate;
+                                      return;
+                                    }
+                                    
+                                    const currentTime = new Date(extractedEndYear, extractedEndMonth+1, extractedEndDate).getTime() - new Date().getTime();
+                                    
+                                    //validation check to prevent user from inputing an end date greater than current time
+                                    if(currentTime > 0){
+                                        e.target.value = endDate;
+                                        alert('end date cannot be greater than current date');
+                                        return;
+                                    }else if(currentTime < 0){
+                                      e.target.value = endDate;
+                                      alert('end date cannot be less than current date');
+                                      
+                                      return;
+                                    }
+                                    const timeDiff = new Date(extractedEndYear,extractedEndMonth+1,extractedEndDate).getTime() - new Date(extractedStartYear, extractedStartMonth+1, extractedStartDate).getTime();
+                                    
+                                    //validation check
+                                    if(timeDiff  < 86400000){
+                                        e.target.value = endDate;
+                                        alert('start date has to be at least 1 day apart from end date');
+                                        return;
+                                    }
+                                    //binding value to change event
+                                    setEndDate(e.target.value);
+                                    //setting end value of calendar component
+                                    setEndValue(new Date(e.target.value));
+                                  }} 
+                                  type="text" 
+                                  id="end-date" 
+                                  value={endDate}
+                                  placeholder="1 Jan 1960" 
+                                  className="peer rounded-md placeholder:text-xs focus:outline-secondary-400 p-2 text-xs focus:ring-1  border border-gray-400 focus:border-secondary-400 w-28"
+                                  />
+                                <label className="text-xs font-bold absolute peer-focus:text-secondary-400 top-[-6px] left-[10px] bg-white px-[5px] text-gray-400">End date</label>
+                            </div>
+                            <div className="inline-flex flex-row gap-x-4 justify-center px-2">
+                              <button onClick={() => {
+                                let downAngle = document.querySelector("i.calendar-angle-down");
+                                let calendarDropdown = document.getElementById("calendar-dropdown");
+
+                                setEnquiries(prevEnqs => {
+                                  let newEnqs = [...prevEnqs];
+                                  newEnqs = newEnqs.filter(enq => new Date(enq.createdAt).getTime() >= new Date(startDate).getTime() && new Date(enq.createdAt).getTime() <= new Date(endDate).getTime());
+                                  return newEnqs;
+                                });
+
+                                if(downAngle && calendarDropdown){
+                                  if(!downAngle.classList.contains("ad-rotate")){
+                                      downAngle.classList.add("ad-rotate");
+                                      downAngle.classList.remove("ad-rotate-anticlock");
+                                      calendarDropdown.classList.remove('hide', 'hidden');
+                                      calendarDropdown.classList.add('show');
+                                  }else{
+                                      downAngle.classList.remove("ad-rotate");
+                                      downAngle.classList.add("ad-rotate-anticlock");
+                                      calendarDropdown.classList.add('hide', 'hidden');
+                                      calendarDropdown.classList.remove('show');
+                                  }
+                                }
+                              }} className="bg-accent text-white px-3 py-2 rounded-md hover:ring-1 hover:ring-accent">Apply</button>
+                              <button onClick={() => {
+                                //resetting calendar and enquiries
+                                setStartDate(`${(currentDate - 29) <= 0 ? new Date(currentDate -29 <= 0 && currentMonth === 0 ? currentYear-1 : currentYear, currentDate -29 <= 0 && currentMonth === 0 ? 8 : currentMonth-4, 0).getDate() - Math.abs(currentDate - 29) : currentDate - 29} ${(currentDate - 29) <= 0 ? (currentMonth === 0 ? months[7] : months[currentMonth-5]) : months[currentMonth -4]} ${(currentDate - 29) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}`);
+                                //setting start value of calStartar component
+                                setStartValue(new Date(`${(currentDate - 29) <= 0 ? new Date(currentDate -29 <= 0 && currentMonth === 0 ? currentYear-1 : currentYear, currentDate -29 <= 0 && currentMonth === 0 ? 8 : currentMonth-4, 0).getDate() - Math.abs(currentDate - 29) : currentDate - 29} ${(currentDate - 29) <= 0 ? (currentMonth === 0 ? months[7] : months[currentMonth-5]) : months[currentMonth -4]} ${(currentDate - 29) <= 0 && currentMonth === 0 ? currentYear - 1 : currentYear}`));
+
+                                setEndDate(`${new Date().getDate()} ${months[currentMonth]} ${new Date().getFullYear()}`);
+                                //setting end value of calendar component
+                                setEndValue(new Date(`${new Date().getDate()} ${months[currentMonth]} ${new Date().getFullYear()}`));
+                              
+                                setEnquiries(enquiriesData.enquiries);
+                              }} className="text-accent bg-transparen">Clear</button>
+                          </div>
+                        </div>
+                        <div className="flex flex-row gap-x-4 w-full">
+                            <Calendar onChange={(val, e) => {
+                              let date = val!.toString().split(' ')[2].split('')[0] === '0' ? val!.toString().split(' ')[2].slice(-1) : val!.toString().split(' ')[2];
+                              let month = val!.toString().split(' ')[1];
+                              let year = val!.toString().split(' ')[3];
+                              setStartDate(`${date} ${month} ${year}`);
+
+                              setStartValue(val);
+                            }} value={startValue} maxDate={new Date(new Date().getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000 - 3600000)}/>
+                            <Calendar onChange={(val, e) => {
+                              let date = val!.toString().split(' ')[2].split('')[0] === '0' ? val!.toString().split(' ')[2].slice(-1) : val!.toString().split(' ')[2];
+                              let month = val!.toString().split(' ')[1];
+                              let year = val!.toString().split(' ')[3];
+                              setEndDate(`${date} ${month} ${year}`);
+                              setEndValue(val);
+                            }} value={endValue} maxDate={new Date(new Date().getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000)}/>
+                        </div>
+                      </div>
+                  </div>
+                  <div className="lg:inline-block lg:max-w-[27%] hidden relative">
+                      <button 
+                      onClick={(e) => {
+                          let downAngle = e.currentTarget.querySelector("i.filter-angle-down");
+                          let filterDropdown = document.getElementById("filter-dropdown");
+                          let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#filter-dropdown)');
+                          let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                          let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                          let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
+
+                          if(calendarAngleDown?.classList.contains('ad-rotate')){
+                            calendarAngleDown?.classList.remove("ad-rotate");
+                            calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                          }
+                          if(actionsAngleDown?.classList.contains('ad-rotate')){
+                            actionsAngleDown?.classList.remove("ad-rotate");
+                            actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                          }
+                          if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                            activeActionAngleDown?.classList.remove("ad-rotate");
+                            activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                          }
+
+                          dropdowns.forEach(dropdown => {
+                            if(dropdown.classList.contains('show')){
+                              dropdown.classList.add('hide', 'hidden');
+                              dropdown.classList.remove('show');
+                            }
+                          });
+
+                          if(downAngle && filterDropdown){
+                              if(!downAngle.classList.contains("ad-rotate")){
+                                  downAngle.classList.add("ad-rotate");
+                                  downAngle.classList.remove("ad-rotate-anticlock");
+                                  filterDropdown.classList.remove('hide', 'hidden');
+                                  filterDropdown.classList.add('show');
+                              }else{
+                                  downAngle.classList.remove("ad-rotate");
+                                  downAngle.classList.add("ad-rotate-anticlock");
+                                  filterDropdown.classList.add('hide', 'hidden');
+                                  filterDropdown.classList.remove('show');
+                              }
+                          }
+                      }}
+                      id='filter-button'
+                      className="w-full rounded-sm font-medium px-2 py-[6px] gap-x-2 cursor-pointer bg-transparent border border-secondary-400 inline-flex flex-row items-end">
+                          <i className="fa-solid fa-filter"></i>
+                          <span className="text-xs">Filter</span>
+                          <i className="fa-solid fa-angle-down text-xs filter-angle-down"></i>
+                      </button>
+                      <ul id='filter-dropdown' className="absolute z-30 w-[130%] text-gray-600 font-medium text-xs bg-white pt-3 pb-2 rounded-md shadow-sm shadow-white flex-col hide hidden">
+                          <li className="mb-2 pl-4 text-gray-700">State</li>
+                          {[
+                            'Read',
+                            'Unread',
+                            'Saved',
+                          ].map((action: string, i: number) => (
+                                <li
+                                  key={action}
+                                  // onClick={(e) => handleSelect(rating, e)}
+                                  className="cursor-pointer flex flex-row items-center gap-x-1 px-4 py-1"
+                                >
+                                    <input
+                                      type="checkbox"
+                                      id={action}
+                                      className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-300 rounded-sm relative
+                                        cursor-pointer outline-none checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
+                                        checked:after:border-accent checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
+                                        checked:after:rotate-45"
+                                    /><span>{action}</span>
+                                </li>
+                          ))}
+                          <hr className="bg-gray-400 mt-3 h-[2px]" />
+                          <div className="inline-flex flex-row gap-x-4 justify-center mt-3 px-2">
+                              <button 
+                              onClick={(e) => {
+                                const readFilter = document.querySelector('#filter-dropdown > li > #Read') as HTMLInputElement;
+                                const unReadFilter = document.querySelector('#filter-dropdown > li > #Unread') as HTMLInputElement;
+                                const savedFilter = document.querySelector('#filter-dropdown > li > #Saved') as HTMLInputElement;
+
+                                if(readFilter.checked){
+                                  setEnquiries(prevEnqs => prevEnqs.filter((enq: any) => enq.order.read === true || enq.contact.read === true));
+                                }
+
+                                if(unReadFilter.checked){
+                                  setEnquiries(prevEnqs => prevEnqs.filter((enq: any) =>  enq.order.unRead === true || enq.contact.unRead === true));
+                                }
+
+                                if(savedFilter.checked){
+                                  setEnquiries(prevEnqs => prevEnqs.filter((enq: any) =>  enq.order.saved === true || enq.contact.saved === true));
+                                }
+
+                              }}
+                              className="bg-accent text-white px-3 py-2 rounded-md hover:ring-1 hover:ring-accent">Apply</button>
+                              <button onClick={() => {
+                                  setEnquiries(enquiriesData.enquiries);
+                              }} className="text-accent bg-transparen">Clear</button>
+                          </div>
+                      </ul>
+                  </div>
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    let item = e.currentTarget;
+                    const inputValue = item.search.value;
+
+                    setEnquiries(prevEnqs => prevEnqs.filter((enq: any) =>  enq.order.content.includes(inputValue) || enq.contact.subject.includes(inputValue)));
+
+                  }} className="inline-flex w-[60%] relative flex-row items-center border border-secondary-400 rounded-sm px-2">
+                      <input name='search' type='search' className="bg-transparent py-[5px] focus:outline-none w-full placeholder:text-secondary-400" placeholder="search"/>
+                      <i className="fa-solid fa-magnifying-glass text-secondary-400 cursor-pointer"></i>
+                  </form>
+                </section>
+                <hr className="border-secondary-400/30 border -mt-2" />
+                <div className="w-full inline-flex flex-row -my-1 text-sm pl-3">
+                  <div className="md:w-[60%] w-[70%] inline-flex flex-row gap-x-2 items-center">
+                    <input
+                      type="checkbox"
+                      id='all'
+                      onChange={(e) => {
+                        let msgs = document.querySelectorAll('[id=single]') as NodeListOf<HTMLInputElement>;
+
+                        msgs.forEach(msg => {
+                          if(e.currentTarget.checked){
+                            msg.checked = true;
+                          }else{
+                            msg.checked = false;
+                          }
+                        });
+                      }}
+                      className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-300 rounded-sm relative
+                      cursor-pointer outline-none checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
+                      checked:after:border-accent checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
+                      checked:after:rotate-45"
+                    /><span className="font-medium">Subject</span>
+                  </div>
+                  <div className="md:w-[40%] w-[30%] font-medium">Date</div>
+                </div>
+                <hr className="border-secondary-400/30 border" />
+                {enquiries.map((enq: any, i: number) => {
+
+                  return (
+                    <>
+                      <div id='email-item' 
+                      data-enq-id={enq._id.toString()}
+                      data-has-contact={!!enq.contact.message}
+                      data-read={!!enq.contact.message ? enq.contact.read : enq.order.read}
+                      data-unread={!!enq.contact.message ? enq.contact.unRead : enq.order.unRead}
+                      data-has-order={!!enq.order.content} key={i} className={`${enq.contact.read  || enq.order.read ? 'bg-primary-500' : ''} w-full inline-flex flex-row -my-5 text-sm py-4 items-center pl-3`}>
+                        <div className="md:w-[60%] w-[70%] inline-flex flex-row gap-x-2 items-center relative">
+                          <input
+                            type="checkbox"
+                            id='single'
+                            className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-300 rounded-sm relative
+                            cursor-pointer outline-none checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]
+                            checked:after:border-accent checked:after:border-r-2 checked:after:border-b-2 checked:after:border-t-0 checked:after:border-l-0
+                            checked:after:rotate-45"
+                          />
+                          <span className="font-light">
+                            <i className="fa-regular fa-envelope-open text-accent/30"></i>&nbsp;&nbsp;{enq.order.content ? `Appointment by ${enq.author.fullName}` : enq.contact.message ? enq.contact.subject : `Testing by ${enq.author.fullName}`}
+                          </span>
+                          <div className="lg:hidden inline-block w-[40%] absolute left-0 top-10">
+                              <div className="w-[156%] rounded-sm font-medium bg-transparent inline-flex flex-row items-center">
+                                  <button className="text-xs border-secondary-400 border px-2 py-[6px] hover:ring-1 hover:ring-secondary-400" onClick={async () => {
+                                    let activeActionAngleDown = document.querySelector("i.active-action-angle-down-for-sm-screen");
+                                    let dropdown = document.getElementById('active-action-dropdown-for-sm-screen');
+                                    document.getElementById('email-item')?.classList.add('bg-primary-500');
+
+                                    if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                                      activeActionAngleDown?.classList.remove("ad-rotate");
+                                      activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                                    }
+
+                                    if(dropdown?.classList.contains('show')){
+                                      dropdown?.classList.add('hide', 'hidden');
+                                      dropdown?.classList.remove('show');
+                                    }
+                                    
+                                    setIsAdminSettingsOpen(true);
+                                    setIsReading(true);
+                                    setIsReplying(false);
+
+                                    setEnquiries(prevEnqs => {
+                                      const updatedEnqs = [...prevEnqs];
+                                      const extractedIndex = updatedEnqs.findIndex(updatedEnq => updatedEnq._id.toString() === enq._id.toString());
+                                      let updatedEnq = updatedEnqs[extractedIndex];
+
+                                      updatedEnqs[extractedIndex] = {
+                                        ...updatedEnq,
+                                        order: {
+                                          ...updatedEnq.order,
+                                          read: !!enq.order.content
+                                        },
+                                        contact: {
+                                          ...updatedEnq.contact,
+                                          read: !!enq.contact.message
+                                        }
+                                      };
+                                      return  updatedEnqs;
+                                    });
+
+
+                                    try {
+                                      await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
+                                        isRead: true,
+                                        isUnRead: false,
+                                        isBooking: !!enq.order.content,
+                                        isContact: !!enq.contact.message
+                                      });
+                                    } catch (error: any) {
+                                      toast.error(error.message);
+                                    }
+                                    }}>READ MESSAGE</button>
+                                  <div className="px-2 py-[4px] border border-secondary-400"
+                                      onClick={(e) => {
+                                        let downAngle = e.currentTarget.querySelector("i.active-action-angle-down-for-sm-screen");
+                                        let activeActionDropdown = document.getElementById("active-action-dropdown-for-sm-screen");
+
+                                        if(downAngle && activeActionDropdown){
+                                            if(!downAngle.classList.contains("ad-rotate")){
+                                                downAngle.classList.add("ad-rotate");
+                                                downAngle.classList.remove("ad-rotate-anticlock");
+                                                activeActionDropdown.classList.remove('hide', 'hidden');
+                                                activeActionDropdown.classList.add('show');
+                                            }else{
+                                                downAngle.classList.remove("ad-rotate");
+                                                downAngle.classList.add("ad-rotate-anticlock");
+                                                activeActionDropdown.classList.add('hide', 'hidden');
+                                                activeActionDropdown.classList.remove('show');
+                                            }
+                                        }
+                                    }}
+                                  >
+                                    <i className="fa-solid fa-angle-down text-xs active-action-angle-down-for-sm-screen cursor-pointer"></i>
+                                  </div>
+                              </div>
+                              <ul id='active-action-dropdown-for-sm-screen' className="absolute z-30 w-[132%] text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white flex-col hide hidden">
+                                  {[
+                                    'Reply',
+                                    'Unread',
+                                    'Save Message',
+                                    'Remove'
+                                  ].map((action: string, i: number) => (
+                                      <div key={i}>
+                                          <li
+                                          onClick={async (e) => {
+                                            let activeActionAngleDown = document.querySelector("i.active-action-angle-down-for-sm-screen");
+                                            let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown-for-sm-screen)');
+
+                                            
+                                            if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                                              activeActionAngleDown?.classList.remove("ad-rotate");
+                                              activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                                            }
+
+                                            dropdowns.forEach(dropdown => {
+                                              if(dropdown.classList.contains('show')){
+                                                dropdown.classList.add('hide', 'hidden');
+                                                dropdown.classList.remove('show');
+                                              }
+                                            });
+
+                                            switch (action) {
+                                              case 'Reply':
+                                                setIsAdminSettingsOpen(true);
+                                                setIsReplying(true);
+                                                setIsReading(false);
+                                                break;
+
+                                              case 'Unread':
+                                                document.getElementById('email-item')?.classList.remove('bg-primary-500');
+
+                                                setEnquiries(prevEnqs => {
+                                                  const updatedEnqs = [...prevEnqs];
+                                                  const extractedIndex = updatedEnqs.findIndex(updatedEnq => updatedEnq._id.toString() === enq._id.toString());
+                                                  let updatedEnq = updatedEnqs[extractedIndex];
+      
+                                                  updatedEnqs[extractedIndex] = {
+                                                    ...updatedEnq,
+                                                    order: {
+                                                      ...updatedEnq.order,
+                                                      unRead: !!enq.order.content
+                                                    },
+                                                    contact: {
+                                                      ...updatedEnq.contact,
+                                                      unRead: !!enq.contact.message
+                                                    }
+                                                  };
+                                                  return  updatedEnqs;
+                                                });
+
+                                                try {
+                                                  await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
+                                                    isRead: false,
+                                                    isUnRead: true,
+                                                    isBooking: !!enq.order.content,
+                                                    isContact: !!enq.contact.message
+                                                  });
+                                                } catch (error: any) {
+                                                  toast.error(error.message);
+                                                }
+                                                break;
+                                              case 'Remove':
+                                                try {
+                                                  setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== enq._id.toString()));
+                                                  await axios.delete(`/api/enquiries/delete/${enq._id.toString()}`);
+                                                } catch (error: any) {
+                                                  toast.error(error.message);
+
+                                                }
+                                              default:
+                                                break;
+                                            }
+                                          }}
+                                          className="cursor-pointer flex flex-row items-center justify-between p-2"
+                                        >
+                                            {action}
+                                        </li>
+                                        {action !== 'Remove' && <hr className="border-secondary-400"/>}
+                                      </div>
+                                  ))}
+                              </ul>
+                          </div>
+                        </div>
+                        <div className="md:w-[40%] w-[30%] font-light relative flex flex-row items-center"><span>{`${months[new Date(enq.createdAt).getMonth()]} ${new Date(enq.createdAt).getDate()}, ${new Date(enq.createdAt).getFullYear()}`}</span>
+                          <div className="lg:inline-block max-w-[33%] absolute md:right-8 xl:right-1 hidden">
+                              <div className="w-[156%] rounded-sm font-medium bg-transparent inline-flex flex-row items-center">
+                                  <button className="text-xs border-secondary-400 border px-2 py-[6px] hover:ring-1 hover:ring-secondary-400" onClick={async () => {
+                                    
+                                    let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
+                                    let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                                    let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                                    let filterAngleDown = document.querySelector('i.filter-angle-down');
+                                    let dropdowns = document.querySelectorAll('[id$=-dropdown]');
+                                    document.getElementById('email-item')?.classList.add('bg-primary-500');
+
+
+                                    if(calendarAngleDown?.classList.contains('ad-rotate')){
+                                      calendarAngleDown?.classList.remove("ad-rotate");
+                                      calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                                    }
+                                    if(filterAngleDown?.classList.contains('ad-rotate')){
+                                      filterAngleDown?.classList.remove("ad-rotate");
+                                      filterAngleDown?.classList.add("ad-rotate-anticlock");
+                                    }
+                                    if(actionsAngleDown?.classList.contains('ad-rotate')){
+                                      actionsAngleDown?.classList.remove("ad-rotate");
+                                      actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                                    }
+                                    if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                                      activeActionAngleDown?.classList.remove("ad-rotate");
+                                      activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                                    }
+
+                                    dropdowns.forEach(dropdown => {
+                                      if(dropdown.classList.contains('show')){
+                                        dropdown.classList.add('hide', 'hidden');
+                                        dropdown.classList.remove('show');
+                                      }
+                                    });
+
+                                    setIsAdminSettingsOpen(true);
+                                    setIsReading(true);
+                                    setIsReplying(false);
+
+                                    setEnquiries(prevEnqs => {
+                                      const updatedEnqs = [...prevEnqs];
+                                      const extractedIndex = updatedEnqs.findIndex(updatedEnq => updatedEnq._id.toString() === enq._id.toString());
+                                      let updatedEnq = updatedEnqs[extractedIndex];
+
+                                      updatedEnqs[extractedIndex] = {
+                                        ...updatedEnq,
+                                        order: {
+                                          ...updatedEnq.order,
+                                          read: !!enq.order.content
+                                        },
+                                        contact: {
+                                          ...updatedEnq.contact,
+                                          read: !!enq.contact.message
+                                        }
+                                      };
+                                      return  updatedEnqs;
+                                    });
+
+
+                                    try {
+                                      await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
+                                        isRead: true,
+                                        isUnRead: false,
+                                        isBooking: !!enq.order.content,
+                                        isContact: !!enq.contact.message
+                                      });
+                                    } catch (error: any) {
+                                      toast.error(error.message);
+                                    }
                                   }}>READ MESSAGE</button>
-                                <div className="px-2 py-[4px] border border-secondary-400"
-                                    onClick={(e) => {
-                                      let downAngle = e.currentTarget.querySelector("i.active-action-angle-down-for-sm-screen");
-                                      let activeActionDropdown = document.getElementById("active-action-dropdown-for-sm-screen");
+                                  <div className="px-2 py-[4px] border border-secondary-400" 
+                                      onClick={(e) => {
+                                      let downAngle = e.currentTarget.querySelector("i.active-action-angle-down");
+                                      let activeActionDropdown = document.getElementById("active-action-dropdown");
+                                      let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                                      let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                                      let filterAngleDown = document.querySelector('i.filter-angle-down');
+                                      let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown)');
+
+                                      if(calendarAngleDown?.classList.contains('ad-rotate')){
+                                        calendarAngleDown?.classList.remove("ad-rotate");
+                                        calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                                      }
+                                      if(filterAngleDown?.classList.contains('ad-rotate')){
+                                        filterAngleDown?.classList.remove("ad-rotate");
+                                        filterAngleDown?.classList.add("ad-rotate-anticlock");
+                                      }
+                                      if(actionsAngleDown?.classList.contains('ad-rotate')){
+                                        actionsAngleDown?.classList.remove("ad-rotate");
+                                        actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                                      }
+
+                                      dropdowns.forEach(dropdown => {
+                                        if(dropdown.classList.contains('show')){
+                                          dropdown.classList.add('hide', 'hidden');
+                                          dropdown.classList.remove('show');
+                                        }
+                                      });
 
                                       if(downAngle && activeActionDropdown){
                                           if(!downAngle.classList.contains("ad-rotate")){
@@ -3724,388 +3933,185 @@ export default function Body({
                                               activeActionDropdown.classList.remove('show');
                                           }
                                       }
-                                  }}
-                                >
-                                  <i className="fa-solid fa-angle-down text-xs active-action-angle-down-for-sm-screen cursor-pointer"></i>
-                                </div>
-                            </div>
-                            <ul id='active-action-dropdown-for-sm-screen' className="absolute z-30 w-[132%] text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white flex-col hide hidden">
-                                {[
-                                  'Reply',
-                                  'Unread',
-                                  'Save Message',
-                                  'Remove'
-                                ].map((action: string, i: number) => (
-                                    <div key={i}>
-                                        <li
-                                        onClick={async (e) => {
-                                          let activeActionAngleDown = document.querySelector("i.active-action-angle-down-for-sm-screen");
-                                          let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown-for-sm-screen)');
+                                      }}>
+                                    <i className="fa-solid fa-angle-down text-xs active-action-angle-down cursor-pointer"></i>
+                                  </div>
+                              </div>
+                              <ul id='active-action-dropdown' className="hide hidden flex-col absolute z-30 w-full text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white">
+                                  {[
+                                    'Reply',
+                                    'Unread',
+                                    'Save Message',
+                                    'Remove'
+                                  ].map((action: string, i: number) => (
+                                      <div key={i}>
+                                          <li
+                                          onClick={async (e) => {
+                                            let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
+                                            let calendarAngleDown = document.querySelector('i.calendar-angle-down');
+                                            let actionsAngleDown = document.querySelector('i.actions-angle-down');
+                                            let filterAngleDown = document.querySelector('i.filter-angle-down');
+                                            let dropdowns = document.querySelectorAll('[id$=-dropdown]');
 
-                                          
-                                          if(activeActionAngleDown?.classList.contains('ad-rotate')){
-                                            activeActionAngleDown?.classList.remove("ad-rotate");
-                                            activeActionAngleDown?.classList.add("ad-rotate-anticlock");
-                                          }
-
-                                          dropdowns.forEach(dropdown => {
-                                            if(dropdown.classList.contains('show')){
-                                              dropdown.classList.add('hide', 'hidden');
-                                              dropdown.classList.remove('show');
+                                            if(calendarAngleDown?.classList.contains('ad-rotate')){
+                                              calendarAngleDown?.classList.remove("ad-rotate");
+                                              calendarAngleDown?.classList.add("ad-rotate-anticlock");
                                             }
-                                          });
-
-                                          switch (action) {
-                                            case 'Reply':
-                                              setIsAdminSettingsOpen(true);
-                                              setIsReplying(true);
-                                              setIsReading(false);
-                                              break;
-
-                                            case 'Unread':
-                                              document.getElementById('email-item')?.classList.remove('bg-primary-500');
-
-                                              setEnquiries(prevEnqs => {
-                                                const updatedEnqs = [...prevEnqs];
-                                                const extractedIndex = updatedEnqs.findIndex(updatedEnq => updatedEnq._id.toString() === enq._id.toString());
-                                                let updatedEnq = updatedEnqs[extractedIndex];
-    
-                                                updatedEnqs[extractedIndex] = {
-                                                  ...updatedEnq,
-                                                  order: {
-                                                    ...updatedEnq.order,
-                                                    unRead: !!enq.order.content
-                                                  },
-                                                  contact: {
-                                                    ...updatedEnq.contact,
-                                                    unRead: !!enq.contact.message
-                                                  }
-                                                };
-                                                return  updatedEnqs;
-                                              });
-
-                                              try {
-                                                await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
-                                                  isRead: false,
-                                                  isUnRead: true,
-                                                  isBooking: !!enq.order.content,
-                                                  isContact: !!enq.contact.message
-                                                });
-                                              } catch (error: any) {
-                                                toast.error(error.message);
-                                              }
-                                              break;
-                                            case 'Remove':
-                                              try {
-                                                setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== enq._id.toString()));
-                                                await axios.delete(`/api/enquiries/delete/${enq._id.toString()}`);
-                                              } catch (error: any) {
-                                                toast.error(error.message);
-
-                                              }
-                                            default:
-                                              break;
-                                          }
-                                        }}
-                                        className="cursor-pointer flex flex-row items-center justify-between p-2"
-                                      >
-                                          {action}
-                                      </li>
-                                      {action !== 'Remove' && <hr className="border-secondary-400"/>}
-                                    </div>
-                                ))}
-                            </ul>
-                        </div>
-                      </div>
-                      <div className="md:w-[40%] w-[30%] font-light relative flex flex-row items-center"><span>{`${months[new Date(enq.createdAt).getMonth()]} ${new Date(enq.createdAt).getDate()}, ${new Date(enq.createdAt).getFullYear()}`}</span>
-                        <div className="lg:inline-block max-w-[33%] absolute md:right-8 xl:right-1 hidden">
-                            <div className="w-[156%] rounded-sm font-medium bg-transparent inline-flex flex-row items-center">
-                                <button className="text-xs border-secondary-400 border px-2 py-[6px] hover:ring-1 hover:ring-secondary-400" onClick={async () => {
-                                  
-                                  let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
-                                  let calendarAngleDown = document.querySelector('i.calendar-angle-down');
-                                  let actionsAngleDown = document.querySelector('i.actions-angle-down');
-                                  let filterAngleDown = document.querySelector('i.filter-angle-down');
-                                  let dropdowns = document.querySelectorAll('[id$=-dropdown]');
-                                  document.getElementById('email-item')?.classList.add('bg-primary-500');
-
-
-                                  if(calendarAngleDown?.classList.contains('ad-rotate')){
-                                    calendarAngleDown?.classList.remove("ad-rotate");
-                                    calendarAngleDown?.classList.add("ad-rotate-anticlock");
-                                  }
-                                  if(filterAngleDown?.classList.contains('ad-rotate')){
-                                    filterAngleDown?.classList.remove("ad-rotate");
-                                    filterAngleDown?.classList.add("ad-rotate-anticlock");
-                                  }
-                                  if(actionsAngleDown?.classList.contains('ad-rotate')){
-                                    actionsAngleDown?.classList.remove("ad-rotate");
-                                    actionsAngleDown?.classList.add("ad-rotate-anticlock");
-                                  }
-                                  if(activeActionAngleDown?.classList.contains('ad-rotate')){
-                                    activeActionAngleDown?.classList.remove("ad-rotate");
-                                    activeActionAngleDown?.classList.add("ad-rotate-anticlock");
-                                  }
-
-                                  dropdowns.forEach(dropdown => {
-                                    if(dropdown.classList.contains('show')){
-                                      dropdown.classList.add('hide', 'hidden');
-                                      dropdown.classList.remove('show');
-                                    }
-                                  });
-
-                                  setIsAdminSettingsOpen(true);
-                                  setIsReading(true);
-                                  setIsReplying(false);
-
-                                  setEnquiries(prevEnqs => {
-                                    const updatedEnqs = [...prevEnqs];
-                                    const extractedIndex = updatedEnqs.findIndex(updatedEnq => updatedEnq._id.toString() === enq._id.toString());
-                                    let updatedEnq = updatedEnqs[extractedIndex];
-
-                                    updatedEnqs[extractedIndex] = {
-                                      ...updatedEnq,
-                                      order: {
-                                        ...updatedEnq.order,
-                                        read: !!enq.order.content
-                                      },
-                                      contact: {
-                                        ...updatedEnq.contact,
-                                        read: !!enq.contact.message
-                                      }
-                                    };
-                                    return  updatedEnqs;
-                                  });
-
-
-                                  try {
-                                    await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
-                                      isRead: true,
-                                      isUnRead: false,
-                                      isBooking: !!enq.order.content,
-                                      isContact: !!enq.contact.message
-                                    });
-                                  } catch (error: any) {
-                                    toast.error(error.message);
-                                  }
-                                }}>READ MESSAGE</button>
-                                <div className="px-2 py-[4px] border border-secondary-400" 
-                                    onClick={(e) => {
-                                    let downAngle = e.currentTarget.querySelector("i.active-action-angle-down");
-                                    let activeActionDropdown = document.getElementById("active-action-dropdown");
-                                    let calendarAngleDown = document.querySelector('i.calendar-angle-down');
-                                    let actionsAngleDown = document.querySelector('i.actions-angle-down');
-                                    let filterAngleDown = document.querySelector('i.filter-angle-down');
-                                    let dropdowns = document.querySelectorAll('[id$=-dropdown]:not(#active-action-dropdown)');
-
-                                    if(calendarAngleDown?.classList.contains('ad-rotate')){
-                                      calendarAngleDown?.classList.remove("ad-rotate");
-                                      calendarAngleDown?.classList.add("ad-rotate-anticlock");
-                                    }
-                                    if(filterAngleDown?.classList.contains('ad-rotate')){
-                                      filterAngleDown?.classList.remove("ad-rotate");
-                                      filterAngleDown?.classList.add("ad-rotate-anticlock");
-                                    }
-                                    if(actionsAngleDown?.classList.contains('ad-rotate')){
-                                      actionsAngleDown?.classList.remove("ad-rotate");
-                                      actionsAngleDown?.classList.add("ad-rotate-anticlock");
-                                    }
-
-                                    dropdowns.forEach(dropdown => {
-                                      if(dropdown.classList.contains('show')){
-                                        dropdown.classList.add('hide', 'hidden');
-                                        dropdown.classList.remove('show');
-                                      }
-                                    });
-
-                                    if(downAngle && activeActionDropdown){
-                                        if(!downAngle.classList.contains("ad-rotate")){
-                                            downAngle.classList.add("ad-rotate");
-                                            downAngle.classList.remove("ad-rotate-anticlock");
-                                            activeActionDropdown.classList.remove('hide', 'hidden');
-                                            activeActionDropdown.classList.add('show');
-                                        }else{
-                                            downAngle.classList.remove("ad-rotate");
-                                            downAngle.classList.add("ad-rotate-anticlock");
-                                            activeActionDropdown.classList.add('hide', 'hidden');
-                                            activeActionDropdown.classList.remove('show');
-                                        }
-                                    }
-                                    }}>
-                                  <i className="fa-solid fa-angle-down text-xs active-action-angle-down cursor-pointer"></i>
-                                </div>
-                            </div>
-                            <ul id='active-action-dropdown' className="hide hidden flex-col absolute z-30 w-full text-xs bg-white rounded-md text-gray-600 font-medium shadow-sm shadow-white">
-                                {[
-                                  'Reply',
-                                  'Unread',
-                                  'Save Message',
-                                  'Remove'
-                                ].map((action: string, i: number) => (
-                                    <div key={i}>
-                                        <li
-                                        onClick={async (e) => {
-                                          let activeActionAngleDown = document.querySelector("i.active-action-angle-down");
-                                          let calendarAngleDown = document.querySelector('i.calendar-angle-down');
-                                          let actionsAngleDown = document.querySelector('i.actions-angle-down');
-                                          let filterAngleDown = document.querySelector('i.filter-angle-down');
-                                          let dropdowns = document.querySelectorAll('[id$=-dropdown]');
-
-                                          if(calendarAngleDown?.classList.contains('ad-rotate')){
-                                            calendarAngleDown?.classList.remove("ad-rotate");
-                                            calendarAngleDown?.classList.add("ad-rotate-anticlock");
-                                          }
-                                          if(filterAngleDown?.classList.contains('ad-rotate')){
-                                            filterAngleDown?.classList.remove("ad-rotate");
-                                            filterAngleDown?.classList.add("ad-rotate-anticlock");
-                                          }
-                                          if(actionsAngleDown?.classList.contains('ad-rotate')){
-                                            actionsAngleDown?.classList.remove("ad-rotate");
-                                            actionsAngleDown?.classList.add("ad-rotate-anticlock");
-                                          }
-                                          if(activeActionAngleDown?.classList.contains('ad-rotate')){
-                                            activeActionAngleDown?.classList.remove("ad-rotate");
-                                            activeActionAngleDown?.classList.add("ad-rotate-anticlock");
-                                          }
-
-                                          dropdowns.forEach(dropdown => {
-                                            if(dropdown.classList.contains('show')){
-                                              dropdown.classList.add('hide', 'hidden');
-                                              dropdown.classList.remove('show');
+                                            if(filterAngleDown?.classList.contains('ad-rotate')){
+                                              filterAngleDown?.classList.remove("ad-rotate");
+                                              filterAngleDown?.classList.add("ad-rotate-anticlock");
                                             }
-                                          });
+                                            if(actionsAngleDown?.classList.contains('ad-rotate')){
+                                              actionsAngleDown?.classList.remove("ad-rotate");
+                                              actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                                            }
+                                            if(activeActionAngleDown?.classList.contains('ad-rotate')){
+                                              activeActionAngleDown?.classList.remove("ad-rotate");
+                                              activeActionAngleDown?.classList.add("ad-rotate-anticlock");
+                                            }
 
-                                          switch (action) {
-                                            case 'Reply':
-                                              setIsAdminSettingsOpen(true);
-                                              setIsReplying(true);
-                                              setIsReading(false);
-                                              break;
-                                            case 'Unread':
-                                              document.getElementById('email-item')?.classList.remove('bg-primary-500');
-
-                                              setEnquiries(prevEnqs => {
-                                                const updatedEnqs = [...prevEnqs];
-                                                const extractedIndex = updatedEnqs.findIndex(updatedEnq => updatedEnq._id.toString() === enq._id.toString());
-                                                let updatedEnq = updatedEnqs[extractedIndex];
-    
-                                                updatedEnqs[extractedIndex] = {
-                                                  ...updatedEnq,
-                                                  order: {
-                                                    ...updatedEnq.order,
-                                                    unRead: !!enq.order.content
-                                                  },
-                                                  contact: {
-                                                    ...updatedEnq.contact,
-                                                    unRead: !!enq.contact.message
-                                                  }
-                                                };
-                                                return  updatedEnqs;
-                                              });
-
-                                              try {
-                                                await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
-                                                  isRead: false,
-                                                  isUnRead: true,
-                                                  isBooking: !!enq.order.content,
-                                                  isContact: !!enq.contact.message
-                                                });
-                                              } catch (error: any) {
-                                                toast.error(error.message);
+                                            dropdowns.forEach(dropdown => {
+                                              if(dropdown.classList.contains('show')){
+                                                dropdown.classList.add('hide', 'hidden');
+                                                dropdown.classList.remove('show');
                                               }
-                                              break;
-                                            case 'Remove':
+                                            });
+
+                                            switch (action) {
+                                              case 'Reply':
+                                                setIsAdminSettingsOpen(true);
+                                                setIsReplying(true);
+                                                setIsReading(false);
+                                                break;
+                                              case 'Unread':
+                                                document.getElementById('email-item')?.classList.remove('bg-primary-500');
+
+                                                setEnquiries(prevEnqs => {
+                                                  const updatedEnqs = [...prevEnqs];
+                                                  const extractedIndex = updatedEnqs.findIndex(updatedEnq => updatedEnq._id.toString() === enq._id.toString());
+                                                  let updatedEnq = updatedEnqs[extractedIndex];
+      
+                                                  updatedEnqs[extractedIndex] = {
+                                                    ...updatedEnq,
+                                                    order: {
+                                                      ...updatedEnq.order,
+                                                      unRead: !!enq.order.content
+                                                    },
+                                                    contact: {
+                                                      ...updatedEnq.contact,
+                                                      unRead: !!enq.contact.message
+                                                    }
+                                                  };
+                                                  return  updatedEnqs;
+                                                });
+
                                                 try {
-                                                  setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== enq._id.toString()));
-                                                  await axios.delete(`/api/enquiries/delete/${enq._id.toString()}`);
+                                                  await axios.patch(`/api/enquiries/update/${enq._id.toString()}`, {
+                                                    isRead: false,
+                                                    isUnRead: true,
+                                                    isBooking: !!enq.order.content,
+                                                    isContact: !!enq.contact.message
+                                                  });
                                                 } catch (error: any) {
                                                   toast.error(error.message);
-
                                                 }
-                                              
-                                            default:
-                                              break;
-                                          }
-                                        }}
-                                        className="cursor-pointer flex flex-row items-center justify-between p-2"
-                                      >
-                                          {action}
-                                      </li>
-                                      {action !== 'Remove' && <hr className="border-secondary-400"/>}
-                                    </div>
-                                ))}
-                            </ul>
+                                                break;
+                                              case 'Remove':
+                                                  try {
+                                                    setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== enq._id.toString()));
+                                                    await axios.delete(`/api/enquiries/delete/${enq._id.toString()}`);
+                                                  } catch (error: any) {
+                                                    toast.error(error.message);
+
+                                                  }
+                                                
+                                              default:
+                                                break;
+                                            }
+                                          }}
+                                          className="cursor-pointer flex flex-row items-center justify-between p-2"
+                                        >
+                                            {action}
+                                        </li>
+                                        {action !== 'Remove' && <hr className="border-secondary-400"/>}
+                                      </div>
+                                  ))}
+                              </ul>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    {
-                      isAdminSettingsOpen && pathName === "emails" && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white'>
-                        <section className="flex flex-col items-start gap-x-2 w-full h-full px-5 pb-6 pt-16 font-sans gap-y-9">
-                              <header className="text-sm flex md:flex-row flex-col items-start md:justify-between md:items-center w-full">
-                                <h2>From:&nbsp;<span className="font-normal">{isReading ? enq.author.email : 'hello@oyinye.com'}</span></h2>
-                                <h2>{`${months[new Date(isReading ? enq.createdAt: new Date()).getMonth()]} ${new Date(isReading ? enq.createdAt: new Date()).getDate()}, ${new Date(isReading ? enq.createdAt: new Date()).getFullYear()}, ${new Date(new Date(isReading ? enq.createdAt: new Date()).getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000).toISOString().substring(11, 16)}${new Date(isReading ? enq.createdAt: new Date()).getHours() >= 11 ? 'PM' : 'AM'}`}</h2>
-                              </header>
-                              <form onSubmit={async (e) => {
-                                e.preventDefault();
-                                let adminContent = document.getElementById('admin-letter') as HTMLTextAreaElement;
-                                if(adminContent && adminContent.value.length === 0){
-                                  return;
-                                }
-                                try {
-                                  setLoader(true);
-                                  await axios.post('/api/admin/send-reminder', {
-                                    email: enq.author.email,
-                                    message: adminContent.value,
-                                    contact: enq.author.fullName,
-                                    date: `${months[new Date(isReading ? enq.createdAt: new Date()).getMonth()]} ${new Date(isReading ? enq.createdAt: new Date()).getDate()}. ${new Date(isReading ? enq.createdAt: new Date()).getFullYear()}`
-                                  });
-                                } catch (error: any) {
-                                  setLoader(false);
-                                  return toast.error(error.message);
-                                }finally{
-                                  setLoader(false);
-                                  adminContent.value = '';
-                                  toast.success('reminder sent', {
-                                    position: 'top-center'
-                                  });
-                                }
-                              }} className="flex flex-col items-start gap-y-4 text-gray-600 font-sans w-full">
-                                <p className="leading-tight tracking-wider text-sm font-medium cursive">
-                                  Hi {isReading ? 'Oyinye Couture team' : enq.author.fullName},
-                                </p>
-                                
-                                  {isReading 
-                                  ? <p className="text-base leading-relaxed text-wrap tracking-wider text-gray-500 w-full">
-                                      {enq.order.content ? enq.order.content : enq.contact.message ? enq.contact.message : 'I am writing to inform you.'} 
-                                    </p>
-                                  : <textarea cols={50} rows={5} placeholder="Compose letter here..." id='admin-letter' className="focus:outline-none w-full border border-gray-300 rounded-md p-2 text-base leading-relaxed text-wrap tracking-wider text-gray-500">
-                                    
-                                    </textarea>}
-                                {isReading 
-                                  ? <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br/>{enq.author.fullName}<br/>
-                                  {enq.order.content && <span>Phone:&nbsp;<Link href={`tel:${enq.author.appointment.phoneNo ?? '070333748920'}`}>{enq.author.appointment.phoneNo ?? '070333748920'}</Link><br/>Standard Size: {enq.author.appointment.size ?? 8}<br/>Date of Event: {`${new Date(enq.order.eventDate).getDate()} ${months[new Date(enq.order.eventDate).getMonth()]}, ${new Date(enq.order.eventDate).getFullYear()}` ?? '10 Sep, 1970'}</span>}
+                      {
+                        isAdminSettingsOpen && pathName === "emails" && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white'>
+                          <section className="flex flex-col items-start gap-x-2 w-full h-full px-5 pb-6 pt-16 font-sans gap-y-9">
+                                <header className="text-sm flex md:flex-row flex-col items-start md:justify-between md:items-center w-full">
+                                  <h2>From:&nbsp;<span className="font-normal">{isReading ? enq.author.email : 'hello@oyinye.com'}</span></h2>
+                                  <h2>{`${months[new Date(isReading ? enq.createdAt: new Date()).getMonth()]} ${new Date(isReading ? enq.createdAt: new Date()).getDate()}, ${new Date(isReading ? enq.createdAt: new Date()).getFullYear()}, ${new Date(new Date(isReading ? enq.createdAt: new Date()).getTime() + Math.abs(new Date().getTimezoneOffset()) * 60 * 1000).toISOString().substring(11, 16)}${new Date(isReading ? enq.createdAt: new Date()).getHours() >= 11 ? 'PM' : 'AM'}`}</h2>
+                                </header>
+                                <form onSubmit={async (e) => {
+                                  e.preventDefault();
+                                  let adminContent = document.getElementById('admin-letter') as HTMLTextAreaElement;
+                                  if(adminContent && adminContent.value.length === 0){
+                                    return;
+                                  }
+                                  try {
+                                    setLoader(true);
+                                    await axios.post('/api/admin/send-reminder', {
+                                      email: enq.author.email,
+                                      message: adminContent.value,
+                                      contact: enq.author.fullName,
+                                      date: `${months[new Date(isReading ? enq.createdAt: new Date()).getMonth()]} ${new Date(isReading ? enq.createdAt: new Date()).getDate()}. ${new Date(isReading ? enq.createdAt: new Date()).getFullYear()}`
+                                    });
+                                  } catch (error: any) {
+                                    setLoader(false);
+                                    return toast.error(error.message);
+                                  }finally{
+                                    setLoader(false);
+                                    adminContent.value = '';
+                                    toast.success('reminder sent', {
+                                      position: 'top-center'
+                                    });
+                                  }
+                                }} className="flex flex-col items-start gap-y-4 text-gray-600 font-sans w-full">
+                                  <p className="leading-tight tracking-wider text-sm font-medium cursive">
+                                    Hi {isReading ? 'Oyinye Couture team' : enq.author.fullName},
                                   </p>
-                                  : <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br />Oyinye Couture Team</p>}
-                                
-                                  {isReplying && <div className="w-full flex justify-end flex-row">
-                                    <button type='submit' className="px-7 py-2 text-sm bg-accent text-white hover:ring-1 hover:ring-accent rounded-md">{loader ? 'Sending..' : 'Send'}</button>
-                                  </div>}
-                              </form>
-                              {enq.order.content && isReading && enq.author.appointment.styles.length > 0 && enq.author.appointment.styles.map((data: any, i:number) => <div key={i} className="flex flex-row flex-wrap gap-x-3 gap-y-2 w-full">
-                                <div className="flex flex-col items-center gap-y-1">
-                                  <div className="w-24 h-24 rounded-md" style={{backgroundImage: `url(${data.image})`}}></div>
-                                  <p className="font-sans text-xs">{data.fileName}</p>
+                                  
+                                    {isReading 
+                                    ? <p className="text-base leading-relaxed text-wrap tracking-wider text-gray-500 w-full">
+                                        {enq.order.content ? enq.order.content : enq.contact.message ? enq.contact.message : 'I am writing to inform you.'} 
+                                      </p>
+                                    : <textarea cols={50} rows={5} placeholder="Compose letter here..." id='admin-letter' className="focus:outline-none w-full border border-gray-300 rounded-md p-2 text-base leading-relaxed text-wrap tracking-wider text-gray-500">
+                                      
+                                      </textarea>}
+                                  {isReading 
+                                    ? <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br/>{enq.author.fullName}<br/>
+                                    {enq.order.content && <span>Phone:&nbsp;<Link href={`tel:${enq.author.appointment.phoneNo ?? '070333748920'}`}>{enq.author.appointment.phoneNo ?? '070333748920'}</Link><br/>Standard Size: {enq.author.appointment.size ?? 8}<br/>Date of Event: {`${new Date(enq.order.eventDate).getDate()} ${months[new Date(enq.order.eventDate).getMonth()]}, ${new Date(enq.order.eventDate).getFullYear()}` ?? '10 Sep, 1970'}</span>}
+                                    </p>
+                                    : <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br />Oyinye Couture Team</p>}
+                                  
+                                    {isReplying && <div className="w-full flex justify-end flex-row">
+                                      <button type='submit' className="px-7 py-2 text-sm bg-accent text-white hover:ring-1 hover:ring-accent rounded-md">{loader ? 'Sending..' : 'Send'}</button>
+                                    </div>}
+                                </form>
+                                {enq.order.content && isReading && enq.author.appointment.styles.length > 0 && enq.author.appointment.styles.map((data: any, i:number) => <div key={i} className="flex flex-row flex-wrap gap-x-3 gap-y-2 w-full">
+                                  <div className="flex flex-col items-center gap-y-1">
+                                    <div className="w-24 h-24 rounded-md" style={{backgroundImage: `url(${data.image})`}}></div>
+                                    <p className="font-sans text-xs">{data.fileName}</p>
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                            
-                        </section>
-                      </AdminSettingsModal>
-                    }
-                  </>
-                );
-              })}
-              {enquiries.length > 0 && <AdminPagination {...enquiriesData} />}
+                              )}
+                              
+                          </section>
+                        </AdminSettingsModal>
+                      }
+                    </>
+                  );
+                })}
+                <AdminPagination {...enquiriesData} />
+              </>
+              : <section className="flex items-center flex-col w-full min-h-screen justify-center">
+              <h1 className="font-sans md:text-2xl text-xl">No emails available!</h1>
+            </section>}
 
             </section>
           )

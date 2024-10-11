@@ -19,5 +19,23 @@ services:
       NEXT_PUBLIC_MER_CODE: ${NEXT_PUBLIC_MER_CODE}
       NEXT_PUBLIC_PAY_ITEM_ID: ${NEXT_PUBLIC_PAY_ITEM_ID}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+    depends_on:
+      - mongo
+  mongo:
+    image:  mongo:latest 
+    # ports:
+    #     - 27018:27017
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
+      MONGO_INITDB_ROOT_DATABASE: ${MONGO_DB}
+    volumes:
+      - ./src/db/users.json:/tmp/
+      - ./src/db/products.json:/tmp/
+      - ./src/db/docker-entrypoint-initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/
+      - ./src/db/docker-entrypoint-initdb.d/importscript.sh:/docker-entrypoint-initdb.d/
+    networks:
+      - reqres
 
 

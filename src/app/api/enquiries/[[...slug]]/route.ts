@@ -274,7 +274,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
           const lastPage = 
                Math.ceil(totalEnquiries / ITEMS_PER_PAGE);
 
-          if (Enquiries.length === 0) {
+          if (enquiries.length === 0) {
             return NextResponse.json(
               {
                 hasNextPage,
