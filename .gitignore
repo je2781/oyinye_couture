@@ -5,9 +5,9 @@
 /.pnp
 .pnp.js
 .yarn/install-state.gz
-/db/docker-entrypoint-initdb.d/
-/db/products.json
-/db/users.json
+/src/db/docker-entrypoint-initdb.d/
+/src/db/products.json
+/src/db/users.json
 
 .env
 # testing
