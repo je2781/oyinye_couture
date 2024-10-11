@@ -55,7 +55,11 @@ export default function RootLayout({
     async function fetchAllProducts() {
       try {
         
-        const res = await fetch(`/api/products`);
+        const res = await fetch(`/api/products`, {
+          headers: {
+            'Cache-Control': 'no-store'
+          }
+        });
         const data = await res.json();
 
         setAllProducts(data.products);

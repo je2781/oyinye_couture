@@ -333,7 +333,7 @@ const Reviews = ({productReviews, product}: any) => {
         }
     }
 
-  return <section className={`font-sans flex flex-col items-center gap-y-5 w-full py-7`}>
+  return <section className={`font-sans flex flex-col items-center gap-y-5 w-full py-7 px-3 md:px-0`}>
     <header className="text-2xl flex flex-row w-full justify-start">
         <h2>CUSTOMER REVIEWS</h2>
     </header>
@@ -344,10 +344,10 @@ const Reviews = ({productReviews, product}: any) => {
                 <div className='inline-flex flex-col gap-y-[5px]'>
                     <ul className="flex flex-row items-center gap-x-1">
                         {Array.from({ length: averageRating }).map((_, i) => (
-                            <li><i key={i} className='fa-solid fa-star text-xl text-yellow-400'></i></li>
+                            <li key={i}><i className='fa-solid fa-star text-xl text-yellow-400'></i></li>
                         ))}
                         {Array.from({ length: 5 - averageRating }).map((_, i) => (
-                            <li><i key={i} className='fa-regular fa-star text-xl text-yellow-400'></i></li>
+                            <li key={i}><i className='fa-regular fa-star text-xl text-yellow-400'></i></li>
                         ))}
                     </ul> 
                     <p className='text-[1rem] text-detail-500 font-light'>Based on {productReviews.length} review(s)</p>
@@ -381,10 +381,10 @@ const Reviews = ({productReviews, product}: any) => {
                     'Rating'
                     : <ul className="cursor-pointer flex flex-row items-center gap-x-1">
                         {Array.from({ length: selectedRating }).map((_, i) => (
-                            <li><i key={i} className='fa-solid fa-star text-lg text-yellow-400'></i></li>
+                            <li key={i}><i className='fa-solid fa-star text-lg text-yellow-400'></i></li>
                         ))}
                         {Array.from({ length: 5 - selectedRating }).map((_, i) => (
-                            <li><i key={i} className='fa-regular fa-star text-lg text-yellow-400'></i></li>
+                            <li key={i}><i className='fa-regular fa-star text-lg text-yellow-400'></i></li>
                         ))}
                     </ul> }
                     <i className="fa-solid fa-angle-down ratings-angle-down absolute right-4 text-xs top-[14px]"></i>
@@ -497,10 +497,10 @@ const Reviews = ({productReviews, product}: any) => {
                                             <h2 className='flex flex-row justify-between items-center'>
                                                 <ul className="flex flex-row items-center gap-x-1">
                                                     {Array.from({ length: review.rating }).map((_, i) => (
-                                                        <li><i key={i} className='fa-solid fa-star text-xl text-yellow-400'></i></li>
+                                                        <li key={i}><i className='fa-solid fa-star text-xl text-yellow-400'></i></li>
                                                     ))}
                                                     {Array.from({ length: 5 - review.rating }).map((_, i) => (
-                                                        <li><i key={i} className='fa-regular fa-star text-xl text-yellow-400'></i></li>
+                                                        <li key={i}><i className='fa-regular fa-star text-xl text-yellow-400'></i></li>
                                                     ))}
                                                 </ul>
                                                 <span className='text-detail-500/50 font-sans text-[1rem]'>{`${new Date(review.createdAt).getMonth() + 1}/${new Date(review.createdAt).getDate()}/${new Date(review.createdAt).getFullYear().toString().slice(-2)}`}</span>
@@ -527,10 +527,10 @@ const Reviews = ({productReviews, product}: any) => {
                                          <h2 className='flex flex-row justify-between items-center'>
                                              <ul className="flex flex-row items-center gap-x-1">
                                                  {Array.from({ length: review.rating }).map((_, i) => (
-                                                     <li><i key={i} className='fa-solid fa-star text-xl text-yellow-400'></i></li>
+                                                     <li key={i}><i className='fa-solid fa-star text-xl text-yellow-400'></i></li>
                                                  ))}
                                                  {Array.from({ length: 5 - review.rating }).map((_, i) => (
-                                                     <li><i key={i} className='fa-regular fa-star text-xl text-yellow-400'></i></li>
+                                                     <li key={i}><i className='fa-regular fa-star text-xl text-yellow-400'></i></li>
                                                  ))}
                                              </ul>
                                              <span className='text-detail-500/50 font-sans text-[1rem]'>{`${new Date(review.createdAt).getMonth() + 1}/${new Date(review.createdAt).getDate()}/${new Date(review.createdAt).getFullYear().toString().slice(-2)}`}</span>

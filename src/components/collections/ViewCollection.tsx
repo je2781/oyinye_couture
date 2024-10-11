@@ -27,7 +27,7 @@ const ViewCollection = ({featuredProducts}: any) => {
         <header className="lg:text-4xl text-3xl font-normal leading-text">
             <FormattedMessage id='app.collection.featured' defaultMessage="FeaturedProducts" />
         </header>
-        <div className="flex flex-row items-center justify-evenly flex-wrap gap-x-2 gap-y-4 leading-text">
+        <div className="flex flex-row items-center justify-evenly flex-wrap lg:gap-x-2 gap-x-1 gap-y-4 leading-text">
           {featuredProducts.filter((product: any) => product.isFeature === true).slice(0, 4).map((product: any, i: number) => <Product key={i} product={product}/>)}
         </div>
         <div className="leading-text flex flex-row w-full justify-center -mt-2">

@@ -36,7 +36,15 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
   useEffect(() => {
     setIsMobileModalOpen(false);
     
-  }, []);
+  }, [setIsMobileModalOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+    };
+  }, [timerId]);
 
   useEffect(() => {
     let adminModal = document.querySelector('#admin-settings-modal') as HTMLElement;
@@ -53,11 +61,6 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
       mobileNav.classList.remove('backward');
     }
     
-    return () => {
-      if(timerId){
-        clearTimeout(timerId);
-      }
-    };
   }, [isMobileModalOpen]);
 
   const showSearchModalHandler = (e: React.MouseEvent) => {
@@ -82,7 +85,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
   };
 
   React.useEffect(() => {
-    if (isAdminSettingsOpen) {
+    if (isAdminSettingsOpen.profile || isAdminSettingsOpen.settings) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
@@ -90,9 +93,6 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
 
     return () => {
       document.body.style.overflow = "auto";
-      if (timerId) {
-        clearTimeout(timerId);
-      }
     };
   }, [isAdminSettingsOpen]);
 
@@ -204,9 +204,8 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                     </button>
                   </form>
                   {
-                      (isAdminSettingsOpen.profile || isAdminSettingsOpen.settings) && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white !top-[7vh]'>
+                      isAdminSettingsOpen.profile  && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white !top-[7vh]'>
                             {
-                              isAdminSettingsOpen.profile ? 
                                   <section className='font-sans font-light flex flex-col gap-y-11 text-gray-500 pb-6 pt-16'>
                               
                                     <form onSubmit={async (e) => {
@@ -329,9 +328,18 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                         
                                     </form>
                               </section>
-                              : <section>
-
+                              
+                            }
+                      </AdminSettingsModal>
+                    }
+                  {
+                      isAdminSettingsOpen.settings  && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white !top-[7vh]'>
+                            {
+                                <section className='font-sans font-light flex flex-col gap-y-11 text-gray-500 pb-6 pt-16'>
+                              
+                                    
                               </section>
+                              
                             }
                       </AdminSettingsModal>
                     }

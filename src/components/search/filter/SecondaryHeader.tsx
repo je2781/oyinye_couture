@@ -2,14 +2,12 @@
 'use client';
 
 import Image from "next/image";
-import On from "../../../public/on.png";
-import Off from "../../../public/off.png";
+import On from "../../../../public/on.png";
+import Off from "../../../../public/off.png";
 import React, { SyntheticEvent, useRef } from "react";
 import { FilterModal} from "../../ui/Modal";
 import { regex } from "@/helpers/getHelpers";
 import Slider from "@mui/material/Slider";
-import './SecondaryHeader.css';
-import { time } from "console";
 
 export default function SecondaryHeader({
     setFilter,
@@ -35,12 +33,20 @@ export default function SecondaryHeader({
 }: any){
     const headerClass = classes
         ? ``
-        : 'px-7 mx-auto container secondary-header';
+        : 'mx-auto container secondary-header max-w-7xl';
 
     const [isFilterModalOpen, setIsFilterModalOpen] = React.useState(false);
     const lowerInputRef = useRef<HTMLInputElement>(null);
     const upperInputRef = useRef<HTMLInputElement>(null);
     let timerId: NodeJS.Timeout | null = null;
+
+    React.useEffect(() => {
+        return () => {
+            if(timerId){
+                clearTimeout(timerId);
+            }
+        };
+    }, [timerId]);
 
     React.useEffect(() => {
         let filterSettings = document.querySelector('#filter-settings') as HTMLElement;
@@ -49,11 +55,6 @@ export default function SecondaryHeader({
             filterSettings.classList.remove('backward');
         }
 
-        return () => {
-            if(timerId){
-                clearTimeout(timerId);
-            }
-        }
         
     }, [isFilterModalOpen]);
     
@@ -75,7 +76,6 @@ export default function SecondaryHeader({
         }
     };
       
-
 
     function handleValueChange(e: Event | SyntheticEvent<Element, Event>, val: number | number[]){
         let values = val as number[];

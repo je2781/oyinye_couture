@@ -28,12 +28,6 @@ export default function Order({country}: any){
     const [firstName, setFirstName] = React.useState('');
     const [lastName, setLastName] = React.useState('');
 
-    React.useEffect(() => {
-        if(locale !== 'en'){
-            history.pushState(null, '', `/${locale}${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1]}`);
-        }
-    }, []);
-
     async function handleUploads(e: React.ChangeEvent<HTMLInputElement>){
         const file = e.target.files![0];
         //retrieving uploaded file data

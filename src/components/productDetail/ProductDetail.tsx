@@ -28,6 +28,7 @@ import Product from "../product/Product";
 import Reviews from "../reviews/Reviews";
 import { createViewedProductsAction } from "@/app/actions";
 import useGlobal from "@/store/useGlobal";
+import { time } from "console";
 
 {/* <main className="min-h-screen w-full flex flex-col items-center justify-center bg-white hide-scrollbar">
             <section className="flex flex-col items-center gap-y-2">
@@ -47,18 +48,20 @@ const ProductDetail = ({
     productReviews,
 }: any) => {
     let sizesJsxObj: DressSizesJsxObj = {};
-    let sizesObj: DressSizesObj = {};
+    let sizesObj: DressSizesObj = React.useMemo(() => ({}), []);
     let colorsObj: {
         [key: string]: number[]
     } = {};
     let frontBase64ImagesObj: Base64ImagesObj = {};
+    let timerId =  React.useRef<NodeJS.Timeout | null>(null);
+
 
     React.useEffect(() => {
         async function getServerAction(){
             await createViewedProductsAction(paramsId);
         }
         getServerAction();
-    }, []);
+    }, [paramsId]);
 
     const [colorsData, setColorsData] = useState<any[]>(productColors);
     const [imageFrontBase64, setImageFrontBase64] = useState<string[]>(productFrontBase64Images);
@@ -76,18 +79,23 @@ const ProductDetail = ({
     const {locale} = useGlobal();
 
     React.useEffect(() => {
+        return () => clearTimeout(timerId.current!);
+    }, [timerId]);
+
+    
+    React.useEffect(() => {
+        // Handling scroll
+        const handleScroll = () => {
+            const docScrollPos = window.scrollY;
+            const AScrollPos = getArticleBottomScrollYPosition();
+    
+            setArticleIsNotSticky(docScrollPos === AScrollPos);
+        };
         window.addEventListener("scroll", handleScroll);
 
         return () => window.removeEventListener("scroll", handleScroll);
     }, [articleIsNotSticky]);
         
-    // Handling scroll
-    const handleScroll = () => {
-        const docScrollPos = window.scrollY;
-        const AScrollPos = getArticleBottomScrollYPosition();
-
-        setArticleIsNotSticky(docScrollPos === AScrollPos);
-    };
 
     function getArticleBottomScrollYPosition() {
         const element = document.querySelector('article') as HTMLElement;
@@ -100,7 +108,6 @@ const ProductDetail = ({
     }
 
     React.useEffect(() => {
-        let timerId: NodeJS.Timeout;
 
         async function sendCartData(){
             if(isSavingCart){
@@ -122,7 +129,7 @@ const ProductDetail = ({
                     let endTime = Date.now();
                     let elapsedTime = endTime - startTime;
                     let remainingTime = Math.max(2000, elapsedTime);
-                    timerId = setTimeout(() => {
+                    timerId.current = setTimeout(() => {
                         setLoader(false);
                         toast.success('item added to cart', {
                             position: 'top-right'
@@ -137,8 +144,7 @@ const ProductDetail = ({
 
         sendCartData();
 
-        return () => clearTimeout(timerId);
-    }, [isSavingCart]);
+    }, [isSavingCart, productId, quantity, selectedColor, selectedSize, sizesObj, totalAmount]);
 
 
     function handleColorChange(e: React.MouseEvent){
@@ -339,7 +345,7 @@ const ProductDetail = ({
     }
 
     const mainContent = (
-        <main className="container mx-auto bg-white lg:gap-y-28 gap-y-14 w-full min-h-screen px-7 max-w-7xl lg:pt-0 pt-8 flex flex-col">
+        <main className="container mx-auto bg-white lg:gap-y-28 gap-y-14 w-full min-h-screen md:px-7 px-2 max-w-7xl lg:pt-0 pt-8 flex flex-col">
             <section className="flex lg:flex-row flex-col gap-y-7">
                 <article className={`flex flex-col gap-y-2 w-full lg:w-[46%] ${articleIsNotSticky ? '' : 'lg:sticky lg:top-0'} lg:h-full lg:pt-8`}>
                     <Swiper
@@ -356,7 +362,7 @@ const ProductDetail = ({
                         },
                     }}
                     navigation
-                    className="lg:h-[480px] w-full"
+                    className="lg:h-[480px] h-64 w-full"
                     >
                         {(frontBase64ImagesObj[selectedColor] ? frontBase64ImagesObj[selectedColor] : imageFrontBase64).map((image: string, i: number) => (
                             <SwiperSlide key={i}>
@@ -414,12 +420,15 @@ const ProductDetail = ({
                                 }}
                             >
                                 <div className="w-[10%]"></div>
-                                <img
-                                    src={image}
-                                    alt={`Slide ${i+1}`}
-                                    className="w-[80%] h-full object-cover"
-                                    role="presentation"
-                                />
+                                <div className="relative w-[80%] h-full">
+                                    <Image
+                                        src={image}
+                                        alt={`Slide ${i+1}`}
+                                        fill
+                                        className="object-cover"
+                                        role="presentation"
+                                    />
+                                </div>
                                 <div className="w-[10%]"></div>
                             </div>
                             </SwiperSlide>

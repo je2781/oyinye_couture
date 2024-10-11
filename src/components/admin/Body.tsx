@@ -121,6 +121,14 @@ export default function Body({
     currentBgColors.push(Object.keys(colorObj)[0]);
   });
 
+  React.useEffect(() => {
+    return () => {
+      if (timerId) {
+        clearTimeout(timerId);
+      }
+    };
+  }, [timerId]);
+
 
   function handleSelectedSize(e: React.MouseEvent, index: number) {
     let selectedSize = document.querySelector(
@@ -370,9 +378,6 @@ export default function Body({
 
     return () => {
       document.body.style.overflow = "auto";
-      if (timerId) {
-        clearTimeout(timerId);
-      }
     };
   }, [isAdminSettingsOpen]);
 
@@ -2465,7 +2470,7 @@ export default function Body({
                       <tr key={i}>
                         <td className="bg-transparent border-secondary-400/20 border-t-0 border-l-0 border-r-0 border w-full py-5 font-medium pl-9 pr-1">
                           {order.items.map((item: any, i: number) => (
-                            <span key={i}>{item.variantId},&nbsp;</span>
+                            <span key={i}>{item.variantId},{i === 1 ? <br/> : ' '}</span>
                           ))}
                         </td>
                       </tr>

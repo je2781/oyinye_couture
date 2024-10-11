@@ -33,7 +33,7 @@ export default function LoginPage() {
     } else {
       setButtonDisabled(true);
     }
-  }, [user]);
+  }, [user, setButtonDisabled]);
 
   async function onSignup() {
     try {

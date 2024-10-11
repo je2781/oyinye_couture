@@ -14,7 +14,7 @@ export default function Footer(){
     const [loader, setLoader] = React.useState(false);
     const {setLocale, locale} = useGlobal();
 
-    return <section className={`flex flex-col lg:gap-y-8 gap-y-5 bg-white items-center font-sans pb-7 pt-14 px-6 mx-auto container`}>
+    return <footer className={`flex flex-col lg:gap-y-8 gap-y-5 bg-white items-center font-sans pb-7 md:pt-14 pt-3 px-6 mx-auto container`}>
         <header className="font-medium text-lg w-full flex lg:flex-row flex-col items-center gap-x-16 max-w-7xl">
             <div className="inline-flex flex-col lg:w-{50%] w-full gap-y-3">
                 <h2><FormattedMessage id='app.footer.menu' defaultMessage='Menu' /></h2>
@@ -47,7 +47,7 @@ export default function Footer(){
                             downAngle?.classList.add("ad-rotate-anticlock");
                         }
                     }}
-                    className="relative border border-gray-400 rounded-sm p-1 focus:border-gray-600 w-[30%] cursor-pointer">
+                    className="relative border border-gray-400 rounded-sm p-1 focus:border-gray-600 md:w-[30%] w-[35%] cursor-pointer">
                         <select 
                         id='lang-select'
                         className="focus:outline-none p-2 appearance-none"
@@ -71,7 +71,7 @@ export default function Footer(){
                         <i onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                        }} className="fa-solid fa-angle-down lang-angle-down absolute top-[40%] right-3"
+                        }} className="fa-solid fa-angle-down lang-angle-down absolute top-[35%] right-3"
 
                         ></i>
                     </div>
@@ -130,5 +130,5 @@ export default function Footer(){
                 </Link>
             </div>
         </footer>
-    </section>
+    </footer>
 }

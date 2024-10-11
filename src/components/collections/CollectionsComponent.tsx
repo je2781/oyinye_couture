@@ -1,10 +1,11 @@
 'use client';
 
-import React from "react";
+import React, { useMemo } from "react";
 import ProductComponent from "../product/Product";
 import SecondaryHeader from "./filter/SecondaryHeader";
 import Pagination from "../layout/Pagination";
 import Setting from "./filter/Setting";
+import useWindowWidth from "../helpers/getWindowWidth";
 
 export default function Collections({
     collectionsCat,
@@ -13,7 +14,7 @@ export default function Collections({
     page
 }: any){
   
-  const sortByList = [
+  const sortByList = useMemo(() => [
     "Featured", 
     "Best Selling", 
     "Alphabetically, A-Z", 
@@ -22,7 +23,7 @@ export default function Collections({
     "Price, high to low", 
     "Date, old to new",
     "Date, new to old"
-  ];
+  ], []);
   const fabricList = [
     "Crepe", "Cotton", "Linen", "Wool","Chiffon", "Organza", "Mikado Silk", "Damask"
   ];
@@ -61,11 +62,10 @@ export default function Collections({
       break;
   }
 
-
-
     const [visible, setVisible] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
     const [isGridView, setIsGridView] = React.useState(true);
+    const [prevScrollPos, setPrevScrollPos] = React.useState(0);
     const [filter, setFilter] = React.useState({
       noOfFilters: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].collection.noOfFilters : 0,
       isVisible: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].collection.isVisible : true,
@@ -77,6 +77,70 @@ export default function Collections({
     const [sort, setSort] = React.useState<string>(
       sortBy
     );
+    const windowWidth = useWindowWidth();
+
+  
+    React.useEffect(() => {
+      // Handling scroll
+      const handleScroll = () => {
+        const docScrollPos = window.scrollY;
+        const element = document.querySelector('.collections-secondary-header') as HTMLElement;
+        const main = document.querySelector('.no-products-section') as HTMLElement;
+
+        if(element){
+          const rect = element.getBoundingClientRect();
+          const SHScrollPos = docScrollPos + rect.top;
+      
+          setVisible(prevScrollPos > docScrollPos && docScrollPos > SHScrollPos);
+          setPrevScrollPos(docScrollPos);
+        }else{
+          const rect = main.getBoundingClientRect();
+          const SHScrollPos = docScrollPos + rect.top;
+      
+          setVisible(prevScrollPos > docScrollPos && docScrollPos > SHScrollPos);
+          setPrevScrollPos(docScrollPos);
+        }
+      }
+      window.addEventListener("scroll", handleScroll);
+  
+      return () => window.removeEventListener("scroll", handleScroll);
+    }, [prevScrollPos, visible]);
+
+
+  React.useEffect(() => {
+    if(windowWidth > 768){
+
+      const element = document.querySelector('.collections-secondary-header') as HTMLElement;
+      const main = document.querySelector('.no-products-section') as HTMLElement;
+
+      if(element){
+
+        const rect = element.getBoundingClientRect();
+        const docScrollPos = window.scrollY;
+        const SHScrollPos = docScrollPos + rect.top;
+  
+        if(docScrollPos > SHScrollPos || SHScrollPos > docScrollPos){
+          window.scrollTo({
+            top: SHScrollPos,
+            behavior: 'smooth'
+          });
+        }
+      }else{
+        const rect = main.getBoundingClientRect();
+        const docScrollPos = window.scrollY;
+        const SHScrollPos = docScrollPos + rect.top;
+  
+        if(docScrollPos > SHScrollPos || SHScrollPos > docScrollPos){
+          window.scrollTo({
+            top: SHScrollPos,
+            behavior: 'smooth'
+          });
+        }
+      }
+
+    }
+
+  }, [windowWidth]);
 
     React.useEffect(() => {
       async function reloadPage(){
@@ -128,7 +192,7 @@ export default function Collections({
         }
       }
       reloadPage();
-    }, [isLoading]);
+    }, [isLoading, collectionsCat, page, sort, sortByList, filter]);
 
     data.collectionsCat = collectionsCat;
     data.sortBy = sort;
@@ -137,11 +201,13 @@ export default function Collections({
     return <>
         <section className={`${
             visible ? "show" : "hide"
-          } mx-auto container px-7 fixed top-[60px] z-10 bg-white h-11 shadow-md py-2 md:hidden max-w-7xl`}>
+          } mx-auto container px-2 fixed top-[95px] z-10 bg-white h-[46px] shadow-md py-2 md:hidden max-w-7xl`}>
           <SecondaryHeader 
             setFilter={setFilter}
             filter={filter}
             sort={sort}
+            classes
+            fabricList={fabricList}
             setSort={setSort}
             setIsLoading={setIsLoading}
             sortByList={sortByList}
@@ -152,30 +218,31 @@ export default function Collections({
           /> 
       </section>
       <main
-      className={`w-full min-h-screen font-sans md:pt-12 pt-5 pb-6 gap-y-9 flex flex-col items-start relative`}
+      className={`w-full min-h-screen font-sans md:pt-12 pt-5 pb-6 gap-y-9 flex flex-col items-start relative no-products-section`}
       >
-        <header className="w-full container mx-auto px-12 max-w-7xl">
+        <header className="w-full container mx-auto md:px-12 px-3 max-w-7xl text-center md:text-start">
           <h1 className="lg:text-4xl text-2xl">{collectionsCat === 'all' ? 'Products' : 'All Dresses'}</h1>
         </header>
         {data.products.length > 0
-        ? <section className="w-full bg-gray-50 pb-7 flex flex-col py-7 gap-y-5" >
+        ? <section className="w-full bg-gray-50 pb-7 flex flex-col md:py-7 py-11 gap-y-5" >
           <SecondaryHeader 
             setFilter={setFilter}
             filter={filter}
             sort={sort}
             setSort={setSort}
             setIsLoading={setIsLoading}
+            fabricList={fabricList}
             category={collectionsCat}
             sortByList={sortByList}
             productsLength={data.products.length}
             isGridView={isGridView}
             setIsGridView={setIsGridView}
           />
-          <div className="flex flex-row pl-12 pr-2 container mx-auto max-w-7xl gap-x-4">
+          <div className="flex flex-row md:pl-12 px-2 container mx-auto max-w-7xl gap-x-4">
             {filter.isVisible && collectionsCat !== 'basics' && <Setting 
               {...{ setIsLoading, setFilter, filter, fabricList }}
             />}
-            <div className={`${filter.isVisible && collectionsCat !== 'basics' ? 'md:w-[80%]': 'w-full'} flex md:flex-row ${isGridView ? 'flex-row': 'flex-col'} items-center md:h-full md:overflow-y-auto hide-scrollbar justify-evenly flex-wrap gap-x-1 gap-y-4`}>
+            <div className={`${filter.isVisible && collectionsCat !== 'basics' ? 'md:w-[80%]': 'w-full'} flex md:flex-row ${isGridView ? 'flex-row': 'flex-col'} items-center h-full overflow-y-auto hide-scrollbar justify-evenly flex-wrap gap-x-1 gap-y-4`}>
                 {data.products.map((product: any, i: number) => (
                   <ProductComponent
                     key={i}

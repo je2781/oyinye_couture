@@ -19,7 +19,7 @@ import { Base64ImagesObj, CartItemObj } from "@/interfaces";
 import axios from "axios";
 import toast from "react-hot-toast";
 import useWindowWidth from "../helpers/getWindowWidth";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import useGlobal from "@/store/useGlobal";
 
 export default function Checkout({ cartItems, total, orderId, country, userEmail, userId, billingInfo, shippingInfo, saveBillingInfo, saveShippingInfo }: any) {
@@ -29,6 +29,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
   let frontBase64ImagesObj: Base64ImagesObj = {};
 
   const router = useRouter();
+  const path = usePathname();
   const [showFlag, setShowFlag] = React.useState({
     shipping: saveShippingInfo ? true : false,
     billing: saveBillingInfo ? true : false
@@ -221,10 +222,10 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
                 const res = await axios.post(`/api/orders/update/transaction-status`, {
                   txn_ref: transactionRef,
                   merchant_code: `${process.env.NEXT_PUBLIC_MER_CODE}`,
-                  amount: parseFloat(total) * 100
+                  amount: (shippingMethod + parseFloat(total) + tax) * 100
                 });
     
-                if(res.status === 400){
+                if(res.status === 200){
                   toast.error(res.data.message);
                 }else if(res.status === 201){
                   toast.success('Payment successful');
@@ -235,7 +236,8 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
                 router.replace(`/`);
               }
             }
-          }
+          },
+          `${process.env.NEXT_PUBLIC_DOMAIN}${path}`
         );
       
       }
@@ -2099,7 +2101,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
           <input type="hidden"  name='pay_item_id' value={`${process.env.NEXT_PUBLIC_PAY_ITEM_ID}`}/>
           <input type="hidden"  name='cust_email' value='info@oyinye.com'/>
           <input type="hidden"  name='item_name' value={orderId}/>
-          <input type="hidden"  name='cust_amount' value={parseFloat(total) * 100}/>
+          <input type="hidden"  name='cust_amount' value={(shippingMethod + parseFloat(total) + tax) * 100}/>
           <input type="hidden"  name='txn_ref' value={transactionRef}/>
           <button
             onClick={completeOrder}

@@ -29,7 +29,7 @@ export default function LoginPage({message, success}: any) {
     } else {
       setButtonDisabled(true);
     }
-  }, [user]);
+  }, [user, setButtonDisabled]);
 
   useEffect(() => {
     if(success === true){
@@ -43,7 +43,7 @@ export default function LoginPage({message, success}: any) {
         position: 'top-center'
       });
     }
-  }, []);
+  }, [success, message]);
 
   async function onLogin() {
     try {

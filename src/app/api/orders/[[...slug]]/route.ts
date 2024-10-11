@@ -163,7 +163,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
                 return NextResponse.json({
                   message: res.data.ResponseDescription
                 }, {
-                  status: 400
+                  status: 200
                 });
               }else{
                 return NextResponse.json({

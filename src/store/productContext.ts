@@ -1,4 +1,3 @@
-import { SearchResults } from "@/interfaces";
 import React from "react";
 
 export const ProductContext  = React.createContext<{

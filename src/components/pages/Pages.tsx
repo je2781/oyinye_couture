@@ -20,11 +20,11 @@ export default function PagesComponent({name}: any){
     const {locale} = useGlobal();
     let content: JSX.Element = <></>;
 
-    React.useEffect(() => {
-        if(locale !== 'en'){
-            history.pushState(null, '', `/${locale}${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1]}`);
-        }
-    }, []);
+    // React.useEffect(() => {
+    //     if(locale !== 'en'){
+    //         history.pushState(null, '', `/${locale}${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1]}`);
+    //     }
+    // }, []);
 
     async function handleFormSubmit(e: React.FormEvent){
         e.preventDefault();

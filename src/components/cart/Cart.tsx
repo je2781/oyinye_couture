@@ -5,7 +5,7 @@ import { Base64ImagesObj, CartItemObj} from "@/interfaces";
 import useCart from "@/store/useCart";
 import axios from "axios";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import './Cart.css';
 import { useRouter } from "next/navigation";
@@ -26,10 +26,9 @@ export default function CartInfo({
     cartItems,
     userEmail
 }: any){
-    let cartItemObj: CartItemObj = {};
-    let timerId: NodeJS.Timeout | null  = null;
+    let cartItemObj = useRef<CartItemObj>({});
+    let frontBase64ImagesObj = useRef<Base64ImagesObj>({});
 
-    let frontBase64ImagesObj: Base64ImagesObj = {};
 
     const {deductItem, addItem, updateCart} = useCart();
 
@@ -43,14 +42,18 @@ export default function CartInfo({
     const [email, setEmail] = useState(userEmail);
     const [isDeductingCart, setIsDeductingCart] = useState<InitialCartData>();
     let windowWidth = useWindowWidth();
+
+    useEffect(() => {
+        updateCart(cartI);
+    }, [cartI]);
     
     if(cartI.length > 0){
 
         //extracting product details to populate the cart page
-        extractProductDetails(cartI, cartItemObj, frontBase64ImagesObj);
+        extractProductDetails(cartI, cartItemObj.current, frontBase64ImagesObj.current);
     }
-    const [quantities, setQuantities] = useState<number[]>(Object.values(cartItemObj).map((item: any) => item.quantity));
-    const [itemTotalAmounts, setItemTotalAmounts] = useState<number[]>(Object.values(cartItemObj).map((item: any) => item.quantity * item.price));
+    const [quantities, setQuantities] = useState<number[]>(Object.values(cartItemObj.current).map((item: any) => item.quantity));
+    const [itemTotalAmounts, setItemTotalAmounts] = useState<number[]>(Object.values(cartItemObj.current).map((item: any) => item.quantity * item.price));
            
 
     useEffect(() => {
@@ -68,14 +71,13 @@ export default function CartInfo({
                     const items = res.data.items;
 
                     //reseting objects for new data entry
-                    cartItemObj = {};
-                    frontBase64ImagesObj = {};
+                    cartItemObj.current = {};
+                    frontBase64ImagesObj.current = {};
 
                     setCartI(items);
-                    updateCart(items);
-                    extractProductDetails(items, cartItemObj, frontBase64ImagesObj);
-                    setQuantities(Object.values(cartItemObj).map((item: any) => item.quantity));
-                    setItemTotalAmounts(Object.values(cartItemObj).map((item: any) => item.quantity * item.price));
+                    extractProductDetails(items, cartItemObj.current, frontBase64ImagesObj.current);
+                    setQuantities(Object.values(cartItemObj.current).map((item: any) => item.quantity));
+                    setItemTotalAmounts(Object.values(cartItemObj.current).map((item: any) => item.quantity * item.price));
                     setTotalAmount(res.data.totalAmount);
                 
 
@@ -107,14 +109,13 @@ export default function CartInfo({
                    const items = res.data.items;
 
                     //reseting objects for new data entry
-                    cartItemObj = {};
-                    frontBase64ImagesObj = {};
+                    cartItemObj.current = {};
+                    frontBase64ImagesObj.current = {};
 
                     setCartI(items);
-                    updateCart(items);
-                    extractProductDetails(items, cartItemObj, frontBase64ImagesObj);
-                    setQuantities(Object.values(cartItemObj).map((item: any) => item.quantity));
-                    setItemTotalAmounts(Object.values(cartItemObj).map((item: any) => item.quantity * item.price));
+                    extractProductDetails(items, cartItemObj.current, frontBase64ImagesObj.current);
+                    setQuantities(Object.values(cartItemObj.current.current).map((item: any) => item.quantity));
+                    setItemTotalAmounts(Object.values(cartItemObj.current.current).map((item: any) => item.quantity * item.price));
                     setTotalAmount(res.data.totalAmount);
                 } catch (error: any) {
                     setLoader(false);
@@ -133,7 +134,7 @@ export default function CartInfo({
 
     useEffect(() => {
         
-        timerId = setTimeout(async () => {
+        const timerId = setTimeout(async () => {
             if(emailPattern.test(email)){
                 try {
                     setIsCreatingUserProfile(true);
@@ -225,7 +226,6 @@ export default function CartInfo({
     }
 
     
-
     return (
         <>
 
@@ -316,7 +316,7 @@ export default function CartInfo({
                     {loader && <div className="trailing-progress-bar">
                         <div className="trailing-progress" ></div>
                     </div>}
-                    {Object.values(cartItemObj).map((item: any, i: number) => quantities[i] > 0 && <section key={i}
+                    {Object.values(cartItemObj.current).map((item: any, i: number) => quantities[i] > 0 && <section key={i}
                         className="border-[0.7px] border-gray-300 border-l-0 border-r-0 border-t-0 w-full py-7"
                     >
                         <section className="flex md:flex-row flex-col justify-between md:items-center items-start w-full gap-y-4">
@@ -324,7 +324,7 @@ export default function CartInfo({
                                 onClick={() => router.push(`/products/${item.title.replace(' ', '-').toLowerCase()}/${item.color.toLowerCase()}/${item.variantId}`)}
                                 >
                                 <div className="flex flex-row md:gap-x-7 gap-x-3 items-start">
-                                    <Image src={Object.values(frontBase64ImagesObj)[i][0]} width={100} height={175} alt={`cart-item${i+1}`}/>
+                                    <Image src={Object.values(frontBase64ImagesObj.current)[i][0]} width={100} height={175} alt={`cart-item${i+1}`}/>
                                     <div className="font-sans inline-block">
                                         <h2 className="text-[1rem] font-normal">{item.title}</h2>
                                         <p className="text-sm font-extralight">&#8358;{item.price}</p>

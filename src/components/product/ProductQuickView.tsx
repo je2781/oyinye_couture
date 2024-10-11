@@ -33,13 +33,41 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
     const {locale} = useGlobal();
 
     let sizesJsxObj: DressSizesJsxObj  = {};
-    let sizesObj: DressSizesObj  = {};
+    let sizesObj: DressSizesObj = React.useMemo(() => ({}), []);
     let colorsObj: {
         [key: string]: number[]
     }  = {};
     let frontBase64ImagesObj: Base64ImagesObj = {};
-    let timerId: NodeJS.Timeout | null = null;
+    
+    let timerId = React.useRef<NodeJS.Timeout | null>(null)
 
+    React.useEffect(() => {
+        return () => {
+            if(timerId.current){
+                clearTimeout(timerId.current);
+            }
+        };
+
+    }, [timerId]);
+
+    
+    //sorting extracted sizes for all dress colors and storing them for later use
+    for(let color of product.colors){
+        if(!isSearchProduct){
+            color.sizes = color.sizes.filter((size: any) => size.stock > 0);
+        }
+        color.sizes.sort((a: any, b: any) => a.number - b.number);
+
+        for(let size of color.sizes){
+            colorsObj[color.type]
+            ? colorsObj[color.type].push(size.number)
+            : colorsObj[color.type] = [size.number];
+        }
+    }
+    
+    const [selectedColor, setSelectedColor] = React.useState(product.colors[0].type);
+
+    const [selectedSize, setSelectedSize] = React.useState<string>(product.colors[0].sizes[0].number.toString());
 
     React.useEffect(() => {
 
@@ -64,7 +92,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                     let endTime = Date.now();
                     let elapsedTime = endTime - startTime;
                     let remainingTime = Math.max(3000, elapsedTime);
-                    timerId = setTimeout(() => {
+                    timerId.current = setTimeout(() => {
                         setProgressIndicator(false);
                         setToastMsgVisible(true);
                         // Resetting isSavingCart to false
@@ -76,32 +104,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
         }
 
         sendCartData();
-
-        return () => {
-            if(timerId){
-                clearTimeout(timerId);
-            }
-        };
-
-    }, [isSavingCart]);
-    
-    //sorting extracted sizes for all dress colors and storing them for later use
-    for(let color of product.colors){
-        if(!isSearchProduct){
-            color.sizes = color.sizes.filter((size: any) => size.stock > 0);
-        }
-        color.sizes.sort((a: any, b: any) => a.number - b.number);
-
-        for(let size of color.sizes){
-            colorsObj[color.type]
-            ? colorsObj[color.type].push(size.number)
-            : colorsObj[color.type] = [size.number];
-        }
-    }
-    
-    const [selectedColor, setSelectedColor] = React.useState(product.colors[0].type);
-
-    const [selectedSize, setSelectedSize] = React.useState<string>(product.colors[0].sizes[0].number.toString());
+    }, [isSavingCart, product._id, quantity, selectedColor, selectedSize, sizesObj, totalAmount]);
 
     function handleColorChange(e: React.MouseEvent){
         let activeColorEl = e.currentTarget as HTMLSpanElement;
@@ -177,6 +180,8 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
         //updating active dress size
         setSelectedSize(activeSizeEl.innerText.split(' ')[1]);
     }
+
+
 
     product.colors.forEach((color: any, i: number) => {
         sizesJsxObj[color.type] = sizes.map((size: number, i: number) => color.sizes[0] && color.sizes[0].number === size && color.sizes[0].stock === 0 && color.isAvailable ?
@@ -259,13 +264,16 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                             item.style.setProperty('--display', 'none');
 
                         }}
-                    >
-                        <img
-                        src={image}
-                        role="presentation"
-                        alt="featured-Image"
-                        className="w-full h-full object-cover"
-                        />
+                    >   
+                        <div className="relative w-full h-full">
+                            <Image
+                            src={image}
+                            role="presentation"
+                            alt="featured-Image"
+                            fill
+                            className="object-cover"
+                            />
+                        </div>
                     </div>
                 </SwiperSlide>)}
             </Swiper>
@@ -323,7 +331,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                         onMouseLeave={(e) => {
                             const el = e.currentTarget;
                             el.classList.add('mouseleave');
-                            timerId = setTimeout(() => {
+                            timerId.current = setTimeout(() => {
                                 el.classList.remove('mouseleave');
                             }, 400); 
                         }}
@@ -365,7 +373,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                         onMouseLeave={(e) => {
                             const el = e.currentTarget;
                             el.classList.add('mouseleave');
-                            timerId = setTimeout(() => {
+                            timerId.current = setTimeout(() => {
                                 el.classList.remove('mouseleave');
                             }, 400); 
                         }}  

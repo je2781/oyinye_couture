@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Pagination from "../layout/Pagination";
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import Box from '@mui/material/Box';
 import Slider from '@mui/material/Slider';
 import { useRouter } from "next/navigation";
@@ -24,7 +24,7 @@ export default function SearchResults({
   productType,
   page,
 }: any) {
-  const sortByList = ["Relevance", "Price, low to high", "Price, high to low"];
+  const sortByList = React.useMemo(() => ["Relevance", "Price, low to high", "Price, high to low"], []);
   const productTypeList = ["Dresses", "Pants", "Jumpsuits"];
   //updating sortby product type params
   switch ((sortBy.split('-').length === 1 ? sortBy.split('-')[0] : sortBy.split('-')[1])) {
@@ -68,45 +68,34 @@ export default function SearchResults({
   const [visible, setVisible] = React.useState(false);
   const [prevScrollPos, setPrevScrollPos] = React.useState(0);
 
+
   React.useEffect(() => {
+    // Handling scroll
+    const handleScroll = () => {
+      const docScrollPos = window.scrollY;
+      const element = document.querySelector('.secondary-header') as HTMLElement;
+      const main = document.querySelector('.no-products-section') as HTMLElement;
+
+      if(element){
+        const rect = element.getBoundingClientRect();
+        const SHScrollPos = docScrollPos + rect.top;
+    
+        setVisible(prevScrollPos > docScrollPos && docScrollPos > SHScrollPos);
+        setPrevScrollPos(docScrollPos);
+      }else{
+        const rect = main.getBoundingClientRect();
+        const SHScrollPos = docScrollPos + rect.top;
+    
+        setVisible(prevScrollPos > docScrollPos && docScrollPos > SHScrollPos);
+        setPrevScrollPos(docScrollPos);
+      }
+    };
     window.addEventListener("scroll", handleScroll);
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, [prevScrollPos, visible]);
 
-  
-  // Handling scroll
-  const handleScroll = () => {
-    const docScrollPos = window.scrollY;
-    const SHScrollPos = getSecondaryHeaderScrollYPosition();
 
-    setVisible(prevScrollPos > docScrollPos && docScrollPos > SHScrollPos);
-    setPrevScrollPos(docScrollPos);
-  };
-
-
-  // Handling scroll
-  const handleSearchContentScrollPosition = () => {
-    
-      const SHScrollPos = getSecondaryHeaderScrollYPosition();
-      const docScrollPos = window.scrollY;
-  
-      if(docScrollPos > SHScrollPos || SHScrollPos > docScrollPos){
-        window.scrollTo({
-          top: SHScrollPos,
-          behavior: 'smooth'
-        });
-      }
-    
-  }
-
-  function getSecondaryHeaderScrollYPosition() {
-    const element = document.querySelector(`${data.products.length > 0 ? '.secondary-header': '.no-products-section'}`) as HTMLElement;
-
-    const rect = element.getBoundingClientRect();
-    return window.scrollY + rect.top;
-    
-  }
 
   React.useEffect(() => {
     async function reloadPage(){
@@ -146,15 +135,40 @@ export default function SearchResults({
       }
     }
     reloadPage();
-  }, [isLoading]);
+  }, [isLoading, filter, newPriceBoundary, page, price, query, sort, sortByList]);
 
   React.useEffect(() => {
     if(windowWidth > 768){
+      const element = document.querySelector('.secondary-header') as HTMLElement;
+      const main = document.querySelector('.no-products-section') as HTMLElement;
 
-      handleSearchContentScrollPosition();
+      if(element){
+
+        const rect = element.getBoundingClientRect();
+        const docScrollPos = window.scrollY;
+        const SHScrollPos = docScrollPos + rect.top;
+  
+        if(docScrollPos > SHScrollPos || SHScrollPos > docScrollPos){
+          window.scrollTo({
+            top: SHScrollPos,
+            behavior: 'smooth'
+          });
+        }
+      }else{
+        const rect = main.getBoundingClientRect();
+        const docScrollPos = window.scrollY;
+        const SHScrollPos = docScrollPos + rect.top;
+  
+        if(docScrollPos > SHScrollPos || SHScrollPos > docScrollPos){
+          window.scrollTo({
+            top: SHScrollPos,
+            behavior: 'smooth'
+          });
+        }
+      }
     }
 
-  }, []);
+  }, [windowWidth]);
 
   //updating products with available products for the current price range
   data.products = data.products.filter((product: any) => product.colors.every((color: any) => color.sizes.length > 0));
@@ -216,7 +230,7 @@ export default function SearchResults({
           /> 
       </section>
       <main
-        className={`bg-white w-full min-h-screen md:pt-12 pt-5 pb-6 flex flex-col md:pl-12 md:pr-0 pl-2 pr-3 max-w-7xl relative no-products-section ${
+        className={`bg-white w-full min-h-screen md:pt-12 pt-5 pb-6 flex flex-col md:pl-12 md:pr-0 px-3 max-w-7xl relative no-products-section ${
           data.products.length === 0  && !lowerBoundary && !upperBoundary && !productType && filter.showOutOfStock ? "space-y-36" : "space-y-6"
         }`}
       >
@@ -389,7 +403,7 @@ export default function SearchResults({
                   className="relative bottom-0 cursor-pointer flex flex-row justify-between items-center font-sans hover:bg-gray-100 text-[.8rem] border border-b-0 border-l-0 border-r-0 py-2 px-5 mt-4 group"
                 >
                   <h5 className="font-sans text-gray-500 text-sm">
-                    Search for "{query}"
+                    Search for &quot;{query}&quot;
                   </h5>
                   {isLoading ? (
                     <div className="loader"></div>
@@ -479,7 +493,7 @@ export default function SearchResults({
                   sliderVal={sliderVal}
                 
                 />}
-              <div className={`${filter.isVisible ? 'md:w-[80%]': 'w-full'} flex md:flex-row ${isGridView ? 'flex-row': 'flex-col'} items-center md:h-full md:overflow-y-auto hide-scrollbar justify-evenly flex-wrap gap-x-2 gap-y-4`}>
+              <div className={`${filter.isVisible ? 'md:w-[80%]': 'w-full'} flex md:flex-row ${isGridView ? 'flex-row': 'flex-col'} items-center h-full overflow-y-auto hide-scrollbar justify-evenly flex-wrap gap-x-1 gap-y-4`}>
                 {data.products.map((product: any, i: number) => (
                   <ProductComponent
                     key={i}

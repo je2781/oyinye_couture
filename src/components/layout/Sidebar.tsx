@@ -26,8 +26,8 @@ export default function Sidebar({pathName}: any){
             if(timerId){
                 clearTimeout(timerId);
             }
-        }
-    }, []);
+        };
+    }, [timerId]);
 
     let routeNames = getRouteNames(appsList);
 

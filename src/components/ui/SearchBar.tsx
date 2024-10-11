@@ -26,7 +26,7 @@ const SearchBar = ({ onHideModal}: any) => {
       }
     }
 
-  }, [isLoading]);
+  }, [isLoading, currentUrl, query, router]);
 
 
   const pages = [
@@ -179,7 +179,7 @@ const SearchBar = ({ onHideModal}: any) => {
             <footer  onClick={() => {
                 setIsLoading(true);
             }} className="relative bottom-0 cursor-pointer flex flex-row justify-between items-center font-sans hover:bg-gray-100 text-[.8rem] border border-b-0 border-l-0 border-r-0 py-2 px-5 mt-4 group">
-                  <h5 className="font-sans text-gray-500 text-sm">Search for "{query}"</h5>
+                  <h5 className="font-sans text-gray-500 text-sm">Search for &quot;{query}&quot;</h5>
                   {isLoading ? <div className="loader"></div> :
                     <i className="absolute right-5 cursor-pointer fa-solid fa-arrow-right-long text-gray-600 font-semibold transition-all duration-300 group-hover:right-4"></i>}
             </footer>

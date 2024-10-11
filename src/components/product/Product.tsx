@@ -85,13 +85,13 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
 
         }}
       > 
-          <div className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && width > 375 && isGridView && isSearchProduct ? 'w-[168px] h-[200px]': width <= 375 && isGridView && isSearchProduct ? 'w-[150px] h-[200px]' : width < 768 && !isGridView && isSearchProduct ? 'w-full h-[380px]': width >= 768 && width < 1024 ? 'w-[270px]' : ``} group overflow-hidden`}>
+          <div className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && width > 375 && isGridView && isSearchProduct ? 'w-[181px] h-[200px]':  width <= 375 && isGridView && isSearchProduct ? 'w-[173px] h-[200px]' : width < 768 && !isGridView && isSearchProduct ? 'w-full h-[380px]': width >= 768 && width < 1024 ? 'w-[270px]' : ``} group overflow-hidden`}>
               <Image
                   src={product.colors[0].imageFrontBase64[0]}
                   alt="dress-Image"
                   width={imageW ?? 300}
                   height={imageH ?? 450}
-                  className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && width > 375 && isGridView && isSearchProduct ? 'w-[168px] h-[200px]': width <= 375 && isGridView && isSearchProduct ? 'w-[150px] h-[200px]' : width < 768 && !isGridView && isSearchProduct ? 'w-full h-[380px]': width >= 768 && width < 1024 ? 'w-[270px]' : ``} object-cover transform transition-transform duration-500 group-hover:scale-125`}
+                  className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && width > 375 && isGridView && isSearchProduct ? 'w-[181px] h-[200px]' : width <= 375 && isGridView && isSearchProduct ? 'w-[173px] h-[200px]' : width < 768 && !isGridView && isSearchProduct ? 'w-full h-[380px]': width >= 768 && width < 1024 ? 'w-[270px]' : ``} object-cover transform transition-transform duration-500 group-hover:scale-125`}
                   role="presentation"
               />
           </div>
