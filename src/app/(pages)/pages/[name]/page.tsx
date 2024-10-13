@@ -12,7 +12,7 @@ async function getData() {
     if(cartId && cartId.length > 0){
     
       const cartDataRes = await 
-        fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`);
+        fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`, {cache: 'no-cache'});
     
       const cartData = await cartDataRes.json();
 

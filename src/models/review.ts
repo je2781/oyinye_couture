@@ -62,8 +62,6 @@ Review.init({
 },  {
     tableName: "reviews",
     sequelize,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
     timestamps: true,
   }
 );

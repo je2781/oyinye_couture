@@ -10,7 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
     try {
 
       let priceList: number[] = [];
-      let filterSettings: any[] = [];
+      let filterSettings: Filter[] = [];
       const ITEMS_PER_PAGE = 21;
 
       if(params.slug === 'search'){
@@ -423,6 +423,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       
        
     } catch (error: any) {
+      console.log('fetching results failed', error);
       return NextResponse.json(
         {
           error: error.message,

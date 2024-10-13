@@ -13,7 +13,7 @@ async function getData() {
     
       const [countryDataRes, cartDataRes] = await Promise.all([
         fetch(`https://ipinfo.io?token=${process.env.IPINFO_TOKEN}`),
-        fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`)
+        fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`, {cache: 'no-cache'})
       ]);
     
       const [countryData, cartData] = await Promise.all([

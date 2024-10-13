@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { GlobalContextProvider } from "@/store/globalContext";
 import "./admin.css";
+import '../../globals.css';
 
 export default function RootLayout({
   children,

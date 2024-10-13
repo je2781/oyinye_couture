@@ -24,24 +24,28 @@ module.exports = {
         type: Sequelize.STRING
       },
       features: {
-        type: Sequelize.ARRAY(Sequelize.STRING),
+        type: Sequelize.JSONB,
         allowNull: true
       },
       reviews: {
-        type: Sequelize.ARRAY(Sequelize.STRING),
+        type: Sequelize.JSONB,
         allowNull: true
       },
       colors: {
-        type: Sequelize.ARRAY(Sequelize.JSONB),
+        type: Sequelize.JSONB,
         allowNull: true
       },
-      created_at: {
+      createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+
       },
-      updated_at: {
+      updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+
       }
     });
   },

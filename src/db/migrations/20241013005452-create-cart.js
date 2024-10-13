@@ -12,13 +12,17 @@ module.exports = {
         type: Sequelize.DOUBLE
       },
       items: Sequelize.ARRAY(Sequelize.JSONB),
-      created_at: {
+      createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+
       },
-      updated_at: {
+      updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+
       }
     });
   },

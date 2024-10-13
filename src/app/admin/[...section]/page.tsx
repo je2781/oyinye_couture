@@ -12,13 +12,6 @@ const BodyComponent = dynamic(() => import('../../../components/admin/Body'),{
 ssr: false
 });
 
-export const dynamicParams = true;
- 
-export async function generateStaticParams() {
-  return [];
-}
-
-
 async function getData(page?: string) {
     const cookieStore = cookies();
     const [orderDataRes, enquiriesDataRes, visitorsDataRes, userDataRes] = await Promise.all([

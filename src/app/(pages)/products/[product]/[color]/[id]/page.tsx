@@ -11,11 +11,6 @@ const ProductDetailComponent = dynamic(() => import('../../../../../../component
 </main>
 });
 
-export const dynamicParams = true;
-
-export async function generateStaticParams() {
-  return [];
-}
 
 async function getData(product: string, color: string, variantId: string) {
   const cookieStore = cookies();
@@ -25,7 +20,7 @@ async function getData(product: string, color: string, variantId: string) {
   if(cartId && cartId.length > 0){
     const [productDataRes, cartDataRes] = await Promise.all([fetch(
       `${process.env.DOMAIN}/api/products/${product}/${color}/${variantId}?viewed_p=${viewedProducts}`, {cache: 'no-cache'}
-      ), fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`)]);
+      ), fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`, {cache: 'no-cache'})]);
 
     const [productData, cartData] = await Promise.all([productDataRes.json(), cartDataRes.json()]);
 

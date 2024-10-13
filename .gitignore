@@ -8,6 +8,7 @@
 /src/db/docker-entrypoint-initdb.d/
 /src/db/products.json
 /src/db/users.json
+/src/ssl
 
 .env
 # testing

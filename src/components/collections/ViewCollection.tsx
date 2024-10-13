@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Product from "../product/Product";
 import {FormattedMessage } from 'react-intl';
-import useGlobal from "@/store/useGlobal";
 
 
 const ViewCollection = ({featuredProducts}: any) => {

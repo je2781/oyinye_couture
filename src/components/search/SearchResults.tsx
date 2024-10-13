@@ -48,12 +48,12 @@ export default function SearchResults({
   const [isLoading, setIsLoading] = React.useState(false);
   const [isGridView, setIsGridView] = React.useState(true);
   const [filter, setFilter] = React.useState({
-    noOfFilters: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.noOfFilters : 0,
-    isVisible: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.isVisible : true,
-    showOutOfStock: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.showOutOfStock : true,
-    productType: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.productType : '',
-    priceRange: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.priceRange : '',
-    currentPriceBoundary: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.currentPriceBoundary : Math.floor(data.highestPrice)
+    noOfFilters: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].collection.no_of_Filters : 0,
+    isVisible: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].collection.is_visible : true,
+    showOutOfStock: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.show_out_of_stock : true,
+    productType: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.product_type : '',
+    priceRange: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.price_range : '',
+    currentPriceBoundary: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.current_price_boundary : Math.floor(data.highestPrice)
   });
   const [isTyping, setIsTyping] = React.useState(false);
   const [sort, setSort] = React.useState<string>(

@@ -67,9 +67,9 @@ export default function Collections({
     const [isGridView, setIsGridView] = React.useState(true);
     const [prevScrollPos, setPrevScrollPos] = React.useState(0);
     const [filter, setFilter] = React.useState({
-      noOfFilters: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].collection.noOfFilters : 0,
-      isVisible: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].collection.isVisible : true,
-      customProp: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].collection.customProperty : {
+      noOfFilters: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].collection.no_of_Filters : 0,
+      isVisible: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].collection.is_visible : true,
+      customProp: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].collection.custom_property : {
         type: '',
         name: ''
       },

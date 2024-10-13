@@ -1,13 +1,14 @@
 
 services:
   oyinye-web:
-    image: je278/oyinye:1.0
+    image: je278/oyinye:1.1
     container_name: nextjs-app
+    restart: always
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - ${PORT}:3000
     env_file: .env
     environment:
       JWT_SECRET: ${JWT_SECRET}
@@ -15,9 +16,9 @@ services:
       USER: ${USER}
       PASS: ${PASS}
       DB_NAME: ${DB_NAME}
-      PORT: ${PORT}
+      DB_PORT: ${DB_PORT}
+      DB_HOST: ${DB_HOST}
       NEXT_PUBLIC_DOMAIN: ${NEXT_PUBLIC_DOMAIN}
-      POSTGRES_URI: ${POSTGRES_URI}
       IPINFO_TOKEN: ${IPINFO_TOKEN}
       NEXT_PUBLIC_MER_CODE: ${NEXT_PUBLIC_MER_CODE}
       NEXT_PUBLIC_PAY_ITEM_ID: ${NEXT_PUBLIC_PAY_ITEM_ID}
@@ -27,15 +28,16 @@ services:
   postgres:
     image: postgres
     ports:
-      - ${PORT}:${PORT}
+      - ${DB_PORT}:5432
     container_name: postgres
+    restart: always
     env_file: .env
     volumes:
       - db_data:/var/lib/postgresql/data/
       - ./src/db/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
-      - ./src/ssl/certs/:/certs/
+      # - ./src/ssl/certs/:/certs/
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -p ${PORT} -U ${USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -p ${DB_PORT} -U ${USER} -d ${DB_NAME}"]
       start_period: 0s
       interval: 10s
       timeout: 5s
@@ -45,9 +47,9 @@ services:
       POSTGRES_PASSWORD: ${PASS}
       POSTGRES_DB: ${DB_NAME}
       # Enable SSL
-      POSTGRES_SSL_CERT: /certs/server.crt
-      POSTGRES_SSL_KEY: /certs/server.key
-      POSTGRES_SSL_CA: /certs/root.crt
+      # POSTGRES_SSL_CERT: /certs/server.crt
+      # POSTGRES_SSL_KEY: /certs/server.key
+      # POSTGRES_SSL_CA: /certs/root.crt
 
 volumes:
   db_data:

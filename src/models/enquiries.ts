@@ -42,8 +42,6 @@ import sequelize from "@/db/connection";
 }, {
     tableName: "enquiries",
     sequelize,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
     timestamps: true,
 }
 );

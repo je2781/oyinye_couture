@@ -5,11 +5,6 @@ import Header from '@/components/layout/Header';
 import SearchResults from '@/components/search/SearchResults';
 import { cookies } from 'next/headers';
 
-export const dynamicParams = true;
- 
-export async function generateStaticParams() {
-  return [];
-}
  
 async function getSearchData(query: string, sortBy: string, page: string, lowerBoundary?: string, upperBoundary?: string, availability?: string, productType?: string){
   
@@ -45,7 +40,7 @@ async function getCart() {
   const cartId = cookieStore.get('cart')?.value;
 
   if(cartId && cartId.length > 0){
-    const res = await fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`);
+    const res = await fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`, {cache: 'no-cache'});
     const data = await res.json();
   
     return data.cartItems;

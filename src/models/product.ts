@@ -52,7 +52,7 @@ Product.init({
         type: DataTypes.BOOLEAN,
         defaultValue: false
     },
-    colors: DataTypes.ARRAY(DataTypes.JSONB),
+    colors: DataTypes.JSONB,
     description: {
         type: DataTypes.STRING,
         allowNull: false
@@ -64,16 +64,14 @@ Product.init({
         type: DataTypes.STRING,
         allowNull: false
     },
-    features: DataTypes.ARRAY(DataTypes.STRING),
-    reviews: DataTypes.ARRAY(DataTypes.STRING),
+    features: DataTypes.JSONB,
+    reviews: DataTypes.JSONB,
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE,
     
 }, {
     tableName: "products",
     sequelize,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
     timestamps: true,
 });
 

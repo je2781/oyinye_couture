@@ -1,15 +1,15 @@
 {
   "name": "oyinye-web",
-  "version": "1.0",
+  "version": "1.1",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "sequelize:apply": "dotenv -e .env -- sequelize-cli db:migrate",
-    "db:prod:rm": "docker compose rm postgres -s -f -v ",
-    "db:prod:up": "docker compose up postgres -d",
-    "db:prod:restart": "npm run sequelize:apply",
-    "prestart": "npm run db:prod:restart",
+    "db:dev:rm": "docker compose rm postgres -s -f -v ",
+    "db:dev:up": "docker compose up postgres -d",
+    "db:dev:restart": "npm run db:dev:rm && npm run db:dev:up && npm run sequelize:apply",
+    "prestart": "npm run sequelize:apply",
     "start": "next start",
     "lint": "next lint"
   },

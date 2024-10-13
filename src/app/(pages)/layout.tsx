@@ -13,8 +13,9 @@ import messagesCh from '../../locales/zh-TW/messages.json';
 import messagesPg from '../../locales/pt-PT/messages.json';
 import messagesEs from '../../locales/es/messages.json';
 import messagesNl from '../../locales/nl/messages.json';
-import './public.css';
 import { IntlProvider } from "react-intl";
+import './public.css';
+import '../globals.css';
 
 const messages: Record<string, { [key: string]: any }> = {
   'en': messagesEn,

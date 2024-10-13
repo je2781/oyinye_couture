@@ -3,11 +3,6 @@ import Footer from "@/components/footer/Footer";
 import Header from "@/components/layout/Header";
 import { cookies } from "next/headers";
 
-export const dynamicParams = true;
- 
-export async function generateStaticParams() {
-  return [];
-}
  
 async function getCollectionData(sortBy: string, page: string, dressColor: string, dressFabric: string, dressFeature: string, dressLength: string, neckLine: string, sleeveLength: string){
   
@@ -43,7 +38,7 @@ async function getCart() {
   const cartId = cookieStore.get('cart')?.value;
 
   if(cartId && cartId.length > 0){
-    const res = await fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`);
+    const res = await fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`, {cache: 'no-cache'});
     const data = await res.json();
   
     return data.cartItems;

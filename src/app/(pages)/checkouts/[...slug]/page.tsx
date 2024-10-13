@@ -19,7 +19,7 @@ async function getCheckout() {
     const [userDataRes, countryDataRes,cartDataRes] = await Promise.all([
       fetch(`${process.env.DOMAIN}/api/users/${userId}`),
       fetch(`https://ipinfo.io?token=${process.env.IPINFO_TOKEN}`),
-      fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`)
+      fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`, {cache: 'no-cache'})
     ]);
 
     const [userData, countryData, cartData] = await Promise.all([userDataRes.json(), countryDataRes.json(), cartDataRes.json()]);

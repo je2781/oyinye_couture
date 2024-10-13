@@ -7,7 +7,6 @@ import Footer from "@/components/footer/Footer";
 import ViewCollection from "@/components/collections/ViewCollection";
 
 
-
 async function getData() {
   const cookieStore = cookies();
   const cartId = cookieStore.get('cart')?.value;

@@ -24,8 +24,6 @@ OrderItem.init({
     variant_id: DataTypes.STRING
 }, {
         tableName: "orderItems",
-        createdAt: 'created_at',
-        updatedAt: 'updated_at',
         sequelize,
 });
 
