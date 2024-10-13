@@ -1,24 +1,22 @@
-import { connect } from '@/db/config';
 import { months, randomReference } from '@/helpers/getHelpers';
 import { getVisitData } from '@/helpers/getVisitData';
-import Enquiries from '@/models/enquiries';
 import * as argon from "argon2";
 import User from '@/models/user';
-import mongoose from 'mongoose';
 import { NextResponse, type NextRequest } from 'next/server';
 import { sendMail } from '@/helpers/mailer';
 import { EmailType } from '@/interfaces';
+import Enquiry from '@/models/enquiries';
+import crypto from 'crypto';
+import Visitor from '@/models/visitor';
 
-connect();
 
 export async function DELETE(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
 
-        const newEnqId = mongoose.Types.ObjectId.createFromHexString(params.slug![1]);
+        if(params.slug![1]){
+          const enq = await Enquiry.findByPk(params.slug![1]);
 
-        
-        if(mongoose.Types.ObjectId.isValid(newEnqId)){
-          await Enquiries.findByIdAndUpdate(newEnqId);
+          await enq!.destroy();
 
           return NextResponse.json(
             {
@@ -59,11 +57,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug?: str
             saved
         } = await req.json();
 
-        const newEnqId = mongoose.Types.ObjectId.createFromHexString(params.slug![1]);
-
         
-        if(mongoose.Types.ObjectId.isValid(newEnqId)){
-          const enq = await Enquiries.findById(newEnqId);
+        if(params.slug![1]){
+          const enq = await Enquiry.findByPk(params.slug![1]);
 
           if(!enq ){
             
@@ -136,61 +132,66 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
         } = await req.json();
 
 
-        const user = await User.findOne({email});
+        const user = await User.findOne({where: {email}});
     
         if(!user){
           const visitId = getVisitData(req);
-          const newVisitId = mongoose.Types.ObjectId.createFromHexString(visitId!);
     
           let newPassword = randomReference();
     
           const hash = await argon.hash(newPassword);
           
-          const newUser = new User({
+          const newUser = await User.create({
+            id: (await crypto.randomBytes(6)).toString("hex"),
             email,
             password: hash,
-            firstName: name.split(' ').length === 2 ? name.split(' ')[0] : name,
-            lastName: name.split(' ').length === 2 ? name.split(' ')[1] : name,
-            'visitor.visitId': mongoose.Types.ObjectId.isValid(newVisitId) ? newVisitId : null 
+            first_name: name.split(' ').length === 2 ? name.split(' ')[0] : name,
+            last_name: name.split(' ').length === 2 ? name.split(' ')[1] : name,
           });
-    
-          const savedUser = await newUser.save();
-    
+
+          if(visitId){
+            const visitor = await Visitor.findByPk(visitId);
+            await newUser.setVisitor(visitor!);
+          }
           // Send password creation email
           await sendMail({
             password: newPassword,
-            email: savedUser.email,
+            email: newUser.email,
             emailType: EmailType.reminder,
           });
           
           //sending verification email
           await sendMail({
-            email: user.email,
+            email: newUser.email,
             emailType: EmailType.verify_account,
-            userId: user._id
+            userId: newUser.id
           });
     
           if(params.slug![0] === 'custom-order'){
             //creating new appointment
-            const newEquiry = new Enquiries({
-              'author.authorId': savedUser._id,
-              'author.order.styles': styles,
-              'author.order.size': size,
-              'author.order.residence': country,
-              'author.order.phoneNo': phone,
-              'order.eventDate': eventDate,
-              'order.content': content
+            const newOrder = await Enquiry.create({
+              id: (await crypto.randomBytes(6)).toString("hex"),
+              order: {
+                styles,
+                size,
+                residence: country,
+                phone,
+                eventDate,
+                content
+              }
             });
 
-            await newEquiry.save();
+            await newOrder.setUser(newUser);
           }else{
-            const newEquiry = new Enquiries({
-              'author.authorId': savedUser._id,
-              'contact.subject': subject,
-              'contact.message': message
+            const newEquiry = await Enquiry.create({
+              id: (await crypto.randomBytes(6)).toString("hex"),
+              contact: {
+                subject,
+                message
+              }
             });
-
-            await newEquiry.save();
+  
+            await newEquiry.setUser(newUser);
 
           }
     
@@ -203,34 +204,37 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             { status: 201 }
           );
         }else{
-          user.firstName = name.split(' ').length === 2 ? name.split(' ')[0] : name,
-          user.lastName = name.split(' ').length === 2 ? name.split(' ')[1] : name,
+          user.first_name = name.split(' ').length === 2 ? name.split(' ')[0] : name,
+          user.last_name = name.split(' ').length === 2 ? name.split(' ')[1] : name,
 
           await user.save();
 
           if(params.slug![0] === 'custom-order'){
 
-            //updating product with user review
             //creating new appointment
-            const newOrder = new Enquiries({
-              'author.authorId': user._id,
-              'author.order.styles': styles,
-              'author.order.size': size,
-              'author.order.residence': country,
-              'author.order.phoneNo': phone,
-              'order.eventDate': eventDate,
-              'order.content': content,
+            const newOrder = await Enquiry.create({
+              id: (await crypto.randomBytes(6)).toString("hex"),
+              order: {
+                styles,
+                size,
+                residence: country,
+                phone,
+                eventDate,
+                content
+              }
             });
       
-            await newOrder.save();
+            await newOrder.setUser(user);
           }else{
-              const newEquiry = new Enquiries({
-                'author.authorId': user._id,
-                'contact.subject': subject,
-                'contact.message': message
-              });
+            const newEquiry = await Enquiry.create({
+              id: (await crypto.randomBytes(6)).toString("hex"),
+              contact: {
+                subject,
+                message
+              }
+            });
   
-              await newEquiry.save();
+              await newEquiry.setUser(user);
   
             }
     
@@ -264,8 +268,11 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
           const updatedPage = +page! || 1;
           const ITEMS_PER_PAGE = +params.slug[0];
   
-          let totalEnquiries = await Enquiries.find().countDocuments();
-          let enquiries = await Enquiries.find().skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+          let totalEnquiries = (await Enquiry.findAndCountAll()).count;
+          let enquiries = await Enquiry.findAll({
+            offset: (updatedPage-1) * ITEMS_PER_PAGE,
+            limit: ITEMS_PER_PAGE,
+          });
   
           const currentPage = updatedPage;
           const hasPreviousPage = currentPage > 1;
@@ -291,14 +298,11 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
           }
               
           for(let enq of enquiries){
-            const updatedEnq = await enq.populate('author.authorId');
-            const authorData = {...updatedEnq.author.authorId._doc};
             updatedEnquiries.push({
-              ...enq._doc,
+              ...enq,
               author: {
-                ...enq.author,
-                fullName: `${authorData.firstName} ${authorData.lastName}`,
-                email: authorData.email,
+                full_name: `${(await enq.getUser()).first_name} ${(await enq.getUser()).last_name}`,
+                email: (await enq.getUser()).email,
               }
             });
           }

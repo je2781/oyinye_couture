@@ -1,10 +1,7 @@
-import { connect } from "@/db/config";
 import User from "@/models/user";
 import { NextRequest, NextResponse } from "next/server";
 import * as argon from "argon2";
 import * as jwt from 'jsonwebtoken';
-
-connect();
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +9,9 @@ export async function POST(req: NextRequest) {
     const { email, password } = reqBody;
 
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      where: { email }
+    });
     
     // Check if user exists
     if (!user) {
@@ -23,13 +22,13 @@ export async function POST(req: NextRequest) {
     }
 
 
-    if (user.isAdmin && !user.password) {
+    if (user.is_admin && !user.password) {
       const adminHashedPass = await argon.hash(password);
       user.password = adminHashedPass;
       await user.save();
     }
 
-    if (!user.isVerified.account) {
+    if (!user.account_is_verified) {
       return NextResponse.json(
         { message: `Check ${user.email} to verify your account` },
         { status: 200 }
@@ -45,9 +44,9 @@ export async function POST(req: NextRequest) {
 
     // Create token data
     const tokenData = {
-      sub: user._id,
+      sub: user.id,
       email: user.email,
-      username: `${user.firstName} ${user.lastName}`
+      username: `${user.first_name} ${user.last_name}`
     };
 
     // Create token
@@ -72,14 +71,14 @@ export async function POST(req: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
     });
 
-    res.cookies.set('admin_status', `${user.isAdmin}`, {
+    res.cookies.set('admin_status', `${user.is_admin}`, {
       httpOnly: true,
       expires: expiryDate,
       secure: process.env.NODE_ENV === 'production',
     });
 
-    if(user.isAdmin){
-      res.cookies.set('admin', user._id.toString(), {
+    if(user.is_admin){
+      res.cookies.set('admin', user.id, {
         httpOnly: true,
         expires: expiryDate,
         secure: process.env.NODE_ENV === 'production',

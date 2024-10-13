@@ -1,4 +1,3 @@
-import { connect } from '@/db/config';
 import { getDataFromCart } from '@/helpers/getDataFromCart';
 import { getDataFromOrder } from '@/helpers/getDataFromOrder';
 import { getVisitData } from '@/helpers/getVisitData';
@@ -9,10 +8,7 @@ import Order from '@/models/order';
 import User from '@/models/user';
 import Visitor from '@/models/visitor';
 import axios from 'axios';
-import mongoose from 'mongoose';
 import { NextResponse, type NextRequest } from 'next/server';
-
-connect();
 
 
 export async function GET(request: NextRequest, { params }: { params: { slug?: string[] } }) {
@@ -23,9 +19,12 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
         let page = searchParams.get('page');
         const updatedPage = +page! || 1;
         const ITEMS_PER_PAGE = +params.slug[0];
-
-        let totalItems =  await Order.find().countDocuments();
-        let orders = await Order.find().skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+      
+        let totalItems = (await Order.findAndCountAll()).count;
+        let orders = await Order.findAll({
+          offset: (updatedPage-1) * ITEMS_PER_PAGE,
+          limit: ITEMS_PER_PAGE,
+        });
 
         const currentPage = updatedPage;
         const hasPreviousPage = currentPage > 1;
@@ -50,24 +49,24 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
             );
         }
 
-        orders = orders.map((order) => ({
-            id: order._id.toString(),
-            items: order.items.map((item: any) => {
+        const updatedOrders = orders.map((order) => ({
+            id: order.id,
+            items: order.items.map(item => {
               let price: number = 0;
               let frontBase64Images: string[] = [];
               let colorType: string  = '';
               let size: number = 0;
-              item.product.colors.forEach((color: any) => {
-                if(color.sizes.find((size: any) => size.variantId === item.variantId)){
-                  price = color.sizes.find((size: any) => size.variantId === item.variantId).price;
-                  size = color.sizes.find((size: any) => size.variantId === item.variantId).number;
-                  frontBase64Images = color.imageFrontBase64;
+              item.product.colors.forEach(color => {
+                if(color.sizes.find((size: any) => size.variant_id === item.variant_id)){
+                  price = color.sizes.find((size: any) => size.variant_id === item.variant_id).price;
+                  size = color.sizes.find((size: any) => size.variant_id === item.variant_id).number;
+                  frontBase64Images = color.image_front_base64;
                   colorType = color.type;
                 }
               });
               return {
                 quantity: item.quantity,
-                variantId: item.variantId,
+                variantId: item.variant_id,
                 productType: item.product.type,
                 total: price * item.quantity,
                 frontBase64Images,
@@ -75,13 +74,13 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
                 size
               };
             }),
-            totalQuantity: order.items.map((item: any) => item.quantity).reduce((prev: number, current: number) => prev + current, 0),
+            totalQuantity: order.items.map(item => item.quantity).reduce((prev: number, current: number) => prev + current, 0),
             sales: order.sales,
             date: order.createdAt,
             status: order.status,
-            paymentType: order.paymentType ?? '',
-            paymentStatus: order.paymentStatus ?? '',
-            shippingMethod: order.shippingMethod ?? ''
+            paymentType: order.payment_type ?? '',
+            paymentStatus: order.payment_status ?? '',
+            shippingMethod: order.shipping_method ?? ''
         }));
 
 
@@ -93,7 +92,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
             isActivePage: updatedPage,
             nextPage: currentPage + 1,
             previousPage: currentPage - 1,
-            orders,
+            orders: updatedOrders,
             success: true
         }, {
             status: 200
@@ -116,7 +115,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
       const [orderId, checkoutSessionToken] = getDataFromOrder(request);
 
       //retrieving order data for the current checkout session
-      const order = await Order.findById(orderId);
+      const order = await Order.findByPk(orderId);
 
 
       if(params.slug){
@@ -136,8 +135,8 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
               delete res.data.ResponseCode;
 
               if (order) {
-                order.paymentInfo = res.data;
-                order.paymentStatus = 'paid';
+                order.payment_info = res.data;
+                order.payment_status = 'paid';
                 order.status = 'closed';
       
                 await order.save();
@@ -155,8 +154,8 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
             }else{
 
               if (order) {
-                order.paymentInfo = res.data;
-                order.paymentStatus = 'failed';
+                order.payment_info = res.data;
+                order.payment_status = 'failed';
       
                 await order.save();
 
@@ -181,7 +180,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
             const {paymentStatus} = await request.json();
 
             if (order) {
-              order.paymentStatus = paymentStatus;
+              order.payment_status = paymentStatus;
     
               await order.save();
 
@@ -203,12 +202,9 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
             const {items} = await request.json();
             const cartId = getDataFromCart(request);
 
-            const newCartId = mongoose.Types.ObjectId.createFromHexString(cartId);
-
-            if(mongoose.Types.ObjectId.isValid(newCartId)){
-              const cart = await Cart.findById(newCartId);
-              const updatedcart = await cart.populate('user.userId');
-              const extractedUser = {...updatedcart.user.userId._doc};
+            if(cartId){
+              const cart = await Cart.findByPk(cartId);
+              const extractedUser = await cart!.getUser();
               //sending cart reminder
               await sendMail({
                 emailType: EmailType.request,
@@ -216,7 +212,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
                 emailBody: {
                   link: `${process.env.DOMAIN}/cart`,
                   id: cartId,
-                  total: cart.totalAmount,
+                  total: cart!.total_amount,
                   items
                 }
               });
@@ -242,11 +238,10 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
             const {link, id, total} = await request.json();
 
             if (order) {
-              let updatedOrder = await order.populate('user.userId');
-              const user = {...updatedOrder.user.userId._doc};
+              let user = await order.getUser();
               await sendMail({
                 email: user.email,
-                userId: user._id.toString(),
+                userId: user.id,
                 emailType: EmailType.request,
                 emailBody: {
                   link,
@@ -277,19 +272,21 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
         const reqBody = await request.json();
         const {shippingInfo, billingInfo, saveBillingInfo, saveShippingInfo, paymentType, status, paymentStatus, shippingMethod, userEmail} = reqBody;
 
-        const extractedUser = await User.findOne({email: userEmail});
+        const extractedUser = await User.findOne({
+          where: {email: userEmail}
+        });
 
 
         if (order && extractedUser) {
-          order.paymentStatus = paymentStatus;
+          order.payment_status = paymentStatus;
           order.status = status;
-          order.paymentType = paymentType;
-          order.shippingMethod = shippingMethod;
+          order.payment_type = paymentType;
+          order.shipping_method = shippingMethod;
 
-          extractedUser.saveBillingInfo = saveBillingInfo;
-          extractedUser.saveShippingInfo = saveShippingInfo;
-          extractedUser.shippingInfo = shippingInfo;
-          extractedUser.billingInfo = billingInfo;
+          extractedUser.save_billing_info = saveBillingInfo;
+          extractedUser.save_shipping_info = saveShippingInfo;
+          extractedUser.shipping_info = shippingInfo;
+          extractedUser.billing_info = billingInfo;
   
           await order.save();
           await extractedUser.save();
@@ -302,7 +299,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
           });
         }else{
           return NextResponse.json({
-            message: 'Got back to cart and checkout again',
+            message: 'no user has created an order',
             success: false
           }, {
             status: 200

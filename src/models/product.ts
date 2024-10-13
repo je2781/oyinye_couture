@@ -1,91 +1,82 @@
+import {
+    CreationOptional,
+    DataTypes,
+    ForeignKey,
+    HasManyAddAssociationMixin,
+    HasManyAddAssociationsMixin,
+    HasManyGetAssociationsMixin,
+    HasOneGetAssociationMixin,
+    InferAttributes,
+    InferCreationAttributes,
+    Model,
+  } from "sequelize";
+  import Review from "./review";
+import sequelize from "@/db/connection";
+  
+  
+  class Product extends Model<InferAttributes<Product>, InferCreationAttributes<Product>> {
+    declare id: string;
+    declare is_feature: boolean;
+    declare title: string;
+    declare features: string[];
+    declare colors: any[];
+    declare description: string;
+    declare reviews: CreationOptional<Array<ForeignKey<string>>>;
+    declare type: string;
+    declare no_of_orders: CreationOptional<number>;
+    declare createdAt: CreationOptional<Date>;
+    declare updatedAt: CreationOptional<Date>;
+    declare getReviews: HasManyGetAssociationsMixin<Review>;
+    declare addReviews: HasManyAddAssociationsMixin<Review, string>;
+    declare addReview: HasManyAddAssociationMixin<Review, string>;
+  
+    // ...
+    static associate(models:any){
+      Product.hasMany(models.Review);
 
+    }
+  }
+  
 
-import mongoose from 'mongoose';
-
-const Schema = mongoose.Schema;
-
-const ProductSchema = new Schema({
+Product.init({
+    id: {
+        type: DataTypes.STRING,
+        primaryKey: true,
+        allowNull: false,
+      },
     title: {
-        type: String,
-        required: true
+        type: DataTypes.STRING,
+        allowNull: false
     },
-    isFeature: {
-        type: Boolean,
-        default: false
+    is_feature: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     },
-    colors: [
-        {
-            type: {
-                type: String,
-                required: true
-            },
-            isAvailable: {
-                type: Boolean,
-                required: true
-            },
-            sizes: [
-                {
-                    number: {
-                        type: Number,
-                        required: true
-                    },
-                    price: {
-                        type: Number,
-                        required: true
-                    },
-                    variantId: {
-                        type: String,
-                        required: true
-                    },
-                    stock: {
-                        type: Number,
-                        required: true
-                    }
-                }
-            ],
-            imageFrontBase64: [
-                {
-                    type: String,
-                    required: true
-                }
-            ],
-            imageBackBase64:  {
-                type: String,
-                required: true
-            }
-        }
-    ],
+    colors: DataTypes.ARRAY(DataTypes.JSONB),
     description: {
-        type: String,
-        required: true
+        type: DataTypes.STRING,
+        allowNull: false
     },
-    noOfOrders: {
-        type: Number
+    no_of_orders: {
+        type: DataTypes.INTEGER
     },
     type: {
-        type: String,
-        required: true
+        type: DataTypes.STRING,
+        allowNull: false
     },
-    features: [
-        {
-            name: String
-        }
-    ],
-    reviews: [
-        {
-            reviewId: {
-                ref: 'reviews',
-                type: Schema.Types.ObjectId,
-                required: true
-            }
-        }
-    ],
+    features: DataTypes.ARRAY(DataTypes.STRING),
+    reviews: DataTypes.ARRAY(DataTypes.STRING),
+    createdAt: DataTypes.DATE,
+    updatedAt: DataTypes.DATE,
     
 }, {
-    timestamps: true
+    tableName: "products",
+    sequelize,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+    timestamps: true,
 });
 
-const Product = mongoose.models.products ?? mongoose.model('products', ProductSchema);
 
 export default Product;
   

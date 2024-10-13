@@ -4073,7 +4073,7 @@ export default function Body({
                                   }
                                 }} className="flex flex-col items-start gap-y-4 text-gray-600 font-sans w-full">
                                   <p className="leading-tight tracking-wider text-sm font-medium cursive">
-                                    Hi {isReading ? 'Oyinye Couture team' : enq.author.fullName},
+                                    Hi {isReading ? 'Oyinye Couture team' : enq.author.full_name},
                                   </p>
                                   
                                     {isReading 
@@ -4085,7 +4085,9 @@ export default function Body({
                                       </textarea>}
                                   {isReading 
                                     ? <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br/>{enq.author.fullName}<br/>
-                                    {enq.order.content && <span>Phone:&nbsp;<Link href={`tel:${enq.author.appointment.phoneNo ?? '070333748920'}`}>{enq.author.appointment.phoneNo ?? '070333748920'}</Link><br/>Standard Size: {enq.author.appointment.size ?? 8}<br/>Date of Event: {`${new Date(enq.order.eventDate).getDate()} ${months[new Date(enq.order.eventDate).getMonth()]}, ${new Date(enq.order.eventDate).getFullYear()}` ?? '10 Sep, 1970'}</span>}
+                                      {enq.order.content && <span>
+                                        Phone:&nbsp;<Link href={`tel:${enq.order.phone ?? '070333748920'}`}>{enq.order.phone ?? '070333748920'}</Link><br/>Standard Size: {enq.order.size ?? 8}<br/>Date of Event: {`${new Date(enq.order.eventDate).getDate()} ${months[new Date(enq.order.eventDate).getMonth()]}, ${new Date(enq.order.eventDate).getFullYear()}`}
+                                      </span>}
                                     </p>
                                     : <p className="leading-tight tracking-wider text-sm font-medium cursive">Best Regards,<br />Oyinye Couture Team</p>}
                                   
@@ -4093,7 +4095,7 @@ export default function Body({
                                       <button type='submit' className="px-7 py-2 text-sm bg-accent text-white hover:ring-1 hover:ring-accent rounded-md">{loader ? 'Sending..' : 'Send'}</button>
                                     </div>}
                                 </form>
-                                {enq.order.content && isReading && enq.author.appointment.styles.length > 0 && enq.author.appointment.styles.map((data: any, i:number) => <div key={i} className="flex flex-row flex-wrap gap-x-3 gap-y-2 w-full">
+                                {enq.order.content && isReading && enq.order.styles.length > 0 && enq.order.styles.map((data: any, i:number) => <div key={i} className="flex flex-row flex-wrap gap-x-3 gap-y-2 w-full">
                                   <div className="flex flex-col items-center gap-y-1">
                                     <div className="w-24 h-24 rounded-md" style={{backgroundImage: `url(${data.image})`}}></div>
                                     <p className="font-sans text-xs">{data.fileName}</p>

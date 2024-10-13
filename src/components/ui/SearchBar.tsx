@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { SearchModal } from "./Modal";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import useProduct from "@/store/useProduct";
 import useGlobal from "@/store/useGlobal";
 
@@ -13,7 +13,7 @@ const SearchBar = ({ onHideModal}: any) => {
   const router = useRouter();
   const {allProducts} = useProduct();
   const [isLoading, setIsLoading] = React.useState(false);
-  const {locale} = useGlobal();
+  const path = usePathname();
 
   let currentUrl = `/search/products?q=${query}&options[prefix]=last&sort_by=relevance&page=1`;
 
@@ -110,7 +110,7 @@ const SearchBar = ({ onHideModal}: any) => {
                           <li
                             className=" hover:underline-offset-1 hover:underline cursor-pointer hover:bg-gray-100 px-5 py-2"
                             key={i}
-                            onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variantId!}`)} 
+                            onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variant_id!}`)} 
                           >
                             <span className="font-sans text-gray-400 text-[.8rem]">
                               {product.title.charAt(0)}
@@ -153,7 +153,7 @@ const SearchBar = ({ onHideModal}: any) => {
                   <ul className="flex flex-col">
                     {allProducts.slice(0, 4).map((product: any, i: number) => (
                       <li key={i}>
-                        <article onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variantId!}`)} 
+                        <article onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variant_id!}`)} 
                         className="flex flex-row items-start gap-x-5 px-4 py-3 hover:bg-gray-100 cursor-pointer">
                           <Image
                             alt={`Product ${i + 1}`}

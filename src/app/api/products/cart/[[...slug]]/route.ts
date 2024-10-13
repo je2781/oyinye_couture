@@ -1,40 +1,33 @@
-import { connect } from "@/db/config";
 import { getDataFromCart } from "@/helpers/getDataFromCart";
 import Cart from "@/models/cart";
 import Order from "@/models/order";
-import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from 'crypto';
-import { getVisitData } from "@/helpers/getVisitData";
+import CartItem from "@/models/cartItem";
+import Product from "@/models/product";
+import User from "@/models/user";
 
-connect();
 
 export async function GET(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
 
-      if(params.slug){
 
-        //retrieving cart data for the current public session
-        let newCartId = mongoose.Types.ObjectId.createFromHexString(params.slug[0]);
-        
-        
-        if (mongoose.Types.ObjectId.isValid(newCartId)) {
-          let cart = await Cart.findById(newCartId);
+        if (params.slug![0]) {
+          let cart = await Cart.findByPk(params.slug![0]);
 
-          let updatedCart = await cart.populate('items.productId');
 
-          const cartItems = updatedCart.items.map((cartItem: any) => {
+          const cartItems = cart!.items.map((item, i) => {
             return {
-              product: {...cartItem.productId._doc},
-              quantity: cartItem.quantity,
-              variantId: cartItem.variantId,
+              product: item.product,
+              quantity: item.quantity,
+              variantId: item.variant_id,
             };
           });
   
           return NextResponse.json(
             {
               cartItems,
-              total: cart.totalAmount,
+              total: cart!.total_amount,
               success: true,
             },
             {
@@ -45,9 +38,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
           throw new Error('Invalid cart id');
         }
   
-      }
   
-     
 
     } catch (error: any) {
       return NextResponse.json(
@@ -63,31 +54,31 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
     try {
       
 
-      if(params.slug && params.slug[0] === 'remove'){
+      if(params.slug![0] === 'remove'){
 
         const reqBody = await req.json();
         const { quantity, variantId, price} = reqBody;
 
         const cartId = getDataFromCart(req);
-
-        const newObjectId = mongoose.Types.ObjectId.createFromHexString(cartId);
     
-        if (mongoose.Types.ObjectId.isValid(newObjectId)) {
+        if (cartId) {
             //retrieving cart data for the current public session
-            const cart = await Cart.findById(newObjectId);
+            const cart = await Cart.findByPk(cartId);
       
-            await cart.deductFromCart(variantId, quantity, price);
+            await cart!.deductFromCart(variantId, quantity, price);
 
-            const updatedCartItems = cart.items.filter((cartItem: any) => cartItem.quantity > 0);
+            const updatedCartItems = cart!.items.filter(item => item.quantity > 0);
 
-            cart.items = updatedCartItems;
+            cart!.items = updatedCartItems;
 
-            await cart.save();
+            await cart!.save();
 
             //checking for empty cart
-            if(cart.items.length === 0){
+            if(cart!.items.length === 0){
               //removing cart document from database and clearing its cookie from browser
-              await Cart.findByIdAndDelete(newObjectId);
+             const cart =  await Cart.findByPk(cartId);
+
+             await cart!.destroy();
                   
               const res =  NextResponse.json(
                 {
@@ -107,20 +98,18 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
               return res;
             }
 
-            let updatedCart = await cart.populate('items.productId');
-
-            const cartItems = updatedCart.items.map((cartItem: any) => {
+            const cartItems = cart!.items.map((item, i) => {
               return {
-                product: {...cartItem.productId._doc},
-                quantity: cartItem.quantity,
-                variantId: cartItem.variantId,
+                product: item.product,
+                quantity: item.quantity,
+                variantId: item.variant_id,
               };
             });
 
             return NextResponse.json(
                 {
                   message: "Cart updated successfully",
-                  totalAmount: cart.totalAmount,
+                  totalAmount: cart!.total_amount,
                   items: cartItems,
                   success: true,
                 },
@@ -137,20 +126,24 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
       
           const cartId = getDataFromCart(req);
           
-          if (cartId.length === 0) {
-            const newCart = new Cart({
+          const product = await Product.findByPk(id);
+
+          if (!cartId) {
+            
+            const newCart = await Cart.create({ 
+              id: (await crypto.randomBytes(6)).toString("hex"),
               items: [
-                {
-                  productId: mongoose.Types.ObjectId.createFromHexString(id),
-                  variantId,
-                  quantity,
-                },
+                  CartItem.build({
+                    id: (await crypto.randomBytes(6)).toString("hex"),
+                    variant_id: variantId,
+                    quantity: parseInt(quantity),
+                    product: product!
+                  }
+                )
               ],
-              totalAmount,
-            });
-            
-            await newCart.save();
-            
+              total_amount: totalAmount
+             });
+
             const remainingMilliseconds = 5184000000; // 2 month
             const now = new Date();
             const expiryDate = new Date(
@@ -165,7 +158,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
               { status: 201 }
             );
             
-            res.cookies.set("cart", newCart._id.toString(), {
+            res.cookies.set("cart", newCart.id, {
               expires: expiryDate,
               secure: process.env.NODE_ENV === 'production',
               path: '/'
@@ -173,41 +166,35 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
             
             return res;
           }else{
-            const newCartId = mongoose.Types.ObjectId.createFromHexString(cartId);
-
-            if(mongoose.Types.ObjectId.isValid(newCartId)){
 
               //retrieving cart data for the current public session
-              const cart = await Cart.findById(newCartId);
+              const cart = await Cart.findByPk(cartId);
               
-              await  cart.addToCart({
-                price,
-                quantity,
-                  id,
-                  variantId,
-                });
+              await cart!.addToCart(
+                product!,
+                parseInt(quantity),
+                variantId,
+                parseInt(price)
+                );
     
-                let updatedCart = await cart.populate('items.productId');
-                const cartItems = updatedCart.items.map((cartItem: any) => {
-                  return {
-                    product: {...cartItem.productId._doc},
-                    quantity: cartItem.quantity,
-                    variantId: cartItem.variantId,
-                  };
-                });
+              const cartItems = cart!.items.map((item, i) => {
+                return {
+                  product: item.product,
+                  quantity: item.quantity,
+                  variantId: item.variant_id,
+                };
+              });
             
                 return NextResponse.json(
                   {
                     message: "Cart updated successfully",
-                    totalAmount: cart.totalAmount,
+                    totalAmount: cart!.total_amount,
                     items: cartItems,
                     success: true,
                   },
                   { status: 201 }
                 );
-            }else{
-              throw new Error('invalid cart id');
-            }
+            
           }
         }
         
@@ -226,17 +213,14 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
   export async function PATCH(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
       
-      if(params.slug){
 
         const reqBody = await req.json();
         const { userId} = reqBody;
     
         const cartId = getDataFromCart(req);
 
-        const newCartId = mongoose.Types.ObjectId.createFromHexString(cartId);
-        const newUserId = mongoose.Types.ObjectId.createFromHexString(userId);
     
-        if (mongoose.Types.ObjectId.isValid(newCartId) && mongoose.Types.ObjectId.isValid(newUserId)) {
+        if (cartId && userId) {
             //creating checkout session token
             const buffer = await crypto.randomBytes(32);
             const hashedToken = buffer.toString("hex");
@@ -246,23 +230,21 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
             const expiryDate = new Date(now.getTime() + remainingMilliseconds);
 
             //retrieving cart data for the current public session and storing user data
-            const cart = await Cart.findById(newCartId);
-    
-            cart.user.userId = newUserId;
+            const cart = await Cart.findByPk(cartId);
 
-            await cart.save();
+            const user = await User.findByPk(userId);
+            await cart!.setUser(user!);
 
             //creating add to cart state in order
             let orderId = (await crypto.randomBytes(6)).toString("hex");
 
-            const newOrder = new Order({
-              _id: orderId,
+            const newOrder = await Order.create({ 
+              id: orderId,
               status: 'add to cart',
-              'user.userId': newUserId,
-              sales: cart.totalAmount
-            });
+              sales: cart!.total_amount
+             });
 
-            await newOrder.save();
+            await newOrder.setUser(user!);
 
             const res = NextResponse.json(
               {
@@ -279,7 +261,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
               secure: process.env.NODE_ENV === 'production',
             });
       
-            res.cookies.set("order", newOrder._id.toString(), {
+            res.cookies.set("order", newOrder.id, {
               expires: expiryDate,
               httpOnly: true,
               secure: process.env.NODE_ENV === 'production',
@@ -294,7 +276,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
 
             return res;
         }
-      }
+      
       
     } catch (error: any) {
       return NextResponse.json(

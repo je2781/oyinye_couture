@@ -1,23 +1,18 @@
-import { connect } from "@/db/config";
 import { getDataFromCart } from "@/helpers/getDataFromCart";
 import { randomReference } from "@/helpers/getHelpers";
 import { getVisitData } from "@/helpers/getVisitData";
 import Cart from "@/models/cart";
-import Order from "@/models/order";
 import Product from "@/models/product";
 import User from "@/models/user";
-import mongoose from "mongoose";
 import * as argon from "argon2";
-
+import crypto from 'crypto';
 import { NextRequest, NextResponse } from "next/server";
 import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
 import Review from "@/models/review";
-import { getUserData } from "@/helpers/getUserData";
-
-connect();
-
-
+import { Op } from "sequelize";
+import CartItem from "@/models/cartItem";
+import Visitor from "@/models/visitor";
 
 export async function PATCH(req: NextRequest, { params }: { params: { slug: string[] } }) {
   try {
@@ -25,10 +20,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
     if(params.slug[1] === 'likes-dislikes'){
       const {likes, dislikes, reviewId} = await req.json();
 
-      await Review.findByIdAndUpdate(reviewId, {
-        likes,
-        dislikes
-      });
+      const review = await Review.findByPk(reviewId);
+
+      review!.likes = likes;
+      review!.dislikes = dislikes;
+
+      await review!.save();
 
       return NextResponse.json(
         {
@@ -53,58 +50,65 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
     const title = params.slug[0].charAt(0).toUpperCase() + params.slug[0].replace('-', ' ').slice(1);
     
-    const user = await User.findOne({email});
+    const user = await User.findOne({
+      where: {email}
+    });
+
+    const product = await Product.findOne({
+      where: {title}
+    });
     
     if(!user){
       const visitId = getVisitData(req);
-      const newVisitId = mongoose.Types.ObjectId.createFromHexString(visitId!);
 
       let newPassword = randomReference();
 
       const hash = await argon.hash(newPassword);
       
-      const newUser = new User({
+      const newUser = await User.create({
+        id: (await crypto.randomBytes(6)).toString("hex"),
         email,
         password: hash,
-        firstName: name.split(' ').length === 2 ? name.split(' ')[0] : name,
-        lastName: name.split(' ').length === 2 ? name.split(' ')[1] : name,
-        'visitor.visitId': mongoose.Types.ObjectId.isValid(newVisitId) ? newVisitId : null,
+        first_name: name.split(' ').length === 2 ? name.split(' ')[0] : name,
+        last_name: name.split(' ').length === 2 ? name.split(' ')[1] : name,
         avatar
       });
 
-      const savedUser = await newUser.save();
-
+      if(visitId){
+        const visitor = await Visitor.findByPk(visitId);
+        await newUser.setVisitor(visitor!);
+      }
+      
       //updating product with new user review
-      const newReview = new Review({
+      const newReview = await Review.create({
+        id: (await crypto.randomBytes(6)).toString("hex"),
         headline,
         rating: +rating,
+        author_id: newUser.id,
         content: review,
-        'author.authorId': savedUser._id,
-        isMedia,
+        is_media: isMedia,
       });
 
-      await newReview.save();
+      await newReview.setUser(newUser);
+      await newReview.setProduct(product!);
+      await product!.addReview(newReview);
 
-      const product = await Product.findOne({title});
+      product!.reviews.push(newReview.id);
 
-      product.reviews = product.reviews.push({
-        reviewId: newReview._id
-      });
-
-      await product.save();
+      await product!.save();
 
       // Send password creation email
       await sendMail({
         password: newPassword,
-        email: savedUser.email,
+        email: newUser.email,
         emailType: EmailType.reminder,
       });
 
       //sending verification email
       await sendMail({
-        email: savedUser.email,
+        email: newUser.email,
         emailType: EmailType.verify_reviewer,
-        userId: savedUser._id
+        userId: newUser.id
       });
 
       return NextResponse.json(
@@ -120,29 +124,28 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
       await user.save();
 
-      const newReview = new Review({
+      const newReview = await Review.create({
+        id: (await crypto.randomBytes(6)).toString("hex"),
         headline,
         rating: +rating,
+        author_id: user!.id,
         content: review,
-        'author.authorId': user._id,
-        isMedia
+        is_media: isMedia,
       });
       
-      await newReview.save();
-      
-      const product = await Product.findOne({title});
-      
-      product.reviews = product.reviews.push({
-        reviewId: newReview._id
-      });
-      
-      await product.save();
+      await newReview.setUser(user!);
+      await newReview.setProduct(product!);
+      await product!.addReview(newReview);
+
+      product!.reviews.push(newReview.id);
+
+      await product!.save();
 
       //sending verification email
       await sendMail({
         email: user.email,
         emailType: EmailType.verify_reviewer,
-        userId: user._id
+        userId: user.id
       });
 
       return NextResponse.json(
@@ -162,21 +165,23 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string[] } }) {
   try {
-    let extractedProductsArray: string[] = [];
-    let authors: any[] = [];
-    let updatedProducts: any[] = [];
+    let extractedProductsArray: Product[] = [];
+    let authors: User[] = [];
+    let updatedProducts: Product[] = [];
     // Get the current viewed products from query params
     const viewedProducts = req.nextUrl.searchParams.get('viewed_p');
 
     const title = params.slug[0].charAt(0).toUpperCase() + params.slug[0].replace('-', ' ').slice(1);
 
-    const product = await Product.findOne({ title });
+    const product = await Product.findOne({
+      where: { title }
+    });
 
     if (!product) {
       return NextResponse.json({ error: "product doesn't exist" }, { status: 404 });
     }
 
-    const extractedColorObj = product.colors.find((color: any) => 
+    const extractedColorObj = product.colors.find(color => 
       color.type === (params.slug[1].charAt(0).toUpperCase() + params.slug[1].slice(1))
     );
 
@@ -186,20 +191,46 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
         const viewedProductsArray = JSON.parse(viewedProducts);
         //getting products attached to variant ids
         for (let viewedProduct of viewedProductsArray) {
-          let extractedProduct = await Product.findOne({ 'colors.sizes.variantId': viewedProduct });
-          extractedProductsArray.push(extractedProduct);
+          let extractedProduct = await Product.findOne({ 
+            where: {
+              colors: {
+                [Op.contains]: [{sizes: [
+                  {variant_id: viewedProduct}
+                ]}]
+              }
+            }
+          });
+          extractedProductsArray.push(extractedProduct!);
         }
       }
 
       //finding products similar in features to selected product
-      const extractedProductsOfSimilarColor = await Product.find({ 'colors.type': extractedColorObj.type, 'colors.sizes.variantId': { $ne: params.slug[2] } });
+      const extractedProductsOfSimilarColor = await Product.findAll({
+        where: {
+          colors: {
+            [Op.contains]: [{type: extractedColorObj.type}, {sizes: [
+              {variant_id: {
+                [Op.ne]: params.slug[2]
+              }}
+            ]}]
+          }
+        }
+      });
 
         //finding related/grouped products of selected product
-      let carts = await Cart.find({ 'items.productId': product._id });
+      let carts = await Cart.findAll({
+        include: [
+          {
+            model: CartItem,
+            where: {
+              product_id: product.id
+            }
+          }
+        ]
+       });
       if(carts.length > 0){
         for (let cart of carts) {
-          let updatedCart = await cart.populate('items.productId');
-          const products = updatedCart.items.map((item: any) => ({ ...item.productId._doc }));
+          let products = cart.items.map(item => item.product);
           updatedProducts.push(...products);
         }
       }
@@ -207,33 +238,31 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       updatedProducts = [...updatedProducts, ...extractedProductsArray, ...extractedProductsOfSimilarColor];
 
        //removing duplicates and storing them
-      const relatedProducts = updatedProducts.filter((prod: any) => prod._id.toString() !== product._id.toString());
+      const relatedProducts = updatedProducts.filter((prod: any) => prod.id !== product.id);
 
       //getting product reviews
-      const updatedProduct = await product.populate('reviews.reviewId');
-
-      const reviews = updatedProduct.reviews.map((review: any) => ({...review.reviewId._doc}));
+      const reviews = await product.getReviews();
 
       for (let review of reviews){
-        const user = await User.findById(review.author.authorId);
-        authors.push(user);
+        const user = await review.getUser();
+        authors.push(user!);
       }
 
-      const updatedReviews = reviews.map((review: any) => {
-        const extractedAuthor = authors.find(author => author._id.toString() === review.author.authorId.toString());
+      const updatedReviews = reviews.map(review => {
+        const extractedAuthor = authors.find(author => author.id === review.author_id);
 
         return {
           ...review,
-          author: extractedAuthor
+          author: extractedAuthor!
         };
       });
       //sorting reviews with the most likes in descending order
-      reviews.sort((a: any, b: any) => b.likes - a.likes);;
+      reviews.sort((a, b) => b.likes - a.likes);;
       
       return NextResponse.json({
         productSizes: extractedColorObj.sizes,
         productFrontBase64Images: extractedColorObj.imageFrontBase64,
-        productId: product._id.toString(),
+        productId: product.id,
         productColors: product.colors,
         productReviews: updatedReviews,
         relatedProducts,

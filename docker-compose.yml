@@ -12,30 +12,45 @@ services:
     environment:
       JWT_SECRET: ${JWT_SECRET}
       DOMAIN: ${DOMAIN}
+      USER: ${USER}
+      PASS: ${PASS}
+      DB_NAME: ${DB_NAME}
+      PORT: ${PORT}
       NEXT_PUBLIC_DOMAIN: ${NEXT_PUBLIC_DOMAIN}
-      MONGO_URI: ${MONGO_URI}
-      DATABASE_URL: ${DATABASE_URL}
+      POSTGRES_URI: ${POSTGRES_URI}
       IPINFO_TOKEN: ${IPINFO_TOKEN}
       NEXT_PUBLIC_MER_CODE: ${NEXT_PUBLIC_MER_CODE}
       NEXT_PUBLIC_PAY_ITEM_ID: ${NEXT_PUBLIC_PAY_ITEM_ID}
       SENDGRID_API_KEY: ${SENDGRID_API_KEY}
     depends_on:
-      - mongo
-  mongo:
-    image:  mongo:latest 
-    # ports:
-    #     - 27018:27017
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
-      MONGO_INITDB_ROOT_DATABASE: ${MONGO_DB}
+      - postgres
+  postgres:
+    image: postgres
+    ports:
+      - ${PORT}:${PORT}
+    container_name: postgres
+    env_file: .env
     volumes:
-      - ./src/db/users.json:/tmp/
-      - ./src/db/products.json:/tmp/
-      - ./src/db/docker-entrypoint-initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/
-      - ./src/db/docker-entrypoint-initdb.d/importscript.sh:/docker-entrypoint-initdb.d/
-    networks:
-      - reqres
+      - db_data:/var/lib/postgresql/data/
+      - ./src/db/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
+      - ./src/ssl/certs/:/certs/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -p ${PORT} -U ${USER} -d ${DB_NAME}"]
+      start_period: 0s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_USER: ${USER}
+      POSTGRES_PASSWORD: ${PASS}
+      POSTGRES_DB: ${DB_NAME}
+      # Enable SSL
+      POSTGRES_SSL_CERT: /certs/server.crt
+      POSTGRES_SSL_KEY: /certs/server.key
+      POSTGRES_SSL_CA: /certs/root.crt
+
+volumes:
+  db_data:
+
 
 

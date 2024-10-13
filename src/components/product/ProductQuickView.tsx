@@ -184,30 +184,30 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
 
 
     product.colors.forEach((color: any, i: number) => {
-        sizesJsxObj[color.type] = sizes.map((size: number, i: number) => color.sizes[0] && color.sizes[0].number === size && color.sizes[0].stock === 0 && color.isAvailable ?
+        sizesJsxObj[color.type] = sizes.map((size: number, i: number) => color.sizes[0] && color.sizes[0].number === size && color.sizes[0].stock === 0 && color.is_available ?
         <span key={i} className='font-sans bg-black px-6 py-2 rounded-3xl cursor-pointer text-gray-400 line-through'>UK {size}</span>
-        : color.sizes[0] && color.sizes[0].number === size && color.sizes[0].stock > 0 && color.isAvailable ?
+        : color.sizes[0] && color.sizes[0].number === size && color.sizes[0].stock > 0 && color.is_available ?
         <span key={i} onClick={handleSizeChange} className='font-sans bg-black px-6 py-2 rounded-3xl cursor-pointer text-white'>UK {size}</span>
-        : color.sizes[1] && color.sizes[1].number === size && color.sizes[1].stock > 0 && color.isAvailable ?
+        : color.sizes[1] && color.sizes[1].number === size && color.sizes[1].stock > 0 && color.is_available ?
         <span key={i} onClick={handleSizeChange} className='font-sans bg-transparent px-6 py-2 rounded-3xl cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600'>UK {size}</span>
-        : color.sizes[2] && color.sizes[2].number === size && color.sizes[2].stock > 0 && color.isAvailable ?
+        : color.sizes[2] && color.sizes[2].number === size && color.sizes[2].stock > 0 && color.is_available ?
         <span key={i} onClick={handleSizeChange} className='font-sans bg-transparent px-6 py-2 rounded-3xl cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600'>UK {size}</span>
-        : color.sizes[3] && color.sizes[3].number === size && color.sizes[3].stock > 0 && color.isAvailable ?
+        : color.sizes[3] && color.sizes[3].number === size && color.sizes[3].stock > 0 && color.is_available ?
         <span key={i} onClick={handleSizeChange} className='font-sans bg-transparent px-6 py-2 rounded-3xl cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600'>UK {size}</span>
-        : color.sizes[4] && color.sizes[4].number === size && color.sizes[4].stock > 0 && color.isAvailable ?
+        : color.sizes[4] && color.sizes[4].number === size && color.sizes[4].stock > 0 && color.is_available ?
         <span key={i} onClick={handleSizeChange} className='font-sans bg-transparent px-6 py-2 rounded-3xl cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600'>UK {size}</span>
-        : color.sizes[5] && color.sizes[5].number === size && color.sizes[5].stock > 0 && color.isAvailable ?
+        : color.sizes[5] && color.sizes[5].number === size && color.sizes[5].stock > 0 && color.is_available ?
         <span key={i} onClick={handleSizeChange} className='font-sans bg-transparent px-6 py-2 rounded-3xl cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600'>UK {size}</span>
        
         : <span key={i} className='font-sans bg-transparent px-6 py-2 rounded-3xl cursor-pointer text-gray-400 line-through border border-gray-200'>UK {size}</span>
          
         );
 
-        frontBase64ImagesObj[color.type] = color.imageFrontBase64;
+        frontBase64ImagesObj[color.type] = color.image_front_base64;
         color.sizes.forEach((size: any) => {
             sizesObj[`${color.type}-${size.number}`] =  {
                 price: size.price,
-                variantId: size.variantId,
+                variantId: size.variant_id,
                 stock: size.stock,
                 color: color.type
             };
@@ -224,7 +224,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                 className="lg:w-[40%] w-full h-[40%] lg:h-full"
 
                 >
-                {(frontBase64ImagesObj[selectedColor] ? frontBase64ImagesObj[selectedColor] : product.colors[0].imageFrontBase64).map((image: string, i: number) => <SwiperSlide key={i}>
+                {(frontBase64ImagesObj[selectedColor] ? frontBase64ImagesObj[selectedColor] : product.colors[0].image_front_base64).map((image: string, i: number) => <SwiperSlide key={i}>
                     <div  id='image-zoom' className={`${zoomActivated ? 'cursor-zoom-out' : 'cursor-zoom-in'} relative h-full`}
                         style={{ "--url": `url(${image})`, "--zoom-x": "0%", "--zoom-y": "0%", "--display": "none" } as React.CSSProperties}
                         onMouseMove={(e) => {
@@ -302,8 +302,8 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                     <div className="flex flex-row justify-start gap-x-2 flex-wrap gap-y-2">
                         {product.colors.map((color: any, i: number) => 
                         sizesObj[`${selectedColor}-${selectedSize}`].stock === 0 ?  
-                        <span key={i} onClick={handleColorChange} className={color.isAvailable && i === 0 ? `cursor-pointer bg-black px-6 py-2 rounded-3xl text-gray-400 line-through` : `cursor-pointer bg-transparent border border-gray-200 px-6 py-2 rounded-3xl text-gray-400 line-through`}>{color.type}</span>
-                        : <span key={i} onClick={handleColorChange} className={color.isAvailable && i === 0 ? `bg-black px-6 py-2 rounded-3xl text-white cursor-pointer` : `cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600 px-6 py-2 rounded-3xl bg-transparent`}>{color.type}</span>)}
+                        <span key={i} onClick={handleColorChange} className={color.is_available && i === 0 ? `cursor-pointer bg-black px-6 py-2 rounded-3xl text-gray-400 line-through` : `cursor-pointer bg-transparent border border-gray-200 px-6 py-2 rounded-3xl text-gray-400 line-through`}>{color.type}</span>
+                        : <span key={i} onClick={handleColorChange} className={color.is_available && i === 0 ? `bg-black px-6 py-2 rounded-3xl text-white cursor-pointer` : `cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600 px-6 py-2 rounded-3xl bg-transparent`}>{color.type}</span>)}
                     </div>
                 </section>
                 <section className="flex flex-col items-start gap-y-2" id="size-list">

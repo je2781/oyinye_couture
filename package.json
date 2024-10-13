@@ -5,6 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "sequelize:apply": "dotenv -e .env -- sequelize-cli db:migrate",
+    "db:prod:rm": "docker compose rm postgres -s -f -v ",
+    "db:prod:up": "docker compose up postgres -d",
+    "db:prod:restart": "npm run sequelize:apply",
+    "prestart": "npm run db:prod:restart",
     "start": "next start",
     "lint": "next lint"
   },
@@ -22,11 +27,14 @@
     "chart.js": "^4.4.4",
     "country-list-with-dial-code-and-flag": "^5.0.5",
     "country-state-city": "^3.2.1",
+    "dotenv": "^16.4.5",
+    "dotenv-cli": "^7.4.2",
     "ejs": "^3.1.10",
     "i18n-iso-countries": "^7.11.3",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.5.0",
     "next": "14.2.4",
+    "pg": "^8.13.0",
+    "pg-hstore": "^2.3.4",
     "react": "^18",
     "react-calendar": "^5.0.0",
     "react-chartjs-2": "^5.2.0",
@@ -34,6 +42,8 @@
     "react-dom": "^18",
     "react-hot-toast": "^2.4.1",
     "react-intl": "^6.7.0",
+    "sequelize": "^6.37.4",
+    "sequelize-typescript": "^2.1.6",
     "swiper": "^11.1.4"
   },
   "devDependencies": {
@@ -48,6 +58,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.4",
     "postcss": "^8",
+    "sequelize-cli": "^6.6.2",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }

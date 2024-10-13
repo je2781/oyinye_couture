@@ -1,29 +1,25 @@
-import { connect } from "@/db/config";
 import Cart from "@/models/cart";
-import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import Order from "@/models/order";
 import { getDataFromCart } from "@/helpers/getDataFromCart";
 import { getDataFromOrder } from "@/helpers/getDataFromOrder";
-
-connect();
+import OrderItem from "@/models/orderItem";
 
 export async function GET(req: NextRequest) {
   try {
     const cartId = getDataFromCart(req);
-
-    const newCartId = mongoose.Types.ObjectId.createFromHexString(cartId);
+    let orderItems: OrderItem[] = [];
 
     const [orderId, checkoutSessionToken] = getDataFromOrder(req);
 
-    if (orderId && mongoose.Types.ObjectId.isValid(newCartId)) {
+    if (orderId && cartId) {
       // Retrieving order data for the current checkout session
-      const order = await Order.findById(orderId);
+      const order = await Order.findByPk(orderId);
 
       if (order) {
         // Retrieving cart data for the current public session
-        const cart = await Cart.findById(newCartId);
+        const cart = await Cart.findByPk(cartId);
 
         if (!cart) {
           return NextResponse.json(
@@ -32,20 +28,27 @@ export async function GET(req: NextRequest) {
           );
         }
 
-        let updatedCart = await cart.populate("items.productId");
-
-        const cartItems = updatedCart.items.map((cartItem: any) => {
+        const cartItems = cart.items.map((item, i) => {
           return {
-            product: { ...cartItem.productId._doc },
-            quantity: cartItem.quantity,
-            variantId: cartItem.variantId,
+            product: item.product,
+            quantity: item.quantity,
+            variantId: item.variant_id,
           };
         });
 
+        for(let item of cartItems){
+          orderItems.push(OrderItem.build({
+            id: (await crypto.randomBytes(6)).toString("hex"),
+            variant_id: item.variantId,
+            quantity: item.quantity,
+            product: item.product
+          }));
+        }
+
         //updating order with checkout state
-        order.items = cartItems;
+        order.items = orderItems;
         order.status = "checkout";
-        order.sales = cart.totalAmount;
+        order.sales = cart.total_amount;
 
         await order.save();
         

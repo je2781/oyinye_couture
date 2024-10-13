@@ -5,7 +5,7 @@ export const getVisitData = (req: NextRequest) => {
   const visitId = req.cookies.get("visit")?.value;
 
   if (!visitId) {
-    return '';
+    return null;
   }
 
   return visitId;

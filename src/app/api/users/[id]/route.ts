@@ -1,28 +1,17 @@
-import { connect } from "@/db/config";
 import User from "@/models/user";
 import { NextRequest, NextResponse } from "next/server";
 import * as argon from "argon2";
 import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
-import mongoose from "mongoose";
 
-connect();
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    // Validate ObjectId before creating one
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json(
-        { error: "Invalid user ID format" },
-        { status: 400 }
-      );
-    }
 
-    const newUserId = mongoose.Types.ObjectId.createFromHexString(params.id);
-    const user = await User.findById(newUserId);
+    const user = await User.findByPk(params.id);
 
     // Check if user exists
     if (!user) {
@@ -36,13 +25,13 @@ export async function GET(
       {
         success: true,
         userEmail: user.email,
-        title: user.isAdmin ? 'Administrator' : 'Guest',
-        userId: user._id.toString(),
-        userName: `${user.firstName} ${user.lastName}`,
-        shippingInfo: user.shippingInfo ?? "",
-        billingInfo: user.billingInfo ?? "",
-        saveBillingInfo: user.saveBillingInfo,
-        saveShippingInfo: user.saveShippingInfo,
+        title: user.is_admin ? 'Administrator' : 'Guest',
+        userId: user.id,
+        userName: `${user.first_name} ${user.last_name}`,
+        shippingInfo: user.shipping_info ?? "",
+        billingInfo: user.billing_info ?? "",
+        saveBillingInfo: user.save_billing_info,
+        saveShippingInfo: user.save_shipping_info,
       },
       { status: 200 }
     );
@@ -62,19 +51,11 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Validate ObjectId before creating one
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json(
-        { error: "Invalid user ID format" },
-        { status: 400 }
-      );
-    }
 
-    const newUserId = mongoose.Types.ObjectId.createFromHexString(params.id);
     const reqBody = await req.json();
     const { firstName, lastName, password, enableEmailMarketing = false, avatar, checkingOut, email} = reqBody;
 
-    const user = await User.findById(newUserId);
+    const user = await User.findByPk(params.id);
 
     // Check if user exists
     if (!user) {
@@ -90,9 +71,9 @@ export async function PATCH(
       const hash = await argon.hash(password);
       user.password = hash;
     }
-    user.enableEmailMarketing = enableEmailMarketing;
-    user.firstName = firstName;
-    user.lastName = lastName;
+    user.enable_email_marketing = enableEmailMarketing;
+    user.first_name = firstName;
+    user.last_name = lastName;
     if(avatar){
       user.avatar = avatar;
     }
@@ -115,7 +96,7 @@ export async function PATCH(
       await sendMail({
         email: savedUser.email,
         emailType: EmailType.verify_buyer,
-        userId: savedUser._id
+        userId: savedUser.id
       });
     }
 

@@ -1,12 +1,9 @@
 'use server'
 
-import { connect } from '@/db/config';
 import { getBrowser, getDeviceType } from '@/helpers/getHelpers';
-import Product from '@/models/product';
 import Visitor from '@/models/visitor';
 import { cookies, headers } from 'next/headers';
-
-connect();
+import crypto from 'crypto';
 
 
 export async function createViewedProductsAction(variantId: string) {
@@ -59,13 +56,12 @@ export async function createVisitorAction() {
 
     const browser = getBrowser(userAgent);
 
-    const newVisitor = new Visitor({
+    const newVisitor = await Visitor.create({
+      id: (await crypto.randomBytes(6)).toString("hex"),
       ip,
       browser,
       device
     });
-
-    await newVisitor.save();
 
     const remainingMilliseconds = 5184000000; // 2 months
     const now = new Date();
@@ -73,7 +69,7 @@ export async function createVisitorAction() {
 
     cookieStore.set({
       name: 'visit',
-      value: newVisitor._id.toString(),
+      value: newVisitor.id,
       expires: expiryDate,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

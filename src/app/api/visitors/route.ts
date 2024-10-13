@@ -1,15 +1,13 @@
-import { connect } from '@/db/config';
 import { getBrowser, getDeviceType } from '@/helpers/getHelpers';
 import { getVisitData } from '@/helpers/getVisitData';
 import User from '@/models/user';
 import Visitor from '@/models/visitor';
 import { NextResponse, type NextRequest } from 'next/server';
 
-connect();
 
 export async function GET(req: NextRequest) {
     try {
-        let visitors = await Visitor.find();
+        let visitors = await Visitor.findAll();
 
 
         return NextResponse.json({
@@ -22,7 +20,6 @@ export async function GET(req: NextRequest) {
         
 
     } catch (error: any) {
-        console.error('Error retrieving visitors:', error);
         return NextResponse.json(
             {
                 error: error.message,

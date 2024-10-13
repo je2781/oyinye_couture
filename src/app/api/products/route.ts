@@ -1,13 +1,11 @@
-import { connect } from '@/db/config';
 import Product from '@/models/product';
 import { NextResponse, type NextRequest } from 'next/server';
-
-connect();
  
+
 export async function GET(req: NextRequest) {
     try {
 
-        const products = await Product.find();
+        const products = await Product.findAll();
 
         if (!products) {
           return NextResponse.json(

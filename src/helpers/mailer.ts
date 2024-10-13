@@ -134,15 +134,17 @@ const requestData = async (
 export const sendMail = async ({ password, email, emailType, userId, emailBody }: SendMail) => {
   try {
     crypto.randomBytes(32, async (err, buffer) => {
-      let vendorEmailBody, resetPasswordEmailBody, updatedTo, verifyEmailBody, reminderEmailBody, paymentRequestBody  = '';
+      let resetPasswordEmailBody, updatedTo, verifyEmailBody, reminderEmailBody, paymentRequestBody  = '';
 
       //create a hash token
       const hashedToken = buffer.toString("hex");
 
       if (emailType === EmailType.verify_account || emailType === EmailType.verify_reviewer || emailType === EmailType.verify_buyer) {
-        await User.findOneAndUpdate(userId, {
-          verifyToken: hashedToken,
-          verifyTokenExpirationDate: new Date(Date.now() + 3600000),
+        await User.update(userId, {
+          where: {
+            verify_token: hashedToken,
+            verify_token_expiry_date: new Date(Date.now() + 3600000),
+          }
         });
         verifyEmailBody = await verifyData(hashedToken, emailType);
 
@@ -157,9 +159,11 @@ export const sendMail = async ({ password, email, emailType, userId, emailBody }
           emailBody.id, emailBody.total, '+2349061681807', emailBody.link, emailBody.items
         );
       } else {
-        await User.findOneAndUpdate(userId, {
-          resetToken: hashedToken,
-          resetTokenExpirationDate: new Date(Date.now() + 3600000),
+        await User.update(userId, {
+          where: {
+            reset_token: hashedToken,
+            reset_token_expiry_date: new Date(Date.now() + 3600000),
+          }
         });
         resetPasswordEmailBody = await resetPasswordEmailData(hashedToken);
       }

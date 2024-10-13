@@ -321,7 +321,7 @@ export default function CartInfo({
                     >
                         <section className="flex md:flex-row flex-col justify-between md:items-center items-start w-full gap-y-4">
                             <article className="md:w-[62%] w-full flex-row flex justify-between items-start cursor-pointer"
-                                onClick={() => router.push(`/products/${item.title.replace(' ', '-').toLowerCase()}/${item.color.toLowerCase()}/${item.variantId}`)}
+                                onClick={() => router.push(`/products/${item.title.replace(' ', '-').toLowerCase()}/${item.color.toLowerCase()}/${item.variant_id}`)}
                                 >
                                 <div className="flex flex-row md:gap-x-7 gap-x-3 items-start">
                                     <Image src={Object.values(frontBase64ImagesObj.current)[i][0]} width={100} height={175} alt={`cart-item${i+1}`}/>

@@ -1,17 +1,20 @@
-import { connect } from "@/db/config";
 import { getDataFromToken } from "@/helpers/getDataFromToken";
 import { sendMail } from "@/helpers/mailer";
 import User from "@/models/user";
 import { NextRequest, NextResponse } from "next/server";
+import { Op } from "sequelize";
 
-connect();
 
 export async function GET(req: NextRequest, {params}: {params: {slug: string[]}}) {
   try {
 
     const user = await User.findOne({
-        verifyToken: params.slug[1],
-        verifyTokenExpirationDate: {$gt: new Date()}
+      where: {
+        verify_token: params.slug[1],
+        verify_token_expiry_date: {
+          [Op.gt]:  new Date()
+        }
+    }
     });
 
     if(!user){
@@ -25,17 +28,17 @@ export async function GET(req: NextRequest, {params}: {params: {slug: string[]}}
 
     switch (params.slug[0]) {
       case 'buyer':
-        user.isVerified.buyer = true;
+        user.buyer_is_verified = true;
         break;
       case 'reviewer':
-        user.isVerified.reviewer = true;
+        user.reviewer_is_verified = true;
         break;
       default:
-        user.isVerified.account = true;
+        user.account_is_verified = true;
         break;
     }
-    user.verifyToken = undefined;
-    user.verifyTokenExpirationDate = undefined;
+    user.verify_token = null;
+    user.verify_token_expiry_date = null;
 
     await user.save();
 

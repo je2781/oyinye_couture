@@ -1,122 +1,130 @@
-import mongoose, { Document, Model, Schema } from "mongoose";
+import {
+  BelongsToGetAssociationMixin,
+  BelongsToManyGetAssociationsMixin,
+  BelongsToSetAssociationMixin,
+  CreationOptional,
+  DataTypes,
+  ForeignKey,
+  HasOneGetAssociationMixin,
+  InferAttributes,
+  InferCreationAttributes,
+  Model,
+} from "sequelize";
+import Review from "./review";
+import Product from "./product";
+import CartItem from "./cartItem";
+import crypto from "crypto";
+import User from "./user";
+import sequelize from "@/db/connection";
 
-// Define the CartItem interface
-interface CartItem {
-  productId: mongoose.Types.ObjectId;
-  quantity: number;
-  variantId: string;
+class Cart extends Model<InferAttributes<Cart>, InferCreationAttributes<Cart>> {
+  declare id: string;
+  declare total_amount: number;
+  declare items: CartItem[];
+  declare createdAt: CreationOptional<Date>;
+  declare updatedAt: CreationOptional<Date>;
+  declare getUser: BelongsToGetAssociationMixin<User>;
+  declare setUser: BelongsToSetAssociationMixin<User, string>;
+
+  static associate(models: any){
+    Cart.belongsTo(models.User);
+
+  }
+
+  async clearCart() {
+    this.items = [];
+  
+    return this.save();
+  }
+
+  async addToCart(
+    product: Product,
+    quantity: number,
+    variantId: string,
+    price: number
+  ) {
+
+    const updatedCartTotalAmount =
+     this.total_amount + price * quantity;
+  
+    const updatedCartItems = this.items.slice();
+    const existingCartItemIndex = updatedCartItems.findIndex(
+      item => item.variant_id === variantId
+    );
+    const existingCartItem = updatedCartItems[existingCartItemIndex];
+    if (existingCartItem) {
+      existingCartItem.setDataValue('quantity', existingCartItem.getDataValue('quantity') + quantity);
+
+    } else {
+          // Create a new CartItem instance for the new product
+      const newProduct = CartItem.build({
+        id: (await crypto.randomBytes(6)).toString("hex"),
+        variant_id: variantId,
+        quantity: quantity,
+        product,
+      });
+
+      updatedCartItems.push(newProduct);
+    }
+  
+    this.items = updatedCartItems;
+    this.total_amount = updatedCartTotalAmount;
+  
+    return this.save();
+  }
+
+ async deductFromCart (
+    variantId: string,
+    quantity: number,
+    price: number
+  ) {
+
+     const updatedCartItems = this.items.slice();
+
+    const existingCartItemIndex = updatedCartItems.findIndex(
+      (item: CartItem) => item.variant_id === variantId
+    );
+    
+    if (existingCartItemIndex === -1) throw new Error('Item not found in the cart');
+
+    const existingCartItem = updatedCartItems[existingCartItemIndex];
+    
+    const updatedCartTotalAmount = this.total_amount - price * quantity;
+
+    if ((existingCartItem.getDataValue('quantity') - quantity) === 0) {
+      updatedCartItems.splice(existingCartItemIndex, 1);  // Remove item
+    } else {
+      existingCartItem.setDataValue('quantity', existingCartItem.getDataValue('quantity') - quantity);
+    }
+
+    // Update cart values
+    this.items = updatedCartItems;
+    this.total_amount = updatedCartTotalAmount;
+
+    // Save updated cart
+    return this.save();
+   }
 }
+  // ...
 
-// Define the Cart document interface
-interface ICart extends Document {
-  items: CartItem[];
-  user?: {
-    userId: mongoose.Types.ObjectId;
-  };
-  totalAmount: any;
-  addToCart(product: any): Promise<void>;
-  deductFromCart(variantId: string, quantity: number): Promise<void>;
-  deleteCartItem(variantId: string, quantity: number): Promise<void>;
-  clearCart(): Promise<void>;
-}
-
-const CartSchema = new Schema<ICart>({
-  items: [
-    {
-      productId: {
-        type: Schema.Types.ObjectId,
-        ref: "products",
-        required: true,
-      },
-      quantity: {
-        type: Number,
-      },
-      variantId: {
-        type: String,
-      },
-    },
-  ],
-  totalAmount: {
-    type: Number,
-    required: true,
+Cart.init({
+  id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+    allowNull: false,
   },
-  user: {
-    userId: {
-      ref: "users",
-      type: Schema.Types.ObjectId,
-    },
-  },
+  items: DataTypes.ARRAY(DataTypes.JSONB),
+  total_amount: DataTypes.DOUBLE,
+  createdAt: DataTypes.DATE,
+  updatedAt: DataTypes.DATE
+  
 }, {
-  timestamps: true
+  tableName: "carts",
+  sequelize,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  timestamps: true,
 });
 
-CartSchema.methods.deductFromCart = function (
-  variantId: string,
-  quantity: number,
-  price: number
-) {
-  let updatedCartItems = this.items.slice();
-
-  const existingCartItemIndex = updatedCartItems.findIndex(
-    (item: any) => item.variantId === variantId
-  );
-  const existingCartItem = updatedCartItems[existingCartItemIndex];
-  const updatedCartTotalAmount = this.totalAmount - price * quantity;
-
-  if ((existingCartItem.quantity - quantity) === 0) {
-    updatedCartItems = updatedCartItems.filter(
-      (item: any) => item.variantId !==  existingCartItem.variantId
-    );
-  } else {
-    const updatedCartItem = {
-      ...existingCartItem,
-      quantity: existingCartItem.quantity - quantity,
-    };
-    updatedCartItems[existingCartItemIndex] = updatedCartItem;
-  }
-
-  this.items = updatedCartItems;
-  this.totalAmount = updatedCartTotalAmount;
-
-  return this.save();
-};
-
-CartSchema.methods.addToCart = function (product: any) {
-  const updatedCartTotalAmount =
-    this.totalAmount + product.price * product.quantity;
-
-  const updatedCartItems = this.items.slice();
-  const existingCartItemIndex = updatedCartItems.findIndex(
-    (item: any) => item.variantId === product.variantId
-  );
-  const existingCartItem = updatedCartItems[existingCartItemIndex];
-  if (existingCartItem) {
-    const updatedCartItem = {
-      ...existingCartItem,
-      quantity: existingCartItem.quantity + product.quantity,
-    };
-    updatedCartItems[existingCartItemIndex] = updatedCartItem;
-  } else {
-    updatedCartItems.push({
-      productId: product.id,
-      quantity: product.quantity,
-      variantId: product.variantId,
-    });
-  }
-
-  this.items = updatedCartItems;
-  this.totalAmount = updatedCartTotalAmount;
-
-  return this.save();
-};
-
-
-CartSchema.methods.clearCart = function () {
-  this.items = [];
-
-  return this.save();
-};
-
-const Cart = mongoose.models.carts ?? mongoose.model("carts", CartSchema);
 
 export default Cart;

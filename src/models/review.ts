@@ -1,37 +1,74 @@
-import mongoose from 'mongoose';
+import sequelize from '@/db/connection';
+import { BelongsToGetAssociationMixin, BelongsToSetAssociationMixin, CreationOptional, DataTypes, ForeignKey, InferAttributes, InferCreationAttributes, Model } from 'sequelize';
+import Product from './product';
+import User from './user';
 
-const Schema = mongoose.Schema;
+class Review extends Model<InferAttributes<Review>, InferCreationAttributes<Review>> {
+    declare id: string;
+    declare headline: string;
+    declare is_media: boolean;
+    declare rating: number;
+    declare likes: CreationOptional<number>;
+    declare dislikes: CreationOptional<number>;
+    declare content: string;
+    declare createdAt: CreationOptional<Date>;
+    declare updatedAt: CreationOptional<Date>;
+    declare author_id: ForeignKey<string>;
+    declare getUser: BelongsToGetAssociationMixin<User>;
+    declare setUser: BelongsToSetAssociationMixin<User, string>;
+    declare getProduct: BelongsToGetAssociationMixin<Product>;
+    declare setProduct: BelongsToSetAssociationMixin<Product, string>;
 
-const ReviewSchema = new Schema({
+    static associate(models: any){
+        Review.belongsTo(models.Product);
+    	Review.belongsTo(models.User);
+    }
+    // ...
+  }
+  
+
+Review.init({
+    id: {
+        type: DataTypes.STRING,
+        primaryKey: true,
+        allowNull: false,
+      },
     headline: {
-        type: String,
+        type: DataTypes.STRING,
     },
-    rating: Number,
-    content: String,
-    isMedia: {
-        type: Boolean,
-        default: false,
-    },
-    author: {
-        authorId: {
-            ref: 'users',
-            type: Schema.Types.ObjectId
-        }
+    rating: DataTypes.INTEGER,
+    content: DataTypes.STRING,
+    is_media: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     },
     likes: {
-        type: Number,
-        default: 0
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    author_id: {
+        type: DataTypes.STRING,
+        references: {
+            model: 'user',
+            key: 'id'
+        }
     },
     dislikes: {
-        type: Number,
-        default: 0
-    }
-},{
-    timestamps: true
-}
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    createdAt: DataTypes.DATE,
+    updatedAt: DataTypes.DATE,
+},  {
+    tableName: "reviews",
+    sequelize,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+    timestamps: true,
+  }
 );
 
-const Review = mongoose.models.reviews ?? mongoose.model('reviews', ReviewSchema);
+
 
 export default Review;
 

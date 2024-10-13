@@ -466,19 +466,19 @@ export const extractProductDetails = (
   for (let item of cartItems) {
     for (let color of item.product.colors) {
       let size = color.sizes.find(
-        (size: any) => size.variantId === item.variantId
+        (size: any) => size.variant_id === item.variant_id
       );
 
       if (size) {
         cartItemObj[`${color.type}-${size.number}`] = {
           ...size,
-          variantId: size.variantId,
+          variantId: size.variant_id,
           title: item.product.title,
           color: color.type,
           quantity: item.quantity,
-          id: item.product._id.toString(),
+          id: item.product.id,
         };
-        frontBase64ImagesObj[`${color.type}-${size.number}`] = color.imageFrontBase64;
+        frontBase64ImagesObj[`${color.type}-${size.number}`] = color.image_front_base64;
       }
     }
   }
@@ -698,7 +698,7 @@ export async function handleSubmit(
           number: datum.number!,
           price: parseFloat(datum.price!),
           stock: datum.stock ? datum.stock : 0,
-          variantId: hashedId,
+          variant_id: hashedId,
         })),
       };
     }),
@@ -833,7 +833,7 @@ export const cartReducer = (state: CartState, action: any) => {
       state.totalAmount + (action.item.price * action.item.quantity);
 
     const existingCartItemIndex = state.items.findIndex(
-      (item: any) => item.variantId === action.item.variantId
+      (item: any) => item.variant_id === action.item.variant_id
     );
     const existingCartItem = state.items[existingCartItemIndex];
 
@@ -859,14 +859,14 @@ export const cartReducer = (state: CartState, action: any) => {
   if (action.type === "REMOVE") {
     let updatedStateItems;
     const existingCartItemIndex = state.items.findIndex(
-      (item: any) => item.variantId === action.item.variantId
+      (item: any) => item.variant_id === action.item.variant_id
     );
     const existingCartItem = state.items[existingCartItemIndex];
     const updatedStateTotalAmount = state.totalAmount - (action.item.price * action.item.quantity);
 
     if (existingCartItem.quantity - action.item.quantity === 0) {
       updatedStateItems = state.items.filter(
-        (item: any) => item.variantId !== existingCartItem.variantId
+        (item: any) => item.variant_id !== existingCartItem.variant_id
       );
     } else {
       const updatedStateItem = {

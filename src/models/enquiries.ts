@@ -1,64 +1,53 @@
-import { timeStamp } from 'console';
-import mongoose from 'mongoose';
+import {
+  BelongsToGetAssociationMixin,
+    BelongsToSetAssociationMixin,
+    CreationOptional,
+    DataTypes,
+    ForeignKey,
+    InferAttributes,
+    InferCreationAttributes,
+    Model,
+  } from "sequelize";
+import User from "./user";
+import sequelize from "@/db/connection";
+  
+  
+  class Enquiry extends Model<InferAttributes<Enquiry>, InferCreationAttributes<Enquiry>> {
+    declare id: string;
+    declare contact: CreationOptional<any>;
+    declare order: CreationOptional<any>;
+    declare createdAt: CreationOptional<Date>;
+    declare updatedAt: CreationOptional<Date>;
+    declare getUser: BelongsToGetAssociationMixin<User>;
+    declare setUser: BelongsToSetAssociationMixin<User, string>;
 
-const Schema = mongoose.Schema;
+    static associate(models: any){
+      Enquiry.belongsTo(models.User);
 
-const EnquiriesSchema = new Schema({
-    author: {
-        authorId: {
-            type: Schema.Types.ObjectId,
-            ref: "users",
-            required: true,
-        },
-        order: {
-            phoneNo: String,
-            residence: String,
-            size: Number,
-            styles: [
-                {
-                    data: Object
-                }
-            ],
-        }
-    },
-    order: {
-        content: String,
-        eventDate: Date,
-        read: {
-            type: Boolean,
-            default: false
-        },
-        unRead: {
-            type: Boolean,
-            default: true
-        },
-        saved: {
-            type: Boolean,
-            default: false
-        }
-    },
-    contact: {
-        subject: String,
-        message: String,
-        read: {
-            type: Boolean,
-            default: false
-        },
-        unRead: {
-            type: Boolean,
-            default: true
-        },
-        saved: {
-            type: Boolean,
-            default: false
-        }
     }
+
+  }
+
+  Enquiry.init({
+    id: {
+        type: DataTypes.STRING,
+        primaryKey: true,
+        allowNull: false,
+      },
+    contact: DataTypes.JSONB,
+    order: DataTypes.JSONB,
+    createdAt: DataTypes.DATE,
+    updatedAt: DataTypes.DATE
+
 }, {
-    timestamps: true
+    tableName: "enquiries",
+    sequelize,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+    timestamps: true,
 }
 );
 
-const Enquiries = mongoose.models.enquiries ?? mongoose.model('enquiries', EnquiriesSchema);
 
-export default Enquiries;
+export default Enquiry;
 

@@ -1,8 +1,6 @@
-import { connect } from "@/db/config";
 import Filter from "@/models/filter";
 import { NextRequest, NextResponse } from "next/server";
-
-connect();
+import crypto from 'crypto';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,49 +12,50 @@ export async function POST(req: NextRequest) {
     const { noOfFilters, isVisible, showOutOfStock, productType, priceRange, currentPriceBoundary, color, customProp } = reqBody;
 
 
-    const filterSettings = await Filter.find();
+    const filterSettings = await Filter.findAll();
 
 
     if (filterSettings.length > 0) {
       if(type === 'search'){
 
-        await Filter.updateMany(
-          {},
+        await Filter.update(
           {
-            $set: {
-              search: {
-                noOfFilters,
-                isVisible,
-                showOutOfStock,
-                productType,
-                priceRange,
-                currentPriceBoundary
-              },
+            search: {
+              noOfFilters,
+              isVisible,
+              showOutOfStock,
+              productType,
+              priceRange,
+              currentPriceBoundary
             }
+          },
+          {
+            where: {}
           }
-          
         );
+        
       }
       if(type === 'collections'){
 
-        await Filter.updateMany(
-          {},
+        await Filter.update(
           {
-            $set: {
-              collections: {
-                color,
-                noOfFilters,
-                isVisible,
-                customProperty: customProp
-              },
+            collections: {
+              color,
+              noOfFilters,
+              isVisible,
+              customProperty: customProp
             }
             
+          },
+          {
+            where: {}
           }
         );
       }
     } else {
       if(type === 'search'){
-        const newSettings = new Filter({
+        const newSettings = await Filter.create({
+            id: (await crypto.randomBytes(6)).toString("hex"),
             search: {
               noOfFilters,
               isVisible,
@@ -71,7 +70,8 @@ export async function POST(req: NextRequest) {
         await newSettings.save();
       }
       if(type === 'collections'){
-        const newSettings = new Filter({
+        const newSettings = await Filter.create({
+          id: (await crypto.randomBytes(6)).toString("hex"),
           collections: {
               color,
               noOfFilters,

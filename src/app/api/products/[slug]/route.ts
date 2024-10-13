@@ -1,17 +1,16 @@
-import { connect } from '@/db/config';
 import Filter from '@/models/filter';
 import Order from '@/models/order';
+import OrderItem from '@/models/orderItem';
 import Product from '@/models/product';
-import User from '@/models/user';
 import { NextResponse, type NextRequest } from 'next/server';
+import { Op } from 'sequelize';
 
-connect();
- 
+
 export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
     try {
 
       let priceList: number[] = [];
-      let filterSettings = [];
+      let filterSettings: any[] = [];
       const ITEMS_PER_PAGE = 21;
 
       if(params.slug === 'search'){
@@ -26,9 +25,22 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         let productType = searchParams.get('filter.p.product_type');
         const updatedPage = +page! || 1;
       
-        let totalItems =  await Product.find().countDocuments();
-        let products = await Product.find({title: new RegExp(`\\b${query}[^\\s]*$`, 'i')})
-        .skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+        let totalItems =  await Product.count({where: {
+          title: {
+            [Op.regexp]: `^\\b${query}[^\\s]*$/i`,
+          },
+          
+        },});
+        let products = await Product.findAll({
+          where: {
+            title: {
+              [Op.regexp]: `^\\b${query}[^\\s]*$/i`,
+            },
+            
+          },
+          offset: (updatedPage-1) * ITEMS_PER_PAGE,
+          limit: ITEMS_PER_PAGE,
+        });
   
         //filtering products by product type
         if(productType){
@@ -46,7 +58,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
   
         //retrieving filter settings
         if(availability || lte || gte || productType){
-          filterSettings =  await Filter.find();
+          filterSettings =  await Filter.findAll();
         }
   
         const currentPage = updatedPage;
@@ -131,16 +143,23 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         
           default:
             for(let product of products){
-              let noOfOrders = await Order.find({'items.product._id': product._id}).countDocuments();
+              let noOfOrders = await Order.count({
+                include: [{
+                  model: OrderItem, // Assuming you have an OrderItem model
+                  where: {
+                    product_id: product.id // Assuming `product_id` is the field in the OrderItem model
+                  }
+                }]
+              });
     
-              product.set('noOfOrders', noOfOrders, { strict: false });
+              product.setDataValue('no_of_orders', noOfOrders);
             }
     
             products.sort((a, b) => {
-              if (b.noOfOrders === a.noOfOrders) {
+              if (b.no_of_orders === a.no_of_orders) {
                 return b.reviews.length - a.reviews.length;
               }
-              return b.noOfOrders - a.noOfOrders;
+              return b.no_of_orders - a.no_of_orders;
             });
   
             break;
@@ -165,7 +184,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
 
       if(params.slug === 'collections'){
         const searchParams = request.nextUrl.searchParams;
-        let products: any[] = [];
+        let products: Product[] = [];
         let totalItems = 0;
         let page = searchParams.get('page');
         let sort = searchParams.get('sort_by');
@@ -178,31 +197,118 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         const updatedPage = +page! || 1;
       
         if(dressColor){
-          totalItems =  await Product.find({'colors.type': dressColor}).countDocuments();
-          products = await Product.find({'colors.type': dressColor}).skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+          totalItems =  await Product.count({
+            where: {
+              colors: {
+                [Op.contains]: [{ type: dressColor }]
+              }
+            }
+          });
+          products = await Product.findAll({ 
+            where: {
+              colors: {
+                [Op.contains]: [{ type: dressColor }]
+              }
+            },
+            offset: (updatedPage-1) * ITEMS_PER_PAGE,
+            limit: ITEMS_PER_PAGE,
+          });
         }else if(dressFeature){
-          totalItems =  await Product.find({'features.name': dressColor}).countDocuments();
-          products = await Product.find({'features.name': dressFeature}).skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+          totalItems =  await Product.count({
+            where: {
+              features: {
+                [Op.contains]: [dressFeature]
+              }
+            }
+          });
+          products = await Product.findAll({ 
+            where: {
+              features: {
+                [Op.contains]: [dressFeature]
+              }
+            },
+            offset: (updatedPage-1) * ITEMS_PER_PAGE,
+            limit: ITEMS_PER_PAGE,
+          });
         }else if(dressLength){
-          totalItems =  await Product.find({'features.name': dressColor}).countDocuments();
-          products = await Product.find({'features.name': dressLength}).skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+          totalItems =  await Product.count({
+            where: {
+              features: {
+                [Op.contains]: [dressLength]
+              }
+            }
+          });
+          products = await Product.findAll({ 
+            where: {
+              features: {
+                [Op.contains]: []
+              }
+            },
+            offset: (updatedPage-1) * ITEMS_PER_PAGE,
+            limit: ITEMS_PER_PAGE,
+          });
         }else if(fabric){
-          totalItems =  await Product.find({'features.name': dressColor}).countDocuments();
-          products = await Product.find({'features.name': fabric}).skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+          totalItems =  await Product.count({
+            where: {
+              features: {
+                [Op.contains]: [fabric]
+              }
+            }
+          });
+          products = await Product.findAll({ 
+            where: {
+              features: {
+                [Op.contains]: [fabric]
+              }
+            },
+            offset: (updatedPage-1) * ITEMS_PER_PAGE,
+            limit: ITEMS_PER_PAGE,
+          });
         }else if(neckLine){
-          totalItems =  await Product.find({'features.name': dressColor}).countDocuments();
-          products = await Product.find({'features.name': neckLine}).skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+          totalItems =  await Product.count({
+            where: {
+              features: {
+                [Op.contains]: [neckLine]
+              }
+            }
+          });
+          products = await Product.findAll({ 
+            where: {
+              features: {
+                [Op.contains]: [neckLine]
+              }
+            },
+            offset: (updatedPage-1) * ITEMS_PER_PAGE,
+            limit: ITEMS_PER_PAGE,
+          });
         }else if(sleeveLength){
-          totalItems =  await Product.find({'features.name': dressColor}).countDocuments();
-          products = await Product.find({'features.name': sleeveLength}).skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+          totalItems =  await Product.count({
+            where: {
+              features: {
+                [Op.contains]: [sleeveLength]
+              }
+            }
+          });
+          products = await Product.findAll({ 
+            where: {
+              features: {
+                [Op.contains]: [sleeveLength]
+              }
+            },
+            offset: (updatedPage-1) * ITEMS_PER_PAGE,
+            limit: ITEMS_PER_PAGE,
+          });
         }else{
-          totalItems =  await Product.find().countDocuments();
-          products = await Product.find().skip((updatedPage-1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+          totalItems =  await Product.count();
+          products = await Product.findAll({ 
+            offset: (updatedPage-1) * ITEMS_PER_PAGE,
+            limit: ITEMS_PER_PAGE,
+          });
         }
         
         //retrieving filter settings
         if(dressColor || dressFeature || dressLength || fabric || neckLine || sleeveLength){
-          filterSettings =  await Filter.find();
+          filterSettings =  await Filter.findAll();
         }
   
         const currentPage = updatedPage;
@@ -272,16 +378,23 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
             break;
           case 'best-selling':
             for(let product of products){
-              let noOfOrders = await Order.find({'items.product._id': product._id}).countDocuments();
+              let noOfOrders = await Order.count({
+                include: [{
+                  model: OrderItem,
+                  where: {
+                    product_id: product.id 
+                  }
+                }]
+              });
     
-              product.set('noOfOrders', noOfOrders, { strict: false });
+              product.setDataValue('no_of_orders', noOfOrders);
             }
     
             products.sort((a, b) => {
-              if (b.noOfOrders === a.noOfOrders) {
+              if (b.no_of_orders === a.no_of_orders) {
                 return b.reviews.length - a.reviews.length;
               }
-              return b.noOfOrders - a.noOfOrders;
+              return b.no_of_orders - a.no_of_orders;
             });
   
             break;
@@ -324,12 +437,10 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
 
       const reqBody = await request.json();
       
-      const newProduct = new Product({
+      await Product.create({
         ...reqBody
       });    
       
-      await newProduct.save();
-
       return NextResponse.json({
         message: 'New product created!',
         success: true

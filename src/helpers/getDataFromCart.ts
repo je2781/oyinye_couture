@@ -5,7 +5,7 @@ export const getDataFromCart = (req: NextRequest) => {
   const cartId = req.cookies.get("cart")?.value;
 
   if (!cartId) {
-    return "";
+    return null;
   }
 
   return cartId;

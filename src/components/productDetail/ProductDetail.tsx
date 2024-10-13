@@ -67,7 +67,7 @@ const ProductDetail = ({
     const [imageFrontBase64, setImageFrontBase64] = useState<string[]>(productFrontBase64Images);
     const [selectedColor, setSelectedColor] = useState<string>(paramsColor.charAt(0).toUpperCase() + paramsColor.slice(1));
     const [selectedSize, setSelectedSize] = useState<string>(productSizes.find(
-        (size: any) => size.variantId === paramsId
+        (size: any) => size.variant_id === paramsId
     ).number.toString());
     const [dragActivated, setDragActivated] = useState(false);
     const [loader, setLoader] = useState(false);
@@ -248,7 +248,7 @@ const ProductDetail = ({
                 color.sizes[0] &&
                 color.sizes[0].number === size &&
                 color.sizes[0].stock === 0 &&
-                color.isAvailable ? (
+                color.is_available ? (
                 <span
                     key={i}
                     className="font-sans bg-black px-6 py-2 rounded-3xl cursor-pointer text-gray-400 line-through"
@@ -258,7 +258,7 @@ const ProductDetail = ({
                 ) : color.sizes[0] &&
                 color.sizes[0].number === size &&
                 color.sizes[0].stock > 0 &&
-                color.isAvailable ? (
+                color.is_available ? (
                 <span
                     key={i}
                     onClick={handleSizeChange}
@@ -269,7 +269,7 @@ const ProductDetail = ({
                 ) : color.sizes[1] &&
                 color.sizes[1].number === size &&
                 color.sizes[1].stock > 0 &&
-                color.isAvailable ? (
+                color.is_available ? (
                 <span
                     key={i}
                     onClick={handleSizeChange}
@@ -280,7 +280,7 @@ const ProductDetail = ({
                 ) : color.sizes[2] &&
                 color.sizes[2].number === size &&
                 color.sizes[2].stock > 0 &&
-                color.isAvailable ? (
+                color.is_available ? (
                 <span
                     key={i}
                     onClick={handleSizeChange}
@@ -291,7 +291,7 @@ const ProductDetail = ({
                 ) : color.sizes[3] &&
                 color.sizes[3].number === size &&
                 color.sizes[3].stock > 0 &&
-                color.isAvailable ? (
+                color.is_available ? (
                 <span
                     key={i}
                     onClick={handleSizeChange}
@@ -302,7 +302,7 @@ const ProductDetail = ({
                 ) : color.sizes[4] &&
                 color.sizes[4].number === size &&
                 color.sizes[4].stock > 0 &&
-                color.isAvailable ? (
+                color.is_available ? (
                 <span
                     key={i}
                     onClick={handleSizeChange}
@@ -313,7 +313,7 @@ const ProductDetail = ({
                 ) : color.sizes[5] &&
                 color.sizes[5].number === size &&
                 color.sizes[5].stock > 0 &&
-                color.isAvailable ? (
+                color.is_available ? (
                 <span
                     key={i}
                     onClick={handleSizeChange}
@@ -331,11 +331,11 @@ const ProductDetail = ({
                 )
             );
 
-            frontBase64ImagesObj[color.type] = color.imageFrontBase64;
+            frontBase64ImagesObj[color.type] = color.image_front_base64;
             color.sizes.forEach((size: any) => {
                 sizesObj[`${color.type}-${size.number}`] = {
                 price: size.price,
-                variantId: size.variantId,
+                variantId: size.variant_id,
                 stock: size.stock,
                 color: color.type,
                 };
@@ -485,7 +485,7 @@ const ProductDetail = ({
                                 key={i}
                                 onClick={handleColorChange}
                                 className={
-                                    color.isAvailable && i === 0
+                                    color.is_available && i === 0
                                     ? `cursor-pointer bg-black px-6 py-2 rounded-3xl text-gray-400 line-through`
                                     : `cursor-pointer bg-transparent border border-gray-200 px-6 py-2 rounded-3xl text-gray-400 line-through`
                                 }
@@ -497,7 +497,7 @@ const ProductDetail = ({
                                 key={i}
                                 onClick={handleColorChange}
                                 className={
-                                    color.isAvailable && i === 0
+                                    color.is_available && i === 0
                                     ? `bg-black px-6 py-2 rounded-3xl text-white cursor-pointer`
                                     : `cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600 px-6 py-2 rounded-3xl bg-transparent`
                                 }

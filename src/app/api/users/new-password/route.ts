@@ -1,11 +1,9 @@
-import { connect } from "@/db/config";
 import { getDataFromToken } from "@/helpers/getDataFromToken";
 import { sendMail } from "@/helpers/mailer";
 import User from "@/models/user";
 import * as argon from "argon2";
 import { NextRequest, NextResponse } from "next/server";
-
-connect();
+import { Op } from "sequelize";
 
 // export async function GET(req: NextRequest) {
 //   try {
@@ -39,7 +37,9 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await User.findOne(
-      { resetToken: token, resetTokenExpirationDate: { $gt: new Date() } }
+      {
+        where: { reset_token: token, reset_token_expiry_date: { [Op.gt]: new Date()  } }
+      }
       
     );
 
@@ -54,8 +54,8 @@ export async function POST(req: NextRequest) {
     const newHashedPassword = await argon.hash(password);
 
     user.password = newHashedPassword;
-    user.resetToken = undefined;
-    user.resetTokenExpirationDate = undefined;
+    user.reset_token = null;
+    user.reset_token_expiry_date = null;
 
     await user.save();
 

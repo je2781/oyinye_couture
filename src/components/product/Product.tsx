@@ -57,7 +57,7 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
             const item = e.currentTarget;
             const imgElement = item.querySelector('img') as HTMLImageElement;
             const zoomHint = item.parentNode!.querySelector('#zoom-hint') as HTMLDivElement;
-            imgElement.src = product.colors[0].imageFrontBase64[0];
+            imgElement.src = product.colors[0].image_front_base64[0];
 
             zoomHint.classList.remove('expand');
 
@@ -66,9 +66,9 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
         }}
         onClick={() => {
           if(isOnDetailPage){
-            location.replace(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variantId}`);
+            location.replace(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variant_id}`);
           }else{
-            router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variantId}`)
+            router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variant_id}`)
           }
           
         }}
@@ -87,7 +87,7 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
       > 
           <div className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && width > 375 && isGridView && isSearchProduct ? 'w-[181px] h-[200px]':  width <= 375 && isGridView && isSearchProduct ? 'w-[173px] h-[200px]' : width < 768 && !isGridView && isSearchProduct ? 'w-full h-[380px]': width >= 768 && width < 1024 ? 'w-[270px]' : ``} group overflow-hidden`}>
               <Image
-                  src={product.colors[0].imageFrontBase64[0]}
+                  src={product.colors[0].image_front_base64[0]}
                   alt="dress-Image"
                   width={imageW ?? 300}
                   height={imageH ?? 450}

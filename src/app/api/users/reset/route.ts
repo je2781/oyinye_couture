@@ -1,4 +1,3 @@
-import { connect } from "@/db/config";
 import { getDataFromToken } from "@/helpers/getDataFromToken";
 import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
@@ -6,7 +5,6 @@ import User from "@/models/user";
 import * as argon from 'argon2';
 import { NextRequest, NextResponse } from "next/server";
 
-connect();
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,7 +13,9 @@ export async function POST(req: NextRequest) {
     const {email} = reqBody;
 
     const user = await User.findOne({
+      where: {
         email
+    }
     });
 
     if(!user){
@@ -29,13 +29,13 @@ export async function POST(req: NextRequest) {
     await sendMail({
         email: user.email,
         emailType: EmailType.reset,
-        userId: user._id
-      });
+        userId: user.id
+    });
 
-      return NextResponse.json(
-        { message: "Password reset email sent!", success: true},
-        { status: 200 }
-      );
+    return NextResponse.json(
+      { message: "Password reset email sent!", success: true},
+      { status: 200 }
+    );
   
 
   } catch (error: any) {

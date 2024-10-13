@@ -308,7 +308,7 @@ export default function SearchResults({
                                       `/${locale !== 'en' ? `${locale}/` : ''}products/${product.title
                                         .replace(" ", "-")
                                         .toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product
-                                        .colors[0].sizes[0].variantId!}`
+                                        .colors[0].sizes[0].variant_id!}`
                                     )
                                   }
                                 >
@@ -370,7 +370,7 @@ export default function SearchResults({
                                 `/${locale !== 'en' ? `${locale}/` : ''}products/${product.title
                                   .replace(" ", "-")
                                   .toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product
-                                  .colors[0].sizes[0].variantId!}`
+                                  .colors[0].sizes[0].variant_id!}`
                               )
                             }
                             className="flex flex-row items-start gap-x-5 px-4 py-3 hover:bg-gray-100 cursor-pointer"

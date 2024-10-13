@@ -1,26 +1,25 @@
-import { connect } from "@/db/config";
 import User from "@/models/user";
 import { NextRequest, NextResponse } from "next/server";
 import * as argon from "argon2";
 import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
 import { getVisitData } from "@/helpers/getVisitData";
-import mongoose from "mongoose";
-import { error } from "console";
+import crypto from 'crypto';
+import Visitor from "@/models/visitor";
 
-
-connect();
 
 export async function POST(req: NextRequest) {
   try {
     const reqBody = await req.json();
     const { firstName, lastName, email, password, enableEmailMarketing} = reqBody;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({
+      where: { email }
+    });
     //check if user laready exists
     if (user) {
       if(enableEmailMarketing){
-        user.enableEmailMarketing = enableEmailMarketing;
+        user.enable_email_marketing = enableEmailMarketing;
         await user.save();
 
         return NextResponse.json(
@@ -41,52 +40,57 @@ export async function POST(req: NextRequest) {
     }
 
     const visitId = getVisitData(req);
-    const newVisitId = mongoose.Types.ObjectId.createFromHexString(visitId!);
 
     if(password && firstName  && lastName && email){
       
           const hash = await argon.hash(password);
       
-          const newUser = new User({
+          const newUser = await User.create({
+            id: (await crypto.randomBytes(6)).toString("hex"),
             email,
             password: hash,
-            firstName,
-            lastName,
-            'visitor.visitId': mongoose.Types.ObjectId.isValid(newVisitId) ? newVisitId : null 
+            first_name: firstName,
+            last_name: lastName,
           });
       
-          const savedUser = await newUser.save();
+          if(visitId){
+            const visitor = await Visitor.findByPk(visitId);
+            await newUser.setVisitor(visitor!);
+          }
       
           //sending verification email
           const msgInfo = await sendMail({
-            email: savedUser.email,
+            email: newUser.email,
             emailType: EmailType.verify_account,
-            userId: savedUser._id
+            userId: newUser.id
           });
       
           return NextResponse.json(
             {
               message: "User created successfully",
               success: true,
-              savedUser,
+              newUser,
             },
             { status: 201 }
           );
 
     }else{
-      const newUser = new User({
+      const newUser = await User.create({
+        id: (await crypto.randomBytes(6)).toString("hex"),
         email,
-        'visitor.visitId': mongoose.Types.ObjectId.isValid(newVisitId) ? newVisitId : null,
-        enableEmailMarketing: enableEmailMarketing ? true : false
+        enable_email_marketing: enableEmailMarketing ? true : false
       });
   
-      const savedUser = await newUser.save();
+      if(visitId){
+        const visitor = await Visitor.findByPk(visitId);
+        await newUser.setVisitor(visitor!);
+      }
 
       return NextResponse.json(
         {
           message: `${enableEmailMarketing ? 'user has joined mailing list' : 'User created successfully'}`,
           success: true,
-          id: savedUser._id.toString(),
+          id: newUser.id,
         },
         { status: 201 }
       );
