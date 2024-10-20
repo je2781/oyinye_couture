@@ -1,20 +1,18 @@
 import { months, randomReference } from '@/helpers/getHelpers';
 import { getVisitData } from '@/helpers/getVisitData';
 import * as argon from "argon2";
-import User from '@/models/user';
 import { NextResponse, type NextRequest } from 'next/server';
 import { sendMail } from '@/helpers/mailer';
 import { EmailType } from '@/interfaces';
-import Enquiry from '@/models/enquiries';
 import crypto from 'crypto';
-import Visitor from '@/models/visitor';
+import { models } from '@/db/connection';
 
 
 export async function DELETE(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
 
         if(params.slug![1]){
-          const enq = await Enquiry.findByPk(params.slug![1]);
+          const enq = await models.Enquiry.findByPk(params.slug![1]);
 
           await enq!.destroy();
 
@@ -59,7 +57,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug?: str
 
         
         if(params.slug![1]){
-          const enq = await Enquiry.findByPk(params.slug![1]);
+          const enq = await models.Enquiry.findByPk(params.slug![1]);
 
           if(!enq ){
             
@@ -132,7 +130,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
         } = await req.json();
 
 
-        const user = await User.findOne({where: {email}});
+        const user = await models.User.findOne({where: {email}});
     
         if(!user){
           const visitId = getVisitData(req);
@@ -141,7 +139,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
     
           const hash = await argon.hash(newPassword);
           
-          const newUser = await User.create({
+          const newUser = await models.User.create({
             id: (await crypto.randomBytes(6)).toString("hex"),
             email,
             password: hash,
@@ -150,7 +148,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
           });
 
           if(visitId){
-            const visitor = await Visitor.findByPk(visitId);
+            const visitor = await models.Visitor.findByPk(visitId);
             await newUser.setVisitor(visitor!);
           }
           // Send password creation email
@@ -169,7 +167,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
     
           if(params.slug![0] === 'custom-order'){
             //creating new appointment
-            const newOrder = await Enquiry.create({
+            const newOrder = await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
               order: {
                 styles,
@@ -183,7 +181,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
 
             await newOrder.setUser(newUser);
           }else{
-            const newEquiry = await Enquiry.create({
+            const newEquiry = await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
               contact: {
                 subject,
@@ -212,7 +210,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
           if(params.slug![0] === 'custom-order'){
 
             //creating new appointment
-            const newOrder = await Enquiry.create({
+            const newOrder = await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
               order: {
                 styles,
@@ -226,7 +224,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
       
             await newOrder.setUser(user);
           }else{
-            const newEquiry = await Enquiry.create({
+            const newEquiry = await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
               contact: {
                 subject,
@@ -268,8 +266,8 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
           const updatedPage = +page! || 1;
           const ITEMS_PER_PAGE = +params.slug[0];
   
-          let totalEnquiries = (await Enquiry.findAndCountAll()).count;
-          let enquiries = await Enquiry.findAll({
+          let totalEnquiries = (await models.Enquiry.findAndCountAll()).count;
+          let enquiries = await models.Enquiry.findAll({
             offset: (updatedPage-1) * ITEMS_PER_PAGE,
             limit: ITEMS_PER_PAGE,
           });

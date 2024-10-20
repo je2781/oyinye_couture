@@ -18,57 +18,102 @@ import {
   verticalBarGraphOptions,
   productTypeGraphOptions,
   deliveryOptionsGraphOptions,
+  generateBase64FromMedia,
+  extractProductDetail,
+  shiftFirstToLast,
 } from "@/helpers/getHelpers";
-import "./Body.css";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination, Navigation } from "swiper/modules";
 import React from "react";
 import toast from "react-hot-toast";
-import { EmailType, SizeData, Value } from "@/interfaces";
+import { Base64ImagesObj, CartItemObj, SizeData, Value } from "@/interfaces";
 import axios from "axios";
 import Calendar from 'react-calendar';
-import { Swiper, SwiperSlide } from "swiper/react";
 import FullCalendar from '@fullcalendar/react';
 import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
-
-import "swiper/css";
 import 'react-calendar/dist/Calendar.css';
 import useWindowWidth from "../helpers/getWindowWidth";
 import { AdminSettingsModal, MobileModal } from "../ui/Modal";
+import crypto from "crypto";
 import useGlobal from "@/store/useGlobal";
 import AdminPagination from "../layout/AdminPagination";
 import { Chart, LinearScale, CategoryScale, BarElement, PointElement, LineElement, Filler, Legend, ArcElement } from 'chart.js';
 
-Chart.register(LinearScale, CategoryScale, BarElement, PointElement, LineElement, Filler, Legend, ArcElement);
 
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import Link from "next/link";
-import { sendMail } from "@/helpers/mailer";
+import ProductComponent from "../product/Product";
 
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
+import "./Body.css";
+import { col } from "sequelize";
+
+Chart.register(LinearScale, CategoryScale, BarElement, PointElement, LineElement, Filler, Legend, ArcElement);
 
 export default function Body({
   pathName,
   extractedOrders,
   data, 
   enquiriesData,
-  visitors
+  visitors,
+  products
 }: any) {
   const colorList = [
-    "bg-yellow-950",
-    "bg-red-800",
-    "bg-blue-800",
-    "bg-green-800",
-    "bg-purple-800",
-    "bg-slate-400",
+    "#422006",
+    "#0000FF",
+    "#FFC0CB",
+    "#065F46",
+    "#6B21A8",
+    "#94A3B8",
+  ];
+  const productListingColorList = [
+    "bg-[#422006]",
+    "bg-[#0000FF]",
+    "bg-[#FFC0CB]",
+    "bg-[#065F46]",
+    "bg-[#6B21A8]",
+    "bg-[#94A3B8]",
   ];
 
-  const [dailyData, dailyProductTypeData, dailyVisitorsData, dailyDeliveryOptionsData, dailyPaymentTypeData, monthData, monthProductTypeData, monthVisitorsData, monthDeliveryOptionsData, monthPaymentTypeData, annualData, annualProductTypeData, annualVisitorsData, annualDeliveryOptionsData, annualPaymentTypeData] = getDataset(extractedOrders);
+  let listOfFeatures = '';
 
+  let productObj = React.useRef<CartItemObj>({});
+  let frontBase64ImagesObj = React.useRef<Base64ImagesObj>({});
+  let backBase64ImagesObj = React.useRef<Base64ImagesObj>({});
+  let selectedProduct = React.useRef<any>();
+
+  const [dailyData, dailyProductTypeData, dailyVisitorsData, dailyDeliveryOptionsData, dailyPaymentTypeData, monthData, monthProductTypeData, monthVisitorsData, monthDeliveryOptionsData, monthPaymentTypeData, annualData, annualProductTypeData, annualVisitorsData, annualDeliveryOptionsData, annualPaymentTypeData] = getDataset(extractedOrders);
   const [dressColorsState, dispatchAction] = React.useReducer(
     colorsReducer,
     []
   );
+  const [selectedColor, setSelectedColor] = React.useState('');
+  const [selectedColors, setSelectedColors] = React.useState<any[]>([]);
   const [hasStock, setHasStock] = React.useState(false);
-  const [isFeature, setIsFeature] = React.useState(false);
+  const [imageBase64, setImageBase64] = React.useState<{
+    position: string,
+    imagesFront: any[],
+    imagesBack: any[]
+  }>({
+    position: 'front',
+    imagesFront: [],
+    imagesBack: []
+  });
+  const [visibleImages, setVisibleImages] = React.useState<{
+    position: string,
+    images: Base64ImagesObj
+  }>({
+    position: 'front',
+    images: {}
+  });
+  const [extractedProducts, setExtractedProducts] = React.useState<any[]>(products);
+  const [isFeature, setIsFeature] = React.useState({
+    listing: false,
+    edit: false
+  });
   const [orders, setOrders] = React.useState<any[]>(extractedOrders);
   const [enquiries, setEnquiries] = React.useState<any[]>(enquiriesData.enquiries);
   const [orderListLength, setOrderListLength] = React.useState('10');
@@ -90,17 +135,54 @@ export default function Body({
   const [endDate, setEndDate] = React.useState(`${new Date().getDate()} ${months[currentMonth]} ${new Date().getFullYear()}`);
   const [endValue, setEndValue] = React.useState<Value>(new Date(endDate));
   const [startValue, setStartValue] = React.useState<Value>(new Date(startDate));
-  const [price, setPrice] = React.useState("");
-  const [stock, setStock] = React.useState("");
-  const [title, setTitle] = React.useState("");
-  const [fabric, setFabric] = React.useState("");
-  const [embelishment, setEmbelishment] = React.useState("");
-  const [dressLength, setDressLength] = React.useState("");
-  const [neckLine, setNeckLine] = React.useState("");
-  const [sleeveL, setSleeveL] = React.useState("");
-  const [type, setType] = React.useState("");
-  const [desc, setDesc] = React.useState("");
+  const [price, setPrice] = React.useState({
+    listing: '',
+    edit: {
+      size: 0,
+      value: ''
+    }
+  });
+  const [stock, setStock] = React.useState({
+    listing: '',
+    edit: {
+      size: 0,
+      value: ''
+    }
+  });
+  const [title, setTitle] = React.useState({
+    listing: '',
+    edit: ''
+  });
+  const [fabric, setFabric] = React.useState({
+    listing: '',
+    edit: ''
+  });
+  const [embelishment, setEmbelishment] = React.useState({
+    listing: '',
+    edit: ''
+  });
+  const [dressLength, setDressLength] = React.useState({
+    listing: '',
+    edit: ''
+  });
+  const [neckLine, setNeckLine] = React.useState({
+    listing: '',
+    edit: ''
+  });
+  const [sleeveL, setSleeveL] = React.useState({
+    listing: '',
+    edit: ''
+  });
+  const [type, setType] = React.useState({
+    listing: '',
+    edit: ''
+  });
+  const [desc, setDesc] = React.useState({
+    listing: '',
+    edit: ''
+  });
   const [isLoading, setIsLoading] = React.useState(false);
+  const [dressFeatures, setDressFeatures] = React.useState('');
   const [range, setRange] = React.useState<number | null>(5);
   const [period, setPeriod] = React.useState<string | null>('monthly');
   const [lineGraphData, setLineGraphData] = React.useState(Object.values(monthData)[4]);
@@ -112,7 +194,6 @@ export default function Body({
   const { isMobileModalOpen, setIsMobileModalOpen } = useGlobal();
   const [loader, setLoader] = React.useState(false);
  
-
   let timerId: NodeJS.Timeout | null = null;
 
   let currentBgColors: string[] = [];
@@ -162,30 +243,40 @@ export default function Body({
 
         if (activeSizes.length >= 1) {
           setSizeData(updatedSizeData);
-          setPrice(updatedSizeData[updatedSizeData.length - 1].price!);
+          setPrice(prevPrice => ({
+            ...prevPrice,
+            listing: updatedSizeData[updatedSizeData.length - 1].price!
+          }));
           setHasStock(
             updatedSizeData[updatedSizeData.length - 1].stock
               ? updatedSizeData[updatedSizeData.length - 1].stock! > 0
               : false
           );
-          setStock(
-            updatedSizeData[updatedSizeData.length - 1].stock
-              ? updatedSizeData[updatedSizeData.length - 1].stock!.toString()
-              : ""
-          );
+          setStock(prevStock => ({
+            ...prevStock,
+            listing: updatedSizeData[updatedSizeData.length - 1].stock
+            ? updatedSizeData[updatedSizeData.length - 1].stock!.toString()
+            : ""
+          }));
         } else {
           //updating price and stock input elements for active size
 
-          setPrice("");
+          setPrice(prevPrice => ({
+            ...prevPrice,
+            listing: ""
+          }));
           setHasStock(false);
-          setStock("");
+          setStock(prevPrice => ({
+            ...prevPrice,
+            listing: ""
+          }));
 
           setSizeData(updatedSizeData);
         }
       } else {
         if (
           sizeData.length > 0 &&
-          price.length === 0 &&
+          price.listing.length === 0 &&
           sizeData.some(
             (datum) =>
               datum.color === currentBgColors[currentBgColors.length - 1]
@@ -213,9 +304,15 @@ export default function Body({
         ]);
 
         // reseting price and stock input element value for active size
-        setPrice("");
+        setPrice(prevPrice => ({
+          ...prevPrice,
+          listing: ""
+        }));
         setHasStock(false);
-        setStock("");
+        setStock(prevPrice => ({
+          ...prevPrice,
+          listing: ""
+        }));
 
         selectedSize.classList.remove("text-black", "bg-white");
         selectedSize.classList.add(
@@ -236,8 +333,6 @@ export default function Body({
     let selectedColor = Array.from(item.classList).find((className) =>
       className.includes("bg-")
     )!;
-    let priceInput = document.querySelector("#price") as HTMLInputElement;
-    let stock = document.querySelector("#stock") as HTMLInputElement;
     let sizeEls = document.querySelectorAll("[id^=size]") as NodeListOf<
       HTMLSpanElement
     >;
@@ -269,12 +364,16 @@ export default function Body({
             }
           }
         }
-        setPrice(updatedSizeData[updatedSizeData.length - 1].price!);
-        setStock(
-          updatedSizeData[updatedSizeData.length - 1].stock
-            ? updatedSizeData[updatedSizeData.length - 1].stock!.toString()
-            : ""
-        );
+        setPrice(prevPrice => ({
+          ...prevPrice,
+          listing: updatedSizeData[updatedSizeData.length - 1].price!
+        }));
+        setStock(prevStock => ({
+          ...prevStock,
+          listing: updatedSizeData[updatedSizeData.length - 1].stock
+          ? updatedSizeData[updatedSizeData.length - 1].stock!.toString()
+          : ""
+        }));
         setHasStock(
           updatedSizeData[updatedSizeData.length - 1].stock
             ? updatedSizeData[updatedSizeData.length - 1].stock! > 0
@@ -293,9 +392,15 @@ export default function Body({
         });
 
         // reseting price, stock input element values for zero selected colors
-        setPrice("");
-        setStock("");
+        setPrice(prevPrice => ({
+          ...prevPrice,
+          listing: ""
+        }));
         setHasStock(false);
+        setStock(prevPrice => ({
+          ...prevPrice,
+          listing: ""
+        }));
       }
 
       dispatchAction({
@@ -334,9 +439,15 @@ export default function Body({
       });
 
       // reseting price, stock input element values and image names for active color
-      setPrice("");
-      setStock("");
+      setPrice(prevPrice => ({
+        ...prevPrice,
+        listing: ""
+      }));
       setHasStock(false);
+      setStock(prevPrice => ({
+        ...prevPrice,
+        listing: ""
+      }));
       setBackFilename(null);
       setFrontFilename(null);
 
@@ -487,6 +598,100 @@ export default function Body({
     }
   }, [isAdminSettingsOpen]);
 
+  function editProduct(product: any){
+    productObj.current = {};
+    frontBase64ImagesObj.current = {};
+    backBase64ImagesObj.current = {};
+    selectedProduct.current = product;
+    setSelectedColors(selectedProduct.current.colors);
+
+    listOfFeatures = '';
+    //collecting and concatenating dress features
+    for(let feature of selectedProduct.current.features){
+      listOfFeatures = listOfFeatures + feature + ', ';
+    }
+    setDressFeatures(listOfFeatures);
+
+    setTitle(prevTitle => ({
+      ...prevTitle,
+      edit: selectedProduct.current.title
+    }));
+    setType(prevType => ({
+      ...prevType,
+      edit: selectedProduct.current.type
+    }));
+    setDesc(prevDesc => ({
+      ...prevDesc,
+      edit: selectedProduct.current.description
+    }));
+    setIsFeature(prevIsFeature => ({
+      ...prevIsFeature,
+      edit: selectedProduct.current.is_feature
+    }));
+    setSelectedColor(selectedProduct.current.colors[0].type);
+    setSelectedColors(selectedProduct.current.colors.map((color: any) => color.type));
+    extractProductDetail(product, frontBase64ImagesObj.current, backBase64ImagesObj.current, productObj.current);
+    setPrice(prevPrice => ({
+      ...prevPrice,
+      edit: {
+        ...prevPrice.edit,
+        size: Object.values(productObj.current)[0].number!,
+        value: Object.values(productObj.current)[0].price.toString()
+      }
+    }));
+    setStock(prevStock => ({
+      ...prevStock,
+      edit: {
+        ...prevStock.edit,
+        size: Object.values(productObj.current)[0].number!,
+        value: Object.values(productObj.current)[0].stock.toString()
+      }
+    }));
+    setVisibleImages(prevVisibleImgs => ({
+      ...prevVisibleImgs,
+      images: frontBase64ImagesObj.current
+    }));
+    setIsAdminSettingsOpen(true);
+  }
+
+  async function deleteProduct(id: string){
+    setExtractedProducts(prevProducts => prevProducts.filter((prod: any) => prod.id !== id));
+    await axios.patch(`/api/products/update/${id}`);
+  }
+
+  async function handleSizeEdit(e: React.MouseEvent<HTMLSpanElement>, item: number){
+    if(!productObj.current[`${selectedColor}-${item}`]){
+      const newSizeObj = {
+        price: 0,
+        stock: 1,
+        variant_id: (await crypto.randomBytes(6)).toString("hex"),
+        number: item,
+        color: selectedColor
+      };
+      productObj.current[`${selectedColor}-${item}`] = newSizeObj;
+
+    }
+      
+    setPrice(prevPrice => ({
+      ...prevPrice,
+      edit: {
+        ...prevPrice.edit,
+        size: productObj.current[`${selectedColor}-${item}`].number!,
+        value: productObj.current[`${selectedColor}-${item}`].price.toString()
+      }
+    }));
+    setStock(prevStock => ({
+      ...prevStock,
+      edit: {
+        ...prevStock.edit,
+        size: productObj.current[`${selectedColor}-${item}`].number!,
+        value: productObj.current[`${selectedColor}-${item}`].stock.toString()
+      }
+    }));
+    
+
+  }
+
   // const browserUsageData = {
   //   chrome: visitors.filter((visitor: any) => visitor.browser === 'Chrome').length,
   //   safari: visitors.filter((visitor: any) => visitor.browser === 'Safari').length,
@@ -510,15 +715,15 @@ export default function Body({
                 onSubmit={(e) =>
                   handleSubmit(
                     e,
-                    title,
-                    desc,
-                    type,
-                    embelishment,
-                    fabric,
-                    sleeveL, 
-                    dressLength,
-                    neckLine,
-                    isFeature,
+                    title.listing,
+                    desc.listing,
+                    type.listing,
+                    embelishment.listing,
+                    fabric.listing,
+                    sleeveL.listing, 
+                    dressLength.listing,
+                    neckLine.listing,
+                    isFeature.listing,
                     dressColorsState,
                     currentBgColors,
                     sizeData,
@@ -631,7 +836,7 @@ export default function Body({
                         }
                       }}
                       id="title"
-                      value={title}
+                      value={title.listing}
                       onChange={(e) => {
                         
                         let item = e.currentTarget;
@@ -643,7 +848,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                        setTitle(e.target.value)
+                        setTitle(prevTitle => ({
+                          ...prevTitle,
+                          listing: e.target.value
+                        }));
                       }}
                       className="w-full h-6 bg-transparent focus:outline-none placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                     />
@@ -686,7 +894,7 @@ export default function Body({
                         }
                       }}
                       id="desc"
-                      value={desc}
+                      value={desc.listing}
                       onChange={(e) => {
                         let item = e.currentTarget;
                         item.placeholder = "";
@@ -698,7 +906,10 @@ export default function Body({
                           }
                         }
 
-                        setDesc(e.target.value);
+                        setDesc(prevDesc => ({
+                          ...prevDesc,
+                          listing: e.target.value
+                        }));
 
                       }}
                       className="w-full bg-transparent focus:outline-none placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
@@ -746,7 +957,7 @@ export default function Body({
 
                         }}
                         id="type"
-                        value={type}
+                        value={type.listing}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -757,7 +968,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setType(e.target.value);
+                          setType(prevType => ({
+                            ...prevType,
+                            listing: e.target.value
+                          }));
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -802,7 +1016,7 @@ export default function Body({
 
                         }}
                         id="slength"
-                        value={sleeveL}
+                        value={sleeveL.listing}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -813,7 +1027,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setSleeveL(e.target.value);
+                          setSleeveL(prevSleeveL => ({
+                            ...prevSleeveL,
+                            listing: e.target.value
+                          }));
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -861,7 +1078,7 @@ export default function Body({
 
                         }}
                         id="embelish"
-                        value={embelishment}
+                        value={embelishment.listing}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -872,7 +1089,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setEmbelishment(e.target.value);
+                          setEmbelishment(prevEmbelishment => ({
+                            ...prevEmbelishment,
+                            listing: e.target.value
+                          }));
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -917,7 +1137,7 @@ export default function Body({
 
                         }}
                         id="fabric"
-                        value={fabric}
+                        value={fabric.listing}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -928,7 +1148,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setFabric(e.target.value);
+                          setFabric(prevFabric => ({
+                            ...prevFabric,
+                            listing: e.target.value
+                          }));
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -976,7 +1199,7 @@ export default function Body({
 
                         }}
                         id="dresslength"
-                      value={dressLength}
+                      value={dressLength.listing}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -987,7 +1210,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setDressLength(e.target.value);
+                          setDressLength(prevDressLength => ({
+                            ...prevDressLength,
+                            listing: e.target.value
+                          }));
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1032,7 +1258,7 @@ export default function Body({
 
                         }}
                         id="neckLine"
-                        value={neckLine}
+                        value={neckLine.listing}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1043,7 +1269,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setNeckLine(e.target.value);
+                          setNeckLine(prevNeckLine => ({
+                            ...prevNeckLine,
+                            listing: e.target.value
+                          }));
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1055,11 +1284,11 @@ export default function Body({
                       className="flex flex-row flex-wrap gap-x-[6px] gap-y-2"
                       id="colors-list"
                     >
-                      {colorList.map((_, i: number) => (
+                      {productListingColorList.map((val, i: number) => (
                         <span
                           key={i}
                           onClick={(e) => handleSelectedColor(e, i)}
-                          className={`rounded-sm cursor-pointer ${colorList[i]} w-6 h-6`}
+                          className={`rounded-sm cursor-pointer] w-6 h-6 ${val} cursor-pointer`}
                         ></span>
                       ))}
                     </div>
@@ -1122,7 +1351,7 @@ export default function Body({
                       type="number"
                       min={0}
                       step={50}
-                      value={price}
+                      value={price.listing}
                       onChange={(e) => {
                         
                         let item = e.currentTarget;
@@ -1184,7 +1413,10 @@ export default function Body({
                         step={1}
                         id="stock"
                         onChange={(e) => {
-                          setStock(e.target.value);
+                          setStock(prevStock => ({
+                            ...prevStock,
+                            listing: e.target.value
+                          }));
                           //storing size data of previous active size
                           setSizeData((prevState) => [
                             ...prevState,
@@ -1195,7 +1427,7 @@ export default function Body({
                             },
                           ]);
                         }}
-                        value={stock}
+                        value={stock.listing}
                         className="w-[60%] focus:outline-none h-8 border border-t-0 border-l-0 border-r-0 border-secondary-400 bg-transparent placeholder:text-secondary-400"
                       />
                     )}
@@ -1217,10 +1449,12 @@ export default function Body({
                             }
                           );
                         }
-                      
-                        setIsFeature(e.currentTarget.checked!);
+                        setIsFeature(prevIsFeature => ({
+                          ...prevIsFeature,
+                          listing: e.currentTarget.checked!
+                        }));
                       }}
-                      checked={isFeature}
+                      checked={isFeature.listing}
                       id="feature-check"
                       type="checkbox"
                       className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-500 rounded-sm relative
@@ -1340,15 +1574,15 @@ export default function Body({
                 onSubmit={(e) =>
                   handleSubmit(
                     e,
-                    title,
-                    desc,
-                    type,
-                    embelishment,
-                    fabric,
-                    sleeveL, 
-                    dressLength,
-                    neckLine,
-                    isFeature,
+                    title.listing,
+                    desc.listing,
+                    type.listing,
+                    embelishment.listing,
+                    fabric.listing,
+                    sleeveL.listing, 
+                    dressLength.listing,
+                    neckLine.listing,
+                    isFeature.listing,
                     dressColorsState,
                     currentBgColors,
                     sizeData,
@@ -1461,7 +1695,7 @@ export default function Body({
                         }
                       }}
                       id="title"
-                      value={title}
+                      value={title.listing}
                       onChange={(e) => {
                         
                         let item = e.currentTarget;
@@ -1473,7 +1707,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                        setTitle(e.target.value)
+                        setTitle(prevTitle => ({
+                          ...prevTitle,
+                          listing: e.target.value
+                        }));
                       }}
                       className="w-full h-6 bg-transparent focus:outline-none placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                     />
@@ -1516,7 +1753,7 @@ export default function Body({
                         }
                       }}
                       id="desc"
-                      value={desc}
+                      value={desc.listing}
                       onChange={(e) => {
                         let item = e.currentTarget;
                         item.placeholder = "";
@@ -1528,7 +1765,10 @@ export default function Body({
                           }
                         }
 
-                        setDesc(e.target.value);
+                        setDesc(prevDesc => ({
+                          ...prevDesc,
+                          listing: e.target.value
+                        }));
 
                       }}
                       className="w-full bg-transparent focus:outline-none placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
@@ -1576,7 +1816,7 @@ export default function Body({
 
                         }}
                         id="type"
-                        value={type}
+                        value={type.listing}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1587,7 +1827,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setType(e.target.value);
+                          setType(prevType => ({
+                            ...prevType,
+                            listing: e.target.value
+                          }));
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1632,7 +1875,7 @@ export default function Body({
 
                         }}
                         id="slength"
-                        value={sleeveL}
+                        value={sleeveL.listing}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1643,7 +1886,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setSleeveL(e.target.value);
+                          setSleeveL(prevSleeveL => ({
+                            ...prevSleeveL,
+                            listing: e.target.value
+                          }));
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1691,7 +1937,7 @@ export default function Body({
 
                         }}
                         id="embelish"
-                        value={embelishment}
+                        value={embelishment.listing}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1702,7 +1948,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setEmbelishment(e.target.value);
+                          setEmbelishment(prevEmbelishment => ({
+                            ...prevEmbelishment,
+                            listing: e.target.value
+                          }));
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1747,7 +1996,7 @@ export default function Body({
 
                         }}
                         id="fabric"
-                        value={fabric}
+                        value={fabric.listing}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1758,7 +2007,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setFabric(e.target.value);
+                          setFabric(prevFabric => ({
+                            ...prevFabric,
+                            listing: e.target.value
+                          }));
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1806,7 +2058,7 @@ export default function Body({
 
                         }}
                         id="dresslength"
-                      value={dressLength}
+                        value={dressLength.listing}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1817,7 +2069,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setDressLength(e.target.value);
+                          setDressLength(prevDressLength => ({
+                            ...prevDressLength,
+                            listing: e.target.value
+                          }));
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1862,7 +2117,7 @@ export default function Body({
 
                         }}
                         id="neckLine"
-                        value={neckLine}
+                        value={neckLine.listing}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1873,7 +2128,10 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setNeckLine(e.target.value);
+                          setNeckLine(prevsetNeckLine => ({
+                            ...prevsetNeckLine,
+                            listing: e.target.value
+                          }));
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1885,11 +2143,11 @@ export default function Body({
                       className="flex flex-row flex-wrap gap-x-[6px] gap-y-2"
                       id="colors-list"
                     >
-                      {colorList.map((_, i: number) => (
+                      {productListingColorList.map((val, i: number) => (
                         <span
                           key={i}
                           onClick={(e) => handleSelectedColor(e, i)}
-                          className={`rounded-sm cursor-pointer ${colorList[i]} w-6 h-6`}
+                          className={`rounded-sm cursor-pointer w-6 h-6 ${val} cursor-pointer`}
                         ></span>
                       ))}
                     </div>
@@ -1952,7 +2210,7 @@ export default function Body({
                       type="number"
                       min={0}
                       step={50}
-                      value={price}
+                      value={price.listing}
                       onChange={(e) => {
                         
                         let item = e.currentTarget;
@@ -2014,7 +2272,10 @@ export default function Body({
                         step={1}
                         id="stock"
                         onChange={(e) => {
-                          setStock(e.target.value);
+                          setStock(prevStock => ({
+                            ...prevStock,
+                            listing: e.target.value
+                          }));
                           //storing size data of previous active size
                           setSizeData((prevState) => [
                             ...prevState,
@@ -2025,7 +2286,7 @@ export default function Body({
                             },
                           ]);
                         }}
-                        value={stock}
+                        value={stock.listing}
                         className="w-[60%] focus:outline-none h-8 border border-t-0 border-l-0 border-r-0 border-secondary-400 bg-transparent placeholder:text-secondary-400"
                       />
                     )}
@@ -2048,9 +2309,12 @@ export default function Body({
                           );
                         }
                       
-                        setIsFeature(e.currentTarget.checked!);
+                        setIsFeature(prevIsFeature => ({
+                          ...prevIsFeature,
+                          listing: e.currentTarget.checked!
+                        }));
                       }}
-                      checked={isFeature}
+                      checked={isFeature.listing}
                       id="feature-check"
                       type="checkbox"
                       className="text-white bg-white appearance-none w-[16px] h-[16px] border border-gray-500 rounded-sm relative
@@ -2091,7 +2355,7 @@ export default function Body({
                 <span>entries</span>
               </header>
               {orders.length === 0
-              ? <section className="flex flex-row justify-center items-end text-white w-full">
+              ? <section className="flex flex-row justify-center text-white w-full">
                   <h1 className="font-sans text-lg">No Order has been created!</h1>
               </section>
               :
@@ -4111,13 +4375,382 @@ export default function Body({
                 })}
                 <AdminPagination {...enquiriesData} />
               </>
-              : <section className="flex items-center flex-col w-full min-h-screen justify-center">
-              <h1 className="font-sans md:text-2xl text-xl">No emails available!</h1>
+              : <section className="flex items-center flex-row w-full md:mt-24 mt-12 justify-center">
+              <h1 className="font-sans md:text-xl text-lg text-white">No emails available!</h1>
             </section>}
 
             </section>
           )
           
+        }
+        {
+          pathName === 'products' && (<section className="w-full text-secondary-400 font-sans">
+            <div className={`w-full flex md:flex-row flex-col items-center py-4 h-full overflow-y-auto hide-scrollbar justify-evenly flex-wrap gap-x-1 gap-y-4`}>
+                {extractedProducts.map((product: any, i: number) => (
+                  <ProductComponent
+                    key={i}
+                    imageW={250}
+                    imageH={300}
+                    handleEdit={() => editProduct(product)}
+                    handleDelete={() => deleteProduct(product.id)}
+                    product={product}
+                    isAdmin={true}
+                  />
+                ))}
+            </div>
+            {isAdminSettingsOpen && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white !top-[7vh]'>
+              <section className='font-sans font-light flex flex-col gap-y-11 text-gray-500 pb-6 pt-16'>
+                              
+                      <form onSubmit={async (e) => {
+                        e.preventDefault();
+                        try {
+                          const Product = {
+                            ...selectedProduct.current,
+                            type: type.edit,
+                            description: desc.edit,
+                            is_feature: isFeature.edit,
+                            features:  dressFeatures.split(',').map(feature => feature.trim()),
+                            colors: selectedProduct.current.colors.map((color: any) => {
+                              let backImages = [];
+                              let frontImages = [];
+                              for(let imageFront of imageBase64.imagesFront){
+                                frontImages.push(imageFront[color]);
+                              }
+                              for(let imageBack of imageBase64.imagesBack){
+                                backImages.push(imageBack[color]);
+                              }
+                              imageBase64.imagesFront.map(image => image[color])
+                              return {
+                                type: color.type,
+                                image_front_base64: frontImages,
+                                image_back_base64: backImages[0],
+                                sizes: Object.values(productObj.current).filter(obj => obj.color === color).map(obj => {
+                                  delete obj.color;
+
+                                  return obj;
+                                }),
+                              };
+                            }),
+                          };
+                          await axios.patch(`/api/products/${selectedProduct.current.id}`, {
+                            	...Product
+                          });
+                        } catch (error) {
+                          
+                        }
+                      }}  className='flex flex-col gap-y-5 max-h-[75vh] items-center w-full' encType="multipart/form-data">
+                        <article className={`flex flex-col gap-y-2 lg:w-[45%] w-[75%] h-fit items-center relative`}>
+                          <Swiper
+                            modules={[Pagination]}
+                            key={visibleImages.position}
+                            slidesPerView={1}
+                            pagination={{
+                                clickable: true,
+                                el: '.custom-pagination',
+                                renderBullet: (index, className) => {
+
+                                    return `<span class="${className}" style="background-image: url(${Object.values(visibleImages.images).flat()[index]}) !important;"></span>`;
+                                },
+                            }}
+                            className="h-36 w-full"
+                            >
+                        {Object.values(visibleImages.images).flat().map((image: string, i: number) => (
+                            <SwiperSlide key={i}>
+                                <div className="flex flex-row justify-center items-center">
+                                    {image.length > 0 
+                                    ? <label htmlFor='avatar' style={{backgroundImage : `url(${image})`}} id='avatar-container' className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                                    </label>
+                                    : <label htmlFor='avatar' id='avatar-container' className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                                    <i className="fa-solid fa-camera text-2xl text-white"></i>
+                                  </label>
+                                    }
+                                    <input type='file' className='hidden' id='avatar' onChange={async(e) => {
+                                        const base64String = await generateBase64FromMedia(e.target.files![0]);
+                                        const picContainer = document.getElementById('avatar-container') as HTMLLabelElement;
+                                        //clearing reviewer picture container
+                                        picContainer.innerHTML = '';
+
+                                        if(picContainer){
+                                            setImageBase64(prevBase64Imgs => {
+                                              if(prevBase64Imgs.position === 'front'){
+                                                return{
+                                                  ...prevBase64Imgs,
+                                                  imagesFront: [...prevBase64Imgs.imagesFront, {
+                                                    [Object.keys(visibleImages.images)[i]]: base64String as string 
+                                                  }]
+                                                }
+                                              }else{
+                                                return{
+                                                  ...prevBase64Imgs,
+                                                  imagesBack: [...prevBase64Imgs.imagesBack, {
+                                                    [Object.keys(visibleImages.images)[i]]: base64String as string 
+                                                  }]
+                                                }
+                                              }
+                                            });
+                                            picContainer.style.backgroundImage = `url(${base64String})`;
+                                        }
+
+                                    }}/>
+                                </div>
+                            </SwiperSlide>
+                        ))}
+                          </Swiper>
+                          <div className="custom-pagination"></div>
+                          <div 
+                            id='switch-pos' 
+                            onClick={() => {
+                              setVisibleImages(prevVisibleImgs => {
+                                const newPosition = prevVisibleImgs.position === 'front' ? 'back' : 'front';
+                                const newImages = newPosition === 'front' ? frontBase64ImagesObj.current : backBase64ImagesObj.current;
+                  
+                                return {
+                                  ...prevVisibleImgs,
+                                  position: newPosition,
+                                  images: newImages
+                                };
+                              });
+                              setImageBase64(prevBase64Imgs => ({
+                                ...prevBase64Imgs,
+                                position: prevBase64Imgs.position === 'front' ? 'back' : 'front'
+                              }));
+                            }}
+                             
+                            className={`left-0 bottom-16 z-10 rounded-md absolute flex h-6 px-2 py-4 w-[100px] flex-row items-center gap-x-1 font-serif cursor-pointer text-blue-400`} 
+                          >
+                            <i className="fa-solid fa-eye text-xs"></i>
+                            <h4 className="text-[.8rem]">Show {visibleImages.position === 'front' ? 'back' : 'front'}</h4>
+                          </div>
+                        </article>
+                        <section className="flex flex-col items-start w-full max-h-[500px] overflow-y-auto hide-scrollbar">
+                          <header className="font-medium font-sans text-lg px-5">{selectedProduct.current.title}</header>
+                          <hr className="border border-gray-100 mt-3 w-full border-l-0 border-r-0 border-t-0" />
+                          
+                          <div className="p-5 w-full text-gray-400 font-medium font-sans text-sm flex flex-col gap-y-5">
+                            <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
+                              <h3 className="md:w-[50%] w-full">Description</h3>
+                              <input value={desc.edit} onChange={(e) => setDesc(prevDesc => ({
+                                ...prevDesc,
+                                edit: e.target.value
+                              }))} className="focus:outline-none font-normal border border-gray-200 p-2 rounded-sm h-8 md:w-[50%] w-full"/>
+                            </div>
+                            <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
+                              <h3 className="md:w-[50%] w-full">Type</h3>
+                              <input value={type.edit} onChange={(e) => setType(prevType => ({
+                                ...prevType,
+                                edit: e.target.value
+                              }))} className="focus:outline-none font-normal border border-gray-200 p-2 bg-gray-50 rounded-sm h-8 md:w-[50%] w-full"/>
+                            </div>
+                            <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
+                              <h3 className="md:w-[50%] w-full">Set As feature</h3>
+                              <div 
+                                onClick={() => {
+                                    let downAngle = document.querySelector('i.feature-angle-down');
+                                    if(!downAngle?.classList.contains("ad-rotate")){
+                                        downAngle?.classList.add("ad-rotate");
+                                        downAngle?.classList.remove("ad-rotate-anticlock");
+                                    }else{
+                                        downAngle?.classList.remove("ad-rotate");
+                                        downAngle?.classList.add("ad-rotate-anticlock");
+                                    }
+                                }}
+                                className="relative border border-gray-400 rounded-sm p-1 focus:border-gray-600 md:w-[26%] w-[60%]">
+                                    <select 
+                                    id='feature-select'
+                                    className="focus:outline-none p-2 appearance-none"
+                                    onChange={(e) => {
+                                        setIsFeature(prevFeature => ({
+                                          ...prevFeature,
+                                          edit: e.target.value === 'Set' ? true : false
+                                        }));
+
+                                    }}>
+                                        <option hidden value={isFeature.edit ? 'Featured' : 'Not'}>{isFeature.edit ? 'Featured Product' : 'Not featured'}</option>
+                                        {
+                                            ['Not featured',
+                                            'Featured Product'].map((val, i) => <option className='underline underline-offset-1' value={val.split(' ')[0]} key={i}>
+                                                {val}
+                                            </option>)
+                                        }
+                                    </select>
+                                    <i onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    }} className="fa-solid fa-angle-down feature-angle-down absolute top-[36%] right-3"
+
+                                    ></i>
+                                </div>
+                            </div>
+                            <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
+                              <h3 className="md:w-[50%] w-full">Features</h3>
+                              <textarea onChange={(e) => setDressFeatures(e.target.value)} value={dressFeatures} cols={70} rows={150} className="focus:outline-none font-normal border border-gray-200 p-2 bg-gray-50 rounded-sm h-14 md:w-[50%] w-full">
+                              </textarea>
+                            </div>
+                            <div className="w-full flex flex-col items-start gap-y-3">
+                              <h3 className="md:w-[50%] w-full">Colors</h3>
+                              <div
+                                className="flex flex-row flex-wrap gap-x-[7px] gap-y-2"
+                                id="colors-list"
+                              >
+                                {colorList.map((val, i: number) => { 
+                                    if(selectedColors.includes(val)){
+                                      return (<span
+                                        key={i}
+                                        onClick={(e) => {
+                                          if(Object.values(productObj.current).filter(obj => obj.color === selectedColor).length > 0 ){
+                                            if(Object.values(productObj.current).filter(obj => obj.color === selectedColor)[0].price > 0){
+                                                                                            
+                                              setSelectedColor(val);
+                                              setPrice(prevPrice => ({
+                                                ...prevPrice,
+                                                edit: {
+                                                  ...prevPrice.edit,
+                                                  size: Object.values(productObj.current).filter(obj => obj.color! === val)[0].number!,
+                                                  value: Object.values(productObj.current).filter(obj => obj.color! === val)[0].price.toString()
+                                                }
+                                              }));
+                                              setStock(prevStock => ({
+                                                ...prevStock,
+                                                edit: {
+                                                  ...prevStock.edit,
+                                                  size: Object.values(productObj.current).filter(obj => obj.color! === val)[0].number!,
+                                                  value: Object.values(productObj.current).filter(obj => obj.color! === val)[0].stock.toString()
+                                                }
+                                              }));
+                                            }else{
+                                              toast.error('new color size data is incomplete', {
+                                                position: 'top-center'
+                                              });
+                                            }
+                                          }else{
+                                            toast.error('new color size data is missing', {
+                                              position: 'top-center'
+                                            });
+                                          }
+                                        }}
+                                        style={{ backgroundColor: val }}
+                                        className={`rounded-sm cursor-pointer w-6 h-6 ring-4 ring-accent`}
+                                      ></span>);
+                                    }else{
+                                      return (
+                                        <span
+                                        key={i}
+                                        onClick={(e) => {
+                                          e.currentTarget.classList.add('ring-4', 'ring-accent');
+                                          setSelectedColor(val);
+                                          setSelectedColors(prevColors => [val, ...prevColors]);
+                                          setPrice(prevPrice => ({
+                                            ...prevPrice,
+                                            edit: {
+                                              ...prevPrice.edit,
+                                              size: 0,
+                                              value: ''
+                                            }
+                                          }));
+                                          setStock(prevStock => ({
+                                            ...prevStock,
+                                            edit:  {
+                                              ...prevStock.edit,
+                                              size: 0,
+                                              value: ''
+                                            }
+                                          }));
+                                        }}
+                                        style={{ backgroundColor: val }}
+                                        className={`rounded-sm cursor-pointer w-6 h-6`}
+                                      ></span>
+                                      );
+                                    }
+                                  
+                                })}
+                              </div> 
+                                
+                            </div>
+                            <div className="flex flex-col gap-y-3 items-start w-full">
+                              <h5>Size</h5>
+                              <div className="flex flex-row flex-wrap gap-x-[6px] gap-y-6" id="edit-size-list">
+                                {sizes.map((item: number, i: number) => {
+                                   if(Object.values(productObj.current).some(size => size.number === item && size.color === selectedColor)){
+
+                                    return (
+                                      <div className="relative" key={i}>
+                                        <span
+                                          onClick={(e) => handleSizeEdit(e, item)}
+                                          id={`edit-size${i}`}
+                                          style={{ backgroundColor: selectedColor }}
+                                          className={`text-white rounded-[50%] cursor-pointer py-2 px-[10px] w-8 h-8 text-xs font-medium text-center`}
+                                        >
+                                          {item}
+                                        </span>
+                                      </div>
+                                    );
+                                  } else {
+                                    return (
+                                      <div className="relative" key={i}>
+                                        <span
+                                          id={`edit-size${i}`}
+                                          onClick={(e) => handleSizeEdit(e, item)}
+                                          className={`rounded-[50%] cursor-pointer py-2 px-[10px] bg-black w-8 h-8 text-xs font-medium text-white text-center`}
+                                        >
+                                          {item}
+                                        </span>
+                                      </div>
+                                    );
+                                  }
+                                  
+                                })}
+                              </div>
+                            </div>
+                            <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
+                              <h3 className="md:w-[50%] w-full">Price</h3>
+                              <input 
+                                  value={price.edit.value} 
+                                  onChange={(e) => {
+                                  setPrice(prevPrice => ({
+                                    ...prevPrice,
+                                    edit: {
+                                      ...prevPrice.edit,
+                                      size: prevPrice.edit.size,
+                                      value: e.target.value
+                                    }
+                                  }));
+                                  productObj.current[`${selectedColor}-${price.edit.size}`] = {
+                                    ...productObj.current[`${selectedColor}-${price.edit.size}`],
+                                    price: parseFloat(e.target.value)
+                                  };
+
+                                  }} 
+                                  className="focus:outline-none font-normal border border-gray-200 p-2 rounded-sm h-8 md:w-[50%] w-full"
+                                />
+                            </div>
+                            <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
+                              <h3 className="md:w-[50%] w-full">Stock</h3>
+                              <input type="number" value={stock.edit.value} onChange={(e) => {
+                                setStock(prevStock => ({
+                                  ...prevStock,
+                                  edit: {
+                                    ...prevStock.edit,
+                                    size: prevStock.edit.size,
+                                    value: e.target.value
+                                  }
+                                }));
+                                productObj.current[`${selectedColor}-${stock.edit.size}`] = {
+                                  ...productObj.current[`${selectedColor}-${stock.edit.size}`],
+                                  stock: parseInt(e.target.value)
+                                };
+
+                              }} className="focus:outline-none font-normal border border-gray-200 p-2 rounded-sm h-8 md:w-[50%] w-full"/>
+                            </div>
+                          </div>
+                        </section>
+                        <div className='flex flex-row justify-end px-5 w-full'>
+                          <button type='submit' className='px-10 py-2 rounded-md bg-accent text-white outline-none'>{loader ? 'Processing' : 'Edit Product'}</button>
+                        </div>
+                          
+                      </form>
+                </section>
+              </AdminSettingsModal>}
+          </section>)
         }
       </main>
   );

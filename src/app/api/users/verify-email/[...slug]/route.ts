@@ -1,6 +1,5 @@
-import { getDataFromToken } from "@/helpers/getDataFromToken";
-import { sendMail } from "@/helpers/mailer";
-import User from "@/models/user";
+
+import { models } from "@/db/connection";
 import { NextRequest, NextResponse } from "next/server";
 import { Op } from "sequelize";
 
@@ -8,7 +7,7 @@ import { Op } from "sequelize";
 export async function GET(req: NextRequest, {params}: {params: {slug: string[]}}) {
   try {
 
-    const user = await User.findOne({
+    const user = await models.User.findOne({
       where: {
         verify_token: params.slug[1],
         verify_token_expiry_date: {

@@ -1,5 +1,4 @@
-import sequelize from "@/db/connection";
-import { InferAttributes, InferCreationAttributes, CreationOptional, DataTypes, Model } from "sequelize";
+import { InferAttributes, InferCreationAttributes, CreationOptional, DataTypes, Model, Sequelize } from "sequelize";
 
 
 class Visitor extends Model<InferAttributes<Visitor>, InferCreationAttributes<Visitor>> {
@@ -11,32 +10,35 @@ class Visitor extends Model<InferAttributes<Visitor>, InferCreationAttributes<Vi
     declare updatedAt: CreationOptional<Date>;
   
     // ...
+    static initModel(sequelize: Sequelize){
+        return Visitor.init({
+            id: {
+                type: DataTypes.STRING,
+                primaryKey: true,
+                allowNull: false,
+              },
+            ip: {
+                type: DataTypes.STRING,
+            },
+            browser: {
+                type: DataTypes.STRING,
+            },
+            device: {
+                type: DataTypes.STRING,
+            },
+            createdAt: DataTypes.DATE,
+            updatedAt: DataTypes.DATE,
+        },
+        {
+            tableName: "visitors",
+            sequelize,
+            timestamps: true,
+        }
+        );
+    }
   }
   
-Visitor.init({
-    id: {
-        type: DataTypes.STRING,
-        primaryKey: true,
-        allowNull: false,
-      },
-    ip: {
-        type: DataTypes.STRING,
-    },
-    browser: {
-        type: DataTypes.STRING,
-    },
-    device: {
-        type: DataTypes.STRING,
-    },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
-},
-{
-    tableName: "visitors",
-    sequelize,
-    timestamps: true,
-}
-);
+
 
 export default Visitor;
 

@@ -1,7 +1,7 @@
-import User from "@/models/user";
 import { NextRequest, NextResponse } from "next/server";
 import * as argon from "argon2";
 import * as jwt from 'jsonwebtoken';
+import { models } from "@/db/connection";
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     const { email, password } = reqBody;
 
 
-    const user = await User.findOne({
+    const user = await models.User.findOne({
       where: { email }
     });
     
@@ -88,6 +88,7 @@ export async function POST(req: NextRequest) {
     return res;
 
   } catch (error: any) {
+    console.log('failed logging in', error);
     return NextResponse.json(
       { error: error.message },
       { status: 500 }

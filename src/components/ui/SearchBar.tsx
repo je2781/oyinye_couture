@@ -6,30 +6,37 @@ import { SearchModal } from "./Modal";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import useProduct from "@/store/useProduct";
-import useGlobal from "@/store/useGlobal";
+import hexs from "colors-named-hex";
+import named from "colors-named";
 
-const SearchBar = ({ onHideModal}: any) => {
+const SearchBar = ({ onHideModal, isAdmin}: any) => {
   const [query, setQuery] = React.useState("");
   const router = useRouter();
   const {allProducts} = useProduct();
   const [isLoading, setIsLoading] = React.useState(false);
   const path = usePathname();
 
-  let currentUrl = `/search/products?q=${query}&options[prefix]=last&sort_by=relevance&page=1`;
+  let currentUrl = isAdmin ? `/admin/products?q=${query}&options[prefix]=last&page=1` 
+  : `/search/products?q=${query}&options[prefix]=last&sort_by=relevance&page=1`;
 
   React.useEffect(() => {
     if(isLoading){
       if(location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1] === currentUrl){
         location.replace(currentUrl);
       }else{
-        router.push(`/search/products?q=${query}&options[prefix]=last&sort_by=relevance&page=1`);
+        router.push(currentUrl);
       }
     }
 
   }, [isLoading, currentUrl, query, router]);
 
 
-  const pages = [
+  const pages = isAdmin ? [
+    { title: "Product Listing", route: `/admin/product-listing` },
+    { title: "Orders", route: `/admin/orders` },
+    { title: "Emails", route: `/admin/emails` },
+    { title: "Summary", route: `/admin/summary` },
+  ] : [
     { title: "Contact Us", route: `/pages/contact` },
     { title: "About", route: `/pages/about` },
     { title: "Login", route: `/login` },
@@ -43,7 +50,7 @@ const SearchBar = ({ onHideModal}: any) => {
   let productSuggestions = allProducts.slice(0, 6).some((product: any)=> product.title.includes(query.charAt(0).toUpperCase() + query.slice(1)));
   let otherSuggestions =  pages.some(page => page.title.includes(query.charAt(0).toUpperCase() + query.slice(1)));
 
-  let otherSearchResults = productSuggestions || otherSuggestions;
+  let otherSearchResults = !isAdmin && productSuggestions || otherSuggestions;
 
   return (
     <SearchModal onClose={onHideModal}>
@@ -110,7 +117,7 @@ const SearchBar = ({ onHideModal}: any) => {
                           <li
                             className=" hover:underline-offset-1 hover:underline cursor-pointer hover:bg-gray-100 px-5 py-2"
                             key={i}
-                            onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variant_id!}`)} 
+                            onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type}/${product.colors[0].sizes[0].variant_id!}`)} 
                           >
                             <span className="font-sans text-gray-400 text-[.8rem]">
                               {product.title.charAt(0)}
@@ -153,11 +160,11 @@ const SearchBar = ({ onHideModal}: any) => {
                   <ul className="flex flex-col">
                     {allProducts.slice(0, 4).map((product: any, i: number) => (
                       <li key={i}>
-                        <article onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variant_id!}`)} 
+                        <article onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type}/${product.colors[0].sizes[0].variant_id!}`)} 
                         className="flex flex-row items-start gap-x-5 px-4 py-3 hover:bg-gray-100 cursor-pointer">
                           <Image
                             alt={`Product ${i + 1}`}
-                            src={product.colors[0].imageFrontBase64[0]}
+                            src={product.colors[0].image_front_base64[0]}
                             width={50}
                             height={65}
                           />

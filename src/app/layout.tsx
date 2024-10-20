@@ -18,6 +18,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+      <meta name="generator" content="SEOmatic"/>
+      <meta name="geo.region" content="Nigeria"/>
       <link rel="android-chrome-192x192" sizes="192x192" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/android-chrome-192x192.png"/>
       <link rel="android-chrome-512x512" sizes="512x512" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/android-chrome-512x512.png"/>
       <link rel="apple-touch-icon" sizes="180x180" href="https://cdn.jsdelivr.net/gh/je2781/oyinye_couture@main/public/apple-touch-icon.png"/>

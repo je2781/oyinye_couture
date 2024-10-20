@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect } from "react";
+import hexs from "colors-named-hex";
+import named from "colors-named";
 import Image from "next/image";
 import React from "react";
 import { QuickViewModal } from "../ui/Modal";
@@ -14,7 +15,7 @@ import useCart from "@/store/useCart";
 import Link from "next/link";
 import useAuth from "@/store/useAuth";
 import { Base64ImagesObj, DressSizesJsxObj, DressSizesObj } from "@/interfaces";
-import { extractProductDetails, regex, sizes } from "@/helpers/getHelpers";
+import {regex, sizes } from "@/helpers/getHelpers";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -81,7 +82,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                     await axios.post('/api/products/cart', {
                         price: sizesObj[`${selectedColor}-${selectedSize}`].price,
                         quantity: parseInt(quantity),
-                        variantId: sizesObj[`${selectedColor}-${selectedSize}`].variantId,
+                        variantId: sizesObj[`${selectedColor}-${selectedSize}`].variant_id,
                         id: product._id.toString(),
                         totalAmount
                     });
@@ -131,7 +132,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
         /**updating active dress color ***/
         for(let color of product.colors){
             for (let i = 0; i < sizes.length; i++) {
-                if (color.type === activeColorEl.innerText && !color.sizes.some((size: any) => size.number === colorsObj[selectedColor][i]) && colorsObj[selectedColor][i]) {
+                if (color.type === (activeColorEl.innerText.charAt(0).toLowerCase() + activeColorEl.innerText.slice(1)) && !color.sizes.some((size: any) => size.number === colorsObj[selectedColor][i]) && colorsObj[selectedColor][i]) {
                     // Setting properties of size element not contained in active dress color to 'not in stock'
                     sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('background-color', 'transparent');
                     sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('color', 'rgb(156, 163, 175)');
@@ -153,7 +154,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
             }
             
         }
-        setSelectedColor(activeColorEl.innerText);
+        setSelectedColor((activeColorEl.innerText.charAt(0).toLowerCase() + activeColorEl.innerText.slice(1)) as any);
 
         
     }
@@ -207,7 +208,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
         color.sizes.forEach((size: any) => {
             sizesObj[`${color.type}-${size.number}`] =  {
                 price: size.price,
-                variantId: size.variant_id,
+                variant_id: size.variant_id,
                 stock: size.stock,
                 color: color.type
             };
@@ -286,9 +287,9 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                 <section className="border border-l-0 border-r-0 border-gray-300 w-full py-4 font-medium my-2 font-sans text-gray-600">
                     <button onClick={() => {
                         if(isOnDetailPage){
-                            location.replace(`/products/${product.title.replace(' ', '-').toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].color!.toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].variantId!}`);
+                            location.replace(`/products/${product.title.replace(' ', '-').toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].color!.toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].variant_id!}`);
                         }else{
-                            router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].color!.toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].variantId!}`);
+                            router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].color!.toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].variant_id!}`);
                         }
                         
                     }}  className="cursor-pointer transition-all m-0 ease-in-out duration-200 hover:ml-2"><i className="fa-solid fa-arrow-right-long text-gray-600"></i>&nbsp;&nbsp;Go to product page</button>
@@ -302,8 +303,8 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                     <div className="flex flex-row justify-start gap-x-2 flex-wrap gap-y-2">
                         {product.colors.map((color: any, i: number) => 
                         sizesObj[`${selectedColor}-${selectedSize}`].stock === 0 ?  
-                        <span key={i} onClick={handleColorChange} className={color.is_available && i === 0 ? `cursor-pointer bg-black px-6 py-2 rounded-3xl text-gray-400 line-through` : `cursor-pointer bg-transparent border border-gray-200 px-6 py-2 rounded-3xl text-gray-400 line-through`}>{color.type}</span>
-                        : <span key={i} onClick={handleColorChange} className={color.is_available && i === 0 ? `bg-black px-6 py-2 rounded-3xl text-white cursor-pointer` : `cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600 px-6 py-2 rounded-3xl bg-transparent`}>{color.type}</span>)}
+                        <span key={i} onClick={handleColorChange} className={color.is_available && i === 0 ? `cursor-pointer bg-black px-6 py-2 rounded-3xl text-gray-400 line-through` : `cursor-pointer bg-transparent border border-gray-200 px-6 py-2 rounded-3xl text-gray-400 line-through`}>{color.type.charAt(0).toUpperCase() + color.type.slice(1)}</span>
+                        : <span key={i} onClick={handleColorChange} className={color.is_available && i === 0 ? `bg-black px-6 py-2 rounded-3xl text-white cursor-pointer` : `cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600 px-6 py-2 rounded-3xl bg-transparent`}>{color.type.charAt(0).toUpperCase() + color.type.slice(1)}</span>)}
                     </div>
                 </section>
                 <section className="flex flex-col items-start gap-y-2" id="size-list">
@@ -387,7 +388,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                         ></div>:
                         <button 
                         onClick={(e) => {
-                            if(items.some(item => item.variantId === sizesObj[`${selectedColor}-${selectedSize}`].variantId!)){
+                            if(items.some(item => item.variantId === sizesObj[`${selectedColor}-${selectedSize}`].variant_id!)){
                                 setToastError(true);
                                 setToastMsgVisible(false);
                             }else{
@@ -395,7 +396,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                                 addItem({
                                     price: sizesObj[`${selectedColor}-${selectedSize}`].price,
                                     quantity: parseInt(quantity),
-                                    variantId: sizesObj[`${selectedColor}-${selectedSize}`].variantId!,
+                                    variantId: sizesObj[`${selectedColor}-${selectedSize}`].variant_id!,
                                     id: product._id.toString()
                                 });
                                 //sending cart data to data layer

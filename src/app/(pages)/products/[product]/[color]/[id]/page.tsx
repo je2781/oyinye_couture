@@ -49,6 +49,7 @@ const ProductPage = async ({
         paramsProduct: params.product
     };
 
+    console.log('productdata', productData);
   return (
     <>
       <Header cartItems={cartItems}/>

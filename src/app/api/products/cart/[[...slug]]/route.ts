@@ -1,11 +1,7 @@
 import { getDataFromCart } from "@/helpers/getDataFromCart";
-import Cart from "@/models/cart";
-import Order from "@/models/order";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from 'crypto';
-import CartItem from "@/models/cartItem";
-import Product from "@/models/product";
-import User from "@/models/user";
+import { models } from "@/db/connection";
 
 
 export async function GET(req: NextRequest, { params }: { params: { slug?: string[] } }) {
@@ -13,14 +9,14 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
 
 
         if (params.slug![0]) {
-          let cart = await Cart.findByPk(params.slug![0]);
+          let cart = await models.Cart.findByPk(params.slug![0]);
 
 
-          const cartItems = cart!.items.map((item, i) => {
+          const cartItems = cart!.items.map((item: any) => {
             return {
               product: item.product,
               quantity: item.quantity,
-              variantId: item.variant_id,
+              variant_id: item.variant_id,
             };
           });
   
@@ -63,7 +59,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
     
         if (cartId) {
             //retrieving cart data for the current public session
-            const cart = await Cart.findByPk(cartId);
+            const cart = await models.Cart.findByPk(cartId);
       
             await cart!.deductFromCart(variantId, quantity, price);
 
@@ -76,7 +72,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
             //checking for empty cart
             if(cart!.items.length === 0){
               //removing cart document from database and clearing its cookie from browser
-             const cart =  await Cart.findByPk(cartId);
+             const cart =  await models.Cart.findByPk(cartId);
 
              await cart!.destroy();
                   
@@ -102,7 +98,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
               return {
                 product: item.product,
                 quantity: item.quantity,
-                variantId: item.variant_id,
+                variant_id: item.variant_id,
               };
             });
 
@@ -126,20 +122,20 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
       
           const cartId = getDataFromCart(req);
           
-          const product = await Product.findByPk(id);
+          const product = await models.Product.findByPk(id);
 
           if (!cartId) {
             
-            const newCart = await Cart.create({ 
+            const newCart = await models.Cart.create({ 
               id: (await crypto.randomBytes(6)).toString("hex"),
               items: [
-                  CartItem.build({
+                {
                     id: (await crypto.randomBytes(6)).toString("hex"),
                     variant_id: variantId,
                     quantity: parseInt(quantity),
                     product: product!
                   }
-                )
+                
               ],
               total_amount: totalAmount
              });
@@ -168,7 +164,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
           }else{
 
               //retrieving cart data for the current public session
-              const cart = await Cart.findByPk(cartId);
+              const cart = await models.Cart.findByPk(cartId);
               
               await cart!.addToCart(
                 product!,
@@ -230,15 +226,15 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
             const expiryDate = new Date(now.getTime() + remainingMilliseconds);
 
             //retrieving cart data for the current public session and storing user data
-            const cart = await Cart.findByPk(cartId);
+            const cart = await models.Cart.findByPk(cartId);
 
-            const user = await User.findByPk(userId);
+            const user = await models.User.findByPk(userId);
             await cart!.setUser(user!);
 
             //creating add to cart state in order
             let orderId = (await crypto.randomBytes(6)).toString("hex");
 
-            const newOrder = await Order.create({ 
+            const newOrder = await models.Order.create({ 
               id: orderId,
               status: 'add to cart',
               sales: cart!.total_amount

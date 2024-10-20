@@ -1,12 +1,8 @@
+import { models } from '@/db/connection';
 import { getDataFromCart } from '@/helpers/getDataFromCart';
 import { getDataFromOrder } from '@/helpers/getDataFromOrder';
-import { getVisitData } from '@/helpers/getVisitData';
 import { sendMail } from '@/helpers/mailer';
 import { EmailType } from '@/interfaces';
-import Cart from '@/models/cart';
-import Order from '@/models/order';
-import User from '@/models/user';
-import Visitor from '@/models/visitor';
 import axios from 'axios';
 import { NextResponse, type NextRequest } from 'next/server';
 
@@ -20,8 +16,8 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
         const updatedPage = +page! || 1;
         const ITEMS_PER_PAGE = +params.slug[0];
       
-        let totalItems = (await Order.findAndCountAll()).count;
-        let orders = await Order.findAll({
+        let totalItems = (await models.Order.findAndCountAll()).count;
+        let orders = await models.Order.findAll({
           offset: (updatedPage-1) * ITEMS_PER_PAGE,
           limit: ITEMS_PER_PAGE,
         });
@@ -56,7 +52,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
               let frontBase64Images: string[] = [];
               let colorType: string  = '';
               let size: number = 0;
-              item.product.colors.forEach(color => {
+              item.product.colors.forEach((color: any) => {
                 if(color.sizes.find((size: any) => size.variant_id === item.variant_id)){
                   price = color.sizes.find((size: any) => size.variant_id === item.variant_id).price;
                   size = color.sizes.find((size: any) => size.variant_id === item.variant_id).number;
@@ -115,7 +111,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
       const [orderId, checkoutSessionToken] = getDataFromOrder(request);
 
       //retrieving order data for the current checkout session
-      const order = await Order.findByPk(orderId);
+      const order = await models.Order.findByPk(orderId);
 
 
       if(params.slug){
@@ -203,7 +199,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
             const cartId = getDataFromCart(request);
 
             if(cartId){
-              const cart = await Cart.findByPk(cartId);
+              const cart = await models.Cart.findByPk(cartId);
               const extractedUser = await cart!.getUser();
               //sending cart reminder
               await sendMail({
@@ -272,7 +268,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
         const reqBody = await request.json();
         const {shippingInfo, billingInfo, saveBillingInfo, saveShippingInfo, paymentType, status, paymentStatus, shippingMethod, userEmail} = reqBody;
 
-        const extractedUser = await User.findOne({
+        const extractedUser = await models.User.findOne({
           where: {email: userEmail}
         });
 

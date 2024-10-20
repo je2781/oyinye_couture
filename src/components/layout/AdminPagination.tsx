@@ -1,4 +1,7 @@
+'use client';
+
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function AdminPagination({
   currentPage,
@@ -8,14 +11,22 @@ export default function AdminPagination({
   hasNextPage,
   nextPage,
   isActivePage}: any) {
+    const router = useRouter();
+    const path = usePathname();
   return (
     <section className="no-underline space-x-2 text-center mt-36">
       {currentPage !== 1 && (
         <Link
+          id='page1'
+          onClick={async (e) => {
+            e.preventDefault();
+            // Programmatically navigate to the base route (without ?page=1)
+            router.replace(path);
+          }}
           className={`${
             isActivePage === 1 ? "bg-accent" : ""
           } text-white px-2 py-1 text-sm border border-secondary-400 hover:bg-accent/70 hover:text-white`}
-          href={`?page=1`}
+          href='#'
         >
           1
         </Link>

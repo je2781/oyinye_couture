@@ -12,7 +12,8 @@ import axios from "axios";
 import crypto from "crypto";
 import toast from "react-hot-toast";
 import countries from "i18n-iso-countries";
-import Cookies from 'js-cookie';
+import hexs from "colors-named-hex";
+import named from "colors-named";
 
 let now = new Date();
 export let currentYear = now.getFullYear();
@@ -484,6 +485,45 @@ export const extractProductDetails = (
   }
 };
 
+export const extractProductDetail = (
+  product: any,
+  frontBase64ImagesObj: Base64ImagesObj,
+  backBase64ImagesObj: Base64ImagesObj,
+  cartItemObj: CartItemObj,
+) => {
+  
+  for (let color of product.colors) {
+      for(let size of color.sizes){
+        cartItemObj[`${color.type}-${size.number}`] = {
+          ...size,
+          color: color.type,
+        };
+      }
+      frontBase64ImagesObj[`${color.type}`] = color.image_front_base64;
+      backBase64ImagesObj[`${color.type}`] = [color.image_back_base64];
+    
+  }
+  
+};
+
+export function shiftFirstToLast(arr: any[]) {
+  // Base case: If the array has 0 or 1 elements, return it as is
+  if (arr.length <= 1) {
+    return arr;
+  }
+
+  // Remove the first element
+  const firstElement = arr[0];
+
+  const rest = arr.slice(1);
+
+  // Append the first element to the end of the array
+  rest.push(firstElement);
+
+  return rest;
+}
+
+
 export const appsList = ["Emails", "Calendar", "Product Listing"];
 
 export const viewsList = ["Orders"];
@@ -667,15 +707,15 @@ export async function handleSubmit(
     }
   }
 
-  const hashedId = (await crypto.randomBytes(32)).toString("hex");
+  const hashedId = (await crypto.randomBytes(6)).toString("hex");
 
   const Product = {
     title,
     description: desc,
-    noOfOrders: 0,
+    no_of_orders: 0,
     type,
     reviews: [],
-    isFeature,
+    is_feature: isFeature,
     features: [
       embelishment,
       sleeveL,
@@ -688,10 +728,10 @@ export async function handleSubmit(
         .filter((datum) => datum.color === bgColor);
       return {
         type: bgColor,
-        imageFrontBase64: Object.values(
+        image_front_base64: Object.values(
           dressColorsState[dressColorsState.length - 1]
         )[0].imageFront,
-        imageBackBase64: Object.values(
+        image_back_base64: Object.values(
           dressColorsState[dressColorsState.length - 1]
         )[0].imageBack,
         sizes: updatedSizeData.map((datum) => ({
@@ -798,7 +838,13 @@ export function handlePriceChange(
   currentBgColors: string[],
   sizeData: SizeData[],
   setSizeData: React.Dispatch<React.SetStateAction<SizeData[]>>,
-  setPrice: React.Dispatch<React.SetStateAction<string>>
+  setPrice: React.Dispatch<React.SetStateAction<{
+    listing: string;
+    edit: {
+      size: number,
+      value: string
+    }
+}>>
 ) {
   if (currentBgColors.length === 0) {
     return toast.error(`Select a dress color`, {
@@ -814,7 +860,10 @@ export function handlePriceChange(
     );
   }
 
-  setPrice(e.target.value);
+  setPrice(prevPrice => ({
+    ...prevPrice,
+    listing: e.target.value
+  }));
 
   //storing size data of previous active size
   setSizeData((prevState) => [
@@ -1880,9 +1929,9 @@ export const getDataset = (orders: any[]) => {
 //         color.sizes.sort((a: any, b: any) => a.number - b.number);
 
 //         for(let size of color.sizes){
-//             colorsObj[color.type]
-//             ? colorsObj[color.type].push(size.number)
-//             : colorsObj[color.type] = [size.number];
+//             colorsObj[action.color.type]
+//             ? colorsObj[action.color.type].push(size.number)
+//             : colorsObj[action.color.type] = [size.number];
 //         }
 //     }
 // }

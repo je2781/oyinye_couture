@@ -11,6 +11,10 @@ module.exports = {
       is_feature: {
         type: Sequelize.BOOLEAN
       },
+      is_hidden: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
+      },
       title: {
         type: Sequelize.STRING
       },

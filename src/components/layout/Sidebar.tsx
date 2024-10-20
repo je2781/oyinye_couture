@@ -256,7 +256,7 @@ export default function Sidebar({pathName}: any){
                                     className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2"
                                     key={i}
                                     onClick={() => {
-                                        router.push(`/admin/${routeNames[i] === 'emails' ? `${routeNames[i]}?page=1` : routeNames[i]}`);
+                                        router.push(`/admin/${routeNames[i]}`);
                                     }}
                                 >
                                     <div 
@@ -277,7 +277,7 @@ export default function Sidebar({pathName}: any){
                             {appsList.map((item: any, i: number) => (
                                 <li
                                 onClick={() => {
-                                    router.push(`/admin/${routeNames[i] === 'emails' ? `${routeNames[i]}?page=1` : routeNames[i]}`);
+                                    router.push(`/admin/${routeNames[i]}`);
                                 }} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2" key={i}>
                                     <div 
@@ -352,7 +352,7 @@ export default function Sidebar({pathName}: any){
                                     className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2"
                                     key={i}
                                     onClick={() => {
-                                        router.push(`/admin/orders?page=1`);
+                                        router.push(`/admin/orders`);
                                       }}
                                 >
                                     <div 
@@ -373,7 +373,7 @@ export default function Sidebar({pathName}: any){
                             {viewsList.map((item: any, i: number) => (
                                 <li
                                 onClick={() => {
-                                    router.push(`/admin/orders?page=1`);
+                                    router.push(`/admin/orders`);
                                 }} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-[3px]" key={i}>
                                     <div 

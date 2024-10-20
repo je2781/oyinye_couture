@@ -14,7 +14,7 @@ import useGlobal from "@/store/useGlobal";
 import { AdminSettingsModal, MobileModal } from "../ui/Modal";
 import { appsList, generateBase64FromMedia, getRouteNames, insightList, viewsList } from "@/helpers/getHelpers";
 
-export default function AdminHeader({sectionName, pathName, userName, userEmail, title, id, avatar}: any) {
+export default function AdminHeader({sectionName, pathName, userName, userEmail, userTitle, id, avatar}: any) {
   let timerId: NodeJS.Timeout | null  = null;
 
   const { authStatus } = useAuth();
@@ -30,6 +30,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
   const [email, setEmail] = React.useState(userEmail);
   const [password, setPassword] = React.useState('*********');
   const [name, setName] = React.useState(userName);
+  const [title, setTitle] = React.useState(userTitle);
   const [loader, setLoader] = React.useState(false);
   const {locale, setLocale} = useGlobal();
 
@@ -229,9 +230,9 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                         });
                                       }
                                     }}  className='flex flex-col gap-y-9 max-h-[75vh]' encType="multipart/form-data">
-                                        <div className="flex flex-row w-full items-start px-5">
-                                          <div className='flex flex-row justify-center w-[30%]'>
-                                              <label htmlFor='avatar' id='avatar-container' className='rounded-[50%] w-40 h-40 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                                        <div className="flex md:flex-row flex-col w-full items-start px-5 gap-y-4">
+                                          <div className='flex flex-row justify-center md:w-[30%] w-full'>
+                                              <label htmlFor='avatar' id='avatar-container' className='rounded-[50%] md:w-40 md:h-40 h-28 w-28 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
                                                   <i className="fa-solid fa-camera text-2xl text-white"></i>
                                               </label>
                                               <input type='file' className='hidden' id='avatar' onChange={async(e) => {
@@ -247,10 +248,10 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
 
                                               }}/>
                                           </div>
-                                          <div className="w-[10%]"></div>
-                                          <div className="w-[60%] flex flex-col justify-start gap-y-3 font-sans font-normal">
-                                            <h1 className="leading-5 text-3xl font-medium">{userName ?? 'Tester'}</h1>
-                                            <p >
+                                          <div className="w-[10%] hidden md:block"></div>
+                                          <div className="md:w-[60%] w-full flex flex-col items-center md:items-start justify-start gap-y-3 font-sans font-normal">
+                                            <h1 className="leading-5 md:text-3xl text-2xl font-medium">{userName ?? 'Tester'}</h1>
+                                            <p className="md:text-[.95rem] text-[.825rem]">
                                               <Link className="text-blue-600" href={`mailto:${userEmail ?? 'test@test.com'}`}>{userEmail ?? 'test@test.com'}</Link>
                                               &nbsp;-&nbsp;Administrator
                                             </p>
@@ -261,24 +262,24 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                           <header className="font-medium font-sans text-lg px-5">Account</header>
                                           <hr className="border border-gray-100 mt-3 w-full border-l-0 border-r-0 border-t-0" />
                                           <div className="p-5 w-full text-gray-400 font-medium font-sans text-sm flex flex-col gap-y-5">
-                                              <div className="w-full flex flex-row items-center">
-                                                <h3 className="w-[50%]">Email</h3>
-                                                <input value={email} className="focus:outline-none font-normal border border-gray-200 p-2 rounded-sm h-8 w-[50%]"/>
+                                              <div className="w-full flex md:flex-row flex-col md:items-center items-start gap-y-2">
+                                                <h3 className="md:w-[50%] w-full">Email</h3>
+                                                <input value={email} onChange={(e) => setEmail(e.target.value)} className="focus:outline-none font-normal border border-gray-200 p-2 rounded-sm h-8 md:w-[50%] w-full"/>
                                               </div>
-                                              <div className="w-full flex flex-row items-center">
-                                                <h3 className="w-[50%]">Password</h3>
-                                                <input value={password} className="focus:outline-none font-normal border border-gray-200 p-2 bg-gray-50 rounded-sm h-8 w-[50%]"/>
+                                              <div className="w-full flex md:flex-row flex-col md:items-center items-start gap-y-2">
+                                                <h3 className="md:w-[50%] w-full">Password</h3>
+                                                <input value={password} onChange={(e) => setPassword(e.target.value)} className="focus:outline-none font-normal border border-gray-200 p-2 bg-gray-50 rounded-sm h-8 md:w-[50%] w-full"/>
                                               </div>
-                                              <div className="w-full flex flex-row items-center">
-                                                <h3 className="w-[50%]">Full Name</h3>
-                                                <input value={name} className="focus:outline-none font-normal border border-gray-200 bg-gray-50 p-2 rounded-sm h-8 w-[50%]"/>
+                                              <div className="w-full flex md:flex-row flex-col md:items-center items-start gap-y-2">
+                                                <h3 className="md:w-[50%] w-full">Full Name</h3>
+                                                <input value={name} onChange={(e) => setName(e.target.value)} className="focus:outline-none font-normal border border-gray-200 bg-gray-50 p-2 rounded-sm h-8 md:w-[50%] w-full"/>
                                               </div>
-                                              <div className="w-full flex flex-row items-center">
-                                                <h3 className="w-[50%]">Title</h3>
-                                                <input value={title ?? 'Administrator'} disabled className="focus:outline-none font-normal border border-gray-200 bg-gray-50 p-2 rounded-sm h-8 w-[50%]"/>
+                                              <div className="w-full flex md:flex-row flex-col md:items-center items-start gap-y-2">
+                                                <h3 className="md:w-[50%] w-full">Title</h3>
+                                                <input value={title ?? 'Administrator'} onChange={(e) => setTitle(e.target.value)} disabled className="focus:outline-none font-normal border border-gray-200 bg-gray-50 p-2 rounded-sm h-8 md:w-[50%] w-full"/>
                                               </div>
-                                              <div className="w-full flex flex-row items-center">
-                                                <h3 className="w-[50%]">Language</h3>
+                                              <div className="w-full flex md:flex-row flex-col md:items-center items-start gap-y-2">
+                                                <h3 className="md:w-[50%] w-full">Language</h3>
                                                 <div 
                                                   onClick={() => {
                                                       let downAngle = document.querySelector('i.lang-angle-down');
@@ -290,7 +291,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                                           downAngle?.classList.add("ad-rotate-anticlock");
                                                       }
                                                   }}
-                                                  className="relative border border-gray-400 rounded-sm p-1 focus:border-gray-600 w-[30%]">
+                                                  className="relative border border-gray-400 rounded-sm p-1 focus:border-gray-600 md:w-[30%] w-full">
                                                       <select 
                                                       id='lang-select'
                                                       className="focus:outline-none p-2 appearance-none"
@@ -315,7 +316,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                                       <i onClick={(e) => {
                                                           e.preventDefault();
                                                           e.stopPropagation();
-                                                      }} className="fa-solid fa-angle-down lang-angle-down absolute top-[40%] right-3"
+                                                      }} className="fa-solid fa-angle-down lang-angle-down absolute top-[36%] right-3"
 
                                                       ></i>
                                                   </div>
@@ -348,7 +349,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
           </div>
         </div>
         {isSearchModalOpen && (
-          <SearchBar onHideModal={hideSearchModalHandler} />
+          <SearchBar onHideModal={hideSearchModalHandler} isAdmin={true} />
         )}
         {isMobileModalOpen && <MobileModal onClose={hideModalHandler} classes='bg-primary-800 px-4 pt-8'>
           
@@ -456,7 +457,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                             {appsList.map((item: any, i: number) => (
                                 <li
                                 onClick={() => {
-                                  router.push(`/admin/${routeNames[i] === 'emails' ? `${routeNames[i]}?page=1` : routeNames[i]}`);
+                                  router.push(`/admin/${routeNames[i]}`);
                                 }} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2" key={i}>
                                     <div 
@@ -513,7 +514,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                             {viewsList.map((item: any, i: number) => (
                                 <li
                                 onClick={() => {
-                                    router.push(`/admin/orders?page=1`);
+                                    router.push(`/admin/orders`);
                                 }} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-[3px]" key={i}>
                                     <div 

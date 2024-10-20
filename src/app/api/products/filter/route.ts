@@ -1,6 +1,6 @@
-import Filter from "@/models/filter";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from 'crypto';
+import { models } from "@/db/connection";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,13 +12,13 @@ export async function POST(req: NextRequest) {
     const { noOfFilters, isVisible, showOutOfStock, productType, priceRange, currentPriceBoundary, color, customProp } = reqBody;
 
 
-    const filterSettings = await Filter.findAll();
+    const filterSettings = await models.Filter.findAll();
 
 
     if (filterSettings.length > 0) {
       if(type === 'search'){
 
-        await Filter.update(
+        await models.Filter.update(
           {
             search: {
               noOfFilters,
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       }
       if(type === 'collections'){
 
-        await Filter.update(
+        await models.Filter.update(
           {
             collections: {
               color,
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       }
     } else {
       if(type === 'search'){
-        const newSettings = await Filter.create({
+        const newSettings = await models.Filter.create({
             id: (await crypto.randomBytes(6)).toString("hex"),
             search: {
               noOfFilters,
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
         await newSettings.save();
       }
       if(type === 'collections'){
-        const newSettings = await Filter.create({
+        const newSettings = await models.Filter.create({
           id: (await crypto.randomBytes(6)).toString("hex"),
           collections: {
               color,

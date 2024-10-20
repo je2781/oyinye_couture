@@ -22,7 +22,7 @@ export default function AboutComponent(){
                     <FormattedMessage id='app.aboutus.action.text' defaultMessage="Read More" />
                 </Link>
             </article>
-            <div className="w-[50%] relative bg-cover bg-red-600 h-full md:block hidden" style={{
+            <div className="w-[50%] relative bg-cover bg-red-600 h-full md:block hidden animate__animated animate__fadeInRight" style={{
                 // backgroundImage: `url(${'https://images.unsplash.com/photo-1519120944692-1a8d8cfc107f?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=872&q=80'})`,
                 backgroundPosition: 'center',
             }}></div>

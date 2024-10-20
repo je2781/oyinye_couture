@@ -1,9 +1,9 @@
 'use server'
 
 import { getBrowser, getDeviceType } from '@/helpers/getHelpers';
-import Visitor from '@/models/visitor';
 import { cookies, headers } from 'next/headers';
 import crypto from 'crypto';
+import { models } from '@/db/connection';
 
 
 export async function createViewedProductsAction(variantId: string) {
@@ -56,7 +56,7 @@ export async function createVisitorAction() {
 
     const browser = getBrowser(userAgent);
 
-    const newVisitor = await Visitor.create({
+    const newVisitor = await models.Visitor.create({
       id: (await crypto.randomBytes(6)).toString("hex"),
       ip,
       browser,

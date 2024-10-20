@@ -1,16 +1,14 @@
-import Filter from '@/models/filter';
-import Order from '@/models/order';
-import OrderItem from '@/models/orderItem';
-import Product from '@/models/product';
+
+import { models } from '@/db/connection';
 import { NextResponse, type NextRequest } from 'next/server';
-import { Op } from 'sequelize';
+import { Op, where } from 'sequelize';
 
 
 export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
     try {
 
       let priceList: number[] = [];
-      let filterSettings: Filter[] = [];
+      let filterSettings: any[] = [];
       const ITEMS_PER_PAGE = 21;
 
       if(params.slug === 'search'){
@@ -25,18 +23,20 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         let productType = searchParams.get('filter.p.product_type');
         const updatedPage = +page! || 1;
       
-        let totalItems =  await Product.count({where: {
-          title: {
-            [Op.regexp]: `^\\b${query}[^\\s]*$/i`,
-          },
-          
-        },});
-        let products = await Product.findAll({
+        let totalItems =  await models.Product.count({
           where: {
             title: {
-              [Op.regexp]: `^\\b${query}[^\\s]*$/i`,
+              [Op.regexp]: `\\b${query}[^\\s]*$/i`,
             },
-            
+            is_hidden: false
+          
+        },});
+        let products = await models.Product.findAll({
+          where: {
+            title: {
+              [Op.regexp]: `\\b${query}[^\\s]*$/i`,
+            },
+            is_hidden: false
           },
           offset: (updatedPage-1) * ITEMS_PER_PAGE,
           limit: ITEMS_PER_PAGE,
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
   
         //retrieving filter settings
         if(availability || lte || gte || productType){
-          filterSettings =  await Filter.findAll();
+          filterSettings =  await models.Filter.findAll();
         }
   
         const currentPage = updatedPage;
@@ -143,13 +143,12 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         
           default:
             for(let product of products){
-              let noOfOrders = await Order.count({
-                include: [{
-                  model: OrderItem, // Assuming you have an OrderItem model
-                  where: {
-                    product_id: product.id // Assuming `product_id` is the field in the OrderItem model
+              let noOfOrders = await models.Order.count({
+                where: {
+                  items: {
+                    [Op.contains] : [{product : {id: product.id}}]
                   }
-                }]
+                }
               });
     
               product.setDataValue('no_of_orders', noOfOrders);
@@ -184,7 +183,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
 
       if(params.slug === 'collections'){
         const searchParams = request.nextUrl.searchParams;
-        let products: Product[] = [];
+        let products: any[] = [];
         let totalItems = 0;
         let page = searchParams.get('page');
         let sort = searchParams.get('sort_by');
@@ -197,118 +196,147 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         const updatedPage = +page! || 1;
       
         if(dressColor){
-          totalItems =  await Product.count({
+          totalItems =  await models.Product.count({
             where: {
               colors: {
                 [Op.contains]: [{ type: dressColor }]
-              }
+              },
+              is_hidden: false
             }
           });
-          products = await Product.findAll({ 
+          products = await models.Product.findAll({ 
             where: {
               colors: {
                 [Op.contains]: [{ type: dressColor }]
-              }
+              },
+              is_hidden: false
             },
             offset: (updatedPage-1) * ITEMS_PER_PAGE,
             limit: ITEMS_PER_PAGE,
           });
         }else if(dressFeature){
-          totalItems =  await Product.count({
+          totalItems =  await models.Product.count({
             where: {
               features: {
                 [Op.contains]: [dressFeature]
-              }
+              },
+              is_hidden: false
+
             }
           });
-          products = await Product.findAll({ 
+          products = await models.Product.findAll({ 
             where: {
               features: {
                 [Op.contains]: [dressFeature]
-              }
+              },
+              is_hidden: false
+
             },
             offset: (updatedPage-1) * ITEMS_PER_PAGE,
             limit: ITEMS_PER_PAGE,
           });
         }else if(dressLength){
-          totalItems =  await Product.count({
+          totalItems =  await models.Product.count({
             where: {
               features: {
                 [Op.contains]: [dressLength]
-              }
+              },
+              is_hidden: false
+
             }
           });
-          products = await Product.findAll({ 
+          products = await models.Product.findAll({ 
             where: {
               features: {
-                [Op.contains]: []
-              }
+                [Op.contains]: [dressLength]
+              },
+              is_hidden: false
+
             },
             offset: (updatedPage-1) * ITEMS_PER_PAGE,
             limit: ITEMS_PER_PAGE,
           });
         }else if(fabric){
-          totalItems =  await Product.count({
+          totalItems =  await models.Product.count({
             where: {
               features: {
                 [Op.contains]: [fabric]
-              }
+              },
+              is_hidden: false
+
             }
           });
-          products = await Product.findAll({ 
+          products = await models.Product.findAll({ 
             where: {
               features: {
                 [Op.contains]: [fabric]
-              }
+              },
+              is_hidden: false
+
             },
             offset: (updatedPage-1) * ITEMS_PER_PAGE,
             limit: ITEMS_PER_PAGE,
           });
         }else if(neckLine){
-          totalItems =  await Product.count({
+          totalItems =  await models.Product.count({
             where: {
               features: {
                 [Op.contains]: [neckLine]
-              }
+              },
+              is_hidden: false
+
             }
           });
-          products = await Product.findAll({ 
+          products = await models.Product.findAll({ 
             where: {
               features: {
                 [Op.contains]: [neckLine]
-              }
+              },
+              is_hidden: false
+
             },
             offset: (updatedPage-1) * ITEMS_PER_PAGE,
             limit: ITEMS_PER_PAGE,
           });
         }else if(sleeveLength){
-          totalItems =  await Product.count({
+          totalItems =  await models.Product.count({
             where: {
               features: {
                 [Op.contains]: [sleeveLength]
-              }
+              },
+              is_hidden: false
+
             }
           });
-          products = await Product.findAll({ 
+          products = await models.Product.findAll({ 
             where: {
               features: {
                 [Op.contains]: [sleeveLength]
-              }
+              },
+              is_hidden: false
+
             },
             offset: (updatedPage-1) * ITEMS_PER_PAGE,
             limit: ITEMS_PER_PAGE,
           });
         }else{
-          totalItems =  await Product.count();
-          products = await Product.findAll({ 
+          totalItems =  await models.Product.count({
+            where: {
+              is_hidden: false
+            }
+          });
+          products = await models.Product.findAll({ 
             offset: (updatedPage-1) * ITEMS_PER_PAGE,
             limit: ITEMS_PER_PAGE,
+            where: {
+              is_hidden: false
+            }
           });
         }
         
         //retrieving filter settings
         if(dressColor || dressFeature || dressLength || fabric || neckLine || sleeveLength){
-          filterSettings =  await Filter.findAll();
+          filterSettings =  await models.Filter.findAll();
         }
   
         const currentPage = updatedPage;
@@ -378,13 +406,12 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
             break;
           case 'best-selling':
             for(let product of products){
-              let noOfOrders = await Order.count({
-                include: [{
-                  model: OrderItem,
-                  where: {
-                    product_id: product.id 
+              let noOfOrders = await models.Order.count({
+                where: {
+                  items: {
+                    [Op.contains] : [{product: {id: product.id}}]
                   }
-                }]
+                }
               });
     
               product.setDataValue('no_of_orders', noOfOrders);
@@ -438,7 +465,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
 
       const reqBody = await request.json();
       
-      await Product.create({
+      await models.Product.create({
         ...reqBody
       });    
       
@@ -458,3 +485,36 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
       );
     }
 }
+ 
+export async function PATCH(request: NextRequest, { params }: { params: { slug: string } }) {
+    try {
+
+      const reqBody = await request.json();
+      const productId = reqBody.id;
+      delete reqBody.id;
+      
+      await models.Product.update({
+        ...reqBody
+      },{
+        where: {
+          id: productId
+        }
+      });    
+      
+      return NextResponse.json({
+        message: 'product updated!',
+        success: true
+      }, {
+        status: 201
+      });
+       
+    } catch (error: any) {
+      return NextResponse.json(
+        {
+          error: error.message,
+        },
+        { status: 500 }
+      );
+    }
+}
+ 

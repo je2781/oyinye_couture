@@ -1,8 +1,8 @@
-import User from "@/models/user";
 import { NextRequest, NextResponse } from "next/server";
 import * as argon from "argon2";
 import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
+import { models } from "@/db/connection";
 
 
 export async function GET(
@@ -11,7 +11,7 @@ export async function GET(
 ) {
   try {
 
-    const user = await User.findByPk(params.id);
+    const user = await models.User.findByPk(params.id);
 
     // Check if user exists
     if (!user) {
@@ -55,7 +55,7 @@ export async function PATCH(
     const reqBody = await req.json();
     const { firstName, lastName, password, enableEmailMarketing = false, avatar, checkingOut, email} = reqBody;
 
-    const user = await User.findByPk(params.id);
+    const user = await models.User.findByPk(params.id);
 
     // Check if user exists
     if (!user) {

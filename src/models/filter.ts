@@ -1,10 +1,10 @@
-import sequelize from "@/db/connection";
 import {
     CreationOptional,
     DataTypes,
     InferAttributes,
     InferCreationAttributes,
     Model,
+    Sequelize,
   } from "sequelize";
   
   
@@ -15,56 +15,60 @@ import {
     declare createdAt: CreationOptional<Date>;
     declare updatedAt: CreationOptional<Date>;
   
+
+    static initModel(sequelize: Sequelize){
+      return Filter.init({
+        id: {
+            type: DataTypes.STRING,
+            primaryKey: true,
+            allowNull: false,
+          },
+        search: DataTypes.JSONB,
+        collections: DataTypes.JSONB,
+        createdAt: DataTypes.DATE,
+        updatedAt: DataTypes.DATE
+            // search: {
+            //     noOfFilters: {
+            //         type: Number,
+            //     },
+            //     isVisible: {
+            //         type: Boolean,
+            //     },
+            //     showOutOfStock: {
+            //         type: Boolean,
+            //     },
+            //     productType: {
+            //         type: String,
+            //     },
+            //     priceRange: {
+            //         type: String,
+            //     },
+            //     currentPriceBoundary: {
+            //         type: Number,
+            //     }
+            // },
+            // collections: {
+            //     noOfFilters: {
+            //         type: Number,
+            //     },
+            //     isVisible: {
+            //         type: Boolean,
+            //     },
+            //     color: String,
+            //     customProperty: {
+            //         type: String,
+            //         name: String
+            //     }
+            // }
+      
+    },{
+        tableName: "filters",
+        sequelize,
+    });
+    }
   }
 
-Filter.init({
-    id: {
-        type: DataTypes.STRING,
-        primaryKey: true,
-        allowNull: false,
-      },
-    search: DataTypes.JSONB,
-    collections: DataTypes.JSONB,
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE
-        // search: {
-        //     noOfFilters: {
-        //         type: Number,
-        //     },
-        //     isVisible: {
-        //         type: Boolean,
-        //     },
-        //     showOutOfStock: {
-        //         type: Boolean,
-        //     },
-        //     productType: {
-        //         type: String,
-        //     },
-        //     priceRange: {
-        //         type: String,
-        //     },
-        //     currentPriceBoundary: {
-        //         type: Number,
-        //     }
-        // },
-        // collections: {
-        //     noOfFilters: {
-        //         type: Number,
-        //     },
-        //     isVisible: {
-        //         type: Boolean,
-        //     },
-        //     color: String,
-        //     customProperty: {
-        //         type: String,
-        //         name: String
-        //     }
-        // }
-  
-},{
-    tableName: "filters",
-    sequelize,
-});
+
 
 export default Filter;
 

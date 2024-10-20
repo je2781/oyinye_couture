@@ -3,6 +3,7 @@ import AdminHeader from "@/components/layout/AdminHeader";
 import Body from "@/components/admin/Body";
 import dynamic from 'next/dynamic'
 import { cookies } from "next/headers";
+import Product from "@/models/product";
 
 const BodyComponent = dynamic(() => import('../../../components/admin/Body'),{
   loading: () => <div className="flex justify-center items-center flex-col gap-y-2 bg-primary-950 h-screen md:pl-64 pl-7 lg:pr-3 pr-7 w-full pb-12" id='admin-content'>
@@ -12,30 +13,35 @@ const BodyComponent = dynamic(() => import('../../../components/admin/Body'),{
 ssr: false
 });
 
-async function getData(page?: string) {
+async function getData() {
     const cookieStore = cookies();
-    const [orderDataRes, enquiriesDataRes, visitorsDataRes, userDataRes] = await Promise.all([
-      fetch(`${process.env.DOMAIN}/api/orders/10?page=${page ? page : '1'}`, {
+    const [orderDataRes, enquiriesDataRes, visitorsDataRes, userDataRes, productsDataRes] = await Promise.all([
+      fetch(`${process.env.DOMAIN}/api/orders/10?page=1`, {
         cache: 'no-store' // Ensure the request isn't cached
       }),
-      fetch(`${process.env.DOMAIN}/api/enquiries/10?page=${page ? page : '1'}`, {
+      fetch(`${process.env.DOMAIN}/api/enquiries/10?page=1`, {
         cache: 'no-store' 
       }),
-      fetch(`${process.env.DOMAIN}/api/visitors`),
-      fetch(`${process.env.DOMAIN}/api/users/${cookieStore.get('admin')?.value}`)
+      fetch(`${process.env.DOMAIN}/api/visitors`, {
+        cache: 'no-store' 
+      }),
+      fetch(`${process.env.DOMAIN}/api/users/${cookieStore.get('admin')?.value}`),
+      fetch(`${process.env.DOMAIN}/api/products`, {
+        cache: 'no-store' 
+      }),
     ]);
 
-    const [orderData, enquiriesData, visitorsData, userData] = await Promise.all([
-      orderDataRes.json(), enquiriesDataRes.json(), visitorsDataRes.json(), userDataRes.json()
+    const [orderData, enquiriesData, visitorsData, userData, productsData] = await Promise.all([
+      orderDataRes.json(), enquiriesDataRes.json(), visitorsDataRes.json(), userDataRes.json(), productsDataRes.json()
     ]);
   
-    return [orderData, enquiriesData, visitorsData, userData];
+    return [orderData, enquiriesData, visitorsData, userData, productsData.products ];
 }
 
 export default async function Admin({
-    params, searchParams
+    params
   }: any){
-    const [orderData, enquiriesData, visitorsData, userData] = await getData(searchParams['page']);
+    const [orderData, enquiriesData, visitorsData, userData, products] = await getData();
 
     let pathNames: string[] = params.section;
     let sectionName = '';
@@ -68,7 +74,7 @@ export default async function Admin({
         pathName,
         userName: userData.userName,
         userEmail: userData.userEmail,
-        title: userData.title,
+        userTitle: userData.title,
         id: userData.userId,
         avatar: userData.avatar
       };
@@ -76,6 +82,7 @@ export default async function Admin({
       const bodyProps = {
         visitors: visitorsData.visitors,
         enquiriesData: enquiriesData,
+        products,
         data: orderData,
         extractedOrders: orderData.orders,
         pathName

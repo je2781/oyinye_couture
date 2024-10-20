@@ -3,8 +3,8 @@
 import Link from "next/link";
 import Pagination from "../layout/Pagination";
 import React, { useCallback, useMemo } from "react";
-import Box from '@mui/material/Box';
-import Slider from '@mui/material/Slider';
+import hexs from "colors-named-hex";
+import named from "colors-named";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import ProductComponent from "../product/Product";
@@ -305,9 +305,9 @@ export default function SearchResults({
                                   key={i}
                                   onClick={() =>
                                     router.push(
-                                      `/${locale !== 'en' ? `${locale}/` : ''}products/${product.title
+                                      `/products/${product.title
                                         .replace(" ", "-")
-                                        .toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product
+                                        .toLowerCase()}/${product.colors[0].type}/${product
                                         .colors[0].sizes[0].variant_id!}`
                                     )
                                   }
@@ -367,9 +367,9 @@ export default function SearchResults({
                           <article
                             onClick={() =>
                               router.push(
-                                `/${locale !== 'en' ? `${locale}/` : ''}products/${product.title
+                                `/products/${product.title
                                   .replace(" ", "-")
-                                  .toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product
+                                  .toLowerCase()}/${product.colors[0].type}/${product
                                   .colors[0].sizes[0].variant_id!}`
                               )
                             }
@@ -377,7 +377,7 @@ export default function SearchResults({
                           >
                             <Image
                               alt={`Product ${i + 1}`}
-                              src={product.colors[0].imageFrontBase64[0]}
+                              src={product.colors[0].image_front_base64[0]}
                               width={50}
                               height={65}
                             />

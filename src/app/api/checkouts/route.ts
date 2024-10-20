@@ -1,25 +1,23 @@
-import Cart from "@/models/cart";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import Order from "@/models/order";
 import { getDataFromCart } from "@/helpers/getDataFromCart";
 import { getDataFromOrder } from "@/helpers/getDataFromOrder";
-import OrderItem from "@/models/orderItem";
+import { models } from "@/db/connection";
 
 export async function GET(req: NextRequest) {
   try {
     const cartId = getDataFromCart(req);
-    let orderItems: OrderItem[] = [];
+    let orderItems: any[] = [];
 
     const [orderId, checkoutSessionToken] = getDataFromOrder(req);
 
     if (orderId && cartId) {
       // Retrieving order data for the current checkout session
-      const order = await Order.findByPk(orderId);
+      const order = await models.Order.findByPk(orderId);
 
       if (order) {
         // Retrieving cart data for the current public session
-        const cart = await Cart.findByPk(cartId);
+        const cart = await models.Cart.findByPk(cartId);
 
         if (!cart) {
           return NextResponse.json(
@@ -32,17 +30,17 @@ export async function GET(req: NextRequest) {
           return {
             product: item.product,
             quantity: item.quantity,
-            variantId: item.variant_id,
+            variant_id: item.variant_id,
           };
         });
 
         for(let item of cartItems){
-          orderItems.push(OrderItem.build({
+          orderItems.push({
             id: (await crypto.randomBytes(6)).toString("hex"),
-            variant_id: item.variantId,
+            variant_id: item.variant_id,
             quantity: item.quantity,
             product: item.product
-          }));
+          });
         }
 
         //updating order with checkout state

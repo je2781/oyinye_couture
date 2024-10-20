@@ -7,9 +7,9 @@ import {
     InferAttributes,
     InferCreationAttributes,
     Model,
+    Sequelize,
   } from "sequelize";
 import User from "./user";
-import sequelize from "@/db/connection";
   
   
   class Enquiry extends Model<InferAttributes<Enquiry>, InferCreationAttributes<Enquiry>> {
@@ -26,25 +26,28 @@ import sequelize from "@/db/connection";
 
     }
 
+    static initModel(sequelize: Sequelize){
+      return   Enquiry.init({
+        id: {
+            type: DataTypes.STRING,
+            primaryKey: true,
+            allowNull: false,
+          },
+        contact: DataTypes.JSONB,
+        order: DataTypes.JSONB,
+        createdAt: DataTypes.DATE,
+        updatedAt: DataTypes.DATE
+    
+    }, {
+        tableName: "enquiries",
+        sequelize,
+        timestamps: true,
+    }
+      );
+    }
+
   }
 
-  Enquiry.init({
-    id: {
-        type: DataTypes.STRING,
-        primaryKey: true,
-        allowNull: false,
-      },
-    contact: DataTypes.JSONB,
-    order: DataTypes.JSONB,
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE
-
-}, {
-    tableName: "enquiries",
-    sequelize,
-    timestamps: true,
-}
-);
 
 
 export default Enquiry;

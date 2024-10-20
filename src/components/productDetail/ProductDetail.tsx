@@ -8,6 +8,8 @@ import {
 } from "@/interfaces";
 import axios from "axios";
 import React, { useState } from "react";
+import hexs from "colors-named-hex";
+import named from "colors-named";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Navigation } from "swiper/modules";
 import "swiper/css";
@@ -17,7 +19,6 @@ import Link from "next/link";
 import Image from "next/image";
 import useCart from "@/store/useCart";
 import { regex, sizes } from "@/helpers/getHelpers";
-import Header from "@/components/layout/Header";
 
 import Ruler from '../../../public/ruler.svg';
 import Truck from '../../../public/truck.svg';
@@ -28,13 +29,7 @@ import Product from "../product/Product";
 import Reviews from "../reviews/Reviews";
 import { createViewedProductsAction } from "@/app/actions";
 import useGlobal from "@/store/useGlobal";
-import { time } from "console";
 
-{/* <main className="min-h-screen w-full flex flex-col items-center justify-center bg-white hide-scrollbar">
-            <section className="flex flex-col items-center gap-y-2">
-                <div className="progress-bar !w-56 !h-6" style={{ "--animate-duration": "2s" } as React.CSSProperties}></div>
-            </section>
-        </main> */}
 
 const ProductDetail = ({
     productSizes,
@@ -65,7 +60,7 @@ const ProductDetail = ({
 
     const [colorsData, setColorsData] = useState<any[]>(productColors);
     const [imageFrontBase64, setImageFrontBase64] = useState<string[]>(productFrontBase64Images);
-    const [selectedColor, setSelectedColor] = useState<string>(paramsColor.charAt(0).toUpperCase() + paramsColor.slice(1));
+    const [selectedColor, setSelectedColor] = useState<string>(paramsColor);
     const [selectedSize, setSelectedSize] = useState<string>(productSizes.find(
         (size: any) => size.variant_id === paramsId
     ).number.toString());
@@ -118,7 +113,7 @@ const ProductDetail = ({
                     await axios.post('/api/products/cart', {
                         price: sizesObj[`${selectedColor}-${selectedSize}`].price,
                         quantity: parseInt(quantity),
-                        variantId: sizesObj[`${selectedColor}-${selectedSize}`].variantId!,
+                        variantId: sizesObj[`${selectedColor}-${selectedSize}`].variant_id!,
                         id: productId,
                         totalAmount
                     });
@@ -173,7 +168,7 @@ const ProductDetail = ({
         if (colorsData) {
             for(let color of colorsData){
                 for (let i = 0; i < sizes.length; i++) {
-                    if (color.type === activeColorEl.innerText && !color.sizes.some((size: any) => size.number === colorsObj[selectedColor][i]) && colorsObj[selectedColor][i]) {
+                    if (color.type === (activeColorEl.innerText.charAt(0).toLowerCase() + activeColorEl.innerText.slice(1)) && !color.sizes.some((size: any) => size.number === colorsObj[selectedColor][i]) && colorsObj[selectedColor][i]) {
                         // Setting properties of size element not contained in active dress color to 'not in stock'
                         sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('background-color', 'transparent');
                         sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('color', 'rgb(156, 163, 175)');
@@ -190,9 +185,9 @@ const ProductDetail = ({
                             }
                         }
                         //updating active dress size and pathname of current route
-                        const extractedColor = colorsData.find(color => color.type === activeColorEl.innerText);
+                        const extractedColor = colorsData.find(color => color.type === (activeColorEl.innerText.charAt(0).toLowerCase() + activeColorEl.innerText.slice(1)));
                         const extractedSize = extractedColor.sizes.find((size: any) => size.number === color.sizes[0].number)
-                        history.pushState(null, '', `/products/${paramsProduct}/${extractedColor.type.toLowerCase()}/${extractedSize?.variantId}`);
+                        history.pushState(null, '', `/products/${paramsProduct}/${extractedColor.type}/${extractedSize?.variantId}`);
                 
                         setSelectedSize(color.sizes[0].number.toString());
                     }
@@ -335,7 +330,7 @@ const ProductDetail = ({
             color.sizes.forEach((size: any) => {
                 sizesObj[`${color.type}-${size.number}`] = {
                 price: size.price,
-                variantId: size.variant_id,
+                variant_id: size.variant_id,
                 stock: size.stock,
                 color: color.type,
                 };
@@ -594,7 +589,7 @@ const ProductDetail = ({
                         </div>}
                         <button className="font-sans lg:px-44 px-28 py-2 ring-gray-600 hover:ring-1 border border-gray-600 text-gray-600 flex flex-row justify-center items-center"
                             onClick={() => {
-                                if(items.some((item: any) => item.variantId === sizesObj[`${selectedColor}-${selectedSize}`].variantId)){
+                                if(items.some((item: any) => item.variantId === sizesObj[`${selectedColor}-${selectedSize}`].variant_id)){
                                     setToastError(true);
                                 }else{
                                     //adding item to cart
@@ -603,7 +598,7 @@ const ProductDetail = ({
                                         sizesObj[`${selectedColor}-${selectedSize}`].price,
                                         quantity: parseInt(quantity),
                                         variantId:
-                                        sizesObj[`${selectedColor}-${selectedSize}`].variantId,
+                                        sizesObj[`${selectedColor}-${selectedSize}`].variant_id,
                                         id: productId,
                                     });
                                     //sending cart data to data layer

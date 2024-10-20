@@ -1,8 +1,6 @@
-import { getDataFromToken } from "@/helpers/getDataFromToken";
+import { models } from "@/db/connection";
 import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
-import User from "@/models/user";
-import * as argon from 'argon2';
 import { NextRequest, NextResponse } from "next/server";
 
 
@@ -12,7 +10,7 @@ export async function POST(req: NextRequest) {
 
     const {email} = reqBody;
 
-    const user = await User.findOne({
+    const user = await models.User.findOne({
       where: {
         email
     }

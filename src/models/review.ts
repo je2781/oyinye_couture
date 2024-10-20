@@ -1,5 +1,4 @@
-import sequelize from '@/db/connection';
-import { BelongsToGetAssociationMixin, BelongsToSetAssociationMixin, CreationOptional, DataTypes, ForeignKey, InferAttributes, InferCreationAttributes, Model } from 'sequelize';
+import { BelongsToGetAssociationMixin, BelongsToSetAssociationMixin, CreationOptional, DataTypes, ForeignKey, InferAttributes, InferCreationAttributes, Model, Sequelize } from 'sequelize';
 import Product from './product';
 import User from './user';
 
@@ -23,48 +22,50 @@ class Review extends Model<InferAttributes<Review>, InferCreationAttributes<Revi
         Review.belongsTo(models.Product);
     	Review.belongsTo(models.User);
     }
+
+    static initModel(sequelize: Sequelize){
+        return Review.init({
+            id: {
+                type: DataTypes.STRING,
+                primaryKey: true,
+                allowNull: false,
+              },
+            headline: {
+                type: DataTypes.STRING,
+            },
+            rating: DataTypes.INTEGER,
+            content: DataTypes.STRING,
+            is_media: {
+                type: DataTypes.BOOLEAN,
+                defaultValue: false
+            },
+            likes: {
+                type: DataTypes.INTEGER,
+                defaultValue: 0
+            },
+            author_id: {
+                type: DataTypes.STRING,
+                references: {
+                    model: 'users',
+                    key: 'id'
+                }
+            },
+            dislikes: {
+                type: DataTypes.INTEGER,
+                defaultValue: 0
+            },
+            createdAt: DataTypes.DATE,
+            updatedAt: DataTypes.DATE,
+        },  {
+            tableName: "reviews",
+            sequelize,
+            timestamps: true,
+          }
+        );
+    }
     // ...
   }
   
-
-Review.init({
-    id: {
-        type: DataTypes.STRING,
-        primaryKey: true,
-        allowNull: false,
-      },
-    headline: {
-        type: DataTypes.STRING,
-    },
-    rating: DataTypes.INTEGER,
-    content: DataTypes.STRING,
-    is_media: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false
-    },
-    likes: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0
-    },
-    author_id: {
-        type: DataTypes.STRING,
-        references: {
-            model: 'user',
-            key: 'id'
-        }
-    },
-    dislikes: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0
-    },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
-},  {
-    tableName: "reviews",
-    sequelize,
-    timestamps: true,
-  }
-);
 
 
 

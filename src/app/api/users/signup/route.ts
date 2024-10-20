@@ -1,11 +1,10 @@
-import User from "@/models/user";
 import { NextRequest, NextResponse } from "next/server";
 import * as argon from "argon2";
 import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
 import { getVisitData } from "@/helpers/getVisitData";
 import crypto from 'crypto';
-import Visitor from "@/models/visitor";
+import { models } from "@/db/connection";
 
 
 export async function POST(req: NextRequest) {
@@ -13,8 +12,8 @@ export async function POST(req: NextRequest) {
     const reqBody = await req.json();
     const { firstName, lastName, email, password, enableEmailMarketing} = reqBody;
 
-    const user = await User.findOne({
-      where: { email }
+    const user = await models.User.findOne({
+      where: { email: email }
     });
     //check if user laready exists
     if (user) {
@@ -45,16 +44,16 @@ export async function POST(req: NextRequest) {
       
           const hash = await argon.hash(password);
       
-          const newUser = await User.create({
+          const newUser = await models.User.create({
             id: (await crypto.randomBytes(6)).toString("hex"),
-            email,
+            email: email,
             password: hash,
             first_name: firstName,
             last_name: lastName,
           });
       
           if(visitId){
-            const visitor = await Visitor.findByPk(visitId);
+            const visitor = await models.Visitor.findByPk(visitId);
             await newUser.setVisitor(visitor!);
           }
       
@@ -75,14 +74,14 @@ export async function POST(req: NextRequest) {
           );
 
     }else{
-      const newUser = await User.create({
+      const newUser = await models.User.create({
         id: (await crypto.randomBytes(6)).toString("hex"),
         email,
         enable_email_marketing: enableEmailMarketing ? true : false
       });
   
       if(visitId){
-        const visitor = await Visitor.findByPk(visitId);
+        const visitor = await models.Visitor.findByPk(visitId);
         await newUser.setVisitor(visitor!);
       }
 

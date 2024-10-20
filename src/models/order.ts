@@ -10,12 +10,9 @@ import {
   InferAttributes,
   InferCreationAttributes,
   Model,
+  Sequelize,
 } from "sequelize";
-import Review from "./review";
-import OrderItem from "./orderItem";
-import Product from "./product";
 import User from "./user";
-import sequelize from "@/db/connection";
 
 
 class Order extends Model<InferAttributes<Order>, InferCreationAttributes<Order>> {
@@ -23,7 +20,7 @@ class Order extends Model<InferAttributes<Order>, InferCreationAttributes<Order>
   declare payment_info: CreationOptional<any>;
   declare status: CreationOptional<string>;
   declare sales: number;
-  declare items: CreationOptional<OrderItem[]>;
+  declare items: CreationOptional<any[]>;
   declare shipping_method: CreationOptional<string>;
   declare payment_type: CreationOptional<string>;
   declare payment_status: CreationOptional<string>;
@@ -36,30 +33,31 @@ class Order extends Model<InferAttributes<Order>, InferCreationAttributes<Order>
     Order.belongsTo(models.User);
 
   }
+
+  static initModel(sequelize: Sequelize){
+    return Order.init({
+      id: {
+        type: DataTypes.STRING,
+        primaryKey: true,
+        allowNull: false,
+      },
+      items: DataTypes.ARRAY(DataTypes.JSONB),
+      sales: DataTypes.DOUBLE,
+      status: DataTypes.STRING,
+      payment_info: DataTypes.JSONB,
+      shipping_method: DataTypes.STRING,
+      payment_type: DataTypes.STRING,
+      payment_status: DataTypes.STRING,
+      createdAt: DataTypes.DATE,
+      updatedAt: DataTypes.DATE
+    },{
+      tableName: "orders",
+      sequelize,
+      timestamps: true,
+    });
+  }
   // ...
 }
-
-
-Order.init({
-  id: {
-    type: DataTypes.STRING,
-    primaryKey: true,
-    allowNull: false,
-  },
-  items: DataTypes.ARRAY(DataTypes.JSONB),
-  sales: DataTypes.DOUBLE,
-  status: DataTypes.STRING,
-  payment_info: DataTypes.JSONB,
-  shipping_method: DataTypes.STRING,
-  payment_type: DataTypes.STRING,
-  payment_status: DataTypes.STRING,
-  createdAt: DataTypes.DATE,
-  updatedAt: DataTypes.DATE
-},{
-  tableName: "orders",
-  sequelize,
-  timestamps: true,
-});
 
 
 export default Order;

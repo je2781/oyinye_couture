@@ -1,11 +1,22 @@
-import Product from '@/models/product';
+import { models } from '@/db/connection';
 import { NextResponse, type NextRequest } from 'next/server';
  
 
 export async function GET(req: NextRequest) {
     try {
+        const notHidden = req.nextUrl.searchParams.get('not_hidden');
+        let products: any[] = [];
 
-        const products = await Product.findAll();
+        if(notHidden){
+
+          products = await models.Product.findAll({
+            where: {
+              is_hidden: false
+            }
+          });
+        }else{
+          products = await models.Product.findAll();
+        }
 
         if (!products) {
           return NextResponse.json(

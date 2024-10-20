@@ -6,7 +6,7 @@ export interface DressSizesJsxObj {
 export type DressSize = {
   price: number;
   stock: number;
-  variantId: string;
+  variant_id: string;
   number?: number;
   color?: string;
 }

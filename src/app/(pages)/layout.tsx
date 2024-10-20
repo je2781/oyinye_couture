@@ -16,6 +16,8 @@ import messagesNl from '../../locales/nl/messages.json';
 import { IntlProvider } from "react-intl";
 import './public.css';
 import '../globals.css';
+import 'animate.css';
+import sequelize from "@/db/connection";
 
 const messages: Record<string, { [key: string]: any }> = {
   'en': messagesEn,
@@ -55,8 +57,9 @@ export default function RootLayout({
   useEffect(() => {
     async function fetchAllProducts() {
       try {
-        
-        const res = await fetch(`/api/products`, {
+
+
+        const res = await fetch(`/api/products?not_hidden=true`, {
           headers: {
             'Cache-Control': 'no-store'
           }

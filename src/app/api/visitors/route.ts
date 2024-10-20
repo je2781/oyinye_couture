@@ -1,13 +1,11 @@
-import { getBrowser, getDeviceType } from '@/helpers/getHelpers';
-import { getVisitData } from '@/helpers/getVisitData';
-import User from '@/models/user';
-import Visitor from '@/models/visitor';
+
+import { models } from '@/db/connection';
 import { NextResponse, type NextRequest } from 'next/server';
 
 
 export async function GET(req: NextRequest) {
     try {
-        let visitors = await Visitor.findAll();
+        let visitors = await models.Visitor.findAll();
 
 
         return NextResponse.json({

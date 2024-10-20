@@ -1,6 +1,5 @@
-import { getDataFromToken } from "@/helpers/getDataFromToken";
-import { sendMail } from "@/helpers/mailer";
-import User from "@/models/user";
+
+import { models } from "@/db/connection";
 import * as argon from "argon2";
 import { NextRequest, NextResponse } from "next/server";
 import { Op } from "sequelize";
@@ -36,7 +35,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await User.findOne(
+    const user = await models.User.findOne(
       {
         where: { reset_token: token, reset_token_expiry_date: { [Op.gt]: new Date()  } }
       }

@@ -5,9 +5,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
-import useCart from "@/store/useCart";
-import Header from "@/components/layout/Header";
-import useGlobal from "@/store/useGlobal";
+
 
 
 export default function LoginPage({message, success}: any) {
@@ -53,13 +51,13 @@ export default function LoginPage({message, success}: any) {
       const extractedUser = res.data.user;
 
       if(extractedUser){
-        if(!extractedUser.isVerified.account){
+        if(!extractedUser.account_is_verified){
           toast.error(`Check ${extractedUser.email} for verification link`, {
             position: 'top-center'
           });
         }else{
           toast.success("Login successful!");
-          if(extractedUser.isAdmin){
+          if(extractedUser.is_admin){
             router.replace('/admin/summary');
           }else{
             router.replace(`/`);

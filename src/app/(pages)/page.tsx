@@ -14,14 +14,14 @@ async function getData() {
   if(cartId && cartId.length > 0){
     const [cartDataRes, productDataRes] = await Promise.all([
       fetch(`${process.env.DOMAIN}/api/products/cart/${cartId}`),
-      fetch(`${process.env.DOMAIN}/api/products`, {next: {revalidate: 3600}})
+      fetch(`${process.env.DOMAIN}/api/products?not_hidden=true`, {next: {revalidate: 3600}})
     ]);
 
     const [cartData, productData] = await Promise.all([cartDataRes.json(), productDataRes.json()]);
   
     return [cartData.cartItems, productData.products];
   }else{
-    const productDataRes = await fetch(`${process.env.DOMAIN}/api/products`, {next: {revalidate: 3600}});
+    const productDataRes = await fetch(`${process.env.DOMAIN}/api/products?not_hidden=true`, {next: {revalidate: 3600}});
     const productData = await productDataRes.json();
     return [[], productData.products];
   }

@@ -8,15 +8,15 @@ import ProductQuickView from "./ProductQuickView";
 import { useRouter } from "next/navigation";
 import { useMediaQuery } from "@mui/material";
 import useWindowWidth from "../helpers/getWindowWidth";
-import toast from "react-hot-toast";
-import useGlobal from "@/store/useGlobal";
+import hexs from "colors-named-hex";
+import named from "colors-named";
 
-const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDetailPage}: any) => {
+const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDetailPage, isAdmin, handleEdit, handleDelete}: any) => {
     const[isModalOpen, setIsModalOpen] = React.useState(false);
     let width = useWindowWidth();
     const router = useRouter();
     //sorting out the sizes of the first dress
-    if(!isSearchProduct){
+    if(!isSearchProduct &&  !isAdmin){
       product.colors[0].sizes = product.colors[0].sizes.filter((size: any) => size.stock > 0);
     }
     product.colors[0].sizes.sort((a: any, b: any) => a.number - b.number);
@@ -65,10 +65,12 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
 
         }}
         onClick={() => {
-          if(isOnDetailPage){
-            location.replace(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variant_id}`);
-          }else{
-            router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type.toLowerCase()}/${product.colors[0].sizes[0].variant_id}`)
+          if(!isAdmin){
+            if(isOnDetailPage){
+              location.replace(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type}/${product.colors[0].sizes[0].variant_id}`);
+            }else{
+              router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type}/${product.colors[0].sizes[0].variant_id}`)
+            }
           }
           
         }}
@@ -96,11 +98,22 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
               />
           </div>
 
-          <section className={`${isSearchProduct  ? 'items-start': 'items-center'} flex flex-col gap-y-1`}>
-            <h2 className="text-gray-500 font-sans text-sm">{product.title}</h2>
-            <h2 className="text-[1rem]">
-                &#8358;{product.colors[0].sizes[0].price.toLocaleString("en-US")}
-            </h2>
+          <section className={`${isSearchProduct  ? 'items-start': 'items-center'} flex ${isAdmin ? 'flex-row gap-x-5' : 'flex-col gap-y-1'}`}>
+            <>
+            { isAdmin
+             ? <>
+                <button onClick={handleEdit} className="text-accent hover:text-accent/60 bg-transparent border-none">Edit</button>
+                <button onClick={handleDelete} className="text-white bg-accent px-2 py-1 rounded-md hover:text-accent hover:bg-white">Delete</button>
+               </>
+
+             : <>
+                <h2 className="text-gray-500 font-sans text-sm">{product.title}</h2>
+                <h2 className="text-[1rem]">
+                    &#8358;{product.colors[0].sizes[0].price.toLocaleString("en-US")}
+                </h2>
+              </>
+            }
+            </>
           </section>
           {product.colors[0].sizes[0].stock === 0 && <section 
             className={`${width > 768 && imageH && imageW ? 'bottom-[31%]' : width < 768 && !isGridView ? 'bottom-[20.5%]' : width < 768 && isGridView ? 'bottom-[33%]' : 'bottom-[26%]'} absolute font-sans bg-black px-4 py-1 rounded-3xl cursor-pointer text-white left-[4%] text-sm`}
@@ -108,17 +121,22 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
             Sold out
           </section>}
       </article>
-      <section 
-          onClick={showModalHandler} className={`${isSearchProduct && imageH && imageW ? 'left-[15%] top-[40%]' : 'left-[20%] top-[50%]'} z-10 opacity-0 rounded-md absolute flex h-6 px-2 py-4 w-[100px] flex-row items-center gap-x-1 font-serif  cursor-pointer text-blue-400`} 
+      {isAdmin 
+      ? <div id='zoom-hint' className="absolute"></div>
+      : <div 
+          onClick={(e) => {
+              showModalHandler(e);
+          }} 
+          className={`${isSearchProduct && imageH && imageW ? 'left-[15%] top-[40%]' : 'left-[20%] top-[50%]'} z-10 opacity-0 rounded-md absolute flex h-6 px-2 py-4 w-[100px] flex-row items-center gap-x-1 font-serif  cursor-pointer text-blue-400`} 
           id='zoom-hint'
           onMouseOut={(e) => {
             if(!isModalOpen){
-  
+
               const item = e.currentTarget;
               item.classList.remove('expand');
             }
-  
-  
+
+
           }}
           onMouseOver={(event) => {
             if(!isModalOpen){
@@ -127,12 +145,13 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
               item.classList.add('expand');
       
             }
-    
+
           }}
         >
-          <i className="fa-solid fa-eye text-xs"></i>
-          <h4 className="text-[.8rem]">Quick View</h4>
-      </section>
+            <i className="fa-solid fa-eye text-xs"></i>
+            <h4 className="text-[.8rem]">{isAdmin && product.is_hidden ? 'hidden' : 'Quick View'}</h4>
+        </div>
+      }
     </div>
 
   );
