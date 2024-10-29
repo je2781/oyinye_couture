@@ -1,7 +1,7 @@
 
 services:
   oyinye-web:
-    image: je278/oyinye:1.1
+    image: je278/oyinye:1.4
     container_name: nextjs-app
     restart: always
     build:

@@ -17,10 +17,10 @@ import {
   class Product extends Model<InferAttributes<Product>, InferCreationAttributes<Product>> {
     declare id: string;
     declare is_feature: boolean;
-    declare title: string;
+    declare title: any;
     declare features: string[];
     declare colors: any[];
-    declare description: string;
+    declare description: any;
     declare reviews: CreationOptional<Array<ForeignKey<string>>>;
     declare type: string;
     declare no_of_orders: CreationOptional<number>;
@@ -44,26 +44,17 @@ import {
             primaryKey: true,
             allowNull: false,
           },
-        title: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
+        title: DataTypes.JSONB,
         is_feature: {
             type: DataTypes.BOOLEAN,
             defaultValue: false
         },
         colors: DataTypes.JSONB,
-        description: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
+        description: DataTypes.JSONB,
         no_of_orders: {
             type: DataTypes.INTEGER
         },
-        type: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
+        type: DataTypes.JSONB,
         is_hidden: DataTypes.BOOLEAN,
         features: DataTypes.JSONB,
         reviews: DataTypes.JSONB,

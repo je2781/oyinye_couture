@@ -8,10 +8,9 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import './Cart.css';
-import { useRouter } from "next/navigation";
+import { useRouter } from '@/i18n/routing';
 import Link from "next/link";
 import useWindowWidth from "../helpers/getWindowWidth";
-import useGlobal from "@/store/useGlobal";
 
 interface InitialCartData {
     price: number, 
@@ -24,21 +23,21 @@ interface InitialCartData {
 export default function CartInfo({
     total,
     cartItems,
-    userEmail
+    userEmail,
+    locale
 }: any){
     let cartItemObj = useRef<CartItemObj>({});
     let frontBase64ImagesObj = useRef<Base64ImagesObj>({});
 
 
     const {deductItem, addItem, updateCart} = useCart();
-
+    const router = useRouter();
     const [loader, setLoader] = useState(false);
     const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
     const [isCreatingUserProfile, setIsCreatingUserProfile] = useState(false);
     const [totalAmount, setTotalAmount] = useState(total);
     const [cartI, setCartI] = useState(cartItems);
     const [isIncrementingCart, setIsIncrementingCart] = useState<InitialCartData>();
-    const router = useRouter();
     const [email, setEmail] = useState(userEmail);
     const [isDeductingCart, setIsDeductingCart] = useState<InitialCartData>();
     let windowWidth = useWindowWidth();
@@ -50,7 +49,7 @@ export default function CartInfo({
     if(cartI.length > 0){
 
         //extracting product details to populate the cart page
-        extractProductDetails(cartI, cartItemObj.current, frontBase64ImagesObj.current);
+        extractProductDetails(cartI, cartItemObj.current, frontBase64ImagesObj.current, locale!);
     }
     const [quantities, setQuantities] = useState<number[]>(Object.values(cartItemObj.current).map((item: any) => item.quantity));
     const [itemTotalAmounts, setItemTotalAmounts] = useState<number[]>(Object.values(cartItemObj.current).map((item: any) => item.quantity * item.price));
@@ -75,7 +74,7 @@ export default function CartInfo({
                     frontBase64ImagesObj.current = {};
 
                     setCartI(items);
-                    extractProductDetails(items, cartItemObj.current, frontBase64ImagesObj.current);
+                    extractProductDetails(items, cartItemObj.current, frontBase64ImagesObj.current, locale!);
                     setQuantities(Object.values(cartItemObj.current).map((item: any) => item.quantity));
                     setItemTotalAmounts(Object.values(cartItemObj.current).map((item: any) => item.quantity * item.price));
                     setTotalAmount(res.data.totalAmount);
@@ -113,9 +112,9 @@ export default function CartInfo({
                     frontBase64ImagesObj.current = {};
 
                     setCartI(items);
-                    extractProductDetails(items, cartItemObj.current, frontBase64ImagesObj.current);
-                    setQuantities(Object.values(cartItemObj.current.current).map((item: any) => item.quantity));
-                    setItemTotalAmounts(Object.values(cartItemObj.current.current).map((item: any) => item.quantity * item.price));
+                    extractProductDetails(items, cartItemObj.current, frontBase64ImagesObj.current, locale!);
+                    setQuantities(Object.values(cartItemObj.current).map((item: any) => item.quantity));
+                    setItemTotalAmounts(Object.values(cartItemObj.current).map((item: any) => item.quantity * item.price));
                     setTotalAmount(res.data.totalAmount);
                 } catch (error: any) {
                     setLoader(false);
@@ -205,10 +204,14 @@ export default function CartInfo({
     const handleCheckout = async () => {
         //validation checks
         if(!email){
-            return toast.error("You're email is missing");
+            return toast.error("Your email is missing",{
+                position: 'top-center'
+            });
         }
         if(!email.includes('@')){
-            return toast.error("Invalid email");
+            return toast.error("Invalid email",{
+                position: 'top-center'
+            });
         }
 
         if(isCreatingUserProfile){
@@ -224,7 +227,6 @@ export default function CartInfo({
         toast.error(error);
        }
     }
-
     
     return (
         <>
@@ -316,12 +318,12 @@ export default function CartInfo({
                     {loader && <div className="trailing-progress-bar">
                         <div className="trailing-progress" ></div>
                     </div>}
-                    {Object.values(cartItemObj.current).map((item: any, i: number) => quantities[i] > 0 && <section key={i}
+                    {Object.values(cartItemObj.current).map((item, i: number) => quantities[i] > 0 && <section key={i}
                         className="border-[0.7px] border-gray-300 border-l-0 border-r-0 border-t-0 w-full py-7"
                     >
                         <section className="flex md:flex-row flex-col justify-between md:items-center items-start w-full gap-y-4">
                             <article className="md:w-[62%] w-full flex-row flex justify-between items-start cursor-pointer"
-                                onClick={() => router.push(`/products/${item.title.replace(' ', '-').toLowerCase()}/${item.color.toLowerCase()}/${item.variant_id}`)}
+                                onClick={() => router.push(`/products/${item.title!.replace(' ', '-').toLowerCase()}/${item.color!.toLowerCase()}/${item.variant_id}`)}
                                 >
                                 <div className="flex flex-row md:gap-x-7 gap-x-3 items-start">
                                     <Image src={Object.values(frontBase64ImagesObj.current)[i][0]} width={100} height={175} alt={`cart-item${i+1}`}/>
@@ -339,7 +341,7 @@ export default function CartInfo({
                                     <div className={`flex flex-col items-start gap-y-2 relative`}>
                                         <div className="flex flex-row gap-x-7 text-gray-600 border border-gray-600 px-5 py-2 w-36 h-12 items-center">
                                             <button
-                                                onClick={() => handleQuantityChange(i, -1, item.price, item.variantId, item.id, totalAmount)}
+                                                onClick={() => handleQuantityChange(i, -1, item.price, item.variant_id, item.id!, totalAmount)}
                                                 className={`text-lg font-sans text-gray-600 font-semibold ${loader ? 'cursor-not-allowed': 'cursor-pointer'}`}
                                                 disabled={loader}
 
@@ -350,7 +352,7 @@ export default function CartInfo({
                                             <button
                                                 className={`text-lg font-sans text-gray-600 font-semibold ${loader ? 'cursor-not-allowed': 'cursor-pointer'}`}
                                                 disabled={loader}
-                                                onClick={() => handleQuantityChange(i, 1, item.price, item.variantId, item.id, totalAmount)}
+                                                onClick={() => handleQuantityChange(i, 1, item.price, item.variant_id, item.id!, totalAmount)}
                                             >
                                                 +
                                             </button>
@@ -365,26 +367,26 @@ export default function CartInfo({
                                             el.style.setProperty("bottom", "0");
                                             el.style.setProperty("background-color", "transparent");
 
-                                            if(quantities[i] < item.quantity){
-                                                deductItem(item.variantId, item.quantity - quantities[i], item.price);
+                                            if(quantities[i] < item.quantity!){
+                                                deductItem(item.variant_id, item.quantity! - quantities[i], item.price);
                                                 //updating cart data in backend
                                                 setIsDeductingCart({
-                                                    quantity: item.quantity - quantities[i],
-                                                    variantId: item.variantId,
+                                                    quantity: item.quantity! - quantities[i],
+                                                    variantId: item.variant_id,
                                                     price: item.price
         
                                                 });
                                             }else{
                                                 addItem({
                                                     price: item.price,
-                                                    quantity: quantities[i] - item.quantity,
-                                                    variantId: item.variantId,
+                                                    quantity: quantities[i] - item.quantity!,
+                                                    variantId: item.variant_id,
                                                 });
                                                 //sending cart data to backend 
                                                 setIsIncrementingCart({
                                                     price: item.price,
-                                                    quantity:  quantities[i] - item.quantity,
-                                                    variantId: item.variantId,
+                                                    quantity:  quantities[i] - item.quantity!,
+                                                    variantId: item.variant_id,
                                                     id: item.id,
                                                     totalAmount
                                                 });
@@ -432,11 +434,11 @@ export default function CartInfo({
                                     <i className={`fa-solid fa-trash-can ${loader ? 'cursor-not-allowed' : ' cursor-pointer'} text-sm text-gray-600`} 
                                     onClick={() => {
                                         if(!loader){
-                                            deductItem(item.variantId, quantities[i], item.price);
+                                            deductItem(item.variant_id, quantities[i], item.price);
                                             //updating cart data in backend
                                             setIsDeductingCart({
                                                 quantity: quantities[i],
-                                                variantId: item.variantId,
+                                                variantId: item.variant_id,
                                                 price: item.price
                                             });
                                         }

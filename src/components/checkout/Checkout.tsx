@@ -19,10 +19,9 @@ import { Base64ImagesObj, CartItemObj } from "@/interfaces";
 import axios from "axios";
 import toast from "react-hot-toast";
 import useWindowWidth from "../helpers/getWindowWidth";
-import { useRouter, usePathname } from "next/navigation";
-import useGlobal from "@/store/useGlobal";
+import { useRouter, usePathname } from '@/i18n/routing';
 
-export default function Checkout({ cartItems, total, orderId, country, userEmail, userId, billingInfo, shippingInfo, saveBillingInfo, saveShippingInfo }: any) {
+export default function Checkout({ cartItems, total, orderId, country, userEmail, userId, billingInfo, shippingInfo, saveBillingInfo, saveShippingInfo, locale}: any) {
   let cartItemObj: CartItemObj = {};
   let tax = 250;
 
@@ -85,11 +84,10 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
     `Phone: +${Country.getCountryByCode(country)!.phonecode}...`
   );
   let windowWidth = useWindowWidth();
-  const {locale} = useGlobal();
 
   if (cartItems.length > 0) {
     //extracting product details to populate the cart page
-    extractProductDetails(cartItems, cartItemObj, frontBase64ImagesObj);
+    extractProductDetails(cartItems, cartItemObj, frontBase64ImagesObj, locale!);
   }
   const quantities = Object.values(cartItemObj).map((item: any) =>
     parseInt(item.quantity)
@@ -130,7 +128,9 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
       || postal.shipping.length === 0
     ){
       
-      return toast.error('shipping data is missing vital info');
+      return toast.error('shipping data is missing vital info', {
+        position: 'top-center'
+      });
     }
     if((phone.billing.length < 10 || firstName.billing.length === 0
       || lastName.billing.length === 0 || company.billing.length === 0 || address.billing.length === 0
@@ -138,7 +138,9 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
       || postal.billing.length === 0) && billing === 'different'
     ){
       
-      return toast.error('billing data is missing vital info');
+      return toast.error('billing data is missing vital info', {
+        position: 'top-center'
+      });
     }
 
     errors.forEach(error => {
@@ -148,7 +150,9 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
     });
 
     if(errorsCount > 0){
-        return toast.error('The values entered are invalid');
+        return toast.error('The values entered are invalid', {
+          position: 'top-center'
+        });
     }
 
     try {
@@ -233,7 +237,13 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
               } catch (error: any) {
                 toast.error(error.message);
               }finally{
-                router.replace(`/`);
+                // Construct the new path
+                const newPath = `/${locale}`;
+
+                const url = new URL(`${window.location.origin}${newPath}`);
+                
+                window.location.href = url.toString();
+
               }
             }
           },

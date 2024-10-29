@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import React, { useEffect } from "react";
 import useWindowWidth from "../helpers/getWindowWidth";
 import Sidebar from "./Sidebar";
@@ -9,15 +8,17 @@ import useAuth from "@/store/useAuth";
 import Image from "next/image";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import { Link, usePathname, useRouter } from '@/i18n/routing';
+import { useSearchParams } from "next/navigation";
 import useGlobal from "@/store/useGlobal";
 import { AdminSettingsModal, MobileModal } from "../ui/Modal";
-import { appsList, generateBase64FromMedia, getRouteNames, insightList, viewsList } from "@/helpers/getHelpers";
+import { appsList, generateBase64FromMedia, getRouteNames, insightList, reloadPageWithLocale, viewsList } from "@/helpers/getHelpers";
 
-export default function AdminHeader({sectionName, pathName, userName, userEmail, userTitle, id, avatar}: any) {
+export default function AdminHeader({sectionName, pathName, userName, userEmail, userTitle, id, avatar, locale}: any) {
   let timerId: NodeJS.Timeout | null  = null;
 
-  const { authStatus } = useAuth();
+  const path = usePathname();
+  const searchParams = useSearchParams();
   const [isAdminSettingsOpen, setIsAdminSettingsOpen] = React.useState({
     profile: false,
     settings: false
@@ -32,7 +33,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
   const [name, setName] = React.useState(userName);
   const [title, setTitle] = React.useState(userTitle);
   const [loader, setLoader] = React.useState(false);
-  const {locale, setLocale} = useGlobal();
+  const {lang, setLang} = useGlobal();
 
   useEffect(() => {
     setIsMobileModalOpen(false);
@@ -121,7 +122,13 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
   const onLogout = async () => {
     try {
       await axios.get("/api/users/logout");
-      router.replace("/login");
+      // Construct the new path
+      const newPath = `/${locale}/login`;
+
+      const url = new URL(`${window.location.origin}${newPath}`);
+      
+      router.push(url.toString());
+
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -296,12 +303,11 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                                       id='lang-select'
                                                       className="focus:outline-none p-2 appearance-none"
                                                       onChange={(e) => {
-                                                          setLocale(e.target.value);
-                                                          localStorage.setItem('locale', e.target.value);
-                                                          history.pushState(null, '', `/${e.target.value}`);
+                                                        setLang(e.target.value);
+                                                        reloadPageWithLocale(path, locale, searchParams, e.target.value);
 
                                                       }}>
-                                                          <option hidden value=''>{locale === 'en' ? 'English' : locale === 'fr' ? 'French' : locale === 'nl' ? 'Dutch' : locale === 'pt-PT' ? 'Portugese (Portugal)' : locale === 'zh-TW' ? 'Chinese (traditional)' : 'Spanish'}</option>
+                                                          <option hidden value=''>{lang === 'en' ? 'English' : lang === 'fr' ? 'French' : lang === 'nl' ? 'Dutch' : lang === 'pt-PT' ? 'Portugese (Portugal)' : lang === 'zh-TW' ? 'Chinese (traditional)' : 'Spanish'}</option>
                                                           {
                                                               ['en',
                                                               'fr',
@@ -349,7 +355,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
           </div>
         </div>
         {isSearchModalOpen && (
-          <SearchBar onHideModal={hideSearchModalHandler} isAdmin={true} />
+          <SearchBar onHideModal={hideSearchModalHandler} isAdmin={true} locale={locale} />
         )}
         {isMobileModalOpen && <MobileModal onClose={hideModalHandler} classes='bg-primary-800 px-4 pt-8'>
           

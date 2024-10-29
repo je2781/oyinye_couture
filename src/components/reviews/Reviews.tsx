@@ -4,18 +4,22 @@ import Stars from '../../../public/shooting-stars.svg';
 import Image from 'next/image';
 import { ReviewsModal } from '../ui/Modal';
 import React from 'react';
-import {decodedBase64, generateBase64FromMedia } from '@/helpers/getHelpers';
-import DocViewerComponent from '../helpers/DocViewer';
+import {decodedBase64, generateBase64FromMedia, reloadPageWithLocale } from '@/helpers/getHelpers';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import { useRouter, usePathname } from '@/i18n/routing';
+import { useSearchParams } from 'next/navigation';
 
-const Reviews = ({productReviews, product}: any) => {
+const Reviews = ({productReviews, product, locale}: any) => {
     let averageRating = 0;
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [mediaBase64, setMediaBase64] = React.useState({
         media: '',
         image: ''
     });
+    const router = useRouter();
+    const path = usePathname();
+    const searchParams = useSearchParams();
     const [likes, setLikes] = React.useState<number[]>(productReviews.map((review: any) => review.likes));
     const [dislikes, setDislikes] = React.useState<number[]>(productReviews.map((review: any) => review.dislikes));
     const [reviews, setReviews] = React.useState(productReviews);
@@ -277,7 +281,7 @@ const Reviews = ({productReviews, product}: any) => {
         } catch (error: any) {
             toast.error(error.message);
         }finally{
-            location.replace(location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1]);
+            reloadPageWithLocale(path, locale, searchParams);
         }
 
     }

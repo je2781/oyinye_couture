@@ -120,7 +120,7 @@ class Cart extends Model<InferAttributes<Cart>, InferCreationAttributes<Cart>> {
         primaryKey: true,
         allowNull: false,
       },
-      items: DataTypes.ARRAY(DataTypes.JSONB),
+      items: DataTypes.JSONB,
       total_amount: DataTypes.DOUBLE,
       createdAt: DataTypes.DATE,
       updatedAt: DataTypes.DATE

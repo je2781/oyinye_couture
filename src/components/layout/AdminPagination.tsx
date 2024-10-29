@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname } from '@/i18n/routing';
 
 export default function AdminPagination({
   currentPage,
@@ -21,7 +21,8 @@ export default function AdminPagination({
           onClick={async (e) => {
             e.preventDefault();
             // Programmatically navigate to the base route (without ?page=1)
-            router.replace(path);
+            
+            router.push(path);
           }}
           className={`${
             isActivePage === 1 ? "bg-accent" : ""

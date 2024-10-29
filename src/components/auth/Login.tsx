@@ -1,14 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, Link } from '@/i18n/routing';
 import axios from "axios";
 import toast from "react-hot-toast";
 
 
 
-export default function LoginPage({message, success}: any) {
+export default function LoginPage({message, success, locale}: any) {
   const [user, setUser] = React.useState({
     email: "",
     password: ""
@@ -58,9 +57,9 @@ export default function LoginPage({message, success}: any) {
         }else{
           toast.success("Login successful!");
           if(extractedUser.is_admin){
-            router.replace('/admin/summary');
+            router.push('/admin/summary');
           }else{
-            router.replace(`/`);
+            router.push(`/`);
           }
         }
       }else{

@@ -11,7 +11,7 @@ module.exports = {
       total_amount: {
         type: Sequelize.DOUBLE
       },
-      items: Sequelize.ARRAY(Sequelize.JSONB),
+      items: Sequelize.JSONB,
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

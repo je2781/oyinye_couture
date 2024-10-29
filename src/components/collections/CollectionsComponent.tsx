@@ -6,14 +6,17 @@ import SecondaryHeader from "./filter/SecondaryHeader";
 import Pagination from "../layout/Pagination";
 import Setting from "./filter/Setting";
 import useWindowWidth from "../helpers/getWindowWidth";
+import { usePathname, useRouter } from "@/i18n/routing";
+
 
 export default function Collections({
     collectionsCat,
     data,
     sortBy,
-    page
+    page,
+    locale
 }: any){
-  
+  const path = usePathname();
   const sortByList = useMemo(() => [
     "Featured", 
     "Best Selling", 
@@ -62,6 +65,7 @@ export default function Collections({
       break;
   }
 
+    const router = useRouter();
     const [visible, setVisible] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
     const [isGridView, setIsGridView] = React.useState(true);
@@ -187,8 +191,19 @@ export default function Collections({
           // Join the parameters to construct the query string
           const queryString = filteredParams.join('&');
   
+          const pathParts = path.split("/");
+  
+          if (pathParts[1] !== locale) {
+            pathParts.unshift(locale);
+          } 
+        
+          // Construct the new path
+          const newPath = `/${pathParts.join("/")}`;
+
+          const url = new URL(`${window.location.origin}${newPath}`);
+
           // Construct the final URL and replace the location
-          location.replace(`/collections/${collectionsCat}?${queryString}`);
+          window.location.href = url.toString() + '?' + queryString;
         }
       }
       reloadPage();
@@ -220,7 +235,7 @@ export default function Collections({
       <main
       className={`w-full min-h-screen font-sans md:pt-12 pt-5 pb-6 gap-y-9 flex flex-col items-start relative no-products-section`}
       >
-        <header className="w-full container mx-auto md:px-12 px-3 max-w-7xl text-center md:text-start">
+        <header className="w-full container mx-auto px-6 max-w-7xl text-center md:text-start">
           <h1 className="lg:text-4xl text-2xl">{collectionsCat === 'all' ? 'Products' : 'All Dresses'}</h1>
         </header>
         {data.products.length > 0
@@ -238,7 +253,7 @@ export default function Collections({
             isGridView={isGridView}
             setIsGridView={setIsGridView}
           />
-          <div className="flex flex-row md:pl-12 px-2 container mx-auto max-w-7xl gap-x-4">
+          <div className="flex flex-row container mx-auto max-w-7xl gap-x-4 justify-center px-6">
             {filter.isVisible && collectionsCat !== 'basics' && <Setting 
               {...{ setIsLoading, setFilter, filter, fabricList }}
             />}
@@ -248,6 +263,7 @@ export default function Collections({
                     key={i}
                     product={product}
                     isSearchProduct
+                    locale={locale}
                     imageH={filter.isVisible && collectionsCat !== 'basics' ? 650: null}
                     imageW={filter.isVisible && collectionsCat !== 'basics' ? 228: null}
                     isGridView={isGridView}

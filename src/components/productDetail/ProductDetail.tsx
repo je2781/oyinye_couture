@@ -8,8 +8,6 @@ import {
 } from "@/interfaces";
 import axios from "axios";
 import React, { useState } from "react";
-import hexs from "colors-named-hex";
-import named from "colors-named";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Navigation } from "swiper/modules";
 import "swiper/css";
@@ -29,16 +27,17 @@ import Product from "../product/Product";
 import Reviews from "../reviews/Reviews";
 import { createViewedProductsAction } from "@/app/actions";
 import useGlobal from "@/store/useGlobal";
-
+import { useRouter } from "@/i18n/routing";
+import {useTranslations} from 'next-intl';
 
 const ProductDetail = ({
     productSizes,
     productColors,
     productFrontBase64Images,
+    productTitle,
+    productColor,
     productId,
     paramsId,
-    paramsColor,
-    paramsProduct,
     relatedProducts,
     productReviews,
 }: any) => {
@@ -49,7 +48,9 @@ const ProductDetail = ({
     } = {};
     let frontBase64ImagesObj: Base64ImagesObj = {};
     let timerId =  React.useRef<NodeJS.Timeout | null>(null);
-
+    const router = useRouter();
+    const {lang} = useGlobal();
+    const t = useTranslations('app');
 
     React.useEffect(() => {
         async function getServerAction(){
@@ -60,18 +61,18 @@ const ProductDetail = ({
 
     const [colorsData, setColorsData] = useState<any[]>(productColors);
     const [imageFrontBase64, setImageFrontBase64] = useState<string[]>(productFrontBase64Images);
-    const [selectedColor, setSelectedColor] = useState<string>(paramsColor);
+    const [selectedColor, setSelectedColor] = useState<string>(productColor['en']);
     const [selectedSize, setSelectedSize] = useState<string>(productSizes.find(
         (size: any) => size.variant_id === paramsId
     ).number.toString());
     const [dragActivated, setDragActivated] = useState(false);
     const [loader, setLoader] = useState(false);
+    const [isBuyingNow, setIsBuyingNow] = useState(false);
     const [quantity, setQuantity] = useState("1");
     const { addItem, totalAmount, items} = useCart();
     const [isSavingCart, setIsSavingCart] = React.useState(false);
     const [toastError, setToastError] = React.useState(false);
     const [articleIsNotSticky, setArticleIsNotSticky] = React.useState(false);
-    const {locale} = useGlobal();
 
     React.useEffect(() => {
         return () => clearTimeout(timerId.current!);
@@ -168,7 +169,7 @@ const ProductDetail = ({
         if (colorsData) {
             for(let color of colorsData){
                 for (let i = 0; i < sizes.length; i++) {
-                    if (color.type === (activeColorEl.innerText.charAt(0).toLowerCase() + activeColorEl.innerText.slice(1)) && !color.sizes.some((size: any) => size.number === colorsObj[selectedColor][i]) && colorsObj[selectedColor][i]) {
+                    if (color.type['en'] === (activeColorEl.innerText.charAt(0).toLowerCase() + activeColorEl.innerText.slice(1)) && !color.sizes.some((size: any) => size.number === colorsObj[selectedColor][i]) && colorsObj[selectedColor][i]) {
                         // Setting properties of size element not contained in active dress color to 'not in stock'
                         sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('background-color', 'transparent');
                         sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('color', 'rgb(156, 163, 175)');
@@ -185,9 +186,9 @@ const ProductDetail = ({
                             }
                         }
                         //updating active dress size and pathname of current route
-                        const extractedColor = colorsData.find(color => color.type === (activeColorEl.innerText.charAt(0).toLowerCase() + activeColorEl.innerText.slice(1)));
+                        const extractedColor = colorsData.find(color => color.type['en'] === (activeColorEl.innerText.charAt(0).toLowerCase() + activeColorEl.innerText.slice(1)));
                         const extractedSize = extractedColor.sizes.find((size: any) => size.number === color.sizes[0].number)
-                        history.pushState(null, '', `/products/${paramsProduct}/${extractedColor.type}/${extractedSize?.variantId}`);
+                        history.pushState(null, '', `/${lang}/products/${productTitle['en'].replace(' ', '-')}/${extractedColor.type['en'].replace(' ', '-')}/${extractedSize?.variant_id}`);
                 
                         setSelectedSize(color.sizes[0].number.toString());
                     }
@@ -222,9 +223,9 @@ const ProductDetail = ({
         activeSizeEl.classList.add('bg-black');
 
         //updating active dress size and pathname of current route
-        const extractedColor = colorsData!.find(color => color.type === selectedColor);
+        const extractedColor = colorsData!.find(color => color.type['en'] === selectedColor);
         const extractedSize = extractedColor.sizes.find((size: any) => size.number === parseInt(activeSizeEl.innerText.split(' ')[1]));
-        history.pushState(null, '', `/products/${paramsProduct}/${selectedColor.toLowerCase()}/${extractedSize?.variantId}`);
+        history.pushState(null, '', `/${lang}/products/${productTitle['en'].replace(' ', '-').toLowerCase()}/${selectedColor.toLowerCase().replace(' ', '-')}/${extractedSize?.variant_id}`);
         setSelectedSize(activeSizeEl.innerText.split(' ')[1]);
     }
 
@@ -234,12 +235,12 @@ const ProductDetail = ({
             //sorting extracted sizes for all dress colors and storing them for later use
             color.sizes.sort((a: any, b: any) => a.number - b.number);
             for(let size of color.sizes){
-                colorsObj[color.type]
-                ? colorsObj[color.type].push(size.number)
-                : colorsObj[color.type] = [size.number];
+                colorsObj[color.type['en']]
+                ? colorsObj[color.type['en']].push(size.number)
+                : colorsObj[color.type['en']] = [size.number];
             }
 
-            sizesJsxObj[color.type] = sizes.map((size: number, i: number) =>
+            sizesJsxObj[color.type['en']] = sizes.map((size: number, i: number) =>
                 color.sizes[0] &&
                 color.sizes[0].number === size &&
                 color.sizes[0].stock === 0 &&
@@ -326,13 +327,13 @@ const ProductDetail = ({
                 )
             );
 
-            frontBase64ImagesObj[color.type] = color.image_front_base64;
+            frontBase64ImagesObj[color.type['en']] = color.image_front_base64;
             color.sizes.forEach((size: any) => {
-                sizesObj[`${color.type}-${size.number}`] = {
+                sizesObj[`${color.type['en']}-${size.number}`] = {
                 price: size.price,
                 variant_id: size.variant_id,
                 stock: size.stock,
-                color: color.type,
+                color: color.type['en'],
                 };
             });
                 
@@ -438,8 +439,8 @@ const ProductDetail = ({
                         OYINYE COUTURE
                         </h2>
                         <h1 className="font-medium font-sans lg:text-4xl text-2xl">
-                        {paramsProduct.charAt(0).toUpperCase() +
-                            paramsProduct.replace("-", " ").slice(1) }
+                        {productTitle[lang].charAt(0).toUpperCase() +
+                            productTitle[lang].replace("-", " ").slice(1) }
                         </h1>
                     </header>
 
@@ -453,7 +454,7 @@ const ProductDetail = ({
                         {(sizesObj[`${selectedColor}-${selectedSize}`]?.stock ?? 0) ===
                         0 && (
                         <h2 className="bg-red-600 text-white h-6 px-2 py-1 w-[70px] text-sm text-center font-semibold flex items-center justify-center">
-                            Sold out
+                            {t('detail.soldout.text')}
                         </h2>
                         )}
                     </div>
@@ -462,15 +463,16 @@ const ProductDetail = ({
                         href={`/pages/shipping-policy`}
                         className="underline text-gray-500 text-sm font-sans"
                         >
-                        Shipping
+                        {t('detail.shipping.p1')}
                         </Link>{" "}
-                        calculated at checkout
+                        {t('detail.shipping.p2')}
+
                     </p>
                     <div
                         className="flex flex-col items-start gap-y-2"
                         id="color-list"
                     >
-                        <h1 className="text-sm text-gray-500">Color</h1>
+                        <h1 className="text-sm text-gray-500">{t('detail.section1.header')}</h1>
                         <div className="flex flex-row justify-start gap-x-2 flex-wrap gap-y-2">
                         {colorsData &&
                             colorsData.map((color: any, i: number) =>
@@ -485,7 +487,7 @@ const ProductDetail = ({
                                     : `cursor-pointer bg-transparent border border-gray-200 px-6 py-2 rounded-3xl text-gray-400 line-through`
                                 }
                                 >
-                                {color.type}
+                                {color.type['en']}
                                 </span>
                             ) : (
                                 <span
@@ -497,14 +499,14 @@ const ProductDetail = ({
                                     : `cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600 px-6 py-2 rounded-3xl bg-transparent`
                                 }
                                 >
-                                {color.type}
+                                {color.type['en']}
                                 </span>
                             )
                             )}
                         </div>
                     </div>
                     <div className="flex flex-col items-start gap-y-2" id="size-list">
-                        <h1 className="text-sm text-gray-500">Size</h1>
+                        <h1 className="text-sm text-gray-500">{t('detail.section2.header')}</h1>
                         <div className="flex flex-row justify-start flex-wrap gap-x-2 gap-y-2">
                         {sizesJsxObj[selectedColor]
                             ? sizesJsxObj[selectedColor]
@@ -519,7 +521,7 @@ const ProductDetail = ({
                         </div>
                     </div>
                     <div className="flex flex-col items-start gap-y-2 relative ">
-                        <h1 className="text-sm text-gray-500">Quantity</h1>
+                        <h1 className="text-sm text-gray-500">{t('detail.section3.header')}</h1>
                         <div className="flex flex-row gap-x-7 text-gray-600 border border-gray-600 px-5 py-2 w-36 h-12 items-center">
                         <button
                             onClick={() => {
@@ -585,7 +587,7 @@ const ProductDetail = ({
                     <div className="mt-2 flex flex-col gap-y-3 lg:w-[80%] w-full">
                         {toastError && <div className="flex flex-row gap-x-2 text-sm font-sans items-center">
                             <i className="fa-solid fa-circle-exclamation text-red-600"></i>
-                            <p className="text-gray-400">You can&apos;t add more {paramsProduct} to the cart</p>
+                            <p className="text-gray-400">{t('detail.warning.p1')} {productTitle[lang]} {t('detail.warning.p2')}</p>
                         </div>}
                         <button className="font-sans lg:px-44 px-28 py-2 ring-gray-600 hover:ring-1 border border-gray-600 text-gray-600 flex flex-row justify-center items-center"
                             onClick={() => {
@@ -597,16 +599,29 @@ const ProductDetail = ({
                                         price:
                                         sizesObj[`${selectedColor}-${selectedSize}`].price,
                                         quantity: parseInt(quantity),
-                                        variantId:
-                                        sizesObj[`${selectedColor}-${selectedSize}`].variant_id,
+                                        variantId: sizesObj[`${selectedColor}-${selectedSize}`].variant_id,
                                         id: productId,
                                     });
                                     //sending cart data to data layer
                                     setIsSavingCart(true);
                                 }
                             }}
-                        >{loader ?  <div className="loader" ></div> : <span>Add to cart</span>}</button>
-                        <button className="font-sans lg:px-44 px-28 py-2 ring-[#5a31f4] hover:bg-[#512bd8] hover:ring-1 bg-[#5a31f4] text-white">Buy it now</button>
+                        >{loader ?  <div className="loader" ></div> : <span>{t('detail.action.text1')}</span>}</button>
+                        <button onClick={async() => {
+                            try {
+                                setIsBuyingNow(true);
+                                await axios.post('/api/products/cart', {
+                                    price: sizesObj[`${selectedColor}-${selectedSize}`]?.price ?? 0, quantity: parseInt(quantity), variantId: paramsId, id: productId, totalAmount:  sizesObj[`${selectedColor}-${selectedSize}`]?.price ?? 0 * parseInt(quantity)
+                                });
+                                await axios.patch('/api/products/cart/update');
+
+                                const res = await axios.get('/api/checkouts');
+                        
+                                router.push(`/checkouts/cn/${res.data.checkout_session_token}`);
+                               } catch (error: any) {
+                                toast.error(error);
+                               }
+                        }} className="font-sans lg:px-44 px-28 py-2 ring-[#5a31f4] hover:bg-[#512bd8] hover:ring-1 bg-[#5a31f4] text-white">{isBuyingNow ?  <div className="loader" ></div> : <span>{t('detail.action.text2')}</span>}</button>
                     </div>
                     <div className="gap-y-3 mt-3 w-full flex flex-col">
                         <div className="flex flex-col gap-y-2">
@@ -633,7 +648,7 @@ const ProductDetail = ({
                                 className="py-4 cursor-pointer flex flex-row justify-between items-center pr-4 border border-l-0 border-r-0 border-b-0 border-gray-200">
                                 <h1 className="flex flex-row gap-x-3">
                                     <Image src={Ruler} alt='ruler' role='presentation' className="w-6 lg:w-[28px]"/>
-                                    <span className="text-gray-500 font-sans lg:text-lg text-[1rem]">Size Chart</span>
+                                    <span className="text-gray-500 font-sans lg:text-lg text-[1rem]">{t('detail.section4.header')}</span>
                                 </h1>
                                 <i className={`fa-angle-down fa-solid text-sm text-gray-500`}></i>
                             </header>
@@ -744,7 +759,7 @@ const ProductDetail = ({
                                 }} className="py-4 cursor-pointer flex flex-row justify-between items-center pr-4 border border-l-0 border-r-0 border-b-0 border-gray-200">
                                 <h1 className="flex flex-row gap-x-3">
                                     <Image src={Truck} alt='delivery-truck' role='presentation' className="w-6 lg:w-[28px]"/>
-                                    <span className="text-gray-500 font-sans lg:text-lg text-[1rem]">Shipping</span>
+                                    <span className="text-gray-500 font-sans lg:text-lg text-[1rem]">{t('detail.section5.header')}</span>
                                 </h1>
                                 <i className={`fa-angle-down fa-solid text-sm text-gray-500`}></i>
                             </header>
@@ -755,12 +770,12 @@ const ProductDetail = ({
             </section>
             <section className="flex flex-col lg:items-start items-center gap-y-5 font-sans">
                 {relatedProducts.length > 0 && <>
-                    <header className="text-2xl">You may also like</header>
+                    <header className="text-2xl">{t('detail.section6.header')}</header>
                     <section className="flex flex-row items-center justify-evenly flex-wrap gap-x-2 gap-y-4">
                     {relatedProducts.slice(0, 4).map((product: any, i: number) => <Product key={i} product={product} isOnDetailPage={true}/>)}
                     </section>
                 </>}
-                <Reviews productReviews={productReviews} product={paramsProduct}/>
+                <Reviews productReviews={productReviews} product={productTitle[lang]}/>
             </section>
         </main>
     );

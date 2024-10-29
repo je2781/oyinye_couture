@@ -3,9 +3,7 @@
 import Link from "next/link";
 import Pagination from "../layout/Pagination";
 import React, { useCallback, useMemo } from "react";
-import hexs from "colors-named-hex";
-import named from "colors-named";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from '@/i18n/routing';
 import Image from "next/image";
 import ProductComponent from "../product/Product";
 import useProduct from "@/store/useProduct";
@@ -13,6 +11,7 @@ import useWindowWidth from "../helpers/getWindowWidth";
 import useGlobal from "@/store/useGlobal";
 import SecondaryHeader from "./filter/SecondaryHeader";
 import FilterSettings from "./filter/Settings";
+
 
 export default function SearchResults({
   searchCat,
@@ -22,9 +21,10 @@ export default function SearchResults({
   upperBoundary,
   sortBy,
   productType,
-  page,
+  page
 }: any) {
   const sortByList = React.useMemo(() => ["Relevance", "Price, low to high", "Price, high to low"], []);
+  const path = usePathname();
   const productTypeList = ["Dresses", "Pants", "Jumpsuits"];
   //updating sortby product type params
   switch ((sortBy.split('-').length === 1 ? sortBy.split('-')[0] : sortBy.split('-')[1])) {
@@ -43,8 +43,8 @@ export default function SearchResults({
 
   const [query, setQuery] = React.useState(keyword);
   const router = useRouter();
+  const {lang} = useGlobal();
   const { allProducts } = useProduct();
-  const { locale } = useGlobal();
   const [isLoading, setIsLoading] = React.useState(false);
   const [isGridView, setIsGridView] = React.useState(true);
   const [filter, setFilter] = React.useState({
@@ -130,8 +130,19 @@ export default function SearchResults({
         // Join the parameters to construct the query string
         const queryString = filteredParams.join('&');
 
+        const pathParts = path.split("/");
+  
+        if (pathParts[1] !== lang) {
+          pathParts.unshift(lang);
+        } 
+      
+        // Construct the new path
+        const newPath = `/${pathParts.join("/")}`;
+
+        const url = new URL(`${window.location.origin}${newPath}`);
+
         // Construct the final URL and replace the location
-        location.replace(`/search/products?${queryString}`);
+        window.location.href = url.toString() + '?' + queryString;
       }
     }
     reloadPage();
@@ -193,7 +204,7 @@ export default function SearchResults({
   let productSuggestions = allProducts
     .slice(0, 6)
     .some((product: any) =>
-      product.title.includes(query.charAt(0).toUpperCase() + query.slice(1))
+      product.title[lang].includes(query.charAt(0).toUpperCase() + query.slice(1))
     );
   let otherSuggestions = pages.some((page) =>
     page.title.includes(query.charAt(0).toUpperCase() + query.slice(1))
@@ -295,7 +306,7 @@ export default function SearchResults({
                           <ul className="flex flex-col">
                             {allProducts
                               .filter((product: any) =>
-                                product.title.includes(
+                                product.title[lang].includes(
                                   query.charAt(0).toUpperCase() + query.slice(1)
                                 )
                               )
@@ -305,18 +316,18 @@ export default function SearchResults({
                                   key={i}
                                   onClick={() =>
                                     router.push(
-                                      `/products/${product.title
+                                      `/products/${product.title[lang]
                                         .replace(" ", "-")
-                                        .toLowerCase()}/${product.colors[0].type}/${product
+                                        .toLowerCase()}/${JSON.stringify(product.colors[0].type[lang])}/${product
                                         .colors[0].sizes[0].variant_id!}`
                                     )
                                   }
                                 >
                                   <span className="font-sans text-gray-400 text-[.8rem]">
-                                    {product.title.charAt(0)}
+                                    {product.title[lang].charAt(0)}
                                   </span>
                                   <span className="font-sans font-semibold text-[.8rem]">
-                                    {product.title.slice(1)}
+                                    {product.title[lang].slice(1)}
                                   </span>
                                 </li>
                               ))}
@@ -367,9 +378,9 @@ export default function SearchResults({
                           <article
                             onClick={() =>
                               router.push(
-                                `/products/${product.title
+                                `/products/${product.title[lang]
                                   .replace(" ", "-")
-                                  .toLowerCase()}/${product.colors[0].type}/${product
+                                  .toLowerCase()}/${product.colors[0].type[lang]}/${product
                                   .colors[0].sizes[0].variant_id!}`
                               )
                             }
@@ -383,7 +394,7 @@ export default function SearchResults({
                             />
                             <section>
                               <h2 className="font-sans text-[1rem] font-medium hover:underline-offset-1 hover:underline">
-                                {product.title}
+                                {product.title[lang]}
                               </h2>
                               <h2 className="font-sans font-thin text-gray-400 text-[.9rem]">
                                 &#8358;

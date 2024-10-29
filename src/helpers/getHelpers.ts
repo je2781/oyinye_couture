@@ -6,14 +6,14 @@ import {
   DressColorObj,
   DressSizesJsxObj,
   DressSizesObj,
+  Locale,
   SizeData,
 } from "@/interfaces";
 import axios from "axios";
 import crypto from "crypto";
 import toast from "react-hot-toast";
 import countries from "i18n-iso-countries";
-import hexs from "colors-named-hex";
-import named from "colors-named";
+
 
 let now = new Date();
 export let currentYear = now.getFullYear();
@@ -436,6 +436,7 @@ export let setBrowserUsageData = (data: any) => {
   };
 };
 
+
 export function decodedBase64(base64String: string) {
   // Decode the Base64 string
   const decodedString = atob(base64String);
@@ -462,24 +463,25 @@ export const extractProductDetails = (
   cartItems: any[],
   cartItemObj: CartItemObj,
   frontBase64ImagesObj: Base64ImagesObj,
+  locale: string
 ) => {
   
   for (let item of cartItems) {
     for (let color of item.product.colors) {
       let size = color.sizes.find(
-        (size: any) => size.variant_id === item.variant_id
+        (size: any) => size.variant_id === item.variantId
       );
 
       if (size) {
-        cartItemObj[`${color.type}-${size.number}`] = {
+        cartItemObj[`${color.type[locale]}-${size.number}`] = {
           ...size,
-          variantId: size.variant_id,
-          title: item.product.title,
-          color: color.type,
+          variant_id: size.variant_id,
+          title: item.product.title[locale],
+          color: color.type[locale],
           quantity: item.quantity,
           id: item.product.id,
         };
-        frontBase64ImagesObj[`${color.type}-${size.number}`] = color.image_front_base64;
+        frontBase64ImagesObj[`${color.type[locale]}-${size.number}`] = color.image_front_base64;
       }
     }
   }
@@ -490,17 +492,19 @@ export const extractProductDetail = (
   frontBase64ImagesObj: Base64ImagesObj,
   backBase64ImagesObj: Base64ImagesObj,
   cartItemObj: CartItemObj,
+  locale: string
 ) => {
   
   for (let color of product.colors) {
       for(let size of color.sizes){
-        cartItemObj[`${color.type}-${size.number}`] = {
+        cartItemObj[`${color.hex_code}-${size.number}`] = {
           ...size,
-          color: color.type,
+          color: color.type[locale],
+          hex_code: color.hex_code
         };
       }
-      frontBase64ImagesObj[`${color.type}`] = color.image_front_base64;
-      backBase64ImagesObj[`${color.type}`] = [color.image_back_base64];
+      frontBase64ImagesObj[`${color.hex_code}`] = color.image_front_base64;
+      backBase64ImagesObj[`${color.hex_code}`] = [color.image_back_base64];
     
   }
   
@@ -709,11 +713,68 @@ export async function handleSubmit(
 
   const hashedId = (await crypto.randomBytes(6)).toString("hex");
 
+  //translating product properties
+  
+  let colorLocale : Locale = {};
+  let titleLocale : Locale = {};
+  let descLocale : Locale = {};
+  let typeLocale : Locale = {};
+  
+  titleLocale['en'] = title;
+  titleLocale['es'] = title;
+  titleLocale['nl'] = title;
+  titleLocale['fr'] = title;
+  titleLocale['pt'] = title;
+  titleLocale['zh'] = title;
+  // titleLocale['es'] = (await axios.post('/api/translate', {text: title, locale:'es'})).data.translation;
+  // titleLocale['fr'] = (await axios.post('/api/translate', {text: title, locale:'fr'})).data.translation;
+  // titleLocale['nl'] = (await axios.post('/api/translate', {text: title, locale:'nl'})).data.translation;
+  // titleLocale['pt'] = (await axios.post('/api/translate', {text: title, locale:'pt-PT'})).data.translation;
+  // titleLocale['zh'] = (await axios.post('/api/translate', {text: title, locale:'zh-TW'})).data.translation;
+
+  descLocale['en'] = desc;
+  descLocale['es'] = desc;
+  descLocale['nl'] = desc;
+  descLocale['fr'] = desc;
+  descLocale['pt'] = desc;
+  descLocale['zh'] = desc;
+  // descLocale['es'] = (await axios.post('/api/translate', {text: desc, locale:'es'})).data.translation;
+  // descLocale['fr'] = (await axios.post('/api/translate', {text: desc, locale:'fr'})).data.translation;
+  // descLocale['nl'] = (await axios.post('/api/translate', {text: desc, locale:'nl'})).data.translation;
+  // descLocale['pt'] = (await axios.post('/api/translate', {text: desc, locale:'pt-PT'})).data.translation;
+  // descLocale['zh'] = (await axios.post('/api/translate', {text: desc, locale:'zh-TW'})).data.translation;
+
+  typeLocale['en'] = type;
+  typeLocale['fr'] = type;
+  typeLocale['es'] = type;
+  typeLocale['nl'] = type;
+  typeLocale['pt'] = type;
+  typeLocale['zh'] = type;
+  // typeLocale['es'] = (await axios.post('/api/translate', {text: type, locale:'es'})).data.translation;
+  // typeLocale['fr'] = (await axios.post('/api/translate', {text: type, locale:'fr'})).data.translation;
+  // typeLocale['nl'] = (await axios.post('/api/translate', {text: type, locale:'nl'})).data.translation;
+  // typeLocale['pt'] = (await axios.post('/api/translate', {text: type, locale:'pt-PT'})).data.translation;
+  // typeLocale['zh'] = (await axios.post('/api/translate', {text: type, locale:'zh-TW'})).data.translation;
+
+  for(let color of currentBgColors){
+    colorLocale['en'] = color;
+    colorLocale['es'] = color;
+    colorLocale['fr'] = color;
+    colorLocale['nl'] = color;
+    colorLocale['pt'] = color;
+    colorLocale['zh'] = color;
+    // colorLocale['es'] = (await axios.post('/api/translate', {text: color, locale:'es'})).data.translation;
+    // colorLocale['fr'] = (await axios.post('/api/translate', {text: color, locale:'fr'})).data.translation;
+    // colorLocale['nl'] = (await axios.post('/api/translate', {text: color, locale:'nl'})).data.translation;
+    // colorLocale['pt'] = (await axios.post('/api/translate', {text: color, locale:'pt-PT'})).data.translation;
+    // colorLocale['zh'] = (await axios.post('/api/translate', {text: color, locale:'zh-TW'})).data.translation;
+  }
+
   const Product = {
-    title,
-    description: desc,
+    title: titleLocale,
+    description: descLocale,
     no_of_orders: 0,
-    type,
+    type: typeLocale,
     reviews: [],
     is_feature: isFeature,
     features: [
@@ -726,8 +787,9 @@ export async function handleSubmit(
       let updatedSizeData = sizeDataArray
         .filter((datum) => datum !== undefined)
         .filter((datum) => datum.color === bgColor);
+        
       return {
-        type: bgColor,
+        type: colorLocale,
         image_front_base64: Object.values(
           dressColorsState[dressColorsState.length - 1]
         )[0].imageFront,
@@ -752,6 +814,181 @@ export async function handleSubmit(
     toast.error(error);
   } finally {
     setIsLoading(false);
+  }
+}
+
+export const reloadPageWithLocale = (path: string, locale: string, searchParams: any, newLang?: string) => {
+  const pathParts = path.split("/");
+  
+
+  if(newLang){
+    // Check if the first part of the path is the current locale
+    if (pathParts[1] === locale) {
+      // Update the locale to the new one
+      pathParts[1] = newLang;
+    } else {
+      // Add the new locale to the path
+      pathParts.unshift(newLang);
+    }
+  }
+
+  // Construct the new path
+  const newPath = `/${pathParts.join("/")}`;
+
+  try {
+    // Create the new URL
+    const url = new URL(`${window.location.origin}${newPath}`);
+
+
+    // Append the existing query parameters
+    searchParams.forEach((value: string, key: string) => {
+      url.searchParams.set(key, value);
+    });
+    
+
+    // Reload the page with the updated URL
+    window.location.href = url.toString();
+  } catch (error) {
+    console.error("Failed to construct URL:", error);
+  }
+  
+};
+
+export async function handleProductEdit(
+  e: React.FormEvent,
+  frontBase64ImagesObj: Base64ImagesObj,
+  backBase64ImagesObj: Base64ImagesObj,
+  desc: string,
+  type: string,
+  product: any,
+  productObj: CartItemObj,
+  dressFeatures: string,
+  visibleImages: any,
+  isFeature: boolean,
+  setLoader: React.Dispatch<React.SetStateAction<boolean>>,
+  path: string,
+  router: any,
+  locale: string,
+  searchParams: any
+){
+  e.preventDefault();
+  const colorFrontImages: string[][] = [];
+  const colorBackImages: string[][] = [];
+
+  // Store the keys once to avoid calling Object.keys repeatedly
+  const frontKeys = Object.keys(frontBase64ImagesObj);
+  const backKeys = Object.keys(backBase64ImagesObj);
+
+  // Extract front images in chunks of 3
+  for (let i = 0; i < visibleImages.imagesFront.length; i += 3) {
+    colorFrontImages.push(visibleImages.imagesFront.slice(i, i + 3));
+  }
+
+  // Assign the front images to frontBase64ImagesObj based on the front keys
+  frontKeys.forEach((key, i) => {
+    frontBase64ImagesObj[key] = colorFrontImages[i] || [];
+  });
+
+  // Extract back images one by one
+  for (let i = 0; i < visibleImages.imagesBack.length; i++) {
+    colorBackImages.push(visibleImages.imagesBack.slice(i, i + 1));
+  }
+
+  // Assign the back images to backBase64ImagesObj based on the back keys
+  backKeys.forEach((key, i) => {
+    backBase64ImagesObj[key] = colorBackImages[i] || [];
+  });
+
+  //translating product properties
+
+  let colorLocale : Locale = {};
+  let descLocale : Locale = {};
+  let typeLocale : Locale = {};
+
+  typeLocale['en'] = type;
+  typeLocale['es'] = type;
+  typeLocale['fr'] = type;
+  typeLocale['nl'] = type;
+  typeLocale['pt'] = type;
+  typeLocale['zh'] = type;
+  // typeLocale['es'] = (await axios.post('/api/translate', {text: type, locale: 'es'})).data.translation;
+  // typeLocale['fr'] = (await axios.post('/api/translate', {text: type, locale:'fr'})).data.translation;
+  // typeLocale['nl'] = (await axios.post('/api/translate', {text: type, locale:'nl'})).data.translation;
+  // typeLocale['pt'] = (await axios.post('/api/translate', {text: type, locale:'pt-PT'})).data.translation;
+  // typeLocale['zh'] = (await axios.post('/api/translate', {text: type, locale:'zh-TW'})).data.translation;
+  
+
+  descLocale['en'] = desc;
+  descLocale['es'] = desc;
+  descLocale['fr'] = desc;
+  descLocale['nl'] = desc;
+  descLocale['pt'] = desc;
+  descLocale['zh'] = desc;
+  // descLocale['es'] = (await axios.post('/api/translate', {text: desc, locale:'es'})).data.translation;
+  // descLocale['fr'] = (await axios.post('/api/translate', {text: desc, locale:'fr'})).data.translation;
+  // descLocale['nl'] = (await axios.post('/api/translate', {text: desc, locale:'nl'})).data.translation;
+  // descLocale['pt'] = (await axios.post('/api/translate', {text: desc, locale:'pt-PT'})).data.translation;
+  // descLocale['zh'] = (await axios.post('/api/translate', {text: desc, locale:'zh-TW'})).data.translation;
+
+  for(let color of product.colors){
+    colorLocale['en'] = color.type;
+    colorLocale['es'] = color.type;
+    colorLocale['fr'] = color.type;
+    colorLocale['nl'] = color.type;
+    colorLocale['pt'] = color.type;
+    colorLocale['zh'] = color.type;
+    // colorLocale['es'] = (await axios.post('/api/translate', {text: color.type, locale:'es'})).data.translation;
+    // colorLocale['fr'] = (await axios.post('/api/translate', {text: color.type, locale:'fr'})).data.translation;
+    // colorLocale['nl'] = (await axios.post('/api/translate', {text: color.type, locale:'nl'})).data.translation;
+    // colorLocale['pt'] = (await axios.post('/api/translate', {text: color.type, locale:'pt-PT'})).data.translation;
+    // colorLocale['zh'] = (await axios.post('/api/translate', {text: color.type, locale:'zh-TW'})).data.translation;
+  }
+  
+  try {
+    setLoader(true);
+    const Product = {
+      ...product,
+      type: typeLocale,
+      description: descLocale,
+      is_feature: isFeature
+      ,
+      features:  dressFeatures.split(',').map(feature => feature.trim()),
+      colors: product.colors.map((color: any) => {
+        return {
+          ...color,
+          type: colorLocale,
+          hex_code: color.hex_code,
+          image_front_base64: frontBase64ImagesObj[color.hex_code],
+          image_back_base64: backBase64ImagesObj[color.hex_code][0],
+          sizes: Object.values(productObj).filter(obj => obj.hex_code === color.hex_code).map(obj => {
+            delete obj.hex_code;
+            delete obj.color;
+
+            return obj;
+          }),
+        };
+      }),
+    };
+
+    await axios.patch(`/api/products/${product.id}`, Product);
+    //reloading page
+    const pathParts = path.split('/');
+
+    if(pathParts[1] !== locale){
+      pathParts.unshift(locale);
+    }
+    const newPath = `/${pathParts.join('/')}`;
+
+    const url = new URL(`${window.location.origin}${newPath}`);
+
+    searchParams.forEach((value: string, key: string) => {
+      url.searchParams.set(key, value);
+    });
+    
+    window.location.href = url.toString();
+
+  } catch (error: any) {
+    toast.error(error.message);
   }
 }
 
@@ -882,7 +1119,7 @@ export const cartReducer = (state: CartState, action: any) => {
       state.totalAmount + (action.item.price * action.item.quantity);
 
     const existingCartItemIndex = state.items.findIndex(
-      (item: any) => item.variant_id === action.item.variant_id
+      (item: any) => item.variantId === action.item.variantId
     );
     const existingCartItem = state.items[existingCartItemIndex];
 
@@ -908,14 +1145,14 @@ export const cartReducer = (state: CartState, action: any) => {
   if (action.type === "REMOVE") {
     let updatedStateItems;
     const existingCartItemIndex = state.items.findIndex(
-      (item: any) => item.variant_id === action.item.variant_id
+      (item: any) => item.variantId === action.item.variantId
     );
     const existingCartItem = state.items[existingCartItemIndex];
     const updatedStateTotalAmount = state.totalAmount - (action.item.price * action.item.quantity);
 
     if (existingCartItem.quantity - action.item.quantity === 0) {
       updatedStateItems = state.items.filter(
-        (item: any) => item.variant_id !== existingCartItem.variant_id
+        (item: any) => item.variantId !== existingCartItem.variantId
       );
     } else {
       const updatedStateItem = {

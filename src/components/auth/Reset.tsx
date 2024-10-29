@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from '@/i18n/routing';
 import axios from "axios";
 import toast from "react-hot-toast";
-import Header from "@/components/layout/Header";
 import useGlobal from "@/store/useGlobal";
 
 export default function ResetPasswordPage() {
@@ -21,7 +20,6 @@ export default function ResetPasswordPage() {
   const [buttonDisabled, setButtonDisabled] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
-  const {locale} = useGlobal();
 
 
   useEffect(() => {

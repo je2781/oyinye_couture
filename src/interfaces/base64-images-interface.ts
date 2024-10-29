@@ -1,3 +1,3 @@
 export interface Base64ImagesObj {
-    [key: string]: any[];
+    [key: string]: string[];
 }

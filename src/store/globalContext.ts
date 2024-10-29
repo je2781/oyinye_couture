@@ -4,13 +4,13 @@ import { useContext } from "react";
 export const GlobalContext  = React.createContext<{
     isMobileModalOpen: boolean;
     setIsMobileModalOpen: (isMobileModalOpen: boolean) => void
-    setLocale: (locale: string) => void,
-    locale: string
+    setLang: (lang: string) => void,
+    lang: string
 }>({
     isMobileModalOpen: false,
     setIsMobileModalOpen: function () {},
-    setLocale: (locale: string) => {},
-    locale: 'en'
+    setLang: (lang: string) => {},
+    lang: 'en'
 });
 
 export const GlobalContextProvider = GlobalContext.Provider;

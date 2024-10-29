@@ -3,29 +3,30 @@
 import React from "react";
 import Image from "next/image";
 import { SearchModal } from "./Modal";
-import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, Link } from '@/i18n/routing';
 import useProduct from "@/store/useProduct";
-import hexs from "colors-named-hex";
-import named from "colors-named";
+import { useSearchParams } from "next/navigation";
+import useGlobal from "@/store/useGlobal";
 
 const SearchBar = ({ onHideModal, isAdmin}: any) => {
   const [query, setQuery] = React.useState("");
   const router = useRouter();
-  const {allProducts} = useProduct();
-  const [isLoading, setIsLoading] = React.useState(false);
   const path = usePathname();
+  const searchParams = useSearchParams();
+  const {allProducts} = useProduct();
+  const {lang} = useGlobal();
+  const [isLoading, setIsLoading] = React.useState(false);
 
   let currentUrl = isAdmin ? `/admin/products?q=${query}&options[prefix]=last&page=1` 
   : `/search/products?q=${query}&options[prefix]=last&sort_by=relevance&page=1`;
 
   React.useEffect(() => {
     if(isLoading){
-      if(location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1] === currentUrl){
-        location.replace(currentUrl);
-      }else{
-        router.push(currentUrl);
-      }
+      const newPath = `/${lang}${currentUrl}`;
+
+      const url = new URL(`${window.location.origin}${newPath}`);
+      
+      window.location.href = url.toString();
     }
 
   }, [isLoading, currentUrl, query, router]);
@@ -47,7 +48,7 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
     {title: "Size Guide", route: `/pages/size-guide`},
   ];
 
-  let productSuggestions = allProducts.slice(0, 6).some((product: any)=> product.title.includes(query.charAt(0).toUpperCase() + query.slice(1)));
+  let productSuggestions = allProducts.slice(0, 6).some((product: any)=> product.title[lang].includes(query.charAt(0).toUpperCase() + query.slice(1)));
   let otherSuggestions =  pages.some(page => page.title.includes(query.charAt(0).toUpperCase() + query.slice(1)));
 
   let otherSearchResults = !isAdmin && productSuggestions || otherSuggestions;
@@ -57,7 +58,7 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
       <form onSubmit={(e) => {
         e.preventDefault();
         setIsLoading(true);
-      }} className="mx-auto container h-full border border-gray-500 max-w-7xl md:w-[55%] w-[90%] focus-within:border-2 focus-within:border-gray-600 relative">
+      }} className="mx-auto container h-full border border-gray-500 max-w-7xl md:w-[60%] w-[90%] focus-within:border-2 focus-within:border-gray-600 relative">
         <section className="flex flex-row items-center justify-between px-4 py-[6px]">
           <div className="flex flex-col items-start w-full">
             <h5 className="text-[.7rem] font-thin font-sans text-gray-600">
@@ -109,7 +110,7 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
                     <ul className="flex flex-col">
                       {allProducts
                         .filter((product: any) =>
-                          product.title.includes(
+                          product.title[lang].includes(
                             query.charAt(0).toUpperCase() + query.slice(1)
                           )
                         )
@@ -117,13 +118,13 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
                           <li
                             className=" hover:underline-offset-1 hover:underline cursor-pointer hover:bg-gray-100 px-5 py-2"
                             key={i}
-                            onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type}/${product.colors[0].sizes[0].variant_id!}`)} 
+                            onClick={() => router.push(`/products/${product.title[lang].replace(' ', '-').toLowerCase()}/${product.colors[0].type[lang]}/${product.colors[0].sizes[0].variant_id!}`)} 
                           >
                             <span className="font-sans text-gray-400 text-[.8rem]">
-                              {product.title.charAt(0)}
+                              {product.title[lang].charAt(0)}
                             </span>
                             <span className="font-sans font-semibold text-[.8rem]">
-                              {product.title.slice(1)}
+                              {product.title[lang].slice(1)}
                             </span>
                           </li>
                         ))}
@@ -160,7 +161,7 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
                   <ul className="flex flex-col">
                     {allProducts.slice(0, 4).map((product: any, i: number) => (
                       <li key={i}>
-                        <article onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].type}/${product.colors[0].sizes[0].variant_id!}`)} 
+                        <article onClick={() => router.push(`/products/${product.title[lang].replace(' ', '-').toLowerCase()}/${product.colors[0].type[lang]}/${product.colors[0].sizes[0].variant_id!}`)} 
                         className="flex flex-row items-start gap-x-5 px-4 py-3 hover:bg-gray-100 cursor-pointer">
                           <Image
                             alt={`Product ${i + 1}`}
@@ -170,7 +171,7 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
                           />
                           <section>
                             <h2 className="font-sans text-[1rem] font-medium hover:underline-offset-1 hover:underline">
-                              {product.title}
+                              {product.title[lang]}
                             </h2>
                             <h2 className="font-sans font-thin text-gray-400 text-[.9rem]">
                               &#8358;

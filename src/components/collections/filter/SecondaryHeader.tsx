@@ -9,6 +9,8 @@ import React from "react";
 import { FilterModal } from "@/components/ui/Modal";
 import useWindowWidth from "@/components/helpers/getWindowWidth";
 
+import './SecondaryHeader.css';
+
 export default function SecondaryHeader({
     setFilter,
     filter,
@@ -65,24 +67,23 @@ export default function SecondaryHeader({
 
     const headerClass = classes
     ? ``
-    : 'container mx-auto max-w-7xl collections-secondary-header';
+    : 'px-6 container mx-auto max-w-7xl collections-secondary-header';
 
     return (
       <>
-          <header className={`${headerClass} text-[.9rem] text-gray-500 font-medium font-sans flex flex-row  ${category === 'basics' ? 'justify-center' : 'justify-between'} items-center w-full relative mb-2`} >
+          <header className={`${headerClass} text-[.9rem] text-gray-500 font-medium font-sans flex flex-row  ${category === 'basics' ? 'justify-center' : 'justify-between'} items-center w-full mb-2`} >
           {category !== 'basics' && <div
-            id='toggle-settings'
-            className="hidden md:inline-block relative cursor-pointer"
+            className="hidden md:inline-flex flex-row gap-x-4 items-center cursor-pointer"
             onClick={(e) => {
-                let leftAngle = document.querySelector("i.filter-angle-left");
+                let leftAngle = document.querySelector("i.collections-filter-angle-left");
                 if (leftAngle) {
-                  if (!leftAngle.classList.contains("al-rotate")) {
-                      leftAngle.classList.add("al-rotate");
-                      leftAngle.classList.remove("al-rotate-clock");
-                  } else {
-                      leftAngle.classList.remove("al-rotate");
-                      leftAngle.classList.add("al-rotate-clock");
-                  }
+                    if (!leftAngle.classList.contains("rotate-anticlockwise-180")) {
+                        leftAngle.classList.add("rotate-anticlockwise-180");
+                        leftAngle.classList.remove("rotate-clockwise-180");
+                    } else {
+                        leftAngle.classList.remove("rotate-anticlockwise-180");
+                        leftAngle.classList.add("rotate-clockwise-180");
+                    }
                 }
 
                 setFilter((prevState: any) => ({
@@ -102,7 +103,7 @@ export default function SecondaryHeader({
                 Filter{filter.noOfFilters > 0 && <span>&nbsp;&#40;{filter.noOfFilters}&#x29;</span>}
                 </h5>
             </div>
-            <i className="fa-solid fa-angle-left filter-angle-left text-sm text-gray-500 absolute -right-6 top-[16%]"></i>
+            <i className="fa-solid fa-angle-left collections-filter-angle-left text-sm text-gray-500"></i>
                 
           </div>}
           {category !== 'basics' && <div

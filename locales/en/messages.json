@@ -1,0 +1,184 @@
+{
+  "app": {
+    "header": {
+      "item1": "Home",
+      "item2": "Collections",
+      "item3": "About",
+      "item4": "Contact"
+    },
+    "hero": {
+      "slide1": {
+        "paragraph": "YOU DESERVE THE BEST DRESS ON YOU FOR EVERY OCCASSION",
+        "action": {
+          "text": "Shop All"
+        }
+      },
+      "slide2": {
+        "paragraph": "PLACE AN ORDER TO GET YOUR CUSTOM WORK DONE",
+        "action": {
+          "text": "Place Order"
+        }
+      }
+    },
+    "aboutus": {
+      "header": "The Story",
+      "paragraph": "Nisi nulla tempor magna cillum excepteur. Fugiat ullamco occaecat in nulla tempor consequat quis aute incididunt velit. Excepteur anim officia magna elit ipsum. Laboris commodo dolor magna consectetur cillum eiusmod eiusmod quis veniam magna labore et proident deserunt. Amet laboris enim aute pariatur sunt commodo elit officia culpa nostrud enim aliquip commodo.",
+      "action": {
+        "text": "Read More"
+      }
+    },
+    "collection": {
+      "header": "Oyinye's Collection",
+      "paragraph": "Let Oyinye's occassion wear inspire you",
+      "action": {
+        "text": "Shop Now"
+      },
+      "featured": {
+        "text": "Featured Products",
+        "action": {
+          "text": "View All"
+        }
+      }
+    },
+    "detail": {
+      "shipping": {
+        "p1": "Shipping",
+        "p2": "calculated at checkout"
+      },
+      "soldout": {
+        "text": "Sold out"
+      },
+      "section1": {
+        "header": "Color"
+      },
+      "section2": {
+        "header": "Size"
+      },
+      "section3": {
+        "header": "Quantity"
+      },
+      "action": {
+        "text1": "Add to cart",
+        "text2": "Buy it now"
+      },
+      "warning": {
+        "p1": "You can't add more",
+        "p2": "to the cart"
+      },
+      "section4": {
+        "header": "Size Chart"
+      },
+      "section5": {
+        "header": "Shipping"
+      },
+      "section6": {
+        "header": "You may also like"
+      },
+      "section7": {
+        "header": "CUSTOMER REVIEWS",
+        "paragraph": {
+          "p1": "We're looking for supporters",
+          "p2": "Be among our tribe"
+        },
+        "reviews": {
+          "search": {
+            "results": {
+              "p1": "We found",
+              "p2": "matching review(s)"
+            },
+            "noResults": {
+              "p1": "No matching review",
+              "p2": "Try clearing or changing the filters.",
+              "action": {
+                "text": "Clear filters"
+              }
+            }
+          },
+          "review": {
+            "comment": "Was this review helpful?",
+            "new": {
+              "header": "SHARE YOUR THOUGHTS",
+              "form": {
+                "label1": "RATE YOUR EXPERIENCE", 
+                "error1": "A star rating is required",
+                "label2": {
+                  "p1": "WRITE A REVIEW",
+                  "p2": "or upload a review"
+                }, 
+                "error2": "Review content is reuqired",
+                "label3": "ADD A HEADLINE",
+                "error3": "A headline is required",
+                "label4": "FULL NAME",
+                "error4": "A name is reuqired",
+                "label5": "YOUR EMAIL ADDRESS",
+                "info5": "Will send you an email to verify this review came from you.",
+                "error5": "An email is required",
+                "required": {
+                  "text": "required fields"
+                }
+              }
+            }
+          },
+          "action": {
+            "text": "Be the first to write a review"
+          }
+        }
+      }
+    },
+    "contact": {
+      "header": "Our Studio",
+      "section1": {
+        "header": "Find Us",
+        "paragraph": {
+          "p1": "Please call us on",
+          "p2": "or email us if you would like to visit our studio"
+        }
+      },
+      "section2": {
+        "header": "Contact Us",
+        "paragraph": {
+          "p1": "Have a question or looking for more information about our products,",
+          "p2": "please fill out the form below or email us at",
+          "p3": "and we'll be in touch."
+        }
+      },
+      "form": {
+        	"header": "Contact Form",
+          "label1": "FIRST NAME",
+          "label2": "LAST NAME",
+          "label3": "EMAIL",
+          "label4": "SUBJECT",
+          "label5": "MESSAGE",
+          "action": {
+            "text": "Submit Form"
+          }
+      }
+    },
+    "search": {
+      "sortList": {
+        "item1": "Relevance",
+        "item2": "Price, low to high",
+        "items": "Price, high to low"
+      }
+    },
+    "footer": {
+      "item1": "About Us",
+      "item2": "Contact Us",
+      "item3": "Size Guide",
+      "item4": "Bespoke",
+      "item5": "Shipping Policy",
+      "item6": "Returns Policy",
+      "item7": "Privacy Policy",
+      "item8": "Language",
+      "menu": "Menu",
+      "newsletter": {
+        "header": "Newsletter",
+        "paragraph": "Join the oyinye couture community to stay updated on promotions and new releases.",
+        "action": {
+          "text": "Join",
+          "loading": "Processing"
+        }
+      }
+    }
+  }
+}

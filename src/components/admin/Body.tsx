@@ -21,12 +21,14 @@ import {
   generateBase64FromMedia,
   extractProductDetail,
   shiftFirstToLast,
+  handleProductEdit,
 } from "@/helpers/getHelpers";
-import { Swiper, SwiperSlide } from "swiper/react";
+import { Swiper, SwiperRef, SwiperSlide } from "swiper/react";
 import { Pagination, Navigation } from "swiper/modules";
 import React from "react";
 import toast from "react-hot-toast";
-import { Base64ImagesObj, CartItemObj, SizeData, Value } from "@/interfaces";
+import { usePathname, useRouter } from '@/i18n/routing';
+import { Base64ImagesObj, CartItemObj, Locale, SizeData, Value } from "@/interfaces";
 import axios from "axios";
 import Calendar from 'react-calendar';
 import FullCalendar from '@fullcalendar/react';
@@ -49,7 +51,7 @@ import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 import "./Body.css";
-import { col } from "sequelize";
+import { useSearchParams } from "next/navigation";
 
 Chart.register(LinearScale, CategoryScale, BarElement, PointElement, LineElement, Filler, Legend, ArcElement);
 
@@ -59,14 +61,15 @@ export default function Body({
   data, 
   enquiriesData,
   visitors,
-  products
+  products,
+  locale
 }: any) {
   const colorList = [
     "#422006",
     "#0000FF",
     "#FFC0CB",
     "#065F46",
-    "#6B21A8",
+    "#BC8F8F",
     "#94A3B8",
   ];
   const productListingColorList = [
@@ -74,12 +77,14 @@ export default function Body({
     "bg-[#0000FF]",
     "bg-[#FFC0CB]",
     "bg-[#065F46]",
-    "bg-[#6B21A8]",
+    "bg-[#BC8F8F]",
     "bg-[#94A3B8]",
   ];
 
   let listOfFeatures = '';
-
+  const path = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   let productObj = React.useRef<CartItemObj>({});
   let frontBase64ImagesObj = React.useRef<Base64ImagesObj>({});
   let backBase64ImagesObj = React.useRef<Base64ImagesObj>({});
@@ -93,21 +98,15 @@ export default function Body({
   const [selectedColor, setSelectedColor] = React.useState('');
   const [selectedColors, setSelectedColors] = React.useState<any[]>([]);
   const [hasStock, setHasStock] = React.useState(false);
-  const [imageBase64, setImageBase64] = React.useState<{
+
+  const [visibleImages, setVisibleImages] = React.useState<{
     position: string,
-    imagesFront: any[],
-    imagesBack: any[]
+    imagesFront: string[],
+    imagesBack: string[]
   }>({
     position: 'front',
     imagesFront: [],
     imagesBack: []
-  });
-  const [visibleImages, setVisibleImages] = React.useState<{
-    position: string,
-    images: Base64ImagesObj
-  }>({
-    position: 'front',
-    images: {}
   });
   const [extractedProducts, setExtractedProducts] = React.useState<any[]>(products);
   const [isFeature, setIsFeature] = React.useState({
@@ -153,26 +152,11 @@ export default function Body({
     listing: '',
     edit: ''
   });
-  const [fabric, setFabric] = React.useState({
-    listing: '',
-    edit: ''
-  });
-  const [embelishment, setEmbelishment] = React.useState({
-    listing: '',
-    edit: ''
-  });
-  const [dressLength, setDressLength] = React.useState({
-    listing: '',
-    edit: ''
-  });
-  const [neckLine, setNeckLine] = React.useState({
-    listing: '',
-    edit: ''
-  });
-  const [sleeveL, setSleeveL] = React.useState({
-    listing: '',
-    edit: ''
-  });
+  const [fabric, setFabric] = React.useState('');
+  const [embelishment, setEmbelishment] = React.useState('');
+  const [dressLength, setDressLength] = React.useState('');
+  const [neckLine, setNeckLine] = React.useState('');
+  const [sleeveL, setSleeveL] = React.useState('');
   const [type, setType] = React.useState({
     listing: '',
     edit: ''
@@ -614,23 +598,29 @@ export default function Body({
 
     setTitle(prevTitle => ({
       ...prevTitle,
-      edit: selectedProduct.current.title
+      edit: selectedProduct.current.title[locale]
     }));
     setType(prevType => ({
       ...prevType,
-      edit: selectedProduct.current.type
+      edit: selectedProduct.current.type[locale]
     }));
     setDesc(prevDesc => ({
       ...prevDesc,
-      edit: selectedProduct.current.description
+      edit: selectedProduct.current.description[locale]
     }));
     setIsFeature(prevIsFeature => ({
       ...prevIsFeature,
       edit: selectedProduct.current.is_feature
     }));
-    setSelectedColor(selectedProduct.current.colors[0].type);
-    setSelectedColors(selectedProduct.current.colors.map((color: any) => color.type));
-    extractProductDetail(product, frontBase64ImagesObj.current, backBase64ImagesObj.current, productObj.current);
+    setSelectedColor(selectedProduct.current.colors[0].hex_code);
+    setSelectedColors(selectedProduct.current.colors.map((color: any) => color.hex_code));
+    extractProductDetail(product, frontBase64ImagesObj.current, backBase64ImagesObj.current, productObj.current, locale);
+    
+    setVisibleImages(prevVisibleImgs => ({
+      ...prevVisibleImgs,
+      imagesFront: Object.values(frontBase64ImagesObj.current).flat(),
+      imagesBack: Object.values(backBase64ImagesObj.current).flat(),
+    }));
     setPrice(prevPrice => ({
       ...prevPrice,
       edit: {
@@ -647,16 +637,13 @@ export default function Body({
         value: Object.values(productObj.current)[0].stock.toString()
       }
     }));
-    setVisibleImages(prevVisibleImgs => ({
-      ...prevVisibleImgs,
-      images: frontBase64ImagesObj.current
-    }));
+
     setIsAdminSettingsOpen(true);
   }
 
   async function deleteProduct(id: string){
-    setExtractedProducts(prevProducts => prevProducts.filter((prod: any) => prod.id !== id));
-    await axios.patch(`/api/products/update/${id}`);
+    // setExtractedProducts(prevProducts => prevProducts.filter((prod: any) => prod.id !== id));
+    await axios.patch(`/api/products/update/${id}?hide=true`);
   }
 
   async function handleSizeEdit(e: React.MouseEvent<HTMLSpanElement>, item: number){
@@ -702,6 +689,8 @@ export default function Body({
   //   edgeC: visitors.filter((visitor: any) => visitor.browser === 'Edge (Chromium)').length,
   // };
 
+
+
   return (
       <main
         className="bg-primary-950 min-h-screen pt-4 lg:pl-64 md:pl-52 pl-7 md:pr-3 pr-7 w-full py-12"
@@ -718,11 +707,11 @@ export default function Body({
                     title.listing,
                     desc.listing,
                     type.listing,
-                    embelishment.listing,
-                    fabric.listing,
-                    sleeveL.listing, 
-                    dressLength.listing,
-                    neckLine.listing,
+                    embelishment,
+                    fabric,
+                    sleeveL, 
+                    dressLength,
+                    neckLine,
                     isFeature.listing,
                     dressColorsState,
                     currentBgColors,
@@ -1016,7 +1005,7 @@ export default function Body({
 
                         }}
                         id="slength"
-                        value={sleeveL.listing}
+                        value={sleeveL}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1027,10 +1016,7 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setSleeveL(prevSleeveL => ({
-                            ...prevSleeveL,
-                            listing: e.target.value
-                          }));
+                          setSleeveL(e.target.value);
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1078,7 +1064,7 @@ export default function Body({
 
                         }}
                         id="embelish"
-                        value={embelishment.listing}
+                        value={embelishment}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1089,10 +1075,7 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setEmbelishment(prevEmbelishment => ({
-                            ...prevEmbelishment,
-                            listing: e.target.value
-                          }));
+                          setEmbelishment(e.target.value);
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1137,7 +1120,7 @@ export default function Body({
 
                         }}
                         id="fabric"
-                        value={fabric.listing}
+                        value={fabric}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1148,10 +1131,7 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setFabric(prevFabric => ({
-                            ...prevFabric,
-                            listing: e.target.value
-                          }));
+                          setFabric(e.target.value);
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1199,7 +1179,7 @@ export default function Body({
 
                         }}
                         id="dresslength"
-                      value={dressLength.listing}
+                      value={dressLength}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1210,10 +1190,7 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setDressLength(prevDressLength => ({
-                            ...prevDressLength,
-                            listing: e.target.value
-                          }));
+                          setDressLength(e.target.value);
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1258,7 +1235,7 @@ export default function Body({
 
                         }}
                         id="neckLine"
-                        value={neckLine.listing}
+                        value={neckLine}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1269,10 +1246,7 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setNeckLine(prevNeckLine => ({
-                            ...prevNeckLine,
-                            listing: e.target.value
-                          }));
+                          setNeckLine(e.target.value);
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1577,11 +1551,11 @@ export default function Body({
                     title.listing,
                     desc.listing,
                     type.listing,
-                    embelishment.listing,
-                    fabric.listing,
-                    sleeveL.listing, 
-                    dressLength.listing,
-                    neckLine.listing,
+                    embelishment,
+                    fabric,
+                    sleeveL, 
+                    dressLength,
+                    neckLine,
                     isFeature.listing,
                     dressColorsState,
                     currentBgColors,
@@ -1875,7 +1849,7 @@ export default function Body({
 
                         }}
                         id="slength"
-                        value={sleeveL.listing}
+                        value={sleeveL}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1886,10 +1860,7 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setSleeveL(prevSleeveL => ({
-                            ...prevSleeveL,
-                            listing: e.target.value
-                          }));
+                          setSleeveL(e.target.value);
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1937,7 +1908,7 @@ export default function Body({
 
                         }}
                         id="embelish"
-                        value={embelishment.listing}
+                        value={embelishment}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -1948,10 +1919,7 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setEmbelishment(prevEmbelishment => ({
-                            ...prevEmbelishment,
-                            listing: e.target.value
-                          }));
+                          setEmbelishment(e.target.value);
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -1996,7 +1964,7 @@ export default function Body({
 
                         }}
                         id="fabric"
-                        value={fabric.listing}
+                        value={fabric}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -2007,10 +1975,7 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setFabric(prevFabric => ({
-                            ...prevFabric,
-                            listing: e.target.value
-                          }));
+                          setFabric(e.target.value);
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -2058,7 +2023,7 @@ export default function Body({
 
                         }}
                         id="dresslength"
-                        value={dressLength.listing}
+                        value={dressLength}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -2069,10 +2034,7 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setDressLength(prevDressLength => ({
-                            ...prevDressLength,
-                            listing: e.target.value
-                          }));
+                          setDressLength(e.target.value);
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -2117,7 +2079,7 @@ export default function Body({
 
                         }}
                         id="neckLine"
-                        value={neckLine.listing}
+                        value={neckLine}
                         onChange={(e) => {
                           let item = e.currentTarget;
                           item.placeholder = "";
@@ -2128,10 +2090,7 @@ export default function Body({
                               label.classList.add("show-label");
                             }
                           }
-                          setNeckLine(prevsetNeckLine => ({
-                            ...prevsetNeckLine,
-                            listing: e.target.value
-                          }));
+                          setNeckLine(e.target.value);
                         }}
                         className="w-full h-6 bg-transparent focus:outline-none py-1 placeholder:text-gray-500 placeholder:text-sm placeholder:font-sans text-sm"
                       />
@@ -4395,106 +4354,111 @@ export default function Body({
                     handleDelete={() => deleteProduct(product.id)}
                     product={product}
                     isAdmin={true}
+                    isSearchProduct
                   />
                 ))}
             </div>
             {isAdminSettingsOpen && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white !top-[7vh]'>
               <section className='font-sans font-light flex flex-col gap-y-11 text-gray-500 pb-6 pt-16'>
                               
-                      <form onSubmit={async (e) => {
-                        e.preventDefault();
-                        try {
-                          const Product = {
-                            ...selectedProduct.current,
-                            type: type.edit,
-                            description: desc.edit,
-                            is_feature: isFeature.edit,
-                            features:  dressFeatures.split(',').map(feature => feature.trim()),
-                            colors: selectedProduct.current.colors.map((color: any) => {
-                              let backImages = [];
-                              let frontImages = [];
-                              for(let imageFront of imageBase64.imagesFront){
-                                frontImages.push(imageFront[color]);
-                              }
-                              for(let imageBack of imageBase64.imagesBack){
-                                backImages.push(imageBack[color]);
-                              }
-                              imageBase64.imagesFront.map(image => image[color])
-                              return {
-                                type: color.type,
-                                image_front_base64: frontImages,
-                                image_back_base64: backImages[0],
-                                sizes: Object.values(productObj.current).filter(obj => obj.color === color).map(obj => {
-                                  delete obj.color;
+                      <form 
+                      onSubmit={(e) => handleProductEdit(
+                        e,
+                        frontBase64ImagesObj.current,
+                        backBase64ImagesObj.current,
+                        desc.edit,
+                        type.edit,
+                        selectedProduct.current,
+                        productObj.current,
+                        dressFeatures,
+                        visibleImages,
+                        isFeature.edit,
+                        setLoader,
+                        path,
+                        router,
+                        locale,
+                        searchParams
 
-                                  return obj;
-                                }),
-                              };
-                            }),
-                          };
-                          await axios.patch(`/api/products/${selectedProduct.current.id}`, {
-                            	...Product
-                          });
-                        } catch (error) {
-                          
-                        }
-                      }}  className='flex flex-col gap-y-5 max-h-[75vh] items-center w-full' encType="multipart/form-data">
+                      )}  className='flex flex-col gap-y-5 max-h-[75vh] items-center w-full' encType="multipart/form-data">
                         <article className={`flex flex-col gap-y-2 lg:w-[45%] w-[75%] h-fit items-center relative`}>
                           <Swiper
                             modules={[Pagination]}
-                            key={visibleImages.position}
+                            key={JSON.stringify(visibleImages.imagesFront.concat(visibleImages.imagesBack))}
                             slidesPerView={1}
                             pagination={{
                                 clickable: true,
                                 el: '.custom-pagination',
                                 renderBullet: (index, className) => {
 
-                                    return `<span class="${className}" style="background-image: url(${Object.values(visibleImages.images).flat()[index]}) !important;"></span>`;
+                                    return `<span class="${className}" style="background-image: url(${visibleImages.position === 'front' ? visibleImages.imagesFront[index] : visibleImages.imagesBack[index]});"></span>`;
                                 },
                             }}
                             className="h-36 w-full"
                             >
-                        {Object.values(visibleImages.images).flat().map((image: string, i: number) => (
-                            <SwiperSlide key={i}>
-                                <div className="flex flex-row justify-center items-center">
-                                    {image.length > 0 
-                                    ? <label htmlFor='avatar' style={{backgroundImage : `url(${image})`}} id='avatar-container' className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                        {
+                          visibleImages.position === 'front'
+                          ? visibleImages.imagesFront.map((image: string, i: number) => {
+
+                          return (
+                              <SwiperSlide key={i}>
+                                  <div className="flex flex-row justify-center items-center">
+                                      {image.length > 0 
+                                      ? <label htmlFor={`avatar-${i}`} style={{backgroundImage : `url(${image})`}} id={`avatar-container-${i}`} className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                                      </label>
+                                      : <label htmlFor={`avatar-${i}`} id={`avatar-container-${i}`} className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                                      <i className="fa-solid fa-camera text-2xl text-white"></i>
                                     </label>
-                                    : <label htmlFor='avatar' id='avatar-container' className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
-                                    <i className="fa-solid fa-camera text-2xl text-white"></i>
-                                  </label>
-                                    }
-                                    <input type='file' className='hidden' id='avatar' onChange={async(e) => {
-                                        const base64String = await generateBase64FromMedia(e.target.files![0]);
-                                        const picContainer = document.getElementById('avatar-container') as HTMLLabelElement;
-                                        //clearing reviewer picture container
-                                        picContainer.innerHTML = '';
+                                      }
+                                      <input type='file' className='hidden' id={`avatar-${i}`} onChange={async(e) => {
+                                          const base64String = await generateBase64FromMedia(e.target.files![0]);
+                                          const picContainer = document.getElementById(`avatar-container-${i}`) as HTMLLabelElement;
+                                          picContainer.style.backgroundImage = `url(${base64String})`;
 
-                                        if(picContainer){
-                                            setImageBase64(prevBase64Imgs => {
-                                              if(prevBase64Imgs.position === 'front'){
-                                                return{
-                                                  ...prevBase64Imgs,
-                                                  imagesFront: [...prevBase64Imgs.imagesFront, {
-                                                    [Object.keys(visibleImages.images)[i]]: base64String as string 
-                                                  }]
-                                                }
-                                              }else{
-                                                return{
-                                                  ...prevBase64Imgs,
-                                                  imagesBack: [...prevBase64Imgs.imagesBack, {
-                                                    [Object.keys(visibleImages.images)[i]]: base64String as string 
-                                                  }]
-                                                }
-                                              }
-                                            });
-                                            picContainer.style.backgroundImage = `url(${base64String})`;
-                                        }
+                                          setVisibleImages(prevImgs => {
+                                            prevImgs.imagesFront.splice(i, 1, base64String as string);
+                                            return {
+                                              ...prevImgs,
+                                              imagesFront: prevImgs.imagesFront
+                                            };
+                                          });
 
-                                    }}/>
-                                </div>
-                            </SwiperSlide>
-                        ))}
+                                      }}/>
+                                  </div>
+                              </SwiperSlide>
+                          )
+                        })
+                        : visibleImages.imagesBack.map((image: string, i: number) => {
+
+                          return (
+                              <SwiperSlide key={i}>
+                                  <div className="flex flex-row justify-center items-center">
+                                      {image.length > 0 
+                                      ? <label htmlFor={`avatar-${i}`} style={{backgroundImage : `url(${image})`}} id={`avatar-container-${i}`} className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                                      </label>
+                                      : <label htmlFor={`avatar-${i}`} id={`avatar-container-${i}`} className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                                      <i className="fa-solid fa-camera text-2xl text-white"></i>
+                                    </label>
+                                      }
+                                      <input type='file' className='hidden' id={`avatar-${i}`} onChange={async(e) => {
+                                          const base64String = await generateBase64FromMedia(e.target.files![0]);
+                                          const picContainer = document.getElementById(`avatar-container-${i}`) as HTMLLabelElement;
+                                          picContainer.style.backgroundImage = `url(${base64String})`;
+
+                                          setVisibleImages(prevImgs => {
+                                            prevImgs.imagesBack.splice(i, 1, base64String as string);
+                                            
+                                            return {
+                                              ...prevImgs,
+                                              imagesBack: prevImgs.imagesBack
+                                            };
+                                          });
+
+                                      }}/>
+                                  </div>
+                              </SwiperSlide>
+                          )
+                        })
+                        }
                           </Swiper>
                           <div className="custom-pagination"></div>
                           <div 
@@ -4502,18 +4466,14 @@ export default function Body({
                             onClick={() => {
                               setVisibleImages(prevVisibleImgs => {
                                 const newPosition = prevVisibleImgs.position === 'front' ? 'back' : 'front';
-                                const newImages = newPosition === 'front' ? frontBase64ImagesObj.current : backBase64ImagesObj.current;
+
+                                 return {
+                                    ...prevVisibleImgs,
+                                    position: newPosition,
+                                  };
                   
-                                return {
-                                  ...prevVisibleImgs,
-                                  position: newPosition,
-                                  images: newImages
-                                };
+                               
                               });
-                              setImageBase64(prevBase64Imgs => ({
-                                ...prevBase64Imgs,
-                                position: prevBase64Imgs.position === 'front' ? 'back' : 'front'
-                              }));
                             }}
                              
                             className={`left-0 bottom-16 z-10 rounded-md absolute flex h-6 px-2 py-4 w-[100px] flex-row items-center gap-x-1 font-serif cursor-pointer text-blue-400`} 
@@ -4523,7 +4483,36 @@ export default function Body({
                           </div>
                         </article>
                         <section className="flex flex-col items-start w-full max-h-[500px] overflow-y-auto hide-scrollbar">
-                          <header className="font-medium font-sans text-lg px-5">{selectedProduct.current.title}</header>
+                          <header  className="font-medium font-sans text-lg px-5 flex flex-row w-full justify-between">
+                            <h1>{selectedProduct.current.title[locale]}</h1>
+                            <button onClick={async(e) => {
+                              try {
+                                setIsLoading(true);
+                                if(selectedProduct.current.is_hidden){
+                                  await axios.patch(`/api/products/update/${selectedProduct.current.id}?hide=false`);
+                                }else{
+                                  await axios.patch(`/api/products/update/${selectedProduct.current.id}?hide=true`);
+                                }
+                                const pathParts = path.split('/');
+
+                                if(pathParts[1] !== locale){
+                                  pathParts.unshift(locale);
+                                }
+                                const newPath = `/${pathParts.join('/')}`;
+
+                                const url = new URL(`${window.location.origin}${newPath}`);
+                            
+                                searchParams.forEach((value: string, key: string) => {
+                                  url.searchParams.set(key, value);
+                                });
+                                
+                                window.location.href = url.toString();
+
+                              } catch (error: any) {
+                                toast.error(error.message);
+                              }
+                            }} type="button" className={`${selectedProduct.current.is_hidden ? 'text-red-400 hover:text-red-500' : 'text-green-400 hover:text-green-500'} bg-transparent border-none focus:outline-none `}>{isLoading ? 'Processing..' : selectedProduct.current.is_hidden ? 'Activate' : 'Hide'}</button>
+                          </header>
                           <hr className="border border-gray-100 mt-3 w-full border-l-0 border-r-0 border-t-0" />
                           
                           <div className="p-5 w-full text-gray-400 font-medium font-sans text-sm flex flex-col gap-y-5">
@@ -4597,24 +4586,24 @@ export default function Body({
                                       return (<span
                                         key={i}
                                         onClick={(e) => {
-                                          if(Object.values(productObj.current).filter(obj => obj.color === selectedColor).length > 0 ){
-                                            if(Object.values(productObj.current).filter(obj => obj.color === selectedColor)[0].price > 0){
+                                          if(Object.values(productObj.current).filter(obj => obj.hex_code === selectedColor).length > 0 ){
+                                            if(Object.values(productObj.current).filter(obj => obj.hex_code === selectedColor)[0].price > 0){
                                                                                             
                                               setSelectedColor(val);
                                               setPrice(prevPrice => ({
                                                 ...prevPrice,
                                                 edit: {
                                                   ...prevPrice.edit,
-                                                  size: Object.values(productObj.current).filter(obj => obj.color! === val)[0].number!,
-                                                  value: Object.values(productObj.current).filter(obj => obj.color! === val)[0].price.toString()
+                                                  size: Object.values(productObj.current).filter(obj => obj.hex_code! === val)[0].number!,
+                                                  value: Object.values(productObj.current).filter(obj => obj.hex_code! === val)[0].price.toString()
                                                 }
                                               }));
                                               setStock(prevStock => ({
                                                 ...prevStock,
                                                 edit: {
                                                   ...prevStock.edit,
-                                                  size: Object.values(productObj.current).filter(obj => obj.color! === val)[0].number!,
-                                                  value: Object.values(productObj.current).filter(obj => obj.color! === val)[0].stock.toString()
+                                                  size: Object.values(productObj.current).filter(obj => obj.hex_code! === val)[0].number!,
+                                                  value: Object.values(productObj.current).filter(obj => obj.hex_code! === val)[0].stock.toString()
                                                 }
                                               }));
                                             }else{
@@ -4670,7 +4659,7 @@ export default function Body({
                               <h5>Size</h5>
                               <div className="flex flex-row flex-wrap gap-x-[6px] gap-y-6" id="edit-size-list">
                                 {sizes.map((item: number, i: number) => {
-                                   if(Object.values(productObj.current).some(size => size.number === item && size.color === selectedColor)){
+                                   if(Object.values(productObj.current).some(size => size.number === item && size.hex_code === selectedColor)){
 
                                     return (
                                       <div className="relative" key={i}>

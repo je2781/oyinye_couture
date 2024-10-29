@@ -68,12 +68,14 @@ export async function POST(req: NextRequest) {
     res.cookies.set('access_token', token, {
       httpOnly: true,
       expires: expiryDate,
+      path: '/',
       secure: process.env.NODE_ENV === 'production',
     });
 
     res.cookies.set('admin_status', `${user.is_admin}`, {
       httpOnly: true,
       expires: expiryDate,
+      path: '/',
       secure: process.env.NODE_ENV === 'production',
     });
 

@@ -41,7 +41,7 @@ class Order extends Model<InferAttributes<Order>, InferCreationAttributes<Order>
         primaryKey: true,
         allowNull: false,
       },
-      items: DataTypes.ARRAY(DataTypes.JSONB),
+      items: DataTypes.JSONB,
       sales: DataTypes.DOUBLE,
       status: DataTypes.STRING,
       payment_info: DataTypes.JSONB,

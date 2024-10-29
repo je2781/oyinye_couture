@@ -78,7 +78,12 @@ body {
   background-image: linear-gradient(to right, #6cdae7, rgb(255, 243, 232));
 }
 
-#zoom-hint.expand {
+#is-hidden
+ {
+  background-image: linear-gradient(to right, #e7896c, rgb(255, 243, 232));
+}
+
+#zoom-hint.expand, #is-hidden.expand {
   animation: hint-expand 400ms ease-out forwards;
 }
 

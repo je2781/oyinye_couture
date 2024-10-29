@@ -116,18 +116,17 @@ export default function SecondaryHeader({
         <>
             <header className={`${headerClass} flex flex-row justify-between items-start w-full relative mb-2`} >
                 <div
-                    id='toggle-settings'
                     className="hidden md:inline-flex flex-row gap-x-4 items-center cursor-pointer absolute left-0"
                     onClick={(e) => {
-                        let leftAngle = e.currentTarget.querySelector("i");
+                        let leftAngle = e.currentTarget.querySelector("i.search-filter-angle-left");
                         if (leftAngle) {
-                        if (!leftAngle.classList.contains("al-rotate")) {
-                            leftAngle.classList.add("al-rotate");
-                            leftAngle.classList.remove("al-rotate-clock");
-                        } else {
-                            leftAngle.classList.remove("al-rotate");
-                            leftAngle.classList.add("al-rotate-clock");
-                        }
+                            if (!leftAngle.classList.contains("al-rotate")) {
+                                leftAngle.classList.add("al-rotate");
+                                leftAngle.classList.remove("al-rotate-clock");
+                            } else {
+                                leftAngle.classList.remove("al-rotate");
+                                leftAngle.classList.add("al-rotate-clock");
+                            }
                         }
 
                         setFilter((prevState: any) => ({
@@ -144,11 +143,11 @@ export default function SecondaryHeader({
                         <Image src={Off} alt="slider-deactivated" height={19} />
                         )}
                         <h5 className="font-sans text-[.9rem] text-gray-500 font-bold">
-                        Filter{filter.noOfFilters > 0 && <span>&nbsp;&#40;{filter.noOfFilters}&#x29;</span>}
+                            Filter{filter.noOfFilters > 0 && <span>&nbsp;&#40;{filter.noOfFilters}&#x29;</span>}
                         </h5>
                     </div>
                     <div className="inline-block">
-                        <i className="fa-solid fa-angle-left text-[1.2rem]"></i>
+                        <i className="fa-solid fa-angle-left search-filter-angle-left text-[1.2rem]"></i>
                     </div>
                         
                 </div>

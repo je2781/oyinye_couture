@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from 'next/navigation';
+import { Link, usePathname } from '@/i18n/routing';
 import React, { useEffect, useLayoutEffect } from "react";
-import {FormattedMessage } from 'react-intl';
 import logo from "../../../public/oyinye.png";
 import useAuth from "../../store/useAuth";
 import HeaderCartButton from "./HeaderCartButton";
@@ -13,11 +11,12 @@ import useWindowWidth from "../helpers/getWindowWidth";
 import { MobileModal } from "../ui/Modal";
 import useCart from "@/store/useCart";
 import useGlobal from "@/store/useGlobal";
+import {useTranslations} from 'next-intl';
 
 
 export default function Header({cartItems, isCheckout, isAuth}: any) {
   let timerId: NodeJS.Timeout | null  = null;
-
+  const t = useTranslations('app');
   const path = usePathname();
   const { authStatus } = useAuth();
   const [isSearchModalOpen, setIsSearchModalOpen] = React.useState(false);
@@ -26,23 +25,22 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
   const {updateCart, items} = useCart();
   const {isMobileModalOpen, setIsMobileModalOpen} = useGlobal();
   let windowWidth = useWindowWidth();
-  const {locale} = useGlobal();
   
   const menuItems = [
     {
-      name: <FormattedMessage id="app.header.item1" defaultMessage="Home" />,
+      name: t('header.item1'),
       href: `/`,
     },
     {
-      name: <FormattedMessage id="app.header.item2" defaultMessage="Collections" />,
-      href: `/collections/all`,
+      name: t('header.item2'),
+      href: `£`,
     },
     {
-      name: <FormattedMessage id="app.header.item3" defaultMessage="About" />,
+      name: t('header.item3'),
       href: `/pages/about`,
     },
     {
-      name: <FormattedMessage id="app.header.item4" defaultMessage="Contact" />,
+      name: t('header.item4'),
       href: `/pages/contact`,
     },
   ];
@@ -78,34 +76,6 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
       }
     };
   }, [timerId]);
-
-  //updating route history to reflect new language
-  // useEffect(() => {
-  //   const handleBeforeUnload = () => {
-  //     history.pushState(null, '', `${path}`);
-
-  //   };
-
-  //   window.addEventListener('beforeunload', handleBeforeUnload);
-
-  //   return () => {
-  //     window.removeEventListener('beforeunload', handleBeforeUnload);
-  //   };
-  // }, []);
-
-  // useEffect(() => {
-  //   timerId = setTimeout(() => {
-  //     if(locale !== 'en'){
-  //       history.pushState(null, '', `/${locale}${path}`);
-  //     }
-  //   }, 400);
-
-  //   return () => {
-  //     if(timerId){
-  //       clearTimeout(timerId);
-  //     }
-  //   };
-  // }, []);
   
   // Handling scroll
   
@@ -169,7 +139,7 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
           <i className="fa-solid fa-bars text-gray-600 text-lg"></i>
           <span className="sr-only">Open dashboard mobile navbar</span>
         </button>
-        <Link href={`/`} className="inline-block max-w-[170px]">
+        <Link href={`/`} className="inline-block max-w-[150px]">
           {isCheckout ?
           <Image src={logo} alt="logo" className="bg-cover" width={1240}/>
         : <Image src={logo} alt="logo" className="bg-cover" />}
@@ -177,11 +147,11 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
         <div className="grow items-start lg:flex hidden">
           {!isCheckout && <ul className="inline-flex flex-row gap-x-8 items-center">
             {menuItems.map((item) => (
-              <li key={item.name.props.defaultMessage} className={`${path === '/' ? '-mt-3' : ''} cursor-pointer relative`}>
-                {item.name.props.defaultMessage !== 'Collections' ? <Link
+              <li key={item.name} className={`cursor-pointer relative`}>
+                {item.name !== t('header.item2') ? <Link
                   href={item.href}
                   style={{textDecorationThickness: '2px'}}
-                  className={`${path === item.href ? 'underline underline-offset-4' : ''} hover:underline hover:underline-offset-4 text-[1rem] font-medium text-gray-600 font-sans`}
+                  className={`${path === item.href ? 'underline underline-offset-4 -mt-4' : ''} hover:underline hover:underline-offset-4 text-[1rem] font-medium text-gray-600 font-sans`}
                 >
                   {item.name}
                 </Link>
@@ -250,17 +220,21 @@ export default function Header({cartItems, isCheckout, isAuth}: any) {
           >
             <i className="fa-solid cursor-pointer fa-user text-lg text-gray-600 transition-all duration-300 ease-out transform hover:scale-110"></i>
           </Link>}
-          <Link href={`/cart`}>
-            <HeaderCartButton isCheckout={isCheckout} isAuth={isAuth}/>
-          </Link>
+          {
+            isCheckout 
+            ? <HeaderCartButton isCheckout={isCheckout}/>
+            : <Link href={`/cart`}>
+                <HeaderCartButton isAuth={isAuth}/>
+              </Link>
+          }
         </div>
       </div>
       {isSearchModalOpen && <SearchBar onHideModal={hideSearchModalHandler}/>}
     {isMobileModalOpen && <MobileModal onClose={hideModalHandler}>
       <ul className="inline-flex flex-col gap-y-6">
               {menuItems.map((item) => (
-                <li key={item.name.props.defaultMessage}>
-                  {item.name.props.defaultMessage !== 'Collections' 
+                <li key={item.name}>
+                  {item.name !== t('header.item2') 
                   ? <Link
                     href={item.href}
                     className="text-lg font-medium text-gray-500 font-sans"

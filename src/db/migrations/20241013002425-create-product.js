@@ -16,16 +16,16 @@ module.exports = {
         defaultValue: false
       },
       title: {
-        type: Sequelize.STRING
+        type: Sequelize.JSONB
       },
       type: {
-        type: Sequelize.STRING
+        type: Sequelize.JSONB
       },
       no_of_orders: {
         type: Sequelize.INTEGER
       },
       description: {
-        type: Sequelize.STRING
+        type: Sequelize.JSONB
       },
       features: {
         type: Sequelize.JSONB,

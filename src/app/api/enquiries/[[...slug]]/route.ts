@@ -11,7 +11,7 @@ import { models } from '@/db/connection';
 export async function DELETE(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
 
-        if(params.slug![1]){
+        if(params.slug && params.slug.length > 0){
           const enq = await models.Enquiry.findByPk(params.slug![1]);
 
           await enq!.destroy();
@@ -56,7 +56,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug?: str
         } = await req.json();
 
         
-        if(params.slug![1]){
+        if(params.slug && params.slug.length > 0){
           const enq = await models.Enquiry.findByPk(params.slug![1]);
 
           if(!enq ){
@@ -260,7 +260,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
     try {
         let updatedEnquiries = [];
 
-        if(params.slug){
+        if(params.slug && params.slug.length > 0){
           const searchParams = req.nextUrl.searchParams;
           let page = searchParams.get('page');
           const updatedPage = +page! || 1;

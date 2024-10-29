@@ -14,7 +14,7 @@ module.exports = {
       payment_status: {
         type: Sequelize.STRING
       },
-      items: Sequelize.ARRAY(Sequelize.JSONB),
+      items: Sequelize.JSONB,
       payment_type: {
         type: Sequelize.STRING
       },

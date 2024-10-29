@@ -3,7 +3,7 @@
 import axios from "axios";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter } from '@/i18n/routing';
 import React from "react";
 import toast from "react-hot-toast";
 import useGlobal from "@/store/useGlobal";
@@ -17,14 +17,9 @@ export default function PagesComponent({name}: any){
     const [message, setMessage] = React.useState('');
     const [subject, setSubject] = React.useState('');
     const router = useRouter();
-    const {locale} = useGlobal();
+    const {lang} = useGlobal();
     let content: JSX.Element = <></>;
 
-    // React.useEffect(() => {
-    //     if(locale !== 'en'){
-    //         history.pushState(null, '', `/${locale}${location.href.split(`${process.env.NEXT_PUBLIC_DOMAIN}`)[1]}`);
-    //     }
-    // }, []);
 
     async function handleFormSubmit(e: React.FormEvent){
         e.preventDefault();
@@ -57,7 +52,8 @@ export default function PagesComponent({name}: any){
         }finally{
             setLoader(false);
             toast.success('Contact Request has been sent');
-            router.replace(`/`);
+            
+            router.push(`/`);
         }
 
     }

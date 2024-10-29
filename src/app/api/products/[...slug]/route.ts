@@ -5,13 +5,13 @@ import crypto from 'crypto';
 import { NextRequest, NextResponse } from "next/server";
 import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import { models } from "@/db/connection";
 
 export async function PATCH(req: NextRequest, { params }: { params: { slug: string[] } }) {
   try {
 
-    if(params.slug[1] === 'likes-dislikes'){
+    if(params.slug && params.slug[1] === 'likes-dislikes'){
       const {likes, dislikes, reviewId} = await req.json();
 
       const review = await models.Review.findByPk(reviewId);
@@ -29,21 +29,26 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
         { status: 201 }
       );
     }else{
-      await models.Product.update({
-        is_hidden: true,
-      }, {
-        where: {
-          id: params.slug[1]
-        }
-      }); 
+      const hide = req.nextUrl.searchParams.get('hide');
 
-      return NextResponse.json(
-        {
-          message: "Product hidden successfully",
-          success: true,
-        },
-        { status: 201 }
-      );
+      if(hide){
+
+        await models.Product.update({
+          is_hidden: hide === 'true' ? true : false,
+        }, {
+          where: {
+            id: params.slug[1]
+          }
+        }); 
+  
+        return NextResponse.json(
+          {
+            message: "Product hidden successfully",
+            success: true,
+          },
+          { status: 201 }
+        );
+      }
     }
     
     
@@ -179,135 +184,105 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     let authors: any[] = [];
     let updatedProducts: any[] = [];
 
-    // Debugging: Log request URL and slug params
-    console.log('Request URL:', req.url);
-    console.log('Slug params:', params.slug);
-
-    // Get the current viewed products from query params
     const viewedProducts = req.nextUrl.searchParams.get('viewed_p') === 'undefined' ? undefined : req.nextUrl.searchParams.get('viewed_p');
-    console.log('Viewed Products:', viewedProducts);
 
     const title = params.slug[0].charAt(0).toUpperCase() + params.slug[0].replace('-', ' ').slice(1);
-    console.log('Product title to find:', title);
 
-    // Finding the product by title
     const product = await models.Product.findOne({
-      where: { title}
+      where: Sequelize.where(
+        Sequelize.literal(`title->>'en'`), 
+        { [Op.eq]: title }
+      ),
     });
-    console.log('Product found:', product);
 
     if (!product) {
       return NextResponse.json({ error: "product doesn't exist" }, { status: 404 });
     }
 
-    // Extracting the color object
-    const extractedColorObj = product.colors.find(color => color.type === params.slug[1]);
-    console.log('Extracted Color Object:', extractedColorObj);
+    const extractedColorObj = product.colors.find((color: any) => color.type['en'] === params.slug[1].replace('-', ' '));
 
-    if (extractedColorObj) {
-      if (viewedProducts) {
-        const viewedProductsArray = JSON.parse(viewedProducts);
-        console.log('Viewed Products Array:', viewedProductsArray);
-
-        // Getting products attached to variant ids
-        for (let viewedProduct of viewedProductsArray) {
-          let extractedProduct = await models.Product.findOne({ 
-            where: {
-              colors: {
-                [Op.contains]: [{sizes: [
-                  {variant_id: viewedProduct}
-                ]}]
-              }
-            }
-          });
-          console.log('Extracted Product from viewed list:', extractedProduct);
-          extractedProductsArray.push(extractedProduct!);
-        }
-      }
-
-      // Finding similar products
-      const extractedProductsOfSimilarColor = await models.Product.findAll({
-        where: {
-          colors: {
-            [Op.contains]: [{type: extractedColorObj.type}, {sizes: [
-              {variant_id: {
-                [Op.ne]: params.slug[2]
-              }}
-            ]}]
-          }
-        }
-      });
-      console.log('Extracted Products of Similar Color:', extractedProductsOfSimilarColor);
-
-      // Finding related/grouped products
-      let carts = await models.Cart.findAll({
-        where: {
-          items: {
-            [Op.contains] : [{product : {
-              id: product.id
-            }
-          }]
-          }
-        }
-      });
-      console.log('Carts containing the product:', carts);
-
-      if(carts.length > 0){
-        for (let cart of carts) {
-          let products = cart.items.map((item: any) => item.product);
-          console.log('Products in cart:', products);
-          updatedProducts.push(...products);
-        }
-      }
-
-      updatedProducts = [...updatedProducts, ...extractedProductsArray, ...extractedProductsOfSimilarColor];
-      console.log('Updated Products:', updatedProducts);
-
-      // Removing duplicates
-      const relatedProducts = updatedProducts.filter((prod: any) => prod.id !== product.id);
-      console.log('Filtered Related Products:', relatedProducts);
-
-      // Getting product reviews
-      const reviews = await product.getReviews();
-      console.log('Product Reviews:', reviews);
-
-      for (let review of reviews) {
-        const user = await review.getUser();
-        console.log('Review Author:', user);
-        authors.push(user!);
-      }
-
-      const updatedReviews = reviews.map(review => {
-        const extractedAuthor = authors.find(author => author.id === review.author_id);
-        return {
-          ...review,
-          author: extractedAuthor!
-        };
-      });
-      console.log('Updated Reviews:', updatedReviews);
-
-      // Sorting reviews by likes
-      reviews.sort((a, b) => b.likes - a.likes);
-
-      // Sending the response
-      return NextResponse.json({
-        productSizes: extractedColorObj.sizes,
-        productFrontBase64Images: extractedColorObj.imageFrontBase64,
-        productId: product.id,
-        productColors: product.colors,
-        productReviews: updatedReviews,
-        relatedProducts,
-        success: true
-      }, { status: 200 });
-
-    } else {
+    if (!extractedColorObj) {
       return NextResponse.json({ error: "product color doesn't exist" }, { status: 404 });
     }
+
+    if (viewedProducts) {
+      const viewedProductsArray = JSON.parse(viewedProducts);
+
+      for (let viewedProduct of viewedProductsArray) {
+        let extractedProduct = await models.Product.findOne({
+          where: {
+            colors: {
+              [Op.contains]: [{ sizes: [{ variant_id: viewedProduct }] }],
+            },
+          },
+        });
+        if (extractedProduct) {
+          extractedProductsArray.push(extractedProduct);
+        }
+      }
+    }
+
+    const extractedProductsOfSimilarColor = await models.Product.findAll({
+      where: {
+        colors: {
+          [Op.contains]: [
+            { type: { en: extractedColorObj.type['en'] } },
+            { sizes: [{ variant_id: { [Op.ne]: params.slug[2] } }] },
+          ],
+        },
+      },
+    });
+
+    let carts = await models.Cart.findAll({
+      where: {
+        items: {
+          [Op.contains]: [{ product: { id: product.id } }],
+        },
+      },
+    });
+
+    if (carts.length > 0) {
+      for (let cart of carts) {
+        let products = cart.items.map((item: any) => item.product);
+        updatedProducts.push(...products);
+      }
+    }
+
+    updatedProducts = [...updatedProducts, ...extractedProductsArray, ...extractedProductsOfSimilarColor];
+
+    const relatedProducts = updatedProducts.filter((prod: any) => prod.id !== product.id);
+
+    const reviews = await product.getReviews();
+
+    for (let review of reviews) {
+      const user = await review.getUser();
+      authors.push(user);
+    }
+
+    const updatedReviews = reviews.map((review: any) => {
+      const extractedAuthor = authors.find((author: any) => author.id === review.author_id);
+      return { ...review, author: extractedAuthor };
+    });
+
+    reviews.sort((a: any, b: any) => b.likes - a.likes);
+
+    return NextResponse.json({
+      productSizes: extractedColorObj.sizes,
+      productFrontBase64Images: extractedColorObj.image_front_base64,
+      productId: product.id,
+      productColor: extractedColorObj.type,
+      productTitle: product.title,
+      productColors: product.colors,
+      productReviews: updatedReviews,
+      relatedProducts,
+      success: true,
+    }, { status: 200 });
+
   } catch (error: any) {
-    console.error('Error:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
 
 
 export async function DELETE(request: NextRequest, { params }: { params: { slug: string[] } }) {

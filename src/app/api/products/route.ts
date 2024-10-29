@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 export async function GET(req: NextRequest) {
     try {
-        const notHidden = req.nextUrl.searchParams.get('not_hidden');
+        const notHidden = req.nextUrl.searchParams.get('hidden');
         let products: any[] = [];
 
         if(notHidden){

@@ -2,15 +2,14 @@
 'use client';
 
 import { generateBase64FromMedia } from "@/helpers/getHelpers";
-import useGlobal from "@/store/useGlobal";
 import axios from "axios";
 import { Country, State, City } from "country-state-city";
-import { useRouter } from "next/navigation";
+import { useRouter } from '@/i18n/routing';
 import React from "react";
 import toast from "react-hot-toast";
 
 
-export default function Order({country}: any){
+export default function Order({country, locale}: any){
     const [countryName, setCountryName] = React.useState(Country.getCountryByCode(country)!.name); 
     const [uploadedFiles, setUploadedFiles] = React.useState<string[]>([]); 
     const [base64Images, setBase64Images] = React.useState<string[]>([]); 
@@ -18,7 +17,6 @@ export default function Order({country}: any){
         `Phone: +${Country.getCountryByCode(country)!.phonecode}...`
       );
     const router = useRouter();
-    const {locale} = useGlobal();
     const [loader, setLoader] = React.useState(false);
     const [content, setContent] = React.useState('');
     const [size, setSize] = React.useState('');
@@ -74,7 +72,13 @@ export default function Order({country}: any){
         }finally{
             setLoader(false);
             toast.success('Appointment Request Sent');
-            router.replace(`/`);
+            // Construct the new path
+            const newPath = `/${locale}`;
+
+            const url = new URL(`${window.location.origin}${newPath}`);
+            
+            window.location.href = url.toString();
+
         }
 
     }
