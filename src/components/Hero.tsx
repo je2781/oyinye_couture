@@ -5,8 +5,7 @@ import { useEffect } from "react";
 import { createVisitorAction } from "@/app/actions";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
-import {useTranslations} from 'next-intl';
-import {Link} from '@/i18n/routing';
+import Link from "next/link";
 import "swiper/css";
 
 const Hero = () => {
@@ -18,8 +17,6 @@ const Hero = () => {
 
     createActions();
   }, []);
-
-  const t = useTranslations('app');
   
   return (
         <Swiper
@@ -41,11 +38,11 @@ const Hero = () => {
                       <section className="leading-text flex flex-col items-center justify-center gap-y-6 absolute bottom-[30%] top-[30%] lg:left-[30%] lg:right-[30%] left-[8%] right-[8%]">
                           <h1 className="text-white lg:text-5xl text-3xl font-sans font-semibold">OYINYE</h1>
                           <h1 className="text-white/80 lg:text-lg text-[1rem] font-sans text-center">
-                            {t('hero.slide1.paragraph')}
+                          YOU DESERVE THE BEST DRESS ON YOU FOR EVERY OCCASSION
                           </h1>
                           <div className="flex flex-col items-stretch">
                               <Link href={`/collections/all-dresses`} className="lg:px-32 px-[120px] text-[.8rem] lg:text-[1rem] py-3 border border-white bg-transparent hover:ring-2 ring-white  text-white font-sans">
-                                {t('hero.slide1.action.text')}
+                              Shop All
                               </Link>
                           </div>
                       </section>
@@ -60,11 +57,11 @@ const Hero = () => {
                       <section className="leading-text flex flex-col items-center justify-center gap-y-6 absolute bottom-[30%] top-[30%] lg:left-[30%] lg:right-[30%] left-[8%] right-[8%]">
                           <h1 className="text-white lg:text-5xl text-3xl font-sans font-semibold">OYINYE</h1>
                           <h1 className="text-white/80 lg:text-lg text-[1rem] font-sans text-center">
-                            {t('hero.slide2.paragraph')}
+                          PLACE AN ORDER TO GET YOUR CUSTOM WORK DONE
                           </h1>
                           <div className="flex flex-col items-stretch">
                               <Link href={`/order`} className="lg:px-32 px-[120px] text-[.8rem] lg:text-[1rem] py-3 border border-white bg-transparent hover:ring-2 ring-white  text-white font-sans">
-                                {t('hero.slide2.action.text')}
+                                Place Order
                               </Link>
                           </div>
                       </section>

@@ -1,12 +1,38 @@
 
 import { models } from '@/db/connection';
-import { cookies } from 'next/headers';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 import { NextResponse, type NextRequest } from 'next/server';
-import { Op, Sequelize, where } from 'sequelize';
+import { Op, Sequelize} from 'sequelize';
+
+const redis = Redis.fromEnv();
+
+// Allow 5 requests per 10 seconds per IP
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "10s"),
+  analytics: true,
+});
 
 
-export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
+
+export async function GET(request: NextRequest, { params }: { params: { slug: string } }, res: NextResponse) {
   try {
+
+    const ip = request.headers.get('x-forwarded-for');
+
+    const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+    if (!success) {
+      const res = NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429 }
+      );
+      res.headers.set('X-RateLimit-Limit', limit.toString());
+      res.headers.set('X-RateLimit-Remaining', remaining.toString());
+      res.headers.set('X-RateLimit-Reset', reset.toString());
+      return res;
+    }
 
     let priceList: number[] = [];
     let filterSettings: any[] = [];
@@ -28,9 +54,11 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       let totalItems = await models.Product.count({
         where: {
           [Op.and]: [
-            Sequelize.where(Sequelize.literal(`title ->> 'en'`), {
-              [Op.like]: `% %${query}%`           
-            }),
+            {
+              title: {
+                [Op.like]: `% %${query}%`
+              }
+            },
             { is_hidden: false },
           ],
         }
@@ -40,9 +68,11 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       let products = await models.Product.findAll({
         where: {
           [Op.and]: [
-            Sequelize.where(Sequelize.literal(`title->>'en'`), {
-              [Op.like]: `% %${query}%`           
-            }),
+            {
+              title: {
+                [Op.like]: `% %${query}%`
+              }
+            },
             { is_hidden: false },
           ],
         },
@@ -53,7 +83,6 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
 
       if (productType) {
         products = products.filter(product => product.type === productType);
-        console.log("Products after filtering by product type:", products);
       }
 
       for (let product of products) {
@@ -63,11 +92,9 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       }
 
       const highestPrice = Math.max(...priceList);
-      console.log("Highest Price:", highestPrice);
 
       if (availability || lte || gte || productType) {
         filterSettings = await models.Filter.findAll();
-        console.log("Filter Settings:", filterSettings);
       }
 
       const currentPage = updatedPage;
@@ -147,7 +174,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
             });
             product.setDataValue('no_of_orders', noOfOrders);
           }
-          products.sort((a, b) => (b.no_of_orders - a.no_of_orders) || (b.reviews.length - a.reviews.length));
+          products.sort((a, b) => (b.no_of_orders - a.no_of_orders) || (b.collated_reviews.length - a.collated_reviews.length));
           break;
       }
 
@@ -366,13 +393,13 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
           break;
         case 'title-descending':
           products.sort((a, b) => {
-            return b.title['en'].charAt(0).localeCompare(a.title['en'].charAt(0));
+            return b.title.charAt(0).localeCompare(a.title.charAt(0));
 
           });
           break;
         case 'title-ascending':
           products.sort((a, b) => {
-            return a.title['en'].charAt(0).localeCompare(b.title['en'].charAt(0));
+            return a.title.charAt(0).localeCompare(b.title.charAt(0));
           });
           break;
         case 'price-descending':
@@ -443,8 +470,23 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
 export async function POST(request: NextRequest, { params }: { params: { slug: string } }) {
     try {
 
+      const ip = request.headers.get('x-forwarded-for');
+
+      const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+      if (!success) {
+        const res = NextResponse.json(
+          { error: 'Rate limit exceeded' },
+          { status: 429 }
+        );
+        res.headers.set('X-RateLimit-Limit', limit.toString());
+        res.headers.set('X-RateLimit-Remaining', remaining.toString());
+        res.headers.set('X-RateLimit-Reset', reset.toString());
+        return res;
+      }
+
       const reqBody = await request.json();
-      
+
       await models.Product.create({
         ...reqBody
       });    
@@ -468,6 +510,21 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
  
 export async function PATCH(request: NextRequest, { params }: { params: { slug: string } }) {
     try {
+
+      const ip = request.headers.get('x-forwarded-for');
+
+      const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+      if (!success) {
+        const res = NextResponse.json(
+          { error: 'Rate limit exceeded' },
+          { status: 429 }
+        );
+        res.headers.set('X-RateLimit-Limit', limit.toString());
+        res.headers.set('X-RateLimit-Remaining', remaining.toString());
+        res.headers.set('X-RateLimit-Reset', reset.toString());
+        return res;
+      }
 
       const reqBody = await request.json();
       

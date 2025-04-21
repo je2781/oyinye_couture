@@ -1,12 +1,15 @@
-import createMiddleware from 'next-intl/middleware';
-import {routing} from './i18n/routing';
- 
-export default createMiddleware(routing);
+import { createCsrfMiddleware } from "@edge-csrf/nextjs";
 
-// See "Matching Paths" below to learn more
-export const config = {
-  matcher: [
-    "/",
-    '/(nl|en|fr|pt-PT|zh-TW|es)/:path*'
-  ],
-};
+// initalize csrf protection middleware
+const csrfMiddleware = createCsrfMiddleware({
+  cookie: {
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    sameSite: "strict",
+    path: "/",
+  },
+});
+
+
+export const middleware = csrfMiddleware;
+

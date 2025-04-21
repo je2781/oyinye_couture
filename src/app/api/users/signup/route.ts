@@ -5,15 +5,47 @@ import { EmailType } from "@/interfaces";
 import { getVisitData } from "@/helpers/getVisitData";
 import crypto from 'crypto';
 import { models } from "@/db/connection";
+import { Redis } from "@upstash/redis";
+import { Ratelimit } from "@upstash/ratelimit";
+import { sanitizeInput } from "@/helpers/sanitize";
+
+const redis = Redis.fromEnv();
+
+// Allow 5 requests per 10 seconds per IP
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "10s"),
+  analytics: true,
+});
 
 
-export async function POST(req: NextRequest) {
+
+export async function POST(req: NextRequest, res: NextResponse) {
   try {
+    const ip = req.headers.get('x-forwarded-for');
+
+    const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+    if (!success) {
+      const res = NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429 }
+      );
+      res.headers.set('X-RateLimit-Limit', limit.toString());
+      res.headers.set('X-RateLimit-Remaining', remaining.toString());
+      res.headers.set('X-RateLimit-Reset', reset.toString());
+      return res;
+    }
     const reqBody = await req.json();
     const { firstName, lastName, email, password, enableEmailMarketing} = reqBody;
+    
+    const cleanFirstName = sanitizeInput(firstName);
+    const cleanLastName= sanitizeInput(lastName);
+    const cleanEmail = sanitizeInput(email);
+    const cleanPassword = sanitizeInput(password);
 
     const user = await models.User.findOne({
-      where: { email: email }
+      where: { email: cleanEmail }
     });
     //check if user laready exists
     if (user) {
@@ -40,16 +72,16 @@ export async function POST(req: NextRequest) {
 
     const visitId = getVisitData(req);
 
-    if(password && firstName  && lastName && email){
+    if(cleanPassword && cleanFirstName  && cleanLastName && cleanEmail){
       
-          const hash = await argon.hash(password);
+          const hash = await argon.hash(cleanPassword);
       
           const newUser = await models.User.create({
             id: (await crypto.randomBytes(6)).toString("hex"),
-            email: email,
+            email: cleanEmail,
             password: hash,
-            first_name: firstName,
-            last_name: lastName,
+            first_name: cleanFirstName,
+            last_name: cleanLastName,
           });
       
           if(visitId){
@@ -76,7 +108,7 @@ export async function POST(req: NextRequest) {
     }else{
       const newUser = await models.User.create({
         id: (await crypto.randomBytes(6)).toString("hex"),
-        email,
+        email: cleanEmail,
         enable_email_marketing: enableEmailMarketing ? true : false
       });
   

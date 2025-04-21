@@ -19,9 +19,9 @@ import { Base64ImagesObj, CartItemObj } from "@/interfaces";
 import axios from "axios";
 import toast from "react-hot-toast";
 import useWindowWidth from "../helpers/getWindowWidth";
-import { useRouter, usePathname } from '@/i18n/routing';
+import { useRouter, usePathname } from 'next/navigation';
 
-export default function Checkout({ cartItems, total, orderId, country, userEmail, userId, billingInfo, shippingInfo, saveBillingInfo, saveShippingInfo, locale}: any) {
+export default function Checkout({ cartItems, total, orderId, country, userEmail, userId, billingInfo, shippingInfo, saveBillingInfo, saveShippingInfo, csrf}: any) {
   let cartItemObj: CartItemObj = {};
   let tax = 250;
 
@@ -87,7 +87,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
 
   if (cartItems.length > 0) {
     //extracting product details to populate the cart page
-    extractProductDetails(cartItems, cartItemObj, frontBase64ImagesObj, locale!);
+    extractProductDetails(cartItems, cartItemObj, frontBase64ImagesObj);
   }
   const quantities = Object.values(cartItemObj).map((item: any) =>
     parseInt(item.quantity)
@@ -164,6 +164,10 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
         password: randomReference(),
         enableEmailMarketing,
         checkingOut: true
+      }, {
+        headers: {
+          'x-csrf-token': csrf
+        }
       });
 
       //updating order
@@ -207,6 +211,10 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
         status: 'pending payment',
         paymentStatus: 'pending',
         shippingMethod: shippingMethod === 5000 ? 'island' : shippingMethod === 8500 ? 'mainland' : 'outside'
+      },{
+        headers: {
+          'x-csrf-token': csrf
+        }
       });
   
       
@@ -227,6 +235,10 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
                   txn_ref: transactionRef,
                   merchant_code: `${process.env.NEXT_PUBLIC_MER_CODE}`,
                   amount: (shippingMethod + parseFloat(total) + tax) * 100
+                },{
+                  headers: {
+                    'x-csrf-token': csrf
+                  }
                 });
     
                 if(res.status === 200){
@@ -237,10 +249,8 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
               } catch (error: any) {
                 toast.error(error.message);
               }finally{
-                // Construct the new path
-                const newPath = `/${locale}`;
-
-                const url = new URL(`${window.location.origin}${newPath}`);
+          
+                const url = new URL(`${window.location.origin}`);
                 
                 window.location.href = url.toString();
 

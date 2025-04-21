@@ -2,19 +2,15 @@
 
 import React from "react";
 import Image from "next/image";
-import { SearchModal } from "./Modal";
-import { useRouter, usePathname, Link } from '@/i18n/routing';
+import { SearchModal } from "../layout/Modal";
+import { useRouter } from 'next/navigation';
+import Link from "next/link";
 import useProduct from "@/store/useProduct";
-import { useSearchParams } from "next/navigation";
-import useGlobal from "@/store/useGlobal";
 
 const SearchBar = ({ onHideModal, isAdmin}: any) => {
   const [query, setQuery] = React.useState("");
   const router = useRouter();
-  const path = usePathname();
-  const searchParams = useSearchParams();
   const {allProducts} = useProduct();
-  const {lang} = useGlobal();
   const [isLoading, setIsLoading] = React.useState(false);
 
   let currentUrl = isAdmin ? `/admin/products?q=${query}&options[prefix]=last&page=1` 
@@ -22,7 +18,7 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
 
   React.useEffect(() => {
     if(isLoading){
-      const newPath = `/${lang}${currentUrl}`;
+      const newPath = `${currentUrl}`;
 
       const url = new URL(`${window.location.origin}${newPath}`);
       
@@ -38,17 +34,17 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
     { title: "Emails", route: `/admin/emails` },
     { title: "Summary", route: `/admin/summary` },
   ] : [
-    { title: "Contact Us", route: `/pages/contact` },
-    { title: "About", route: `/pages/about` },
+    { title: "Contact Us", route: `/other/contact` },
+    { title: "About", route: `/other/about` },
     { title: "Login", route: `/login` },
     { title: "Signup", route: `/signup` },
-    { title: "Shipping Policy", route: `/pages/shipping-policy` },
-    {title: "Returns Policy", route: `/pages/returns-policy`},
-    {title: "Privacy Policy", route: `/pages/privacy-policy`},
-    {title: "Size Guide", route: `/pages/size-guide`},
+    { title: "Shipping Policy", route: `/other/shipping-policy` },
+    {title: "Returns Policy", route: `/other/returns-policy`},
+    {title: "Privacy Policy", route: `/other/privacy-policy`},
+    {title: "Size Guide", route: `/other/size-guide`},
   ];
 
-  let productSuggestions = allProducts.slice(0, 6).some((product: any)=> product.title[lang].includes(query.charAt(0).toUpperCase() + query.slice(1)));
+  let productSuggestions = allProducts.slice(0, 6).some((product: any)=> product.title.includes(query.charAt(0).toUpperCase() + query.slice(1)));
   let otherSuggestions =  pages.some(page => page.title.includes(query.charAt(0).toUpperCase() + query.slice(1)));
 
   let otherSearchResults = !isAdmin && productSuggestions || otherSuggestions;
@@ -110,7 +106,7 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
                     <ul className="flex flex-col">
                       {allProducts
                         .filter((product: any) =>
-                          product.title[lang].includes(
+                          product.title.includes(
                             query.charAt(0).toUpperCase() + query.slice(1)
                           )
                         )
@@ -118,13 +114,13 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
                           <li
                             className=" hover:underline-offset-1 hover:underline cursor-pointer hover:bg-gray-100 px-5 py-2"
                             key={i}
-                            onClick={() => router.push(`/products/${product.title[lang].replace(' ', '-').toLowerCase()}/${product.colors[0].type[lang]}/${product.colors[0].sizes[0].variant_id!}`)} 
+                            onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name}/${product.colors[0].sizes[0].variant_id!}`)} 
                           >
                             <span className="font-sans text-gray-400 text-[.8rem]">
-                              {product.title[lang].charAt(0)}
+                              {product.title.charAt(0)}
                             </span>
                             <span className="font-sans font-semibold text-[.8rem]">
-                              {product.title[lang].slice(1)}
+                              {product.title.slice(1)}
                             </span>
                           </li>
                         ))}
@@ -161,7 +157,7 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
                   <ul className="flex flex-col">
                     {allProducts.slice(0, 4).map((product: any, i: number) => (
                       <li key={i}>
-                        <article onClick={() => router.push(`/products/${product.title[lang].replace(' ', '-').toLowerCase()}/${product.colors[0].type[lang]}/${product.colors[0].sizes[0].variant_id!}`)} 
+                        <article onClick={() => router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name}/${product.colors[0].sizes[0].variant_id!}`)} 
                         className="flex flex-row items-start gap-x-5 px-4 py-3 hover:bg-gray-100 cursor-pointer">
                           <Image
                             alt={`Product ${i + 1}`}
@@ -171,7 +167,7 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
                           />
                           <section>
                             <h2 className="font-sans text-[1rem] font-medium hover:underline-offset-1 hover:underline">
-                              {product.title[lang]}
+                              {product.title}
                             </h2>
                             <h2 className="font-sans font-thin text-gray-400 text-[.9rem]">
                               &#8358;

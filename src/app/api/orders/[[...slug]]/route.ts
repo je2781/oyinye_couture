@@ -3,12 +3,38 @@ import { getDataFromCart } from '@/helpers/getDataFromCart';
 import { getDataFromOrder } from '@/helpers/getDataFromOrder';
 import { sendMail } from '@/helpers/mailer';
 import { EmailType } from '@/interfaces';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 import axios from 'axios';
 import { NextResponse, type NextRequest } from 'next/server';
 
+const redis = Redis.fromEnv();
 
-export async function GET(request: NextRequest, { params }: { params: { slug?: string[] } }) {
+// Allow 5 requests per 10 seconds per IP
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "10s"),
+  analytics: true,
+});
+
+
+export async function GET(request: NextRequest, { params }: { params: { slug?: string[] } }, res: NextResponse) {
   try {
+
+      const ip = request.headers.get('x-forwarded-for');
+
+      const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+      if (!success) {
+        const res = NextResponse.json(
+          { error: 'Rate limit exceeded' },
+          { status: 429 }
+        );
+        res.headers.set('X-RateLimit-Limit', limit.toString());
+        res.headers.set('X-RateLimit-Remaining', remaining.toString());
+        res.headers.set('X-RateLimit-Reset', reset.toString());
+        return res;
+      }
 
       if(params.slug){
         const searchParams = request.nextUrl.searchParams;
@@ -57,7 +83,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
                   price = color.sizes.find((size: any) => size.variant_id === item.variant_id).price;
                   size = color.sizes.find((size: any) => size.variant_id === item.variant_id).number;
                   frontBase64Images = color.image_front_base64;
-                  colorType = color.type;
+                  colorType = color.names;
                 }
               });
               return {
@@ -108,6 +134,22 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
 export async function POST(request: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
       
+
+      const ip = request.headers.get('x-forwarded-for');
+
+      const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+      if (!success) {
+        const res = NextResponse.json(
+          { error: 'Rate limit exceeded' },
+          { status: 429 }
+        );
+        res.headers.set('X-RateLimit-Limit', limit.toString());
+        res.headers.set('X-RateLimit-Remaining', remaining.toString());
+        res.headers.set('X-RateLimit-Reset', reset.toString());
+        return res;
+      }
+      
       const [orderId, checkoutSessionToken] = getDataFromOrder(request);
 
       //retrieving order data for the current checkout session
@@ -116,7 +158,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
 
       if(params.slug){
         switch (params.slug[1]) {
-          case 'transaction-status':
+          case 'transaction-status': {
             const reqBody = await request.json();
             const {txn_ref, merchant_code, amount} = reqBody;
 
@@ -171,8 +213,8 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
 
               
             }
-        
-          case 'payment-status':
+          }
+          case 'payment-status':{
             const {paymentStatus} = await request.json();
 
             if (order) {
@@ -194,8 +236,10 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
                 status: 200
               });
             }
-          case 'reminder':
+          }
+          case 'reminder':{
             const {items} = await request.json();
+
             const cartId = getDataFromCart(request);
 
             if(cartId){
@@ -229,8 +273,8 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
             }
 
             
-        
-          case 'payment-request':
+          }
+          case 'payment-request': {
             const {link, id, total} = await request.json();
 
             if (order) {
@@ -260,7 +304,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
                 status: 200
               });
             }
-
+          }
         }
 
       

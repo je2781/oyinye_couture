@@ -1,4 +1,4 @@
-import { months, randomReference } from '@/helpers/getHelpers';
+import { randomReference } from '@/helpers/getHelpers';
 import { getVisitData } from '@/helpers/getVisitData';
 import * as argon from "argon2";
 import { NextResponse, type NextRequest } from 'next/server';
@@ -6,9 +6,20 @@ import { sendMail } from '@/helpers/mailer';
 import { EmailType } from '@/interfaces';
 import crypto from 'crypto';
 import { models } from '@/db/connection';
+import { Redis } from '@upstash/redis';
+import { Ratelimit } from '@upstash/ratelimit';
+import { sanitizeInput } from '@/helpers/sanitize';
 
+const redis = Redis.fromEnv();
 
-export async function DELETE(req: NextRequest, { params }: { params: { slug?: string[] } }) {
+// Allow 5 requests per 10 seconds per IP
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "10s"),
+  analytics: true,
+});
+
+export async function DELETE(req: NextRequest, { params }: { params: { slug?: string[] } }, res: NextResponse) {
     try {
 
         if(params.slug && params.slug.length > 0){
@@ -24,6 +35,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { slug?: st
             { status: 201 }
           );
         }else{
+
           return NextResponse.json(
             {
                 message: 'invalid enquiry id',
@@ -47,6 +59,20 @@ export async function DELETE(req: NextRequest, { params }: { params: { slug?: st
 export async function PATCH(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
 
+      const ip = req.headers.get('x-forwarded-for');
+
+      const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+      if (!success) {
+        const res = NextResponse.json(
+          { error: 'Rate limit exceeded' },
+          { status: 429 }
+        );
+        res.headers.set('X-RateLimit-Limit', limit.toString());
+        res.headers.set('X-RateLimit-Remaining', remaining.toString());
+        res.headers.set('X-RateLimit-Reset', reset.toString());
+        return res;
+      }
         const {
             isRead,
             isUnRead,
@@ -55,12 +81,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug?: str
             saved
         } = await req.json();
 
+
         
         if(params.slug && params.slug.length > 0){
           const enq = await models.Enquiry.findByPk(params.slug![1]);
 
           if(!enq ){
-            
             return NextResponse.json(
               {
                 message: "Enquiry doesn't exist",
@@ -116,6 +142,21 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug?: str
 export async function POST(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
 
+      const ip = req.headers.get('x-forwarded-for');
+
+        const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+        if (!success) {
+          const res = NextResponse.json(
+            { error: 'Rate limit exceeded' },
+            { status: 429 }
+          );
+          res.headers.set('X-RateLimit-Limit', limit.toString());
+          res.headers.set('X-RateLimit-Remaining', remaining.toString());
+          res.headers.set('X-RateLimit-Reset', reset.toString());
+          return res;
+        }
+
         const {
             email,
             name,
@@ -129,8 +170,17 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             message
         } = await req.json();
 
+        const cleanEmail = sanitizeInput(email);
+        const cleanName = sanitizeInput(name);
+        const cleanContent = sanitizeInput(content);
+        const cleanCountry = sanitizeInput(country);
+        const cleanPhone = sanitizeInput(phone);
+        const cleanDate= sanitizeInput(eventDate);
+        const cleanSubject = sanitizeInput(subject);
+        const cleanMsg = sanitizeInput(message);
 
-        const user = await models.User.findOne({where: {email}});
+
+        const user = await models.User.findOne({where: {email: cleanEmail}});
     
         if(!user){
           const visitId = getVisitData(req);
@@ -141,10 +191,10 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
           
           const newUser = await models.User.create({
             id: (await crypto.randomBytes(6)).toString("hex"),
-            email,
+            email: cleanEmail,
             password: hash,
-            first_name: name.split(' ').length === 2 ? name.split(' ')[0] : name,
-            last_name: name.split(' ').length === 2 ? name.split(' ')[1] : name,
+            first_name: cleanName.split(' ').length === 2 ? cleanName.split(' ')[0] : cleanName,
+            last_name: cleanName.split(' ').length === 2 ? cleanName.split(' ')[1] : cleanName,
           });
 
           if(visitId){
@@ -172,10 +222,10 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
               order: {
                 styles,
                 size,
-                residence: country,
-                phone,
-                eventDate,
-                content
+                residence: cleanCountry,
+                phone: cleanPhone,
+                eventDate: cleanDate,
+                content: cleanContent
               }
             });
 
@@ -184,8 +234,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             const newEquiry = await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
               contact: {
-                subject,
-                message
+                subject: cleanSubject,
+                message: cleanMsg
               }
             });
   
@@ -202,8 +252,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             { status: 201 }
           );
         }else{
-          user.first_name = name.split(' ').length === 2 ? name.split(' ')[0] : name,
-          user.last_name = name.split(' ').length === 2 ? name.split(' ')[1] : name,
+          user.first_name = cleanName.split(' ').length === 2 ? cleanName.split(' ')[0] : cleanName,
+          user.last_name = cleanName.split(' ').length === 2 ? cleanName.split(' ')[1] : cleanName,
 
           await user.save();
 
@@ -215,10 +265,10 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
               order: {
                 styles,
                 size,
-                residence: country,
-                phone,
-                eventDate,
-                content
+                residence: cleanCountry,
+                phone: cleanPhone,
+                eventDate: cleanDate,
+                content: cleanContent
               }
             });
       
@@ -227,8 +277,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             const newEquiry = await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
               contact: {
-                subject,
-                message
+                subject: cleanSubject,
+                message: cleanMsg
               }
             });
   
@@ -258,6 +308,21 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
 
 export async function GET(req: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
+        const ip = req.headers.get('x-forwarded-for');
+
+        const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+        if (!success) {
+          const res = NextResponse.json(
+            { error: 'Rate limit exceeded' },
+            { status: 429 }
+          );
+          res.headers.set('X-RateLimit-Limit', limit.toString());
+          res.headers.set('X-RateLimit-Remaining', remaining.toString());
+          res.headers.set('X-RateLimit-Reset', reset.toString());
+          return res;
+        }
+
         let updatedEnquiries = [];
 
         if(params.slug && params.slug.length > 0){

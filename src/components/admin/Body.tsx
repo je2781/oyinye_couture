@@ -27,7 +27,7 @@ import { Swiper, SwiperRef, SwiperSlide } from "swiper/react";
 import { Pagination, Navigation } from "swiper/modules";
 import React from "react";
 import toast from "react-hot-toast";
-import { usePathname, useRouter } from '@/i18n/routing';
+import { usePathname, useRouter } from 'next/navigation';
 import { Base64ImagesObj, CartItemObj, Locale, SizeData, Value } from "@/interfaces";
 import axios from "axios";
 import Calendar from 'react-calendar';
@@ -36,7 +36,7 @@ import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
 import 'react-calendar/dist/Calendar.css';
 import useWindowWidth from "../helpers/getWindowWidth";
-import { AdminSettingsModal, MobileModal } from "../ui/Modal";
+import { AdminSettingsModal, MobileModal } from "../layout/Modal";
 import crypto from "crypto";
 import useGlobal from "@/store/useGlobal";
 import AdminPagination from "../layout/AdminPagination";
@@ -53,6 +53,7 @@ import "swiper/css/navigation";
 import "./Body.css";
 import { useSearchParams } from "next/navigation";
 
+
 Chart.register(LinearScale, CategoryScale, BarElement, PointElement, LineElement, Filler, Legend, ArcElement);
 
 export default function Body({
@@ -61,9 +62,10 @@ export default function Body({
   data, 
   enquiriesData,
   visitors,
-  products,
-  locale
+  searchData,
+  csrf
 }: any) {
+  
   const colorList = [
     "#422006",
     "#0000FF",
@@ -108,7 +110,7 @@ export default function Body({
     imagesFront: [],
     imagesBack: []
   });
-  const [extractedProducts, setExtractedProducts] = React.useState<any[]>(products);
+  const [extractedProducts, setExtractedProducts] = React.useState<any[]>(searchData.products);
   const [isFeature, setIsFeature] = React.useState({
     listing: false,
     edit: false
@@ -598,15 +600,15 @@ export default function Body({
 
     setTitle(prevTitle => ({
       ...prevTitle,
-      edit: selectedProduct.current.title[locale]
+      edit: selectedProduct.current.title
     }));
     setType(prevType => ({
       ...prevType,
-      edit: selectedProduct.current.type[locale]
+      edit: selectedProduct.current.type
     }));
     setDesc(prevDesc => ({
       ...prevDesc,
-      edit: selectedProduct.current.description[locale]
+      edit: selectedProduct.current.description
     }));
     setIsFeature(prevIsFeature => ({
       ...prevIsFeature,
@@ -614,7 +616,7 @@ export default function Body({
     }));
     setSelectedColor(selectedProduct.current.colors[0].hex_code);
     setSelectedColors(selectedProduct.current.colors.map((color: any) => color.hex_code));
-    extractProductDetail(product, frontBase64ImagesObj.current, backBase64ImagesObj.current, productObj.current, locale);
+    extractProductDetail(product, frontBase64ImagesObj.current, backBase64ImagesObj.current, productObj.current);
     
     setVisibleImages(prevVisibleImgs => ({
       ...prevVisibleImgs,
@@ -643,7 +645,11 @@ export default function Body({
 
   async function deleteProduct(id: string){
     // setExtractedProducts(prevProducts => prevProducts.filter((prod: any) => prod.id !== id));
-    await axios.patch(`/api/products/update/${id}?hide=true`);
+    await axios.patch(`/api/products/update/${id}?hide=true`,{
+      headers: {
+        "x-csrf-token": csrf,
+      }
+    });
   }
 
   async function handleSizeEdit(e: React.MouseEvent<HTMLSpanElement>, item: number){
@@ -716,7 +722,8 @@ export default function Body({
                     dressColorsState,
                     currentBgColors,
                     sizeData,
-                    setIsLoading
+                    setIsLoading,
+                    csrf
                   )
                 }
                 className="flex flex-col gap-y-5 w-full"
@@ -1560,7 +1567,8 @@ export default function Body({
                     dressColorsState,
                     currentBgColors,
                     sizeData,
-                    setIsLoading
+                    setIsLoading,
+                    csrf
                   )
                 }
                 className="flex flex-col gap-y-5 w-full"
@@ -2301,7 +2309,7 @@ export default function Body({
           </section>
         )}
         {pathName === "orders" && (
-          <section className="flex flex-col items-center justify-center w-full gap-y-16">
+          <section className="flex flex-col items-center justify-center w-full h-full gap-y-16">
             <div className={`flex flex-col items-start ${orders.length > 0 ? 'gap-y-7': 'gap-y-24'} w-full`}>
               <header className="inline-flex flex-row gap-x-3 text-secondary-400 text-sm items-center">
                 <span>Show</span>
@@ -2453,6 +2461,10 @@ export default function Body({
                                   setIsLoading(true);
                                   const res = await axios.post('/api/orders/send/reminder',{
                                     items: order.items
+                                  },{
+                                    headers: {
+                                      "x-csrf-token": csrf,
+                                    },
                                   });
 
                                   if(res.data.success === false){
@@ -2510,6 +2522,10 @@ export default function Body({
                                       setIsLoading(true);
                                       await axios.post('/api/orders/update/payment-status', {
                                         paymentStatus: selectedStatus.value
+                                      },{
+                                        headers: {
+                                          "x-csrf-token": csrf,
+                                        },
                                       });
                                     } catch (error: any) {
                                       setIsLoading(false);
@@ -2555,6 +2571,10 @@ export default function Body({
                                             link: link.value.trim(),
                                             id: order.id,
                                             total: order.sales
+                                          },{
+                                            headers: {
+                                              "x-csrf-token": csrf,
+                                            },
                                           });
                                         } catch (error: any) {
                                           setIsLoading(false);
@@ -2649,6 +2669,10 @@ export default function Body({
                                     setIsLoading(true);
                                     const res = await axios.post('/api/orders/send/reminder',{
                                       items: order.items
+                                    }, {
+                                      headers: {
+                                        "x-csrf-token": csrf,
+                                      }
                                     });
 
                                     if(res.data.success === false){
@@ -2805,7 +2829,7 @@ export default function Body({
         )}
         {
           pathName === 'summary' && (
-            <section className="flex flex-col gap-y-8 md:gap-y-8 w-full relative justify-between md:pr-8">
+            <section className="flex flex-col gap-y-8 md:gap-y-8 w-full h-full relative justify-between md:pr-8">
               <span id="report-settings" onClick={() => {
                 setIsAdminSettingsOpen(true);
               }} className="cursor-pointer flex flex-row items-center absolute md:right-10 right-4 -top-4">
@@ -3291,7 +3315,7 @@ export default function Body({
         }
         {
           pathName === 'emails' && (
-            <section className="flex flex-col w-full gap-y-5 md:px-8 text-secondary-400 font-sans">
+            <section className="flex flex-col w-full h-full gap-y-5 md:px-8 text-secondary-400 font-sans">
               <header className="text-lg pb-4 border font-medium border-l-0 border-t-0 border-r-0 border-secondary-400/20">
                   Inbox
               </header>
@@ -3376,7 +3400,11 @@ export default function Body({
                                           
                                           if(action === 'Remove'){
                                             setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== newEmailItems[i].dataset.enqId));
-                                            await axios.delete(`/api/enquiries/delete/${newEmailItems[i].dataset.enqId}`);
+                                            await axios.delete(`/api/enquiries/delete/${newEmailItems[i].dataset.enqId}`,{
+                                              headers: {
+                                                "x-csrf-token": csrf,
+                                              }
+                                            });
                                           }else{
                                             
                                             if(action === 'Mark As Read'){
@@ -3409,6 +3437,10 @@ export default function Body({
                                                   isUnRead: false,
                                                   isBooking: newEmailItems[i].dataset.hasOrder === 'true',
                                                   isContact: newEmailItems[i].dataset.hasContact === 'true'
+                                                },{
+                                                  headers: {
+                                                    "x-csrf-token": csrf,
+                                                  }
                                                 });
                                               }
     
@@ -3444,6 +3476,10 @@ export default function Body({
                                                   isUnRead: true,
                                                   isBooking: newEmailItems[i].dataset.hasOrder === 'true',
                                                   isContact: newEmailItems[i].dataset.hasContact === 'true'
+                                                },{
+                                                  headers: {
+                                                    "x-csrf-token": csrf,
+                                                  }
                                                 });
                                               }
 
@@ -3926,6 +3962,10 @@ export default function Body({
                                         isUnRead: false,
                                         isBooking: !!enq.order.content,
                                         isContact: !!enq.contact.message
+                                      },{
+                                        headers: {
+                                          "x-csrf-token": csrf,
+                                        }
                                       });
                                     } catch (error: any) {
                                       toast.error(error.message);
@@ -4015,6 +4055,10 @@ export default function Body({
                                                     isUnRead: true,
                                                     isBooking: !!enq.order.content,
                                                     isContact: !!enq.contact.message
+                                                  },{
+                                                    headers: {
+                                                      "x-csrf-token": csrf,
+                                                    }
                                                   });
                                                 } catch (error: any) {
                                                   toast.error(error.message);
@@ -4023,7 +4067,11 @@ export default function Body({
                                               case 'Remove':
                                                 try {
                                                   setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== enq._id.toString()));
-                                                  await axios.delete(`/api/enquiries/delete/${enq._id.toString()}`);
+                                                  await axios.delete(`/api/enquiries/delete/${enq._id.toString()}`,{
+                                                    headers: {
+                                                      "x-csrf-token": csrf,
+                                                    }
+                                                  });
                                                 } catch (error: any) {
                                                   toast.error(error.message);
 
@@ -4109,6 +4157,10 @@ export default function Body({
                                         isUnRead: false,
                                         isBooking: !!enq.order.content,
                                         isContact: !!enq.contact.message
+                                      },{
+                                        headers: {
+                                          "x-csrf-token": csrf,
+                                        }
                                       });
                                     } catch (error: any) {
                                       toast.error(error.message);
@@ -4234,6 +4286,10 @@ export default function Body({
                                                     isUnRead: true,
                                                     isBooking: !!enq.order.content,
                                                     isContact: !!enq.contact.message
+                                                  },{
+                                                    headers: {
+                                                      "x-csrf-token": csrf,
+                                                    }
                                                   });
                                                 } catch (error: any) {
                                                   toast.error(error.message);
@@ -4242,7 +4298,11 @@ export default function Body({
                                               case 'Remove':
                                                   try {
                                                     setEnquiries(prevEnqs => prevEnqs.filter(prevEnq => prevEnq._id.toString() !== enq._id.toString()));
-                                                    await axios.delete(`/api/enquiries/delete/${enq._id.toString()}`);
+                                                    await axios.delete(`/api/enquiries/delete/${enq._id.toString()}`,{
+                                                      headers: {
+                                                        "x-csrf-token": csrf,
+                                                      }
+                                                    });
                                                   } catch (error: any) {
                                                     toast.error(error.message);
 
@@ -4283,6 +4343,10 @@ export default function Body({
                                       message: adminContent.value,
                                       contact: enq.author.fullName,
                                       date: `${months[new Date(isReading ? enq.createdAt: new Date()).getMonth()]} ${new Date(isReading ? enq.createdAt: new Date()).getDate()}. ${new Date(isReading ? enq.createdAt: new Date()).getFullYear()}`
+                                    },{
+                                      headers: {
+                                        "x-csrf-token": csrf,
+                                      }
                                     });
                                   } catch (error: any) {
                                     setLoader(false);
@@ -4334,7 +4398,7 @@ export default function Body({
                 })}
                 <AdminPagination {...enquiriesData} />
               </>
-              : <section className="flex items-center flex-row w-full md:mt-24 mt-12 justify-center">
+              : <section className="flex items-center flex-row w-full md:mt-36 mt-16 justify-center">
               <h1 className="font-sans md:text-xl text-lg text-white">No emails available!</h1>
             </section>}
 
@@ -4343,8 +4407,10 @@ export default function Body({
           
         }
         {
-          pathName === 'products' && (<section className="w-full text-secondary-400 font-sans">
-            <div className={`w-full flex md:flex-row flex-col items-center py-4 h-full overflow-y-auto hide-scrollbar justify-evenly flex-wrap gap-x-1 gap-y-4`}>
+          pathName === 'products' && (<section className="w-full text-secondary-400 font-sans h-full">
+            {extractedProducts.length > 0
+            ? <>
+                <div className={`w-full flex md:flex-row flex-col items-center py-4 h-full overflow-y-auto hide-scrollbar justify-evenly flex-wrap gap-x-1 gap-y-4`}>
                 {extractedProducts.map((product: any, i: number) => (
                   <ProductComponent
                     key={i}
@@ -4357,388 +4423,393 @@ export default function Body({
                     isSearchProduct
                   />
                 ))}
-            </div>
+                </div>
+                <AdminPagination  {...searchData}/>
+            </>
+            : <div className="flex items-center flex-row w-full md:mt-36 mt-16 justify-center">
+                <h1 className="font-sans md:text-xl text-lg text-white">No products found. Try a differnt search parameter!</h1>
+            </div>}
             {isAdminSettingsOpen && <AdminSettingsModal onClose={hideAdminSettingsModalHandler} left='20rem' width='40rem' classes='h-fit bg-white !top-[7vh]'>
-              <section className='font-sans font-light flex flex-col gap-y-11 text-gray-500 pb-6 pt-16'>
-                              
-                      <form 
-                      onSubmit={(e) => handleProductEdit(
-                        e,
-                        frontBase64ImagesObj.current,
-                        backBase64ImagesObj.current,
-                        desc.edit,
-                        type.edit,
-                        selectedProduct.current,
-                        productObj.current,
-                        dressFeatures,
-                        visibleImages,
-                        isFeature.edit,
-                        setLoader,
-                        path,
-                        router,
-                        locale,
-                        searchParams
+              <section className='font-sans font-light flex flex-col gap-y-11 text-gray-500 pb-6 pt-16'>  
+                  <form 
+                  onSubmit={(e) => handleProductEdit(
+                    e,
+                    frontBase64ImagesObj.current,
+                    backBase64ImagesObj.current,
+                    desc.edit,
+                    type.edit,
+                    selectedProduct.current,
+                    productObj.current,
+                    dressFeatures,
+                    visibleImages,
+                    isFeature.edit,
+                    setLoader,
+                    path,
+                    searchParams,
+                    csrf
 
-                      )}  className='flex flex-col gap-y-5 max-h-[75vh] items-center w-full' encType="multipart/form-data">
-                        <article className={`flex flex-col gap-y-2 lg:w-[45%] w-[75%] h-fit items-center relative`}>
-                          <Swiper
-                            modules={[Pagination]}
-                            key={JSON.stringify(visibleImages.imagesFront.concat(visibleImages.imagesBack))}
-                            slidesPerView={1}
-                            pagination={{
-                                clickable: true,
-                                el: '.custom-pagination',
-                                renderBullet: (index, className) => {
+                  )}  className='flex flex-col gap-y-5 max-h-[75vh] items-center w-full' encType="multipart/form-data">
+                    <article className={`flex flex-col gap-y-2 lg:w-[45%] w-[75%] h-fit items-center relative`}>
+                      <Swiper
+                        modules={[Pagination]}
+                        key={JSON.stringify(visibleImages.imagesFront.concat(visibleImages.imagesBack))}
+                        slidesPerView={1}
+                        pagination={{
+                            clickable: true,
+                            el: '.custom-pagination',
+                            renderBullet: (index, className) => {
 
-                                    return `<span class="${className}" style="background-image: url(${visibleImages.position === 'front' ? visibleImages.imagesFront[index] : visibleImages.imagesBack[index]});"></span>`;
-                                },
-                            }}
-                            className="h-36 w-full"
-                            >
-                        {
-                          visibleImages.position === 'front'
-                          ? visibleImages.imagesFront.map((image: string, i: number) => {
+                                return `<span class="${className}" style="background-image: url(${visibleImages.position === 'front' ? visibleImages.imagesFront[index] : visibleImages.imagesBack[index]});"></span>`;
+                            },
+                        }}
+                        className="h-36 w-full"
+                        >
+                    {
+                      visibleImages.position === 'front'
+                      ? visibleImages.imagesFront.map((image: string, i: number) => {
 
-                          return (
-                              <SwiperSlide key={i}>
-                                  <div className="flex flex-row justify-center items-center">
-                                      {image.length > 0 
-                                      ? <label htmlFor={`avatar-${i}`} style={{backgroundImage : `url(${image})`}} id={`avatar-container-${i}`} className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
-                                      </label>
-                                      : <label htmlFor={`avatar-${i}`} id={`avatar-container-${i}`} className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
-                                      <i className="fa-solid fa-camera text-2xl text-white"></i>
-                                    </label>
-                                      }
-                                      <input type='file' className='hidden' id={`avatar-${i}`} onChange={async(e) => {
-                                          const base64String = await generateBase64FromMedia(e.target.files![0]);
-                                          const picContainer = document.getElementById(`avatar-container-${i}`) as HTMLLabelElement;
-                                          picContainer.style.backgroundImage = `url(${base64String})`;
+                      return (
+                          <SwiperSlide key={i}>
+                              <div className="flex flex-row justify-center items-center">
+                                  {image.length > 0 
+                                  ? <label htmlFor={`avatar-${i}`} style={{backgroundImage : `url(${image})`}} id={`avatar-container-${i}`} className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                                  </label>
+                                  : <label htmlFor={`avatar-${i}`} id={`avatar-container-${i}`} className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                                  <i className="fa-solid fa-camera text-2xl text-white"></i>
+                                </label>
+                                  }
+                                  <input type='file' className='hidden' id={`avatar-${i}`} onChange={async(e) => {
+                                      const base64String = await generateBase64FromMedia(e.target.files![0]);
+                                      const picContainer = document.getElementById(`avatar-container-${i}`) as HTMLLabelElement;
+                                      picContainer.style.backgroundImage = `url(${base64String})`;
 
-                                          setVisibleImages(prevImgs => {
-                                            prevImgs.imagesFront.splice(i, 1, base64String as string);
-                                            return {
-                                              ...prevImgs,
-                                              imagesFront: prevImgs.imagesFront
-                                            };
-                                          });
+                                      setVisibleImages(prevImgs => {
+                                        prevImgs.imagesFront.splice(i, 1, base64String as string);
+                                        return {
+                                          ...prevImgs,
+                                          imagesFront: prevImgs.imagesFront
+                                        };
+                                      });
 
-                                      }}/>
-                                  </div>
-                              </SwiperSlide>
-                          )
-                        })
-                        : visibleImages.imagesBack.map((image: string, i: number) => {
+                                  }}/>
+                              </div>
+                          </SwiperSlide>
+                      )
+                    })
+                    : visibleImages.imagesBack.map((image: string, i: number) => {
 
-                          return (
-                              <SwiperSlide key={i}>
-                                  <div className="flex flex-row justify-center items-center">
-                                      {image.length > 0 
-                                      ? <label htmlFor={`avatar-${i}`} style={{backgroundImage : `url(${image})`}} id={`avatar-container-${i}`} className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
-                                      </label>
-                                      : <label htmlFor={`avatar-${i}`} id={`avatar-container-${i}`} className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
-                                      <i className="fa-solid fa-camera text-2xl text-white"></i>
-                                    </label>
-                                      }
-                                      <input type='file' className='hidden' id={`avatar-${i}`} onChange={async(e) => {
-                                          const base64String = await generateBase64FromMedia(e.target.files![0]);
-                                          const picContainer = document.getElementById(`avatar-container-${i}`) as HTMLLabelElement;
-                                          picContainer.style.backgroundImage = `url(${base64String})`;
+                      return (
+                          <SwiperSlide key={i}>
+                              <div className="flex flex-row justify-center items-center">
+                                  {image.length > 0 
+                                  ? <label htmlFor={`avatar-${i}`} style={{backgroundImage : `url(${image})`}} id={`avatar-container-${i}`} className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                                  </label>
+                                  : <label htmlFor={`avatar-${i}`} id={`avatar-container-${i}`} className='rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                                  <i className="fa-solid fa-camera text-2xl text-white"></i>
+                                </label>
+                                  }
+                                  <input type='file' className='hidden' id={`avatar-${i}`} onChange={async(e) => {
+                                      const base64String = await generateBase64FromMedia(e.target.files![0]);
+                                      const picContainer = document.getElementById(`avatar-container-${i}`) as HTMLLabelElement;
+                                      picContainer.style.backgroundImage = `url(${base64String})`;
 
-                                          setVisibleImages(prevImgs => {
-                                            prevImgs.imagesBack.splice(i, 1, base64String as string);
-                                            
-                                            return {
-                                              ...prevImgs,
-                                              imagesBack: prevImgs.imagesBack
-                                            };
-                                          });
+                                      setVisibleImages(prevImgs => {
+                                        prevImgs.imagesBack.splice(i, 1, base64String as string);
+                                        
+                                        return {
+                                          ...prevImgs,
+                                          imagesBack: prevImgs.imagesBack
+                                        };
+                                      });
 
-                                      }}/>
-                                  </div>
-                              </SwiperSlide>
-                          )
-                        })
-                        }
-                          </Swiper>
-                          <div className="custom-pagination"></div>
-                          <div 
-                            id='switch-pos' 
-                            onClick={() => {
-                              setVisibleImages(prevVisibleImgs => {
-                                const newPosition = prevVisibleImgs.position === 'front' ? 'back' : 'front';
+                                  }}/>
+                              </div>
+                          </SwiperSlide>
+                      )
+                    })
+                    }
+                      </Swiper>
+                      <div className="custom-pagination"></div>
+                      <div 
+                        id='switch-pos' 
+                        onClick={() => {
+                          setVisibleImages(prevVisibleImgs => {
+                            const newPosition = prevVisibleImgs.position === 'front' ? 'back' : 'front';
 
-                                 return {
-                                    ...prevVisibleImgs,
-                                    position: newPosition,
-                                  };
-                  
-                               
-                              });
-                            }}
-                             
-                            className={`left-0 bottom-16 z-10 rounded-md absolute flex h-6 px-2 py-4 w-[100px] flex-row items-center gap-x-1 font-serif cursor-pointer text-blue-400`} 
-                          >
-                            <i className="fa-solid fa-eye text-xs"></i>
-                            <h4 className="text-[.8rem]">Show {visibleImages.position === 'front' ? 'back' : 'front'}</h4>
-                          </div>
-                        </article>
-                        <section className="flex flex-col items-start w-full max-h-[500px] overflow-y-auto hide-scrollbar">
-                          <header  className="font-medium font-sans text-lg px-5 flex flex-row w-full justify-between">
-                            <h1>{selectedProduct.current.title[locale]}</h1>
-                            <button onClick={async(e) => {
-                              try {
-                                setIsLoading(true);
-                                if(selectedProduct.current.is_hidden){
-                                  await axios.patch(`/api/products/update/${selectedProduct.current.id}?hide=false`);
-                                }else{
-                                  await axios.patch(`/api/products/update/${selectedProduct.current.id}?hide=true`);
-                                }
-                                const pathParts = path.split('/');
-
-                                if(pathParts[1] !== locale){
-                                  pathParts.unshift(locale);
-                                }
-                                const newPath = `/${pathParts.join('/')}`;
-
-                                const url = new URL(`${window.location.origin}${newPath}`);
+                              return {
+                                ...prevVisibleImgs,
+                                position: newPosition,
+                              };
+              
                             
-                                searchParams.forEach((value: string, key: string) => {
-                                  url.searchParams.set(key, value);
-                                });
-                                
-                                window.location.href = url.toString();
-
-                              } catch (error: any) {
-                                toast.error(error.message);
-                              }
-                            }} type="button" className={`${selectedProduct.current.is_hidden ? 'text-red-400 hover:text-red-500' : 'text-green-400 hover:text-green-500'} bg-transparent border-none focus:outline-none `}>{isLoading ? 'Processing..' : selectedProduct.current.is_hidden ? 'Activate' : 'Hide'}</button>
-                          </header>
-                          <hr className="border border-gray-100 mt-3 w-full border-l-0 border-r-0 border-t-0" />
+                          });
+                        }}
                           
-                          <div className="p-5 w-full text-gray-400 font-medium font-sans text-sm flex flex-col gap-y-5">
-                            <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
-                              <h3 className="md:w-[50%] w-full">Description</h3>
-                              <input value={desc.edit} onChange={(e) => setDesc(prevDesc => ({
-                                ...prevDesc,
-                                edit: e.target.value
-                              }))} className="focus:outline-none font-normal border border-gray-200 p-2 rounded-sm h-8 md:w-[50%] w-full"/>
-                            </div>
-                            <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
-                              <h3 className="md:w-[50%] w-full">Type</h3>
-                              <input value={type.edit} onChange={(e) => setType(prevType => ({
-                                ...prevType,
-                                edit: e.target.value
-                              }))} className="focus:outline-none font-normal border border-gray-200 p-2 bg-gray-50 rounded-sm h-8 md:w-[50%] w-full"/>
-                            </div>
-                            <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
-                              <h3 className="md:w-[50%] w-full">Set As feature</h3>
-                              <div 
-                                onClick={() => {
-                                    let downAngle = document.querySelector('i.feature-angle-down');
-                                    if(!downAngle?.classList.contains("ad-rotate")){
-                                        downAngle?.classList.add("ad-rotate");
-                                        downAngle?.classList.remove("ad-rotate-anticlock");
-                                    }else{
-                                        downAngle?.classList.remove("ad-rotate");
-                                        downAngle?.classList.add("ad-rotate-anticlock");
+                        className={`left-0 bottom-16 z-10 rounded-md absolute flex h-6 px-2 py-4 w-[100px] flex-row items-center gap-x-1 font-serif cursor-pointer text-blue-400`} 
+                      >
+                        <i className="fa-solid fa-eye text-xs"></i>
+                        <h4 className="text-[.8rem]">Show {visibleImages.position === 'front' ? 'back' : 'front'}</h4>
+                      </div>
+                    </article>
+                    <section className="flex flex-col items-start w-full max-h-[500px] overflow-y-auto hide-scrollbar">
+                      <header  className="font-medium font-sans text-lg px-5 flex flex-row w-full justify-between">
+                        <h1>{selectedProduct.current.title}</h1>
+                        <button onClick={async(e) => {
+                          try {
+                            setIsLoading(true);
+                            if(selectedProduct.current.is_hidden){
+                              await axios.patch(`/api/products/update/${selectedProduct.current.id}?hide=false`,{
+                                headers: {
+                                  "x-csrf-token": csrf,
+                                }
+                              });
+                            }else{
+                              await axios.patch(`/api/products/update/${selectedProduct.current.id}?hide=true`,{
+                                headers: {
+                                  "x-csrf-token": csrf,
+                                }
+                              });
+                            }
+
+                            const url = new URL(`${window.location.origin}${path}`);
+                        
+                            searchParams.forEach((value: string, key: string) => {
+                              url.searchParams.set(key, value);
+                            });
+                            
+                            window.location.href = url.toString();
+
+                          } catch (error: any) {
+                            toast.error(error.message);
+                          }
+                        }} type="button" className={`${selectedProduct.current.is_hidden ? 'text-red-400 hover:text-red-500' : 'text-green-400 hover:text-green-500'} bg-transparent border-none focus:outline-none `}>{isLoading ? 'Processing..' : selectedProduct.current.is_hidden ? 'Activate' : 'Hide'}</button>
+                      </header>
+                      <hr className="border border-gray-100 mt-3 w-full border-l-0 border-r-0 border-t-0" />
+                      
+                      <div className="p-5 w-full text-gray-400 font-medium font-sans text-sm flex flex-col gap-y-5">
+                        <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
+                          <h3 className="md:w-[50%] w-full">Description</h3>
+                          <input value={desc.edit} onChange={(e) => setDesc(prevDesc => ({
+                            ...prevDesc,
+                            edit: e.target.value
+                          }))} className="focus:outline-none font-normal border border-gray-200 p-2 rounded-sm h-8 md:w-[50%] w-full"/>
+                        </div>
+                        <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
+                          <h3 className="md:w-[50%] w-full">Type</h3>
+                          <input value={type.edit} onChange={(e) => setType(prevType => ({
+                            ...prevType,
+                            edit: e.target.value
+                          }))} className="focus:outline-none font-normal border border-gray-200 p-2 bg-gray-50 rounded-sm h-8 md:w-[50%] w-full"/>
+                        </div>
+                        <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
+                          <h3 className="md:w-[50%] w-full">Set As feature</h3>
+                          <div 
+                            onClick={() => {
+                                let downAngle = document.querySelector('i.feature-angle-down');
+                                if(!downAngle?.classList.contains("ad-rotate")){
+                                    downAngle?.classList.add("ad-rotate");
+                                    downAngle?.classList.remove("ad-rotate-anticlock");
+                                }else{
+                                    downAngle?.classList.remove("ad-rotate");
+                                    downAngle?.classList.add("ad-rotate-anticlock");
+                                }
+                            }}
+                            className="relative border border-gray-400 rounded-sm p-1 focus:border-gray-600 md:w-[26%] w-[60%]">
+                                <select 
+                                id='feature-select'
+                                className="focus:outline-none p-2 appearance-none"
+                                onChange={(e) => {
+                                    setIsFeature(prevFeature => ({
+                                      ...prevFeature,
+                                      edit: e.target.value === 'Set' ? true : false
+                                    }));
+
+                                }}>
+                                    <option hidden value={isFeature.edit ? 'Featured' : 'Not'}>{isFeature.edit ? 'Featured Product' : 'Not featured'}</option>
+                                    {
+                                        ['Not featured',
+                                        'Featured Product'].map((val, i) => <option className='underline underline-offset-1' value={val.split(' ')[0]} key={i}>
+                                            {val}
+                                        </option>)
                                     }
-                                }}
-                                className="relative border border-gray-400 rounded-sm p-1 focus:border-gray-600 md:w-[26%] w-[60%]">
-                                    <select 
-                                    id='feature-select'
-                                    className="focus:outline-none p-2 appearance-none"
-                                    onChange={(e) => {
-                                        setIsFeature(prevFeature => ({
-                                          ...prevFeature,
-                                          edit: e.target.value === 'Set' ? true : false
-                                        }));
+                                </select>
+                                <i onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }} className="fa-solid fa-angle-down feature-angle-down absolute top-[36%] right-3"
 
-                                    }}>
-                                        <option hidden value={isFeature.edit ? 'Featured' : 'Not'}>{isFeature.edit ? 'Featured Product' : 'Not featured'}</option>
-                                        {
-                                            ['Not featured',
-                                            'Featured Product'].map((val, i) => <option className='underline underline-offset-1' value={val.split(' ')[0]} key={i}>
-                                                {val}
-                                            </option>)
-                                        }
-                                    </select>
-                                    <i onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                    }} className="fa-solid fa-angle-down feature-angle-down absolute top-[36%] right-3"
-
-                                    ></i>
-                                </div>
+                                ></i>
                             </div>
-                            <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
-                              <h3 className="md:w-[50%] w-full">Features</h3>
-                              <textarea onChange={(e) => setDressFeatures(e.target.value)} value={dressFeatures} cols={70} rows={150} className="focus:outline-none font-normal border border-gray-200 p-2 bg-gray-50 rounded-sm h-14 md:w-[50%] w-full">
-                              </textarea>
-                            </div>
-                            <div className="w-full flex flex-col items-start gap-y-3">
-                              <h3 className="md:w-[50%] w-full">Colors</h3>
-                              <div
-                                className="flex flex-row flex-wrap gap-x-[7px] gap-y-2"
-                                id="colors-list"
-                              >
-                                {colorList.map((val, i: number) => { 
-                                    if(selectedColors.includes(val)){
-                                      return (<span
-                                        key={i}
-                                        onClick={(e) => {
-                                          if(Object.values(productObj.current).filter(obj => obj.hex_code === selectedColor).length > 0 ){
-                                            if(Object.values(productObj.current).filter(obj => obj.hex_code === selectedColor)[0].price > 0){
-                                                                                            
-                                              setSelectedColor(val);
-                                              setPrice(prevPrice => ({
-                                                ...prevPrice,
-                                                edit: {
-                                                  ...prevPrice.edit,
-                                                  size: Object.values(productObj.current).filter(obj => obj.hex_code! === val)[0].number!,
-                                                  value: Object.values(productObj.current).filter(obj => obj.hex_code! === val)[0].price.toString()
-                                                }
-                                              }));
-                                              setStock(prevStock => ({
-                                                ...prevStock,
-                                                edit: {
-                                                  ...prevStock.edit,
-                                                  size: Object.values(productObj.current).filter(obj => obj.hex_code! === val)[0].number!,
-                                                  value: Object.values(productObj.current).filter(obj => obj.hex_code! === val)[0].stock.toString()
-                                                }
-                                              }));
-                                            }else{
-                                              toast.error('new color size data is incomplete', {
-                                                position: 'top-center'
-                                              });
-                                            }
-                                          }else{
-                                            toast.error('new color size data is missing', {
-                                              position: 'top-center'
-                                            });
-                                          }
-                                        }}
-                                        style={{ backgroundColor: val }}
-                                        className={`rounded-sm cursor-pointer w-6 h-6 ring-4 ring-accent`}
-                                      ></span>);
-                                    }else{
-                                      return (
-                                        <span
-                                        key={i}
-                                        onClick={(e) => {
-                                          e.currentTarget.classList.add('ring-4', 'ring-accent');
+                        </div>
+                        <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
+                          <h3 className="md:w-[50%] w-full">Features</h3>
+                          <textarea onChange={(e) => setDressFeatures(e.target.value)} value={dressFeatures} cols={70} rows={150} className="focus:outline-none font-normal border border-gray-200 p-2 bg-gray-50 rounded-sm h-14 md:w-[50%] w-full">
+                          </textarea>
+                        </div>
+                        <div className="w-full flex flex-col items-start gap-y-3">
+                          <h3 className="md:w-[50%] w-full">Colors</h3>
+                          <div
+                            className="flex flex-row flex-wrap gap-x-[7px] gap-y-2"
+                            id="colors-list"
+                          >
+                            {colorList.map((val, i: number) => { 
+                                if(selectedColors.includes(val)){
+                                  return (<span
+                                    key={i}
+                                    onClick={(e) => {
+                                      if(Object.values(productObj.current).filter(obj => obj.hex_code === selectedColor).length > 0 ){
+                                        if(Object.values(productObj.current).filter(obj => obj.hex_code === selectedColor)[0].price > 0){
+                                                                                        
                                           setSelectedColor(val);
-                                          setSelectedColors(prevColors => [val, ...prevColors]);
                                           setPrice(prevPrice => ({
                                             ...prevPrice,
                                             edit: {
                                               ...prevPrice.edit,
-                                              size: 0,
-                                              value: ''
+                                              size: Object.values(productObj.current).filter(obj => obj.hex_code! === val)[0].number!,
+                                              value: Object.values(productObj.current).filter(obj => obj.hex_code! === val)[0].price.toString()
                                             }
                                           }));
                                           setStock(prevStock => ({
                                             ...prevStock,
-                                            edit:  {
+                                            edit: {
                                               ...prevStock.edit,
-                                              size: 0,
-                                              value: ''
+                                              size: Object.values(productObj.current).filter(obj => obj.hex_code! === val)[0].number!,
+                                              value: Object.values(productObj.current).filter(obj => obj.hex_code! === val)[0].stock.toString()
                                             }
                                           }));
-                                        }}
-                                        style={{ backgroundColor: val }}
-                                        className={`rounded-sm cursor-pointer w-6 h-6`}
-                                      ></span>
-                                      );
-                                    }
-                                  
-                                })}
-                              </div> 
-                                
-                            </div>
-                            <div className="flex flex-col gap-y-3 items-start w-full">
-                              <h5>Size</h5>
-                              <div className="flex flex-row flex-wrap gap-x-[6px] gap-y-6" id="edit-size-list">
-                                {sizes.map((item: number, i: number) => {
-                                   if(Object.values(productObj.current).some(size => size.number === item && size.hex_code === selectedColor)){
-
-                                    return (
-                                      <div className="relative" key={i}>
-                                        <span
-                                          onClick={(e) => handleSizeEdit(e, item)}
-                                          id={`edit-size${i}`}
-                                          style={{ backgroundColor: selectedColor }}
-                                          className={`text-white rounded-[50%] cursor-pointer py-2 px-[10px] w-8 h-8 text-xs font-medium text-center`}
-                                        >
-                                          {item}
-                                        </span>
-                                      </div>
-                                    );
-                                  } else {
-                                    return (
-                                      <div className="relative" key={i}>
-                                        <span
-                                          id={`edit-size${i}`}
-                                          onClick={(e) => handleSizeEdit(e, item)}
-                                          className={`rounded-[50%] cursor-pointer py-2 px-[10px] bg-black w-8 h-8 text-xs font-medium text-white text-center`}
-                                        >
-                                          {item}
-                                        </span>
-                                      </div>
-                                    );
-                                  }
-                                  
-                                })}
-                              </div>
-                            </div>
-                            <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
-                              <h3 className="md:w-[50%] w-full">Price</h3>
-                              <input 
-                                  value={price.edit.value} 
-                                  onChange={(e) => {
-                                  setPrice(prevPrice => ({
-                                    ...prevPrice,
-                                    edit: {
-                                      ...prevPrice.edit,
-                                      size: prevPrice.edit.size,
-                                      value: e.target.value
-                                    }
-                                  }));
-                                  productObj.current[`${selectedColor}-${price.edit.size}`] = {
-                                    ...productObj.current[`${selectedColor}-${price.edit.size}`],
-                                    price: parseFloat(e.target.value)
-                                  };
-
-                                  }} 
-                                  className="focus:outline-none font-normal border border-gray-200 p-2 rounded-sm h-8 md:w-[50%] w-full"
-                                />
-                            </div>
-                            <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
-                              <h3 className="md:w-[50%] w-full">Stock</h3>
-                              <input type="number" value={stock.edit.value} onChange={(e) => {
-                                setStock(prevStock => ({
-                                  ...prevStock,
-                                  edit: {
-                                    ...prevStock.edit,
-                                    size: prevStock.edit.size,
-                                    value: e.target.value
-                                  }
-                                }));
-                                productObj.current[`${selectedColor}-${stock.edit.size}`] = {
-                                  ...productObj.current[`${selectedColor}-${stock.edit.size}`],
-                                  stock: parseInt(e.target.value)
-                                };
-
-                              }} className="focus:outline-none font-normal border border-gray-200 p-2 rounded-sm h-8 md:w-[50%] w-full"/>
-                            </div>
-                          </div>
-                        </section>
-                        <div className='flex flex-row justify-end px-5 w-full'>
-                          <button type='submit' className='px-10 py-2 rounded-md bg-accent text-white outline-none'>{loader ? 'Processing' : 'Edit Product'}</button>
+                                        }else{
+                                          toast.error('new color size data is incomplete', {
+                                            position: 'top-center'
+                                          });
+                                        }
+                                      }else{
+                                        toast.error('new color size data is missing', {
+                                          position: 'top-center'
+                                        });
+                                      }
+                                    }}
+                                    style={{ backgroundColor: val }}
+                                    className={`rounded-sm cursor-pointer w-6 h-6 ring-4 ring-accent`}
+                                  ></span>);
+                                }else{
+                                  return (
+                                    <span
+                                    key={i}
+                                    onClick={(e) => {
+                                      e.currentTarget.classList.add('ring-4', 'ring-accent');
+                                      setSelectedColor(val);
+                                      setSelectedColors(prevColors => [val, ...prevColors]);
+                                      setPrice(prevPrice => ({
+                                        ...prevPrice,
+                                        edit: {
+                                          ...prevPrice.edit,
+                                          size: 0,
+                                          value: ''
+                                        }
+                                      }));
+                                      setStock(prevStock => ({
+                                        ...prevStock,
+                                        edit:  {
+                                          ...prevStock.edit,
+                                          size: 0,
+                                          value: ''
+                                        }
+                                      }));
+                                    }}
+                                    style={{ backgroundColor: val }}
+                                    className={`rounded-sm cursor-pointer w-6 h-6`}
+                                  ></span>
+                                  );
+                                }
+                              
+                            })}
+                          </div> 
+                            
                         </div>
-                          
-                      </form>
-                </section>
-              </AdminSettingsModal>}
+                        <div className="flex flex-col gap-y-3 items-start w-full">
+                          <h5>Size</h5>
+                          <div className="flex flex-row flex-wrap gap-x-[6px] gap-y-6" id="edit-size-list">
+                            {sizes.map((item: number, i: number) => {
+                                if(Object.values(productObj.current).some(size => size.number === item && size.hex_code === selectedColor)){
+
+                                return (
+                                  <div className="relative" key={i}>
+                                    <span
+                                      onClick={(e) => handleSizeEdit(e, item)}
+                                      id={`edit-size${i}`}
+                                      style={{ backgroundColor: selectedColor }}
+                                      className={`text-white rounded-[50%] cursor-pointer py-2 px-[10px] w-8 h-8 text-xs font-medium text-center`}
+                                    >
+                                      {item}
+                                    </span>
+                                  </div>
+                                );
+                              } else {
+                                return (
+                                  <div className="relative" key={i}>
+                                    <span
+                                      id={`edit-size${i}`}
+                                      onClick={(e) => handleSizeEdit(e, item)}
+                                      className={`rounded-[50%] cursor-pointer py-2 px-[10px] bg-black w-8 h-8 text-xs font-medium text-white text-center`}
+                                    >
+                                      {item}
+                                    </span>
+                                  </div>
+                                );
+                              }
+                              
+                            })}
+                          </div>
+                        </div>
+                        <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
+                          <h3 className="md:w-[50%] w-full">Price</h3>
+                          <input 
+                              value={price.edit.value} 
+                              onChange={(e) => {
+                              setPrice(prevPrice => ({
+                                ...prevPrice,
+                                edit: {
+                                  ...prevPrice.edit,
+                                  size: prevPrice.edit.size,
+                                  value: e.target.value
+                                }
+                              }));
+                              productObj.current[`${selectedColor}-${price.edit.size}`] = {
+                                ...productObj.current[`${selectedColor}-${price.edit.size}`],
+                                price: parseFloat(e.target.value)
+                              };
+
+                              }} 
+                              className="focus:outline-none font-normal border border-gray-200 p-2 rounded-sm h-8 md:w-[50%] w-full"
+                            />
+                        </div>
+                        <div className="w-full flex md:flex-row flex-col items-start gap-y-2 md:items-center">
+                          <h3 className="md:w-[50%] w-full">Stock</h3>
+                          <input type="number" value={stock.edit.value} onChange={(e) => {
+                            setStock(prevStock => ({
+                              ...prevStock,
+                              edit: {
+                                ...prevStock.edit,
+                                size: prevStock.edit.size,
+                                value: e.target.value
+                              }
+                            }));
+                            productObj.current[`${selectedColor}-${stock.edit.size}`] = {
+                              ...productObj.current[`${selectedColor}-${stock.edit.size}`],
+                              stock: parseInt(e.target.value)
+                            };
+
+                          }} className="focus:outline-none font-normal border border-gray-200 p-2 rounded-sm h-8 md:w-[50%] w-full"/>
+                        </div>
+                      </div>
+                    </section>
+                    <div className='flex flex-row justify-end px-5 w-full'>
+                      <button type='submit' className='px-10 py-2 rounded-md bg-accent text-white outline-none'>{loader ? 'Processing' : 'Edit Product'}</button>
+                    </div>
+                      
+                  </form>
+              </section>
+            </AdminSettingsModal>}
           </section>)
         }
       </main>

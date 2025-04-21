@@ -4,17 +4,14 @@ import { useEffect } from "react";
 import Image from "next/image";
 import React from "react";
 import ProductQuickView from "./ProductQuickView";
-import { usePathname, useRouter } from '@/i18n/routing';
+import { usePathname, useRouter } from 'next/navigation';
 import useWindowWidth from "../helpers/getWindowWidth";
-import useProduct from "@/store/useProduct";
-import useGlobal from "@/store/useGlobal";
 
 const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDetailPage, isAdmin, handleEdit, handleDelete}: any) => {
     const[isModalOpen, setIsModalOpen] = React.useState(false);
     let width = useWindowWidth();
     const router = useRouter();
     const path = usePathname();
-    const {lang} = useGlobal();
 
     //sorting out the sizes of the first dress
     if(!isSearchProduct &&  !isAdmin){
@@ -49,7 +46,7 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
     
   return (
     <div className="relative">
-      {isModalOpen  && <ProductQuickView onHideModal={hideModalHandler} product={product} isSearchProduct={isSearchProduct} isOnDetailPage={isOnDetailPage} locale={lang}/>}
+      {isModalOpen  && <ProductQuickView onHideModal={hideModalHandler} product={product} isSearchProduct={isSearchProduct} isOnDetailPage={isOnDetailPage}/>}
       {
         isAdmin
         ?
@@ -148,19 +145,18 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
                 imgElement.src = product.colors[0].image_front_base64[0];
 
                 zoomHint.classList.remove('expand');
-
               }
 
             }}
             onClick={() => {
               if(isOnDetailPage){
                 const pathParts = path.split("/");
-                const newPath = `/${pathParts[1]}/products/${product.title['en'].replace(' ', '-').toLowerCase()}/${product.colors[0].type['en'].replace(' ', '-')}/${product.colors[0].sizes[0].variant_id}`;
+                const newPath = `/${pathParts[1]}/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name.replace(' ', '-')}/${product.colors[0].sizes[0].variant_id}`;
 
                 const url = new URL(`${window.location.origin}${newPath}`);
                 window.location.href = url.toString();
               }else{
-                router.push(`/products/${product.title['en'].replace(' ', '-').toLowerCase()}/${product.colors[0].type['en'].replace(' ', '-')}/${product.colors[0].sizes[0].variant_id}`);
+                router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name.replace(' ', '-')}/${product.colors[0].sizes[0].variant_id}`);
               }
               
               
@@ -191,7 +187,7 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
 
 
             <section className={`${isSearchProduct  ? 'items-start': 'items-center'} flex flex-col gap-y-1`}>
-              <h2 className="text-gray-500 font-sans text-sm">{product.title[lang]}</h2>
+              <h2 className="text-gray-500 font-sans text-sm">{product.title}</h2>
                 <h2 className="text-[1rem]">
                     &#8358;{product.colors[0].sizes[0].price.toLocaleString("en-US")}
                 </h2>

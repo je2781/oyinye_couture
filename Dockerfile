@@ -17,7 +17,7 @@ RUN npm install sharp
 # Copy the rest of the project files
 COPY . .
 
-# Build the Next.js project
+# build for production
 RUN npm run build
 
 # Expose port 3000

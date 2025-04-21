@@ -1,7 +1,6 @@
 import {
   CreationOptional,
   DataTypes,
-  ForeignKey,
   HasManyGetAssociationsMixin,
   HasOneGetAssociationMixin,
   InferCreationAttributes,

@@ -2,16 +2,14 @@
 
 import Link from "next/link";
 import Pagination from "../layout/Pagination";
-import React, { useCallback, useMemo } from "react";
-import { usePathname, useRouter } from '@/i18n/routing';
+import React from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import ProductComponent from "../product/Product";
 import useProduct from "@/store/useProduct";
 import useWindowWidth from "../helpers/getWindowWidth";
-import useGlobal from "@/store/useGlobal";
 import SecondaryHeader from "./filter/SecondaryHeader";
 import FilterSettings from "./filter/Settings";
-
 
 export default function SearchResults({
   searchCat,
@@ -21,71 +19,99 @@ export default function SearchResults({
   upperBoundary,
   sortBy,
   productType,
-  page
+  page,
+  csrf
 }: any) {
-  const sortByList = React.useMemo(() => ["Relevance", "Price, low to high", "Price, high to low"], []);
+  const sortByList = React.useMemo(
+    () => ["Relevance", "Price, low to high", "Price, high to low"],
+    []
+  );
   const path = usePathname();
   const productTypeList = ["Dresses", "Pants", "Jumpsuits"];
   //updating sortby product type params
-  switch ((sortBy.split('-').length === 1 ? sortBy.split('-')[0] : sortBy.split('-')[1])) {
-    case 'relevance':
-      sortBy = 'Relevance';
+  switch (
+    sortBy.split("-").length === 1 ? sortBy.split("-")[0] : sortBy.split("-")[1]
+  ) {
+    case "relevance":
+      sortBy = "Relevance";
       break;
-    case 'ascending':
+    case "ascending":
       sortBy = "Price, low to high";
       break;
-  
+
     default:
       sortBy = "Price, high to low";
       break;
   }
 
-
   const [query, setQuery] = React.useState(keyword);
   const router = useRouter();
-  const {lang} = useGlobal();
   const { allProducts } = useProduct();
   const [isLoading, setIsLoading] = React.useState(false);
   const [isGridView, setIsGridView] = React.useState(true);
   const [filter, setFilter] = React.useState({
-    noOfFilters: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].collection.no_of_Filters : 0,
-    isVisible: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].collection.is_visible : true,
-    showOutOfStock: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.show_out_of_stock : true,
-    productType: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.product_type : '',
-    priceRange: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.price_range : '',
-    currentPriceBoundary: data.filterSettings && data.filterSettings.length > 0 ? data.filterSettings[0].search.current_price_boundary : Math.floor(data.highestPrice)
+    noOfFilters:
+      data.filterSettings && data.filterSettings.length > 0
+        ? data.filterSettings[0].collection.no_of_Filters
+        : 0,
+    isVisible:
+      data.filterSettings && data.filterSettings.length > 0
+        ? data.filterSettings[0].collection.is_visible
+        : true,
+    showOutOfStock:
+      data.filterSettings && data.filterSettings.length > 0
+        ? data.filterSettings[0].search.show_out_of_stock
+        : true,
+    productType:
+      data.filterSettings && data.filterSettings.length > 0
+        ? data.filterSettings[0].search.product_type
+        : "",
+    priceRange:
+      data.filterSettings && data.filterSettings.length > 0
+        ? data.filterSettings[0].search.price_range
+        : "",
+    currentPriceBoundary:
+      data.filterSettings && data.filterSettings.length > 0
+        ? data.filterSettings[0].search.current_price_boundary
+        : Math.floor(data.highestPrice),
   });
   const [isTyping, setIsTyping] = React.useState(false);
-  const [sort, setSort] = React.useState<string>(
-    sortBy
-  );
+  const [sort, setSort] = React.useState<string>(sortBy);
   const [newPriceBoundary, setNewPriceBoundary] = React.useState<number>(
     upperBoundary ? upperBoundary : filter.currentPriceBoundary
   );
-  const [price, setPrice] = React.useState<number>(lowerBoundary ? lowerBoundary : 0);
-  const [sliderVal, setSliderVal] = React.useState<number[]>([lowerBoundary ? lowerBoundary : price, upperBoundary ? upperBoundary : filter.currentPriceBoundary]);
+  const [price, setPrice] = React.useState<number>(
+    lowerBoundary ? lowerBoundary : 0
+  );
+  const [sliderVal, setSliderVal] = React.useState<number[]>([
+    lowerBoundary ? lowerBoundary : price,
+    upperBoundary ? upperBoundary : filter.currentPriceBoundary,
+  ]);
   let windowWidth = useWindowWidth();
   const [visible, setVisible] = React.useState(false);
   const [prevScrollPos, setPrevScrollPos] = React.useState(0);
-
 
   React.useEffect(() => {
     // Handling scroll
     const handleScroll = () => {
       const docScrollPos = window.scrollY;
-      const element = document.querySelector('.secondary-header') as HTMLElement;
-      const main = document.querySelector('.no-products-section') as HTMLElement;
+      const element = document.querySelector(
+        ".secondary-header"
+      ) as HTMLElement;
+      const main = document.querySelector(
+        ".no-products-section"
+      ) as HTMLElement;
 
-      if(element){
+      if (element) {
         const rect = element.getBoundingClientRect();
         const SHScrollPos = docScrollPos + rect.top;
-    
+
         setVisible(prevScrollPos > docScrollPos && docScrollPos > SHScrollPos);
         setPrevScrollPos(docScrollPos);
-      }else{
+      } else {
         const rect = main.getBoundingClientRect();
         const SHScrollPos = docScrollPos + rect.top;
-    
+
         setVisible(prevScrollPos > docScrollPos && docScrollPos > SHScrollPos);
         setPrevScrollPos(docScrollPos);
       }
@@ -95,26 +121,35 @@ export default function SearchResults({
     return () => window.removeEventListener("scroll", handleScroll);
   }, [prevScrollPos, visible]);
 
-
-
   React.useEffect(() => {
-    async function reloadPage(){
+    async function reloadPage() {
       if (isLoading) {
-        if(filter.noOfFilters > 0){
-          await fetch('/api/products/filter?type=search',{
-            method: 'POST',
-            body: JSON.stringify(filter)
-          })
+        if (filter.noOfFilters > 0) {
+          await fetch("/api/products/filter?type=search", {
+            method: "POST",
+            body: JSON.stringify(filter),
+            headers: {
+              "x-csrf-token": csrf
+            }
+          });
         }
 
         const queryParams = [
           `q=${query}`,
           `options[prefix]=last`,
-          !filter.showOutOfStock ? `filter.v.availability=1` : '',
-          filter.productType.length > 0 ? `filter.p.product_type=${filter.productType}` : '',
-          price > 0 && newPriceBoundary === filter.currentPriceBoundary ? `filter.v.price.gte=${price}` : '',
-          price > 0 && newPriceBoundary < filter.currentPriceBoundary ? `filter.v.price.gte=${price}&filter.v.price.lte=${newPriceBoundary}` : '',
-          newPriceBoundary < filter.currentPriceBoundary && price === 0 ? `filter.v.price.lte=${newPriceBoundary}` : '',
+          !filter.showOutOfStock ? `filter.v.availability=1` : "",
+          filter.productType.length > 0
+            ? `filter.p.product_type=${filter.productType}`
+            : "",
+          price > 0 && newPriceBoundary === filter.currentPriceBoundary
+            ? `filter.v.price.gte=${price}`
+            : "",
+          price > 0 && newPriceBoundary < filter.currentPriceBoundary
+            ? `filter.v.price.gte=${price}&filter.v.price.lte=${newPriceBoundary}`
+            : "",
+          newPriceBoundary < filter.currentPriceBoundary && price === 0
+            ? `filter.v.price.lte=${newPriceBoundary}`
+            : "",
           `sort_by=${
             sort === sortByList[1]
               ? "price-ascending"
@@ -122,67 +157,73 @@ export default function SearchResults({
               ? "price-descending"
               : "relevance"
           }`,
-          `page=${page}`
+          `page=${page}`,
         ];
         // Filter out empty parameters
-        const filteredParams = queryParams.filter(param => param !== '');
+        const filteredParams = queryParams.filter((param) => param !== "");
 
         // Join the parameters to construct the query string
-        const queryString = filteredParams.join('&');
+        const queryString = filteredParams.join("&");
 
-        const pathParts = path.split("/");
-  
-        if (pathParts[1] !== lang) {
-          pathParts.unshift(lang);
-        } 
-      
         // Construct the new path
-        const newPath = `/${pathParts.join("/")}`;
-
-        const url = new URL(`${window.location.origin}${newPath}`);
+        const url = new URL(`${window.location.origin}${path}`);
 
         // Construct the final URL and replace the location
-        window.location.href = url.toString() + '?' + queryString;
+        window.location.href = url.toString() + "?" + queryString;
       }
     }
     reloadPage();
-  }, [isLoading, filter, newPriceBoundary, page, price, query, sort, sortByList]);
+  }, [
+    isLoading,
+    filter,
+    newPriceBoundary,
+    page,
+    price,
+    query,
+    sort,
+    sortByList,
+    path,
+  ]);
 
   React.useEffect(() => {
-    if(windowWidth > 768){
-      const element = document.querySelector('.secondary-header') as HTMLElement;
-      const main = document.querySelector('.no-products-section') as HTMLElement;
+    if (windowWidth > 768) {
+      const element = document.querySelector(
+        ".secondary-header"
+      ) as HTMLElement;
+      const main = document.querySelector(
+        ".no-products-section"
+      ) as HTMLElement;
 
-      if(element){
-
+      if (element) {
         const rect = element.getBoundingClientRect();
         const docScrollPos = window.scrollY;
         const SHScrollPos = docScrollPos + rect.top;
-  
-        if(docScrollPos > SHScrollPos || SHScrollPos > docScrollPos){
+
+        if (docScrollPos > SHScrollPos || SHScrollPos > docScrollPos) {
           window.scrollTo({
             top: SHScrollPos,
-            behavior: 'smooth'
+            behavior: "smooth",
           });
         }
-      }else{
+      } else {
         const rect = main.getBoundingClientRect();
         const docScrollPos = window.scrollY;
         const SHScrollPos = docScrollPos + rect.top;
-  
-        if(docScrollPos > SHScrollPos || SHScrollPos > docScrollPos){
+
+        if (docScrollPos > SHScrollPos || SHScrollPos > docScrollPos) {
           window.scrollTo({
             top: SHScrollPos,
-            behavior: 'smooth'
+            behavior: "smooth",
           });
         }
       }
     }
-
   }, [windowWidth]);
 
   //updating products with available products for the current price range
-  data.products = data.products.filter((product: any) => product.colors.every((color: any) => color.sizes.length > 0));
+  data.products = data.products.filter((product: any) =>
+    product.colors.every((color: any) => color.sizes.length > 0)
+  );
 
   data.searchCat = searchCat;
   data.query = query;
@@ -191,20 +232,22 @@ export default function SearchResults({
   data.upperBoundary = upperBoundary;
 
   const pages = [
-    { title: "Contact Us", route: `/pages/contact` },
-    { title: "About", route: `/pages/about` },
+    { title: "Contact Us", route: `/other/contact` },
+    { title: "About", route: `/other/about` },
     { title: "Login", route: `/login` },
     { title: "Signup", route: `/signup` },
-    { title: "Shipping Policy", route: `/pages/shipping-policy` },
-    {title: "Returns Policy", route: `/pages/returns-policy`},
-    {title: "Privacy Policy", route: `/pages/privacy-policy`},
-    {title: "Size Guide", route: `/pages/size-guide`},
+    { title: "Shipping Policy", route: `/other/shipping-policy` },
+    { title: "Returns Policy", route: `/other/returns-policy` },
+    { title: "Privacy Policy", route: `/other/privacy-policy` },
+    { title: "Size Guide", route: `/other/size-guide` },
   ];
 
   let productSuggestions = allProducts
     .slice(0, 6)
     .some((product: any) =>
-      product.title[lang].includes(query.charAt(0).toUpperCase() + query.slice(1))
+      product.title.includes(
+        query.charAt(0).toUpperCase() + query.slice(1)
+      )
     );
   let otherSuggestions = pages.some((page) =>
     page.title.includes(query.charAt(0).toUpperCase() + query.slice(1))
@@ -214,43 +257,56 @@ export default function SearchResults({
 
   return (
     <>
-      <section className={`${
-            visible ? "show" : "hide"
-          } mx-auto container px-7 fixed top-[95px] z-10 bg-white h-[46px] shadow-md py-2 md:hidden max-w-7xl`}>
-          <SecondaryHeader 
-            setFilter={setFilter}
-            filter={filter}
-            sort={sort}
-            setSort={setSort}
-            setIsLoading={setIsLoading}
-            sortByList={sortByList}
-            productsLength={data.products.length}
-            isGridView={isGridView}
-            setIsGridView={setIsGridView}
-            classes
-            windowWidth={windowWidth}
-            newPriceBoundary={newPriceBoundary}
-            currentPriceBoundary={filter.currentPriceBoundary}
-            setPrice={setPrice}
-            setSliderVal={setSliderVal}
-            price={price}
-            prodType={productType}
-            setNewPriceBoundary={setNewPriceBoundary}
-            sliderVal={sliderVal}
-            productTypeList={productTypeList}
-          /> 
+      <section
+        className={`${
+          visible ? "show" : "hide"
+        } mx-auto container px-7 fixed top-[95px] z-10 bg-white h-[46px] shadow-md py-2 md:hidden max-w-7xl`}
+      >
+        <SecondaryHeader
+          setFilter={setFilter}
+          filter={filter}
+          sort={sort}
+          setSort={setSort}
+          setIsLoading={setIsLoading}
+          sortByList={sortByList}
+          productsLength={data.products.length}
+          isGridView={isGridView}
+          setIsGridView={setIsGridView}
+          classes
+          windowWidth={windowWidth}
+          newPriceBoundary={newPriceBoundary}
+          currentPriceBoundary={filter.currentPriceBoundary}
+          setPrice={setPrice}
+          setSliderVal={setSliderVal}
+          price={price}
+          prodType={productType}
+          setNewPriceBoundary={setNewPriceBoundary}
+          sliderVal={sliderVal}
+          productTypeList={productTypeList}
+        />
       </section>
       <main
         className={`bg-white w-full min-h-screen md:pt-12 pt-5 pb-6 flex flex-col md:pl-12 md:pr-0 px-3 max-w-7xl relative no-products-section ${
-          data.products.length === 0  && !lowerBoundary && !upperBoundary && !productType && filter.showOutOfStock ? "space-y-36" : "space-y-6"
+          data.products.length === 0 &&
+          !lowerBoundary &&
+          !upperBoundary &&
+          !productType &&
+          filter.showOutOfStock
+            ? "space-y-36"
+            : "space-y-6"
         }`}
       >
         <header className="flex flex-col items-center gap-y-4 justify-center mb-7">
-          <h1 className="text-3xl font-sans md:inline-block hidden">Search Results</h1>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            setIsLoading(true);
-          }} className="mx-auto h-full border border-gray-500 max-w-7xl md:w-[55%] w-full focus-within:border-2 focus-within:border-gray-600 relative">
+          <h1 className="text-3xl font-sans md:inline-block hidden">
+            Search Results
+          </h1>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              setIsLoading(true);
+            }}
+            className="mx-auto h-full border border-gray-500 max-w-7xl md:w-[55%] w-full focus-within:border-2 focus-within:border-gray-600 relative"
+          >
             <div className="flex flex-row items-center justify-between px-4 py-[6px]">
               <div className="flex flex-col items-start w-full">
                 <h5 className="text-[.7rem] font-thin font-sans text-gray-600">
@@ -306,7 +362,7 @@ export default function SearchResults({
                           <ul className="flex flex-col">
                             {allProducts
                               .filter((product: any) =>
-                                product.title[lang].includes(
+                                product.title.includes(
                                   query.charAt(0).toUpperCase() + query.slice(1)
                                 )
                               )
@@ -316,18 +372,20 @@ export default function SearchResults({
                                   key={i}
                                   onClick={() =>
                                     router.push(
-                                      `/products/${product.title[lang]
+                                      `/products/${product.title
                                         .replace(" ", "-")
-                                        .toLowerCase()}/${JSON.stringify(product.colors[0].type[lang])}/${product
-                                        .colors[0].sizes[0].variant_id!}`
+                                        .toLowerCase()}/${JSON.stringify(
+                                        product.colors[0].name
+                                      )}/${product.colors[0].sizes[0]
+                                        .variant_id!}`
                                     )
                                   }
                                 >
                                   <span className="font-sans text-gray-400 text-[.8rem]">
-                                    {product.title[lang].charAt(0)}
+                                    {product.title.charAt(0)}
                                   </span>
                                   <span className="font-sans font-semibold text-[.8rem]">
-                                    {product.title[lang].slice(1)}
+                                    {product.title.slice(1)}
                                   </span>
                                 </li>
                               ))}
@@ -373,37 +431,40 @@ export default function SearchResults({
                       PRODUCTS
                     </h4>
                     <ul className="flex flex-col">
-                      {allProducts.slice(0, 4).map((product: any, i: number) => (
-                        <li key={i}>
-                          <article
-                            onClick={() =>
-                              router.push(
-                                `/products/${product.title[lang]
-                                  .replace(" ", "-")
-                                  .toLowerCase()}/${product.colors[0].type[lang]}/${product
-                                  .colors[0].sizes[0].variant_id!}`
-                              )
-                            }
-                            className="flex flex-row items-start gap-x-5 px-4 py-3 hover:bg-gray-100 cursor-pointer"
-                          >
-                            <Image
-                              alt={`Product ${i + 1}`}
-                              src={product.colors[0].image_front_base64[0]}
-                              width={50}
-                              height={65}
-                            />
-                            <section>
-                              <h2 className="font-sans text-[1rem] font-medium hover:underline-offset-1 hover:underline">
-                                {product.title[lang]}
-                              </h2>
-                              <h2 className="font-sans font-thin text-gray-400 text-[.9rem]">
-                                &#8358;
-                                {product.colors[0].sizes[0].price.toLocaleString()}
-                              </h2>
-                            </section>
-                          </article>
-                        </li>
-                      ))}
+                      {allProducts
+                        .slice(0, 4)
+                        .map((product: any, i: number) => (
+                          <li key={i}>
+                            <article
+                              onClick={() =>
+                                router.push(
+                                  `/products/${product.title
+                                    .replace(" ", "-")
+                                    .toLowerCase()}/${
+                                    product.colors[0].name
+                                  }/${product.colors[0].sizes[0].variant_id!}`
+                                )
+                              }
+                              className="flex flex-row items-start gap-x-5 px-4 py-3 hover:bg-gray-100 cursor-pointer"
+                            >
+                              <Image
+                                alt={`Product ${i + 1}`}
+                                src={product.colors[0].image_front_base64[0]}
+                                width={50}
+                                height={65}
+                              />
+                              <section>
+                                <h2 className="font-sans text-[1rem] font-medium hover:underline-offset-1 hover:underline">
+                                  {product.title}
+                                </h2>
+                                <h2 className="font-sans font-thin text-gray-400 text-[.9rem]">
+                                  &#8358;
+                                  {product.colors[0].sizes[0].price.toLocaleString()}
+                                </h2>
+                              </section>
+                            </article>
+                          </li>
+                        ))}
                     </ul>
                   </section>
                 </section>
@@ -426,8 +487,13 @@ export default function SearchResults({
             )}
           </form>
         </header>
-        {(data.products.length > 0 || (data.products.length === 0 && (upperBoundary || lowerBoundary || productType || !filter.showOutOfStock) )) &&
-          <SecondaryHeader 
+        {(data.products.length > 0 ||
+          (data.products.length === 0 &&
+            (upperBoundary ||
+              lowerBoundary ||
+              productType ||
+              !filter.showOutOfStock))) && (
+          <SecondaryHeader
             setFilter={setFilter}
             filter={filter}
             sort={sort}
@@ -448,48 +514,39 @@ export default function SearchResults({
             setNewPriceBoundary={setNewPriceBoundary}
             sliderVal={sliderVal}
           />
-        }
+        )}
         <section
           className={`${
-            data.products.length === 0 && !lowerBoundary && !upperBoundary && !productType && filter.showOutOfStock 
+            data.products.length === 0 &&
+            !lowerBoundary &&
+            !upperBoundary &&
+            !productType &&
+            filter.showOutOfStock
               ? "justify-center flex-col"
               : "justify-evenly md:flex-row flex-col"
           } flex items-center w-full flex-wrap md:gap-x-5 gap-y-9`}
         >
-          {data.products.length === 0 && !lowerBoundary && !upperBoundary && !productType && filter.showOutOfStock ? (
+          {data.products.length === 0 &&
+          !lowerBoundary &&
+          !upperBoundary &&
+          !productType &&
+          filter.showOutOfStock ? (
             <section className="flex items-center flex-col">
               <h1 className="font-sans text-xl">No {searchCat} available!</h1>
               <h1 className="font-sans text-sm">
                 Try a different search parameter
               </h1>
             </section>
-          ) : data.products.length === 0 && (upperBoundary || lowerBoundary || productType || !filter.showOutOfStock)
-          ? <section className={`flex flex-row pt-5 w-full md:gap-x-[40px] md:justify-start justify-center`}>
-            {filter.isVisible && <FilterSettings 
-              setFilter={setFilter}
-              filter={filter}
-              newPriceBoundary={newPriceBoundary}
-              currentPriceBoundary={filter.currentPriceBoundary}
-              setPrice={setPrice}
-              setSliderVal={setSliderVal}
-              setIsLoading={setIsLoading}
-              price={price}
-              prodType={productType}
-              productTypeList={productTypeList}
-              setNewPriceBoundary={setNewPriceBoundary}
-              sliderVal={sliderVal}
-            
-            />}
-            <section className={`${filter.isVisible ? 'md:w-[50%]': 'w-full'} flex items-center flex-col mt-24`}>
-              <h1 className="font-sans text-xl">No {searchCat} available!</h1>
-              <h1 className="font-sans text-sm">
-                Try a different search parameter
-              </h1>
-            </section>
-            </section>
-          : (
-            <section className="flex flex-row pt-5 w-full gap-x-[40px] h-full">
-              {filter.isVisible && <FilterSettings 
+          ) : data.products.length === 0 &&
+            (upperBoundary ||
+              lowerBoundary ||
+              productType ||
+              !filter.showOutOfStock) ? (
+            <section
+              className={`flex flex-row pt-5 w-full md:gap-x-[40px] md:justify-start justify-center`}
+            >
+              {filter.isVisible && (
+                <FilterSettings
                   setFilter={setFilter}
                   filter={filter}
                   newPriceBoundary={newPriceBoundary}
@@ -502,16 +559,51 @@ export default function SearchResults({
                   productTypeList={productTypeList}
                   setNewPriceBoundary={setNewPriceBoundary}
                   sliderVal={sliderVal}
-                
-                />}
-              <div className={`${filter.isVisible ? 'md:w-[80%]': 'w-full'} flex md:flex-row ${isGridView ? 'flex-row': 'flex-col'} items-center h-full overflow-y-auto hide-scrollbar justify-evenly flex-wrap gap-x-1 gap-y-4`}>
+                />
+              )}
+              <section
+                className={`${
+                  filter.isVisible ? "md:w-[50%]" : "w-full"
+                } flex items-center flex-col mt-24`}
+              >
+                <h1 className="font-sans text-xl">No {searchCat} available!</h1>
+                <h1 className="font-sans text-sm">
+                  Try a different search parameter
+                </h1>
+              </section>
+            </section>
+          ) : (
+            <section className="flex flex-row pt-5 w-full gap-x-[40px] h-full">
+              {filter.isVisible && (
+                <FilterSettings
+                  setFilter={setFilter}
+                  filter={filter}
+                  newPriceBoundary={newPriceBoundary}
+                  currentPriceBoundary={filter.currentPriceBoundary}
+                  setPrice={setPrice}
+                  setSliderVal={setSliderVal}
+                  setIsLoading={setIsLoading}
+                  price={price}
+                  prodType={productType}
+                  productTypeList={productTypeList}
+                  setNewPriceBoundary={setNewPriceBoundary}
+                  sliderVal={sliderVal}
+                />
+              )}
+              <div
+                className={`${
+                  filter.isVisible ? "md:w-[80%]" : "w-full"
+                } flex md:flex-row ${
+                  isGridView ? "flex-row" : "flex-col"
+                } items-center h-full overflow-y-auto hide-scrollbar justify-evenly flex-wrap gap-x-1 gap-y-4`}
+              >
                 {data.products.map((product: any, i: number) => (
                   <ProductComponent
                     key={i}
                     product={product}
                     isSearchProduct
-                    imageH={filter.isVisible ? 650: null}
-                    imageW={filter.isVisible ? 229: null}
+                    imageH={filter.isVisible ? 650 : null}
+                    imageW={filter.isVisible ? 229 : null}
                     isGridView={isGridView}
                     setIsGridView={setIsGridView}
                   />
@@ -520,9 +612,11 @@ export default function SearchResults({
             </section>
           )}
         </section>
-        {isLoading && <section className="absolute top-[60px] z-20 left-0 bg-white/50 w-full h-full">
-          <div className="loader absolute top-4 right-4"></div>
-        </section>}
+        {isLoading && (
+          <section className="absolute top-[60px] z-20 left-0 bg-white/50 w-full h-full">
+            <div className="loader absolute top-4 right-4"></div>
+          </section>
+        )}
         {data.products.length > 0 && <Pagination {...data} />}
       </main>
     </>

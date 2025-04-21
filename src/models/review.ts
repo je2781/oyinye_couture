@@ -13,13 +13,17 @@ class Review extends Model<InferAttributes<Review>, InferCreationAttributes<Revi
     declare createdAt: CreationOptional<Date>;
     declare updatedAt: CreationOptional<Date>;
     declare author_id: ForeignKey<string>;
+    declare product_id: CreationOptional<ForeignKey<string>>;
     declare getUser: BelongsToGetAssociationMixin<User>;
     declare setUser: BelongsToSetAssociationMixin<User, string>;
     declare getProduct: BelongsToGetAssociationMixin<Product>;
     declare setProduct: BelongsToSetAssociationMixin<Product, string>;
 
     static associate(models: any){
-        Review.belongsTo(models.Product);
+        Review.belongsTo(models.Product, {
+            foreignKey: 'product_id',
+            as:'product'
+        });
     	Review.belongsTo(models.User);
     }
 
@@ -47,6 +51,13 @@ class Review extends Model<InferAttributes<Review>, InferCreationAttributes<Revi
                 type: DataTypes.STRING,
                 references: {
                     model: 'users',
+                    key: 'id'
+                }
+            },
+            product_id: {
+                type: DataTypes.STRING,
+                references: {
+                    model: 'products',
                     key: 'id'
                 }
             },

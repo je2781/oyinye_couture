@@ -18,6 +18,7 @@ export async function createViewedProductsAction(variantId: string) {
       expires: new Date(new Date().getTime() + 5184000000), // Expires in 2 month,
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
+      sameSite: 'strict'
     });
   }else{
     const viewedProductsArray = JSON.parse(viewedP);
@@ -38,6 +39,7 @@ export async function createViewedProductsAction(variantId: string) {
       expires: new Date(new Date().getTime() + 2629746000), // Expires in 1 month,
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
+      sameSite: 'strict'
     });
   }
   
@@ -74,6 +76,7 @@ export async function createVisitorAction() {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       path: '/',
+      sameSite: 'strict'
     });
   }
 }
