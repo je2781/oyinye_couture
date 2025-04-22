@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function AboutComponent() {
   return (
     <section
-      className="lg:pt-16 md:pt-10 pt-4 md:pb-5 pb-3 lg:h-[420px] md:h-[340px]"
+      className="lg:pt-16 md:pt-10 pt-4 md:pb-5 pb-3 lg:h-[420px] md:h-[340px] container mx-auto"
       id="about"
     >
       <div className="flex flex-row w-full h-full overflow-hidden">

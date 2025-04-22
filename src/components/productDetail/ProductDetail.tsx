@@ -341,7 +341,7 @@ const ProductDetail = ({
     }
 
     const mainContent = (
-        <main className="container mx-auto bg-white lg:gap-y-28 gap-y-14 w-full min-h-screen md:px-7 px-2 max-w-7xl lg:pt-0 pt-8 flex flex-col">
+        <main className="container mx-auto bg-white lg:gap-y-28 gap-y-14 w-full min-h-screen md:px-7 px-2 lg:pt-0 pt-8 flex flex-col">
             <section className="flex lg:flex-row flex-col gap-y-7">
                 <article className={`flex flex-col gap-y-2 w-full lg:w-[46%] ${articleIsNotSticky ? '' : 'lg:sticky lg:top-0'} lg:h-full lg:pt-8`}>
                     <Swiper

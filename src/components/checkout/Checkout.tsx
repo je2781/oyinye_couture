@@ -267,7 +267,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
   return (
     <>
        
-      <main className="min-h-screen w-full mx-auto flex md:flex-row flex-col">
+      <main className="min-h-screen w-full mx-auto container flex md:flex-row flex-col">
         {windowWidth < 768 && <section className="flex flex-col">
           <header className="flex flex-row justify-between h-12 items-center px-7 w-full py-4 shadow-sm bg-gray-100">
             <div

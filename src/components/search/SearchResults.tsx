@@ -257,7 +257,7 @@ export default function SearchResults({
 
   return (
     <>
-      <section
+      <div
         className={`${
           visible ? "show" : "hide"
         } mx-auto container px-7 fixed top-[95px] z-10 bg-white h-[46px] shadow-md py-2 md:hidden max-w-7xl`}
@@ -284,9 +284,9 @@ export default function SearchResults({
           sliderVal={sliderVal}
           productTypeList={productTypeList}
         />
-      </section>
+      </div>
       <main
-        className={`bg-white w-full min-h-screen md:pt-12 pt-5 pb-6 flex flex-col md:pl-12 md:pr-0 px-3 max-w-7xl relative no-products-section ${
+        className={`bg-white w-full min-h-screen md:pt-12 pt-5 pb-6 flex flex-col md:pl-12 md:pr-0 px-3 container relative no-products-section ${
           data.products.length === 0 &&
           !lowerBoundary &&
           !upperBoundary &&

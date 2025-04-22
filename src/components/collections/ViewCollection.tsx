@@ -6,7 +6,7 @@ import Product from "../product/Product";
 
 const ViewCollection = ({featuredProducts}: any) => {
   return (
-    <div className="flex flex-col gap-y-8 bg-white max-w-7xl w-full lg:py-12 py-8 mx-auto px-6 container">
+    <div className="flex flex-col gap-y-8 bg-white w-full lg:py-12 py-8 mx-auto px-6 container">
       <section className="flex flex-col gap-y-6 items-center justify-center leading-text">
         <header className="text-center flex flex-col gap-y-6">
           <h1 className="lg:text-4xl text-3xl font-sans font-normal">

@@ -78,7 +78,7 @@ export default function OthersComponent({ name, csrf }: any) {
   switch (name) {
     case "contact":
       content = (
-        <main className="container mx-auto bg-white min-h-screen max-w-7xl lg:pb-12 lg:pt-16 py-8 lg:px-8 px-6 flex flex-row font-sans">
+        <main className="container mx-auto bg-white min-h-screen lg:pb-12 lg:pt-16 py-8 lg:px-8 px-6 flex flex-row font-sans">
           <article className="flex flex-col w-full gap-y-11 lg:w-[50%]">
             <header className="lg:text-6xl text-4xl font-light">
               Our Studio
