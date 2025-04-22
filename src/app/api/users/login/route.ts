@@ -116,15 +116,14 @@ export async function POST(req: NextRequest, response: NextResponse) {
       sameSite: "strict",
     });
 
-    if (user.is_admin) {
-      res.cookies.set("admin", user.id, {
-        httpOnly: true,
-        expires: expiryDate,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        
-      });
-    }
+    res.cookies.set("user", user.id, {
+      httpOnly: true,
+      expires: expiryDate,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      
+    });
+    
 
     return res;
   } catch (error: any) {

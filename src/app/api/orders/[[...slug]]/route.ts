@@ -1,7 +1,9 @@
 import { models } from '@/db/connection';
 import { getDataFromCart } from '@/helpers/getDataFromCart';
 import { getDataFromOrder } from '@/helpers/getDataFromOrder';
+import { getUserData } from '@/helpers/getUserData';
 import { sendMail } from '@/helpers/mailer';
+import { sanitizeInput } from '@/helpers/sanitize';
 import { EmailType } from '@/interfaces';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
@@ -151,6 +153,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
       }
       
       const [orderId, checkoutSessionToken] = getDataFromOrder(request);
+      const userId = getUserData(request);
 
       //retrieving order data for the current checkout session
       const order = await models.Order.findByPk(orderId);
@@ -312,12 +315,19 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
         const reqBody = await request.json();
         const {shippingInfo, billingInfo, saveBillingInfo, saveShippingInfo, paymentType, status, paymentStatus, shippingMethod, userEmail} = reqBody;
 
+        const cleanEmail = sanitizeInput(userEmail);
         const extractedUser = await models.User.findOne({
-          where: {email: userEmail}
+          where: {email: cleanEmail}
         });
 
 
         if (order && extractedUser) {
+          const extractedUser = await order.getUser();
+          //protecting against unauthorized access
+          if(extractedUser.id !== userId){
+            throw new Error('No permissions');
+          }
+          
           order.payment_status = paymentStatus;
           order.status = status;
           order.payment_type = paymentType;
@@ -351,9 +361,10 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
       
        
     } catch (error: any) {
+      const e = error as Error;
       return NextResponse.json(
         {
-          error: error.message,
+          error: e.message,
         },
         { status: 500 }
       );

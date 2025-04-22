@@ -1,5 +1,5 @@
 
-import Hero from "@/components/Hero";
+import Hero from "@/components/hero/Hero";
 import { cookies, headers} from "next/headers";
 import About from "@/components/about/AboutUs";
 import Footer from "@/components/footer/Footer";

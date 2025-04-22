@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { models } from "@/db/connection";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { getUserData } from "@/helpers/getUserData";
 
 const redis = Redis.fromEnv();
 
@@ -13,7 +14,6 @@ const ratelimit = new Ratelimit({
   limiter: Ratelimit.slidingWindow(5, "10s"),
   analytics: true,
 });
-
 
 export async function GET(
   req: NextRequest,
@@ -62,10 +62,11 @@ export async function GET(
     } else {
       throw new Error("Invalid cart id");
     }
-  } catch (error: any) {
+  } catch (error) {
+    const e = error as Error;
     return NextResponse.json(
       {
-        error: error.message,
+        error: e.message,
       },
       { status: 500 }
     );
@@ -77,20 +78,26 @@ export async function POST(
   { params }: { params: { slug?: string[] } }
 ) {
   try {
-    const ip = req.headers.get('x-forwarded-for');
+    const ip = req.headers.get("x-forwarded-for");
 
-    const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+    const { success, limit, remaining, reset } = await ratelimit.limit(
+      String(ip)
+    );
 
     if (!success) {
       const res = NextResponse.json(
-        { error: 'Rate limit exceeded' },
+        { error: "Rate limit exceeded" },
         { status: 429 }
       );
-      res.headers.set('X-RateLimit-Limit', limit.toString());
-      res.headers.set('X-RateLimit-Remaining', remaining.toString());
-      res.headers.set('X-RateLimit-Reset', reset.toString());
+      res.headers.set("X-RateLimit-Limit", limit.toString());
+      res.headers.set("X-RateLimit-Remaining", remaining.toString());
+      res.headers.set("X-RateLimit-Reset", reset.toString());
       return res;
     }
+
+    //retrieving user cookie and user data
+    const userId = getUserData(req);
+    const extractedUser = await models.User.findByPk(userId);
 
     if (
       params.slug &&
@@ -98,12 +105,19 @@ export async function POST(
       params.slug.length > 0 &&
       params.slug[0] === "remove"
     ) {
-      const { quantity, variantId, price} = await req.json();
+      const { quantity, variantId, price } = await req.json();
 
       const cartId = getDataFromCart(req);
 
-      if (cartId) {
+      if (cartId && userId) {
         const cart = await models.Cart.findByPk(cartId);
+
+        const cartUser = await cart!.getUser();
+
+        //protecting against unauthorized access
+        if (cartUser.id !== userId) {
+          throw new Error("No permissions");
+        }
 
         await cart!.deductFromCart(variantId, quantity, price);
 
@@ -172,6 +186,8 @@ export async function POST(
           ],
           total_amount: parseFloat(totalAmount),
         });
+        //saving joined table
+        newCart.setUser(extractedUser!);
 
         const remainingMilliseconds = 5184000000; // 2 months
         const expiryDate = new Date(Date.now() + remainingMilliseconds);
@@ -195,6 +211,13 @@ export async function POST(
         return res;
       } else {
         const cart = await models.Cart.findByPk(cartId);
+
+        const cartUser = await cart!.getUser();
+        //protecting against unauthorized access
+        if (cartUser.id !== userId) {
+          throw new Error("No permissions");
+        }
+
         await cart!.addToCart(
           product!,
           parseInt(quantity),
@@ -219,10 +242,11 @@ export async function POST(
         );
       }
     }
-  } catch (error: any) {
+  } catch (error) {
+    const e = error as Error;
     return NextResponse.json(
       {
-        error: error.message,
+        error: e.message,
         success: false,
       },
       { status: 500 }
@@ -235,18 +259,20 @@ export async function PATCH(
   { params }: { params: { slug?: string[] } }
 ) {
   try {
-    const ip = req.headers.get('x-forwarded-for');
+    const ip = req.headers.get("x-forwarded-for");
 
-    const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+    const { success, limit, remaining, reset } = await ratelimit.limit(
+      String(ip)
+    );
 
     if (!success) {
       const res = NextResponse.json(
-        { error: 'Rate limit exceeded' },
+        { error: "Rate limit exceeded" },
         { status: 429 }
       );
-      res.headers.set('X-RateLimit-Limit', limit.toString());
-      res.headers.set('X-RateLimit-Remaining', remaining.toString());
-      res.headers.set('X-RateLimit-Reset', reset.toString());
+      res.headers.set("X-RateLimit-Limit", limit.toString());
+      res.headers.set("X-RateLimit-Remaining", remaining.toString());
+      res.headers.set("X-RateLimit-Reset", reset.toString());
       return res;
     }
 
@@ -265,57 +291,10 @@ export async function PATCH(
     const expiryDate = new Date(now.getTime() + remainingMilliseconds);
 
     if (cartId) {
-      //retrieving cart data for the current public session and storing user data
+      //retrieving cart and user data for the current public session
       const cart = await models.Cart.findByPk(cartId);
 
-      if (userId) {
-        const user = await models.User.findByPk(userId);
-        await cart!.setUser(user!);
-
-        //creating add to cart state in order
-        const newOrder = await models.Order.create({
-          id: (await crypto.randomBytes(6)).toString("hex"),
-          status: "add to cart",
-          sales: cart!.total_amount,
-        });
-
-        await newOrder.setUser(user!);
-
-        const res = NextResponse.json(
-          {
-            message: "Order created!",
-            checkout_session_token: hashedToken,
-            success: true,
-          },
-          { status: 201 }
-        );
-
-        res.cookies.set("checkout_session_token", hashedToken, {
-          expires: expiryDate,
-          httpOnly: true,
-          path: "/",
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-        });
-
-        res.cookies.set("order", newOrder.id, {
-          expires: expiryDate,
-          httpOnly: true,
-          path: "/",
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-        });
-
-        res.cookies.set("user", userId, {
-          expires: expiryDate,
-          httpOnly: true,
-          path: "/",
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
-        });
-
-        return res;
-      }
+      const user = await models.User.findByPk(userId);
 
       //creating add to cart state in order
       const newOrder = await models.Order.create({
@@ -323,6 +302,8 @@ export async function PATCH(
         status: "add to cart",
         sales: cart!.total_amount,
       });
+
+      await newOrder.setUser(user!);
 
       const res = NextResponse.json(
         {
@@ -351,10 +332,11 @@ export async function PATCH(
 
       return res;
     }
-  } catch (error: any) {
+  } catch (error) {
+    const e = error as Error;
     return NextResponse.json(
       {
-        error: error.message,
+        error: e.message,
         success: false,
       },
       { status: 500 }

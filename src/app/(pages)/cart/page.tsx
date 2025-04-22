@@ -45,6 +45,8 @@ async function CartPage() {
 
   const h = headers();
   const csrfToken = h.get('X-CSRF-Token') || 'missing';
+
+  const cartData = {...data, csrf: csrfToken};
   
   //protecting public routes
   const cookieStore = cookies();
@@ -58,7 +60,7 @@ async function CartPage() {
   return (
     <>
       <Header cartItems={data.cartItems} />
-      <CartComponent {{...data, csrf: csrfToken}} />
+      <CartComponent {...cartData} />
       <Footer  csrfToken={csrfToken}/>
     </>
   );
