@@ -64,7 +64,7 @@ export default function LoginPage({csrf}: any) {
         <h1 className="lg:text-5xl text-3xl font-sans lg:pb-5 pb-2 font-light">Create account</h1>
         <div className="flex flex-col lg:w-[480px] max-w-[80%] w-[360px]">
           <input
-            className="p-4 border border-gray-300 focus:outline-none focus:border-gray-600 placeholder:font-sans placeholder:text-lg"
+            className="p-4 border border-gray-300 bg-transparent focus:outline-none focus:border-gray-600 placeholder:font-sans placeholder:text-lg"
             id="firstName"
             type="text"
             value={user.firstName}
@@ -74,7 +74,7 @@ export default function LoginPage({csrf}: any) {
         </div>
         <div className="flex flex-col lg:w-[480px] max-w-[80%] w-[360px] gap-y-0">
           <input
-            className="p-4 border border-gray-300 focus:outline-none focus:border-gray-600 placeholder:font-sans placeholder:text-lg"
+            className="p-4 border border-gray-300 bg-transparent focus:outline-none focus:border-gray-600 placeholder:font-sans placeholder:text-lg"
             id="lastName"
             type="text"
             value={user.lastName}
@@ -84,7 +84,7 @@ export default function LoginPage({csrf}: any) {
         </div>
         <div className="flex flex-col lg:w-[480px] max-w-[80%] w-[360px]">
           <input
-            className="p-4 border border-gray-300 focus:outline-none focus:border-gray-600 placeholder:font-sans placeholder:text-lg"
+            className="p-4 border border-gray-300 bg-transparent focus:outline-none focus:border-gray-600 placeholder:font-sans placeholder:text-lg"
             id="email"
             type="text"
             value={user.email}

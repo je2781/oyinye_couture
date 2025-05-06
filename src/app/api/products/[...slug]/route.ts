@@ -8,7 +8,6 @@ import { Op } from "sequelize";
 import { models } from "@/db/connection";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
-import { cookies } from "next/headers";
 
 const redis = Redis.fromEnv();
 
@@ -44,13 +43,19 @@ export async function GET(
     let authors: any[] = [];
     let updatedProducts: any[] = [];
 
-    const viewedProducts = req.nextUrl.searchParams.get('viewed_p') === 'undefined' ? undefined : req.nextUrl.searchParams.get('viewed_p');
+    const viewedProducts =
+      req.nextUrl.searchParams.get("viewed_p") === "undefined"
+        ? undefined
+        : req.nextUrl.searchParams.get("viewed_p");
 
     // ===== Load the product first =====
     const title =
       params.slug[0].charAt(0).toUpperCase() +
       params.slug[0].replace("-", " ").slice(1);
-    const product = await models.Product.findOne({ where: { title } });
+    const product = await models.Product.findOne({
+      where: { title },
+      include: [{ model: models.Review, as: 'reviews' }],
+    });
 
     if (!product) {
       return NextResponse.json(
@@ -112,15 +117,20 @@ export async function GET(
       }
     }
 
-    const reviews = await product.getReviews();
+    const reviews = await models.Review.findAll({
+      where: {
+        product_id: product.id
+      },
+      include: [{model: models.User, as: 'author'}]
+    });
     reviews.sort((a: any, b: any) => b.likes - a.likes);
 
     for (let review of reviews) {
-      const user = await review.getUser();
+      const user = await models.User.findByPk(review.author_id);
       authors.push(user);
     }
 
-    const updatedReviews = reviews.map((review: any) => {
+    const updatedReviews = reviews.map((review) => {
       const extractedAuthor = authors.find(
         (author: any) => author.id === review.author_id
       );
@@ -153,7 +163,6 @@ export async function GET(
         status: 200,
       }
     );
-
   } catch (error) {
     const e = error as Error;
     console.error("❌ Error in GET handler:", error);
@@ -272,6 +281,7 @@ export async function POST(
 
     const product = await models.Product.findOne({
       where: { title: title },
+      include: [{ model: models.Review, as: 'reviews' }],
     });
 
     if (!user) {
@@ -281,33 +291,36 @@ export async function POST(
 
       const hash = await argon.hash(newPassword);
 
-      const newUser = await models.User.create({
-        id: (await crypto.randomBytes(6)).toString("hex"),
-        email,
-        password: hash,
-        first_name: name.split(" ").length === 2 ? name.split(" ")[0] : name,
-        last_name: name.split(" ").length === 2 ? name.split(" ")[1] : name,
-        avatar,
-      });
-
-      if (visitId) {
-        const visitor = await models.Visitor.findByPk(visitId);
-        await newUser.setVisitor(visitor!);
-      }
+      const newUser = await models.User.create(
+        {
+          id: (await crypto.randomBytes(6)).toString("hex"),
+          email,
+          visitor_id: visitId ?? '',
+          password: hash,
+          first_name: name.split(" ").length === 2 ? name.split(" ")[0] : name,
+          last_name: name.split(" ").length === 2 ? name.split(" ")[1] : name,
+          avatar,
+        },
+        {
+          include: [{ model: models.Visitor, as: 'visitor' }],
+        }
+      );
 
       //updating product with new user review
-      const newReview = await models.Review.create({
-        id: (await crypto.randomBytes(6)).toString("hex"),
-        headline,
-        rating: +rating,
-        author_id: newUser.id,
-        content: review,
-        is_media: isMedia,
-      });
-
-      await newReview.setUser(newUser);
-      await newReview.setProduct(product!);
-      await product!.addReview(newReview);
+      const newReview = await models.Review.create(
+        {
+          id: (await crypto.randomBytes(6)).toString("hex"),
+          headline,
+          rating: +rating,
+          author_id: newUser.id,
+          content: review,
+          is_media: isMedia,
+          product_id: product!.id
+        },
+        {
+          include: [{ model: models.User, as: 'author' },{ model: models.Product, as: 'product' }],
+        }
+      );
 
       product!.collated_reviews.push(newReview.id);
 
@@ -353,13 +366,12 @@ export async function POST(
         headline,
         rating: +rating,
         author_id: user!.id,
+        product_id: product!.id,
         content: review,
         is_media: isMedia,
+      },{
+        include: [{ model: models.User, as: 'author' },{ model: models.Product, as: 'product' }],
       });
-
-      await newReview.setUser(user!);
-      await newReview.setProduct(product!);
-      await product!.addReview(newReview);
 
       product!.collated_reviews.push(newReview.id);
 

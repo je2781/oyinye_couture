@@ -24,13 +24,12 @@ class Order extends Model<InferAttributes<Order>, InferCreationAttributes<Order>
   declare shipping_method: CreationOptional<string>;
   declare payment_type: CreationOptional<string>;
   declare payment_status: CreationOptional<string>;
+  declare user_id: ForeignKey<string>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
-  declare getUser: BelongsToGetAssociationMixin<User>;
-  declare setUser: BelongsToSetAssociationMixin<User, string>;
 
   static associate(models: any){
-    Order.belongsTo(models.User);
+    Order.belongsTo(models.User, {foreignKey: 'user_id', as: 'orderUser'});
 
   }
 
@@ -48,6 +47,14 @@ class Order extends Model<InferAttributes<Order>, InferCreationAttributes<Order>
       shipping_method: DataTypes.STRING,
       payment_type: DataTypes.STRING,
       payment_status: DataTypes.STRING,
+      user_id: {
+        type: DataTypes.STRING,
+        references: {
+          model: 'users',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
+      },
       createdAt: DataTypes.DATE,
       updatedAt: DataTypes.DATE
     },{

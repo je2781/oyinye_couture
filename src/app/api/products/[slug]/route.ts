@@ -78,6 +78,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         },
         offset: (updatedPage - 1) * ITEMS_PER_PAGE,
         limit: ITEMS_PER_PAGE,
+        include: [{ model: models.Review, as: 'reviews' }]
       });
 
 
@@ -174,7 +175,12 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
             });
             product.setDataValue('no_of_orders', noOfOrders);
           }
-          products.sort((a, b) => (b.no_of_orders - a.no_of_orders) || (b.collated_reviews.length - a.collated_reviews.length));
+          products.sort((a, b) => {
+            if (b.no_of_orders === a.no_of_orders) {
+              return b.collated_reviews.length - a.collated_reviews.length;
+            }
+            return b.no_of_orders - a.no_of_orders;
+          });
           break;
       }
 
@@ -225,6 +231,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
           },
           offset: (updatedPage-1) * ITEMS_PER_PAGE,
           limit: ITEMS_PER_PAGE,
+          include: [{ model: models.Review, as: 'reviews' }]
         });
       }else if(dressFeature){
         totalItems =  await models.Product.count({
@@ -246,6 +253,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
           },
           offset: (updatedPage-1) * ITEMS_PER_PAGE,
           limit: ITEMS_PER_PAGE,
+          include: [{ model: models.Review, as: 'reviews' }]
         });
       }else if(dressLength){
         totalItems =  await models.Product.count({
@@ -267,6 +275,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
           },
           offset: (updatedPage-1) * ITEMS_PER_PAGE,
           limit: ITEMS_PER_PAGE,
+          include: [{ model: models.Review, as: 'reviews' }]
         });
       }else if(fabric){
         totalItems =  await models.Product.count({
@@ -288,6 +297,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
           },
           offset: (updatedPage-1) * ITEMS_PER_PAGE,
           limit: ITEMS_PER_PAGE,
+          include: [{ model: models.Review, as: 'reviews' }]
         });
       }else if(neckLine){
         totalItems =  await models.Product.count({
@@ -309,6 +319,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
           },
           offset: (updatedPage-1) * ITEMS_PER_PAGE,
           limit: ITEMS_PER_PAGE,
+          include: [{ model: models.Review, as: 'reviews' }]
         });
       }else if(sleeveLength){
         totalItems =  await models.Product.count({
@@ -330,6 +341,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
           },
           offset: (updatedPage-1) * ITEMS_PER_PAGE,
           limit: ITEMS_PER_PAGE,
+          include: [{ model: models.Review, as: 'reviews' }]
         });
       }else{
         totalItems =  await models.Product.count({
@@ -342,7 +354,8 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
           limit: ITEMS_PER_PAGE,
           where: {
             is_hidden: false
-          }
+          },
+          include: [{ model: models.Review, as: 'reviews' }]
         });
       }
       
@@ -431,7 +444,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
   
           products.sort((a, b) => {
             if (b.no_of_orders === a.no_of_orders) {
-              return b.reviews.length - a.reviews.length;
+              return b.collated_reviews.length - a.collated_reviews.length;
             }
             return b.no_of_orders - a.no_of_orders;
           });

@@ -5,6 +5,7 @@ import { models } from "@/db/connection";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { getUserData } from "@/helpers/getUserData";
+import { getVisitData } from "@/helpers/getVisitData";
 
 const redis = Redis.fromEnv();
 
@@ -39,7 +40,9 @@ export async function GET(
     }
 
     if (params.slug && params.slug[0]) {
-      let cart = await models.Cart.findByPk(params.slug![0]);
+      let cart = await models.Cart.findByPk(params.slug![0], {
+        include: [{ model: models.User, as: "cartUser" }],
+      });
 
       const cartItems = cart!.items.map((item: any) => {
         return {
@@ -95,8 +98,9 @@ export async function POST(
       return res;
     }
 
-    //retrieving user cookie and user data
+    //retrieving user cookie and visitor cookie
     const userId = getUserData(req);
+    const visitId = getVisitData(req);
 
     if (Array.isArray(params.slug) && params.slug[0] === "remove") {
       const { quantity, variantId, price } = await req.json();
@@ -104,12 +108,12 @@ export async function POST(
       const cartId = getDataFromCart(req);
 
       if (cartId && userId) {
-        const cart = await models.Cart.findByPk(cartId);
-
-        const cartUser = await cart!.getUser();
+        const cart = await models.Cart.findByPk(cartId, {
+          include: [{ model: models.User, as: "cartUser" }],
+        });
 
         //protecting against unauthorized access
-        if (cartUser.id != userId) {
+        if (cart!.user_id != userId) {
           throw new Error("Not Authorized");
         }
 
@@ -165,31 +169,13 @@ export async function POST(
 
       const cartId = getDataFromCart(req);
 
-      const product = await models.Product.findByPk(id);
+      const product = await models.Product.findByPk(id, {
+        include: [{ model: models.Review, as: "reviews" }],
+      });
       let extractedUser = await models.User.findByPk(userId!);
 
       if (!cartId) {
-        if(!extractedUser){
-          extractedUser = await models.User.create({
-            id: (await crypto.randomBytes(6)).toString("hex"),
-          });
-        }
-
-        const newCart = await models.Cart.create({
-          id: (await crypto.randomBytes(6)).toString("hex"),
-          items: [
-            {
-              id: (await crypto.randomBytes(6)).toString("hex"),
-              variant_id: variantId,
-              quantity: parseInt(quantity),
-              product: product!,
-            },
-          ],
-          total_amount: parseFloat(totalAmount),
-        });
-        //saving joined table
-        await newCart.setUser(extractedUser);
-
+        //setting up response for cookie
         const remainingMilliseconds = 5184000000; // 2 months
         const expiryDate = new Date(Date.now() + remainingMilliseconds);
 
@@ -199,6 +185,38 @@ export async function POST(
             success: true,
           },
           { status: 201 }
+        );
+
+        if (!extractedUser) {
+          extractedUser = await models.User.create({
+            id: (await crypto.randomBytes(6)).toString("hex"),
+            visitor_id: visitId ?? "",
+          });
+
+          res.cookies.set("user", extractedUser.id, {
+            httpOnly: true,
+            expires: expiryDate,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            path: "/",
+          });
+        }
+
+        const newCart = await models.Cart.create(
+          {
+            id: (await crypto.randomBytes(6)).toString("hex"),
+            items: [
+              {
+                id: (await crypto.randomBytes(6)).toString("hex"),
+                variant_id: variantId,
+                quantity: parseInt(quantity),
+                product: product!,
+              },
+            ],
+            user_id: extractedUser.id,
+            total_amount: parseFloat(totalAmount),
+          },
+          { include: [{ model: models.User, as: "cartUser" }] }
         );
 
         res.cookies.set("cart", newCart.id, {
@@ -211,11 +229,12 @@ export async function POST(
 
         return res;
       } else {
-        const cart = await models.Cart.findByPk(cartId!);
+        const cart = await models.Cart.findByPk(cartId!, {
+          include: [{ model: models.User, as: "cartUser" }],
+        });
 
-        const cartUser = await cart!.getUser();
         //protecting against unauthorized access
-        if (cartUser.id != userId) {
+        if (cart!.user_id != userId) {
           throw new Error("Not Authorized");
         }
 
@@ -223,7 +242,7 @@ export async function POST(
           product!,
           parseInt(quantity),
           variantId,
-          parseInt(price)
+          parseFloat(price)
         );
 
         const cartItems = cart!.items.map((item) => ({
@@ -295,16 +314,16 @@ export async function PATCH(
       //retrieving cart and user data for the current public session
       const cart = await models.Cart.findByPk(cartId);
 
-      const user = await models.User.findByPk(userId);
-
       //creating add to cart state in order
-      const newOrder = await models.Order.create({
-        id: (await crypto.randomBytes(6)).toString("hex"),
-        status: "add to cart",
-        sales: cart!.total_amount,
-      });
-
-      await newOrder.setUser(user!);
+      const newOrder = await models.Order.create(
+        {
+          id: (await crypto.randomBytes(6)).toString("hex"),
+          status: "add to cart",
+          sales: cart!.total_amount,
+          user_id: userId
+        },
+        { include: [{ model: models.User, as: "orderUser" }] }
+      );
 
       const res = NextResponse.json(
         {

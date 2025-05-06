@@ -114,7 +114,7 @@ export async function PATCH(
     if (!user) {
       return NextResponse.json(
         { message: "user doesn't exist" },
-        { status: 200 }
+        { status: 404 }
       );
     }
 
@@ -125,8 +125,8 @@ export async function PATCH(
       user.password = hash;
     }
     user.enable_email_marketing = enableEmailMarketing;
-    user.first_name = cleanFirstName;
-    user.last_name = cleanLastName;
+    user.first_name = cleanFirstName!;
+    user.last_name = cleanLastName!;
     if (avatar) {
       user.avatar = avatar;
     }

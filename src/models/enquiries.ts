@@ -16,13 +16,12 @@ import User from "./user";
     declare id: string;
     declare contact: CreationOptional<any>;
     declare order: CreationOptional<any>;
+    declare user_id: ForeignKey<string>
     declare createdAt: CreationOptional<Date>;
     declare updatedAt: CreationOptional<Date>;
-    declare getUser: BelongsToGetAssociationMixin<User>;
-    declare setUser: BelongsToSetAssociationMixin<User, string>;
 
     static associate(models: any){
-      Enquiry.belongsTo(models.User);
+      Enquiry.belongsTo(models.User, {foreignKey: 'user_id', as: 'user'});
 
     }
 
@@ -35,6 +34,14 @@ import User from "./user";
           },
         contact: DataTypes.JSONB,
         order: DataTypes.JSONB,
+        user_id: {
+          type: DataTypes.STRING,
+          references: {
+            model: 'users',
+            key: 'id'
+          },
+          onDelete: 'CASCADE'
+        },
         createdAt: DataTypes.DATE,
         updatedAt: DataTypes.DATE
     

@@ -48,6 +48,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
         let orders = await models.Order.findAll({
           offset: (updatedPage-1) * ITEMS_PER_PAGE,
           limit: ITEMS_PER_PAGE,
+          include: [{ model: models.User, as: 'orderUser' }]
         });
 
         const currentPage = updatedPage;
@@ -156,7 +157,9 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
       const userId = getUserData(request);
 
       //retrieving order data for the current checkout session
-      const order = await models.Order.findByPk(orderId);
+      const order = await models.Order.findByPk(orderId,{
+        include: [{ model: models.User, as: 'orderUser' }]
+      });
 
 
       if(params.slug){
@@ -246,14 +249,16 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
             const cartId = getDataFromCart(request);
 
             if(cartId){
-              const cart = await models.Cart.findByPk(cartId);
-              const extractedUser = await cart!.getUser();
+              const cart = await models.Cart.findByPk(cartId,{
+                include: [{ model: models.User, as: 'cartUser' }]
+              });
+              const extractedUser = await models.User.findByPk(cart!.user_id);
 
                //dispatching cart reminder email job
               await qstashClient.publishJSON({
                 url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.request]}`,
                 body: {
-                  email: extractedUser.email,
+                  email: extractedUser!.email,
                   emailBody: {
                     link: `${process.env.DOMAIN}/cart`,
                     id: cartId,
@@ -284,14 +289,14 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
             const {link, id, total} = await request.json();
 
             if (order) {
-              let user = await order.getUser();
+              let user = await models.User.findByPk(order!.user_id);
 
               //dispatching payment request email job
               await qstashClient.publishJSON({
                 url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.request]}`,
                 body: {
-                  email: user.email,
-                    userId: user.id,
+                  email: user!.email,
+                    userId: user!.id,
                     emailBody: {
                       link,
                       id,
@@ -325,14 +330,13 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
 
         const cleanEmail = sanitizeInput(userEmail);
         const extractedUser = await models.User.findOne({
-          where: {email: cleanEmail}
+          where: {email: cleanEmail!}
         });
 
 
         if (order && extractedUser) {
-          const extractedUser = await order.getUser();
           //protecting against unauthorized access
-          if(extractedUser.id !== userId){
+          if(order!.user_id != userId){
             throw new Error('Not Authorized');
           }
           

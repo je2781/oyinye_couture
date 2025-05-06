@@ -179,7 +179,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
         const cleanMsg = sanitizeInput(message);
 
 
-        const user = await models.User.findOne({where: {email: cleanEmail}});
+        const user = await models.User.findOne({where: {email: cleanEmail!}});
     
         if(!user){
           const visitId = getVisitData(req);
@@ -190,16 +190,15 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
           
           const newUser = await models.User.create({
             id: (await crypto.randomBytes(6)).toString("hex"),
-            email: cleanEmail,
+            email: cleanEmail!,
             password: hash,
-            first_name: cleanName.split(' ').length === 2 ? cleanName.split(' ')[0] : cleanName,
-            last_name: cleanName.split(' ').length === 2 ? cleanName.split(' ')[1] : cleanName,
+            visitor_id: visitId ?? '',
+            first_name: cleanName!.split(' ').length === 2 ? cleanName!.split(' ')[0] : cleanName!,
+            last_name: cleanName!.split(' ').length === 2 ? cleanName!.split(' ')[1] : cleanName!,
+          },{
+            include: [{ model: models.Visitor, as: 'visitor' }],
           });
 
-          if(visitId){
-            const visitor = await models.Visitor.findByPk(visitId);
-            await newUser.setVisitor(visitor!);
-          }
 
           //dispatching password creation email job
           await qstashClient.publishJSON({
@@ -222,8 +221,9 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
     
           if(params.slug![0] === 'custom-order'){
             //creating new appointment
-            const newOrder = await models.Enquiry.create({
+            await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
+              user_id: newUser.id,
               order: {
                 styles,
                 size,
@@ -232,20 +232,22 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
                 eventDate: cleanDate,
                 content: cleanContent
               }
+            },{
+              include: [{ model: models.User, as: 'orderUser' }]
             });
 
-            await newOrder.setUser(newUser);
           }else{
-            const newEquiry = await models.Enquiry.create({
+            await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
+              user_id: newUser.id,
               contact: {
                 subject: cleanSubject,
                 message: cleanMsg
               }
+            },{
+              include: [{ model: models.User, as: 'user' }]
             });
   
-            await newEquiry.setUser(newUser);
-
           }
     
     
@@ -257,16 +259,17 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             { status: 201 }
           );
         }else{
-          user.first_name = cleanName.split(' ').length === 2 ? cleanName.split(' ')[0] : cleanName,
-          user.last_name = cleanName.split(' ').length === 2 ? cleanName.split(' ')[1] : cleanName,
+          user.first_name = cleanName!.split(' ').length === 2 ? cleanName!.split(' ')[0] : cleanName!,
+          user.last_name = cleanName!.split(' ').length === 2 ? cleanName!.split(' ')[1] : cleanName!,
 
           await user.save();
 
           if(params.slug![0] === 'custom-order'){
 
             //creating new appointment
-            const newOrder = await models.Enquiry.create({
+            await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
+              user_id: user.id,
               order: {
                 styles,
                 size,
@@ -275,20 +278,22 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
                 eventDate: cleanDate,
                 content: cleanContent
               }
+            },{
+              include: [{ model: models.User, as: 'orderUser' }]
             });
       
-            await newOrder.setUser(user);
           }else{
-            const newEquiry = await models.Enquiry.create({
+            await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
+              user_id: user.id,
               contact: {
                 subject: cleanSubject,
                 message: cleanMsg
               }
+            },{
+              include: [{ model: models.User, as: 'user' }]
             });
-  
-              await newEquiry.setUser(user);
-  
+    
             }
     
           return NextResponse.json(
@@ -340,6 +345,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
           let enquiries = await models.Enquiry.findAll({
             offset: (updatedPage-1) * ITEMS_PER_PAGE,
             limit: ITEMS_PER_PAGE,
+            include: [{ model: models.User, as: 'user' }]
           });
   
           const currentPage = updatedPage;
@@ -366,11 +372,12 @@ export async function GET(req: NextRequest, { params }: { params: { slug?: strin
           }
               
           for(let enq of enquiries){
+            const user = await models.User.findByPk(enq.user_id);
             updatedEnquiries.push({
               ...enq,
               author: {
-                full_name: `${(await enq.getUser()).first_name} ${(await enq.getUser()).last_name}`,
-                email: (await enq.getUser()).email,
+                full_name: `${user!.first_name} ${user!.last_name}`,
+                email: user!.email,
               }
             });
           }

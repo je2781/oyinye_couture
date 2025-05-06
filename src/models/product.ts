@@ -26,9 +26,6 @@ import {
     declare is_hidden: CreationOptional<boolean>;
     declare createdAt: CreationOptional<Date>;
     declare updatedAt: CreationOptional<Date>;
-    declare getReviews: HasManyGetAssociationsMixin<Review>;
-    declare addReviews: HasManyAddAssociationsMixin<Review, string>;
-    declare addReview: HasManyAddAssociationMixin<Review, string>;
   
     // ...
     static associate(models:any){

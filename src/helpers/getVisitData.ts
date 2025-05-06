@@ -1,4 +1,3 @@
-import * as jwt from "jsonwebtoken";
 import { NextRequest } from "next/server";
 
 export const getVisitData = (req: NextRequest) => {

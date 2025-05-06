@@ -62,6 +62,14 @@ module.exports = {
       enable_email_marketing: {
         type: Sequelize.BOOLEAN
       },
+      visitor_id: {
+        type: Sequelize.STRING,
+        references: {
+          model: 'visitors',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

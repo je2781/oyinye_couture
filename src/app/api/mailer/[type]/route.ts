@@ -50,6 +50,12 @@ export async function POST(
       });
     }
 
+    return NextResponse.json({
+      message: 'email sent'
+    },{
+      status: 201
+    });
+
   } catch (error: any) {
     if (error instanceof SignatureError) {
       return NextResponse.json(

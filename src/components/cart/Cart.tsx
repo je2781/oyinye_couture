@@ -27,7 +27,7 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
   let cartItemObj = useRef<CartItemObj>({});
   let frontBase64ImagesObj = useRef<Base64ImagesObj>({});
 
-  const { deductItem, addItem, updateCart } = useCart();
+  const {updateCart } = useCart();
   const router = useRouter();
   const [loader, setLoader] = useState(false);
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
@@ -236,7 +236,6 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
 
     if (delta === -1) {
       if (quantities[index] > 1) {
-        deductItem(variantId, Math.abs(delta), price);
         //updating cart data in backend
         setIsDeductingCart({
           quantity: Math.abs(delta),
@@ -246,11 +245,6 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
       }
     } else {
       if (quantities[index] >= 1) {
-        addItem({
-          price,
-          quantity: delta,
-          variantId,
-        });
         //sending cart data to backend
         setIsIncrementingCart({
           price,
@@ -525,11 +519,7 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
                                 );
 
                                 if (quantities[i] < item.quantity!) {
-                                  deductItem(
-                                    item.variant_id,
-                                    item.quantity! - quantities[i],
-                                    item.price
-                                  );
+
                                   //updating cart data in backend
                                   setIsDeductingCart({
                                     quantity: item.quantity! - quantities[i],
@@ -537,11 +527,7 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
                                     price: item.price,
                                   });
                                 } else {
-                                  addItem({
-                                    price: item.price,
-                                    quantity: quantities[i] - item.quantity!,
-                                    variantId: item.variant_id,
-                                  });
+      
                                   //sending cart data to backend
                                   setIsIncrementingCart({
                                     price: item.price,
@@ -594,11 +580,6 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
                             } text-sm text-gray-600`}
                             onClick={() => {
                               if (!loader) {
-                                deductItem(
-                                  item.variant_id,
-                                  quantities[i],
-                                  item.price
-                                );
                                 //updating cart data in backend
                                 setIsDeductingCart({
                                   quantity: quantities[i],

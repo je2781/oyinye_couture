@@ -5,6 +5,7 @@ import { Redis } from '@upstash/redis';
 import { cookies, headers } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import * as crypto from 'crypto';
+import { getVisitData } from '@/helpers/getVisitData';
 
 const redis = Redis.fromEnv();
 
@@ -56,36 +57,39 @@ export async function GET(req: NextRequest) {
         });
         
         //creating cookie to track leads
-        const visitId = cookies().get('visit')?.value;
+        const visitId = getVisitData(req);
         
-        if (!visitId) {
+      if (!visitId) {
           const ip = headers().get('x-forwarded-for') || '0.0.0.0';
           const userAgent = headers().get('user-agent') || '';
           
           const device = getDeviceType(userAgent);
       
           const browser = getBrowser(userAgent);
+
+          if(browser != "Unknown"){
+            const newVisitor = await models.Visitor.create({
+              id: (await crypto.randomBytes(6)).toString("hex"),
+              ip,
+              browser,
+              device
+            });
+        
+            const remainingMilliseconds = 5184000000; // 2 months
+            const now = new Date();
+            const expiryDate = new Date(now.getTime() + remainingMilliseconds);
+        
+            res.cookies.set({
+              name: 'visit',
+              value: newVisitor.id,
+              expires: expiryDate,
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
+              path: '/',
+              sameSite: 'strict'
+            });
+          }
       
-          const newVisitor = await models.Visitor.create({
-            id: (await crypto.randomBytes(6)).toString("hex"),
-            ip,
-            browser,
-            device
-          });
-      
-          const remainingMilliseconds = 5184000000; // 2 months
-          const now = new Date();
-          const expiryDate = new Date(now.getTime() + remainingMilliseconds);
-      
-          res.cookies.set({
-            name: 'visit',
-            value: newVisitor.id,
-            expires: expiryDate,
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            path: '/',
-            sameSite: 'strict'
-          });
         }
 
         if (!products) {

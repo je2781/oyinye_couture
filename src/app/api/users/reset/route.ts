@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     const user = await models.User.findOne({
       where: {
-        email: cleanEmail
+        email: cleanEmail!
     }
     });
 

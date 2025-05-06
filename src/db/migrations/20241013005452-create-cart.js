@@ -12,6 +12,14 @@ module.exports = {
         type: Sequelize.DOUBLE
       },
       items: Sequelize.JSONB,
+      user_id: {
+        type: Sequelize.STRING,
+        references: {
+          model: 'users',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

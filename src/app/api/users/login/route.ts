@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const cleanPassword = sanitizeInput(password);
 
     const user = await models.User.findOne({
-      where: { email: cleanEmail },
+      where: { email: cleanEmail! },
     });
 
     // Check if user exists
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (user.is_admin && !user.password) {
-      const adminHashedPass = await argon.hash(cleanPassword);
+      const adminHashedPass = await argon.hash(cleanPassword!);
       user.password = adminHashedPass;
       await user.save();
     }

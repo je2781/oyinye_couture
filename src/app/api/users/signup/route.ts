@@ -9,6 +9,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Client } from "@upstash/qstash";
 import { sanitizeInput } from "@/helpers/sanitize";
 import { qstashClient } from "@/helpers/getHelpers";
+import { getUserData } from "@/helpers/getUserData";
 
 const redis = Redis.fromEnv();
 
@@ -51,43 +52,73 @@ export async function POST(req: NextRequest, res: NextResponse) {
     const cleanEmail = sanitizeInput(email);
     const cleanPassword = sanitizeInput(password);
 
-    const user = await models.User.findOne({
-      where: { email: cleanEmail },
-    });
-    //check if user laready exists
-    if (user) {
-      if (!user.email) {
-        user.email = cleanEmail;
-        await user.save();
-
-        return NextResponse.json(
-          { message: "User updated" },
-          {
-            status: 201,
-          }
-        );
-      } else if (enableEmailMarketing) {
-        user.enable_email_marketing = enableEmailMarketing;
-        await user.save();
-
-        return NextResponse.json(
-          { message: "User has joined mailing list" },
-          {
-            status: 201,
-          }
-        );
-      } else {
-        return NextResponse.json(
-          { message: "User already exists" },
-          {
-            status: 400,
-          }
-        );
-      }
-    }
-
+    //retrieving user id for users created earlier and also visitor id
+    const userId = getUserData(req);
     const visitId = getVisitData(req);
 
+    const user = await models.User.findOne({
+      where: { email: cleanEmail! },
+    });
+
+    //check if user with email exists
+    if (user) {
+      return NextResponse.json(
+        { message: "User already exists" },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    //check if user with id exists
+    if (userId) {
+      const extractedUser = await models.User.findByPk(userId);
+      extractedUser!.email = cleanEmail ?? "";
+      extractedUser!.first_name = cleanFirstName ?? "";
+      extractedUser!.last_name = cleanLastName ?? "";
+      extractedUser!.password = cleanPassword
+        ? await argon.hash(cleanPassword!)
+        : "";
+      extractedUser!.enable_email_marketing = enableEmailMarketing
+        ? true
+        : false;
+      await extractedUser!.save();
+
+      return NextResponse.json(
+        {
+          message: `${
+            enableEmailMarketing
+              ? "user has joined mailing list"
+              : "User created successfully"
+          }`,
+          success: true,
+          id: userId,
+        },
+        {
+          status: 201,
+        }
+      );
+    }
+
+    //checking if only email is provided
+    if (cleanEmail && !cleanPassword && !cleanFirstName && !cleanLastName) {
+      const newUser = await models.User.create({
+        id: (await crypto.randomBytes(6)).toString("hex"),
+        email: cleanEmail!,
+        visitor_id: visitId ?? "",
+      });
+
+      return NextResponse.json(
+        {
+          message: "User created successfully",
+          success: true,
+          id: newUser.id,
+        },
+        { status: 201 }
+      );
+    }
+
+    //checking if on signup page or footer to sign up for mailing list
     if (cleanPassword && cleanFirstName && cleanLastName && cleanEmail) {
       const hash = await argon.hash(cleanPassword);
 
@@ -96,13 +127,9 @@ export async function POST(req: NextRequest, res: NextResponse) {
         email: cleanEmail,
         password: hash,
         first_name: cleanFirstName,
+        visitor_id: visitId ?? "",
         last_name: cleanLastName,
       });
-
-      if (visitId) {
-        const visitor = await models.Visitor.findByPk(visitId);
-        await newUser.setVisitor(visitor!);
-      }
 
       //dispatching verification email job
       await qstashClient.publishJSON({
@@ -126,22 +153,14 @@ export async function POST(req: NextRequest, res: NextResponse) {
     } else {
       const newUser = await models.User.create({
         id: (await crypto.randomBytes(6)).toString("hex"),
-        email: cleanEmail,
-        enable_email_marketing: enableEmailMarketing ? true : false,
+        email: cleanEmail!,
+        enable_email_marketing: true,
+        visitor_id: visitId ?? "",
       });
-
-      if (visitId) {
-        const visitor = await models.Visitor.findByPk(visitId);
-        await newUser.setVisitor(visitor!);
-      }
 
       return NextResponse.json(
         {
-          message: `${
-            enableEmailMarketing
-              ? "user has joined mailing list"
-              : "User created successfully"
-          }`,
+          message: "user has joined mailing list",
           success: true,
           id: newUser.id,
         },

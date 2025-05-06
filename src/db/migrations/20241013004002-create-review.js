@@ -33,6 +33,22 @@ module.exports = {
       is_media: {
         type: Sequelize.BOOLEAN
       },
+      product_id: {
+        type: Sequelize.STRING,
+        references: {
+          model: 'products',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
+      },
+      author_id: {
+        type: Sequelize.STRING,
+        references: {
+          model: 'users',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

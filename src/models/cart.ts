@@ -1,32 +1,26 @@
 import {
-  BelongsToGetAssociationMixin,
-  BelongsToManyGetAssociationsMixin,
-  BelongsToSetAssociationMixin,
+ 
   CreationOptional,
   DataTypes,
   ForeignKey,
-  HasOneGetAssociationMixin,
   InferAttributes,
   InferCreationAttributes,
   Model,
   Sequelize,
 } from "sequelize";
-import Review from "./review";
 import Product from "./product";
-import crypto from "crypto";
-import User from "./user";
 
 class Cart extends Model<InferAttributes<Cart>, InferCreationAttributes<Cart>> {
   declare id: string;
   declare total_amount: number;
   declare items: any[];
+  declare user_id: ForeignKey<string>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
-  declare getUser: BelongsToGetAssociationMixin<User>;
-  declare setUser: BelongsToSetAssociationMixin<User, string>;
+
 
   static associate(models: any){
-    Cart.belongsTo(models.User);
+    Cart.belongsTo(models.User, { foreignKey: 'user_id', as: 'cartUser' });
 
   }
 
@@ -44,7 +38,7 @@ class Cart extends Model<InferAttributes<Cart>, InferCreationAttributes<Cart>> {
   ) {
 
     const updatedCartTotalAmount =
-     this.total_amount + price * quantity;
+     this.total_amount + (price * quantity);
   
     const updatedCartItems = this.items.slice();
     const existingCartItemIndex = updatedCartItems.findIndex(
@@ -92,7 +86,7 @@ class Cart extends Model<InferAttributes<Cart>, InferCreationAttributes<Cart>> {
 
     const existingCartItem = updatedCartItems[existingCartItemIndex];
     
-    const updatedCartTotalAmount = this.total_amount - price * quantity;
+    const updatedCartTotalAmount = this.total_amount - (price * quantity);
 
     if ((existingCartItem.quantity) - quantity === 0) {
       updatedCartItems.splice(existingCartItemIndex, 1);  // Remove item
@@ -122,6 +116,14 @@ class Cart extends Model<InferAttributes<Cart>, InferCreationAttributes<Cart>> {
       },
       items: DataTypes.JSONB,
       total_amount: DataTypes.DOUBLE,
+      user_id: {
+        type: DataTypes.STRING,
+        references: {
+          model: 'users',
+          key: 'id'
+        },
+        onDelete: 'CASCADE'
+      },
       createdAt: DataTypes.DATE,
       updatedAt: DataTypes.DATE
       

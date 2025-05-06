@@ -169,7 +169,7 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
                     href={item.href}
                     style={{ textDecorationThickness: "2px" }}
                     className={`${
-                      path === item.href && "underline underline-offset-4" 
+                      path === item.href && "underline underline-offset-4"
                     } hover:underline hover:underline-offset-4 text-[1rem] font-medium text-gray-600 font-sans`}
                   >
                     {item.name}
@@ -273,7 +273,7 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
             ))}
           </ul>
         )}
-        <ul className="flex flex-row items-center gap-x-7">
+        <ul className="flex flex-row items-center md:gap-x-7 gap-x-3">
           {!isCheckout && (
             <li onClick={showSearchModalHandler}>
               <i className="fa-solid cursor-pointer fa-search text-lg text-gray-600 transition-all duration-300 ease-out transform hover:scale-110"></i>
@@ -305,7 +305,18 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
       {isSearchModalOpen && <SearchBar onHideModal={hideSearchModalHandler} />}
       {isMobileModalOpen && (
         <MobileModal onClose={hideModalHandler}>
-          <ul className="inline-flex flex-col gap-y-6">
+          <ul>
+            <li>
+              <Link
+                href={authStatus ? "/profile" : "/login"}
+                className="inline-flex flex-row gap-x-3 items-center"
+              >
+                <i className="fa-solid cursor-pointer fa-user text-lg font-medium text-gray-500 font-sans"></i>
+                Login
+              </Link>
+            </li>
+          </ul>
+          <ul className="inline-flex flex-col gap-y-6 mt-3">
             {menuItems.map((item) => (
               <li key={item.name}>
                 {item.name !== "Collections" ? (

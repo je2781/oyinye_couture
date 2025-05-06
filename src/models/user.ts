@@ -8,7 +8,8 @@ import {
   BelongsToGetAssociationMixin,
   InferAttributes,
   BelongsToSetAssociationMixin,
-  Sequelize
+  Sequelize,
+  ForeignKey
 } from "sequelize";
 import Review from "./review";
 import Order from "./order";
@@ -37,26 +38,21 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare email: CreationOptional<string>;
   declare password: CreationOptional<string>;
   declare enable_email_marketing: CreationOptional<boolean>;
+  declare visitor_id: ForeignKey<string>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
-  declare getReviews: HasManyGetAssociationsMixin<Review>;
-  declare getOrders: HasManyGetAssociationsMixin<Order>;
-  declare getEnquiries: HasManyGetAssociationsMixin<Enquiry>;
-  declare getCart: HasOneGetAssociationMixin<Cart>;
-  declare getVisitor: BelongsToGetAssociationMixin<Visitor>;
-  declare setVisitor: BelongsToSetAssociationMixin<Visitor, string>;
 
   static associate(models: any) {
     // Define your associations here, referencing models dynamically
-    User.hasMany(models.Review);
+    User.hasMany(models.Review, { foreignKey: 'author_id', as: 'author' });
     
-    User.hasMany(models.Order);
+    User.hasMany(models.Order, { foreignKey: 'user_id', as: 'orderUser' });
     
-    User.hasMany(models.Enquiry);
+    User.hasMany(models.Enquiry, { foreignKey: 'user_id', as: 'user' });
     
-    User.hasOne(models.Cart);
+    User.hasOne(models.Cart, { foreignKey: 'user_id', as: 'cartUser' });
     
-    User.belongsTo(models.Visitor);
+    User.belongsTo(models.Visitor, { foreignKey: 'visitor_id', as: 'visitor' });
   }
 
   static initModel(sequelize: Sequelize){
@@ -126,6 +122,14 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
         },
         reset_token_expiry_date: {
           type: DataTypes.DATE,
+        },
+        visitor_id: {
+          type: DataTypes.STRING,
+          references: {
+            model: 'visitors',
+            key: 'id'
+          },
+          onDelete: 'CASCADE'
         },
         createdAt: DataTypes.DATE,
         updatedAt: DataTypes.DATE,
