@@ -60,7 +60,7 @@ export default function LoginPage({csrf}: any) {
         e.preventDefault();
         onSignup();
       }} 
-      className="flex flex-col mx-auto container items-center justify-start gap-y-4 bg-[#f7f7f7] pt-12 min-h-screen">
+      className="flex flex-col items-center justify-start gap-y-4 bg-[#f7f7f7] pt-12 min-h-screen">
         <h1 className="lg:text-5xl text-3xl font-sans lg:pb-5 pb-2 font-light">Create account</h1>
         <div className="flex flex-col lg:w-[480px] max-w-[80%] w-[360px]">
           <input

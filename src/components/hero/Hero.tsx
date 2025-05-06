@@ -1,20 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { createVisitorAction } from "@/app/actions";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import Link from "next/link";
 import "swiper/css";
 
 const Hero = () => {
-  useEffect(() => {
-    async function createActions() {
-      await createVisitorAction();
-    }
-
-    createActions();
-  }, []);
 
   return (
     <section className="w-full">

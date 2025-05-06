@@ -100,7 +100,7 @@ export default function Order({ country, csrf }: any) {
   }
 
   return (
-    <main className="container mx-auto bg-white w-full min-h-screen max-w-7xl lg:py-12 py-8 lg:px-12 px-8 flex flex-col gap-y-9 items-center">
+    <main className="container mx-auto bg-white w-full min-h-screen lg:py-12 py-8 pl-2 pr-3 lg:pl-0 lg:pr-6 flex flex-col gap-y-9 items-center">
       <article className="space-y-11">
         <header className="flex flex-col md:items-start items-center gap-y-4">
           <h1 className="text-4xl font-serif">Your Bespoke Order</h1>

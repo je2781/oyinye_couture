@@ -3,7 +3,7 @@
 import React, { useMemo } from "react";
 import ProductComponent from "../product/Product";
 import SecondaryHeader from "./filter/SecondaryHeader";
-import Pagination from "../layout/Pagination";
+import Pagination from "../layout/pagination/Pagination";
 import Setting from "./filter/Setting";
 import useWindowWidth from "../helpers/getWindowWidth";
 import { usePathname, useRouter } from "next/navigation";
@@ -227,7 +227,7 @@ export default function Collections({
       <main
       className={`w-full min-h-screen font-sans md:pt-12 pt-5 pb-6 gap-y-9 flex flex-col items-start relative no-products-section`}
       >
-        <header className="w-full container mx-auto px-6 max-w-7xl text-center md:text-start">
+        <header className="w-full container mx-auto pl-2 pr-3 lg:pl-0 lg:pr-6 text-center md:text-start">
           <h1 className="lg:text-4xl text-2xl">{collectionsCat === 'all' ? 'Products' : 'All Dresses'}</h1>
         </header>
         {data.products.length > 0

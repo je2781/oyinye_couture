@@ -1,5 +1,5 @@
 import { models } from "@/db/connection";
-import { sendMail } from "@/helpers/mailer";
+import { qstashClient } from "@/helpers/getHelpers";
 import { sanitizeInput } from "@/helpers/sanitize";
 import { EmailType } from "@/interfaces";
 import { Ratelimit } from "@upstash/ratelimit";
@@ -46,17 +46,19 @@ export async function POST(req: NextRequest) {
     });
 
     if(!user){
-        return NextResponse.json(
-            { message: "Invalid email"},
-            { status: 400 }
-          ); 
+      return NextResponse.json(
+        { message: "Invalid email"},
+        { status: 400 }
+      ); 
     }
 
-    //sending reset your password email
-    await sendMail({
+    //dispatching password reset email job
+    await qstashClient.publishJSON({
+      url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.reset]}`,
+      body: {
         email: user.email,
-        emailType: EmailType.reset,
         userId: user.id
+      },
     });
 
     return NextResponse.json(

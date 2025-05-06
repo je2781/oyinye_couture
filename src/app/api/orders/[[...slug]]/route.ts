@@ -1,8 +1,8 @@
 import { models } from '@/db/connection';
 import { getDataFromCart } from '@/helpers/getDataFromCart';
 import { getDataFromOrder } from '@/helpers/getDataFromOrder';
+import { qstashClient } from '@/helpers/getHelpers';
 import { getUserData } from '@/helpers/getUserData';
-import { sendMail } from '@/helpers/mailer';
 import { sanitizeInput } from '@/helpers/sanitize';
 import { EmailType } from '@/interfaces';
 import { Ratelimit } from '@upstash/ratelimit';
@@ -248,15 +248,18 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
             if(cartId){
               const cart = await models.Cart.findByPk(cartId);
               const extractedUser = await cart!.getUser();
-              //sending cart reminder
-              await sendMail({
-                emailType: EmailType.request,
-                email: extractedUser.email,
-                emailBody: {
-                  link: `${process.env.DOMAIN}/cart`,
-                  id: cartId,
-                  total: cart!.total_amount,
-                  items
+
+               //dispatching cart reminder email job
+              await qstashClient.publishJSON({
+                url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.request]}`,
+                body: {
+                  email: extractedUser.email,
+                  emailBody: {
+                    link: `${process.env.DOMAIN}/cart`,
+                    id: cartId,
+                    total: cart!.total_amount,
+                    items
+                  }
                 }
               });
 
@@ -282,19 +285,24 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
 
             if (order) {
               let user = await order.getUser();
-              await sendMail({
-                email: user.email,
-                userId: user.id,
-                emailType: EmailType.request,
-                emailBody: {
-                  link,
-                  id,
-                  total
-                }
+
+              //dispatching payment request email job
+              await qstashClient.publishJSON({
+                url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.request]}`,
+                body: {
+                  email: user.email,
+                    userId: user.id,
+                    emailBody: {
+                      link,
+                      id,
+                      total
+                    }
+                },
               });
 
+
               return NextResponse.json({
-                message: 'payment requst sent',
+                message: 'payment request sent',
                 success: true
               }, {
                 status: 201
@@ -325,7 +333,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
           const extractedUser = await order.getUser();
           //protecting against unauthorized access
           if(extractedUser.id !== userId){
-            throw new Error('No permissions');
+            throw new Error('Not Authorized');
           }
           
           order.payment_status = paymentStatus;

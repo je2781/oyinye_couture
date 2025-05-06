@@ -1,5 +1,5 @@
 
-import AdminHeader from "@/components/layout/AdminHeader";
+import AdminHeader from "@/components/layout/header/AdminHeader";
 import dynamic from 'next/dynamic'
 import { cookies, headers} from "next/headers";
 import { redirect } from "next/navigation";
@@ -103,6 +103,7 @@ export default async function Admin({
       userTitle: userData.title,
       id: userData.userId,
       avatar: userData.avatar,
+      csrf: csrfToken
     };
 
     const bodyProps = {

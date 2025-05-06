@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as argon from "argon2";
-import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
 import { models } from "@/db/connection";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { sanitizeInput } from "@/helpers/sanitize";
+import { qstashClient } from "@/helpers/getHelpers";
 
 const redis = Redis.fromEnv();
 
@@ -137,19 +137,24 @@ export async function PATCH(
     const savedUser = await user.save();
 
     if (checkingOut) {
-      // Send password creation email
-      await sendMail({
-        password: cleanPass,
-        email: savedUser.email,
-        emailType: EmailType.reminder,
+      //dispatching password creation email job
+      await qstashClient.publishJSON({
+        url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.reminder]}`,
+        body: {
+          password: cleanPass,
+          email: savedUser.email,
+        },
       });
 
-      //sending verification email
-      await sendMail({
-        email: savedUser.email,
-        emailType: EmailType.verify_buyer,
-        userId: savedUser.id,
+      //dispatching verification email job
+      await qstashClient.publishJSON({
+        url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.verify_buyer]}`,
+        body: {
+            email: savedUser.email,
+            userId: savedUser.id,
+        },
       });
+
     }
 
     return NextResponse.json(

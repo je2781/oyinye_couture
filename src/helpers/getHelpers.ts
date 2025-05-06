@@ -4,14 +4,18 @@ import {
   CartItemObj,
   CartState,
   DressColorObj,
-
-  Locale,
   SizeData,
 } from "@/interfaces";
 import axios from "axios";
 import crypto from "crypto";
 import toast from "react-hot-toast";
 import countries from "i18n-iso-countries";
+import { Client } from '@upstash/qstash';
+
+
+export const qstashClient = new Client({
+  token: process.env.QSTASH_TOKEN!,
+});
 
 
 let now = new Date();
@@ -2044,4 +2048,6 @@ export const getDataset = (orders: any[]) => {
   return [dailyData, dailyProductTypeData, dailyVisitorsData, dailyDeliveryOptionsData, dailyPaymentTypeData, monthData, monthProductTypeData, monthVisitorsData, monthDeliveryOptionsData, monthPaymentTypeData, annualData, annualProductTypeData, annualVisitorsData, annualDeliveryOptionsData, annualPaymentTypeData];
     
 }
+
+
 

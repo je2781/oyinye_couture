@@ -16,7 +16,7 @@ const ratelimit = new Ratelimit({
 });
 
 
-export async function POST(req: NextRequest, response: NextResponse) {
+export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for');
 

@@ -142,7 +142,7 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
             }`
       }
     >
-      <div className="flex items-center flex-row justify-between md:py-5 container mx-auto pl-2 pr-3 lg:pl-0 lg:pr-6 h-full">
+      <div className="flex items-center flex-row justify-between md:py-5 container mx-auto px-4 lg:pl-0 lg:pr-6 h-full">
         <button
           id="toggle-button"
           className="hover:bg-gray-600/10 focus:bg-gray-600/10  px-2 py-1 bg-transparent rounded-md lg:hidden inline-block"
@@ -168,7 +168,6 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
                   <Link
                     href={item.href}
                     style={{ textDecorationThickness: "2px" }}
-                    aria-current={`${path === item.href ? 'page': 'false' }`}
                     className={`${
                       path === item.href && "underline underline-offset-4" 
                     } hover:underline hover:underline-offset-4 text-[1rem] font-medium text-gray-600 font-sans`}

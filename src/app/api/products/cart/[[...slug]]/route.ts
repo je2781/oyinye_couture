@@ -97,14 +97,8 @@ export async function POST(
 
     //retrieving user cookie and user data
     const userId = getUserData(req);
-    const extractedUser = await models.User.findByPk(userId);
 
-    if (
-      params.slug &&
-      Array.isArray(params.slug) &&
-      params.slug.length > 0 &&
-      params.slug[0] === "remove"
-    ) {
+    if (Array.isArray(params.slug) && params.slug[0] === "remove") {
       const { quantity, variantId, price } = await req.json();
 
       const cartId = getDataFromCart(req);
@@ -115,8 +109,8 @@ export async function POST(
         const cartUser = await cart!.getUser();
 
         //protecting against unauthorized access
-        if (cartUser.id !== userId) {
-          throw new Error("No permissions");
+        if (cartUser.id != userId) {
+          throw new Error("Not Authorized");
         }
 
         await cart!.deductFromCart(variantId, quantity, price);
@@ -172,8 +166,15 @@ export async function POST(
       const cartId = getDataFromCart(req);
 
       const product = await models.Product.findByPk(id);
+      let extractedUser = await models.User.findByPk(userId!);
 
       if (!cartId) {
+        if(!extractedUser){
+          extractedUser = await models.User.create({
+            id: (await crypto.randomBytes(6)).toString("hex"),
+          });
+        }
+
         const newCart = await models.Cart.create({
           id: (await crypto.randomBytes(6)).toString("hex"),
           items: [
@@ -187,7 +188,7 @@ export async function POST(
           total_amount: parseFloat(totalAmount),
         });
         //saving joined table
-        newCart.setUser(extractedUser!);
+        await newCart.setUser(extractedUser);
 
         const remainingMilliseconds = 5184000000; // 2 months
         const expiryDate = new Date(Date.now() + remainingMilliseconds);
@@ -210,12 +211,12 @@ export async function POST(
 
         return res;
       } else {
-        const cart = await models.Cart.findByPk(cartId);
+        const cart = await models.Cart.findByPk(cartId!);
 
         const cartUser = await cart!.getUser();
         //protecting against unauthorized access
-        if (cartUser.id !== userId) {
-          throw new Error("No permissions");
+        if (cartUser.id != userId) {
+          throw new Error("Not Authorized");
         }
 
         await cart!.addToCart(
@@ -331,6 +332,8 @@ export async function PATCH(
       });
 
       return res;
+    } else {
+      throw new Error("Invalid cart id");
     }
   } catch (error) {
     const e = error as Error;

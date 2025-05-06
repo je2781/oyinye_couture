@@ -9,14 +9,12 @@ import { useSearchParams } from "next/navigation";
 
 export default function Footer({csrf}: any) {
   const [loader, setLoader] = React.useState(false);
-  const path = usePathname();
-  const searchParams = useSearchParams();
 
   return (
     <footer
-      className={`flex flex-col lg:gap-y-8 gap-y-5 bg-white items-center font-sans pb-7 md:pt-14 pt-3 px-6 mx-auto container`}
+      className={`flex flex-col lg:gap-y-8 gap-y-5 bg-white items-center font-sans pb-7 md:pt-14 pt-3 px-4 lg:pl-0 lg:pr-6 mx-auto container`}
     >
-      <header className="font-medium text-lg w-full flex lg:flex-row flex-col items-center gap-x-16 max-w-7xl">
+      <header className="font-medium text-lg w-full flex lg:flex-row flex-col items-center gap-x-16">
         <div className="inline-flex flex-col lg:w-[50%] w-full gap-y-3">
           <h2>Menu</h2>
           <hr className="border border-gray-200/50 inline-block" />

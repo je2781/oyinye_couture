@@ -1,20 +1,20 @@
 "use client";
 
 import React, { useEffect } from "react";
-import useWindowWidth from "../helpers/getWindowWidth";
-import Sidebar from "./Sidebar";
-import SearchBar from "../ui/SearchBar";
+import useWindowWidth from "../../helpers/getWindowWidth";
+import Sidebar from "../Sidebar";
+import SearchBar from "../../ui/SearchBar";
 import Image from "next/image";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import Link from "next/link";
 import useGlobal from "@/store/useGlobal";
-import { AdminSettingsModal, MobileModal } from "./Modal";
+import { AdminSettingsModal, MobileModal } from "../Modal";
 import { appsList, generateBase64FromMedia, getRouteNames, insightList, viewsList } from "@/helpers/getHelpers";
 
-export default function AdminHeader({sectionName, pathName, userName, userEmail, userTitle, id, avatar}: any) {
-  let timerId: NodeJS.Timeout | null  = null;
+export default function AdminHeader({sectionName, pathName, userName, userEmail, userTitle, id, avatar, csrf}: any) {
+  let timerId = React.useRef<NodeJS.Timeout | null>(null);
 
   const [isAdminSettingsOpen, setIsAdminSettingsOpen] = React.useState({
     profile: false,
@@ -23,7 +23,6 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
   const [isSearchModalOpen, setIsSearchModalOpen] = React.useState(false);
   const router = useRouter();
   const {isMobileModalOpen, setIsMobileModalOpen} = useGlobal();
-  let width = useWindowWidth();
   const [imageBase64, setImageBase64] = React.useState('');
   const [email, setEmail] = React.useState(userEmail);
   const [password, setPassword] = React.useState('*********');
@@ -37,11 +36,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
   }, [setIsMobileModalOpen]);
 
   useEffect(() => {
-    return () => {
-      if (timerId) {
-        clearTimeout(timerId);
-      }
-    };
+    return () => clearTimeout(timerId.current!);
   }, [timerId]);
 
   useEffect(() => {
@@ -74,7 +69,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
     if (mobileNav) {
       mobileNav.classList.remove('forward');
       mobileNav.classList.add('backward');
-      timerId = setTimeout(() => {
+      timerId.current = setTimeout(() => {
         setIsMobileModalOpen(false);
       }, 300); 
     } else {
@@ -100,7 +95,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
     if (adminModal) {
       adminModal.classList.remove('slide-down');
       adminModal.classList.add('slide-up');
-      timerId = setTimeout(() => {
+      timerId.current = setTimeout(() => {
       setIsAdminSettingsOpen({
         settings: false,
         profile: false,
@@ -117,7 +112,11 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
 
   const onLogout = async () => {
     try {
-      await axios.get("/api/users/logout");
+      await axios.post("/api/users/logout",{
+        headers:{
+          'x-csrf-token': csrf
+        }
+      });
       // Construct the new path
       const newPath = `/login`;
 

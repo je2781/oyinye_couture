@@ -1,8 +1,7 @@
-import { randomReference } from '@/helpers/getHelpers';
+import { qstashClient, randomReference } from '@/helpers/getHelpers';
 import { getVisitData } from '@/helpers/getVisitData';
 import * as argon from "argon2";
 import { NextResponse, type NextRequest } from 'next/server';
-import { sendMail } from '@/helpers/mailer';
 import { EmailType } from '@/interfaces';
 import crypto from 'crypto';
 import { models } from '@/db/connection';
@@ -201,19 +200,25 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             const visitor = await models.Visitor.findByPk(visitId);
             await newUser.setVisitor(visitor!);
           }
-          // Send password creation email
-          await sendMail({
-            password: newPassword,
-            email: newUser.email,
-            emailType: EmailType.reminder,
+
+          //dispatching password creation email job
+          await qstashClient.publishJSON({
+            url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.reminder]}`,
+            body: {
+                email: newUser.email,
+                password: newPassword
+            }
           });
-          
-          //sending verification email
-          await sendMail({
-            email: newUser.email,
-            emailType: EmailType.verify_account,
-            userId: newUser.id
+
+          //dispatching verification email job
+          await qstashClient.publishJSON({
+            url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.verify_account]}`,
+            body: {
+                email: newUser.email,
+                userId: newUser.id
+            }
           });
+
     
           if(params.slug![0] === 'custom-order'){
             //creating new appointment

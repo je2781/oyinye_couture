@@ -15,7 +15,7 @@ const QuickViewModalOverlay = (props: any) => {
 
 const FilterModalOverlay = (props: any) => {
   return (
-    <main id='filter-settings' aria-orientation="vertical" aria-labelledby='toggle-settings' className="z-[45] w-4/5 flex-col pb-12 pt-[70px] px-4 bg-white gap-y-6 h-screen flex fixed top-0 left-0">
+    <main id='filter-settings' aria-orientation="vertical" aria-labelledby='toggle-settings' className="z-[45] w-4/5 flex-col pb-12 pt-[70px] px-4 bg-white gap-y-6 h-full flex fixed top-0 left-0">
       {props.children}
       <h2 className="font-serif text-lg text-gray-500 absolute left-4 top-5 italic font-extralight">Filter</h2>
       <i className="fa-solid fa-xmark text-xl absolute right-4 top-5 cursor-pointer text-gray-500" onClick={props.onClick}></i>
@@ -43,7 +43,7 @@ const AdminSettingsModalOverlay = (props: any) => {
 
 const MobileModalOverlay = (props: any) => {
   return (
-    <main id='mobile-nav' aria-orientation="vertical" aria-labelledby='toggle-button' className={`${props.classes ? props.classes : 'bg-white px-4 pt-[70px]'} z-[45] w-4/5 flex-col pb-12 gap-y-6 h-screen flex fixed top-0 left-0`}>
+    <main id='mobile-nav' aria-orientation="vertical" aria-labelledby='toggle-button' className={`${props.classes ? props.classes : 'bg-white px-4 pt-[70px]'} z-[45] w-4/5 flex-col pb-12 gap-y-6 h-full flex fixed top-0 left-0`}>
       {props.children}
       <i className="fa-solid fa-xmark text-xl absolute right-4 top-5 cursor-pointer text-gray-500" onClick={props.onClick}></i>
     </main>

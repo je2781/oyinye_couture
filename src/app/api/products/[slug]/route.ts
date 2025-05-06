@@ -16,7 +16,7 @@ const ratelimit = new Ratelimit({
 
 
 
-export async function GET(request: NextRequest, { params }: { params: { slug: string } }, res: NextResponse) {
+export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
   try {
 
     const ip = request.headers.get('x-forwarded-for');
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
           [Op.and]: [
             {
               title: {
-                [Op.like]: `% %${query}%`
+                [Op.like]: `%${query}%`
               }
             },
             { is_hidden: false },

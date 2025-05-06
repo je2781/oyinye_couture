@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Pagination from "../layout/Pagination";
+import Pagination from "../layout/pagination/Pagination";
 import React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -183,6 +183,7 @@ export default function SearchResults({
     sort,
     sortByList,
     path,
+    csrf
   ]);
 
   React.useEffect(() => {
@@ -286,7 +287,7 @@ export default function SearchResults({
         />
       </div>
       <main
-        className={`bg-white w-full min-h-screen md:pt-12 pt-5 pb-6 flex flex-col md:pl-12 md:pr-0 px-3 container relative no-products-section ${
+        className={`bg-white w-full min-h-screen md:pt-12 pt-5 pb-6 flex flex-col pl-2 pr-3 lg:pl-0 lg:pr-6 container mx-auto relative no-products-section ${
           data.products.length === 0 &&
           !lowerBoundary &&
           !upperBoundary &&

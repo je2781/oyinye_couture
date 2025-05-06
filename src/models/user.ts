@@ -34,7 +34,7 @@ class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   declare verify_token_expiry_date: CreationOptional<Date | null>;
   declare reset_token: CreationOptional<string | null>;
   declare reset_token_expiry_date: CreationOptional<Date | null>;
-  declare email: string;
+  declare email: CreationOptional<string>;
   declare password: CreationOptional<string>;
   declare enable_email_marketing: CreationOptional<boolean>;
   declare createdAt: CreationOptional<Date>;

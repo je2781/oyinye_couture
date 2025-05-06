@@ -23,7 +23,6 @@ import Logo from '../../../public/oyinye.png';
 import toast from "react-hot-toast";
 import Product from "../product/Product";
 import Reviews from "../reviews/Reviews";
-import { createViewedProductsAction } from "@/app/actions";
 import { useRouter } from "next/navigation";
 
 import './ProductDetail.css';
@@ -49,14 +48,6 @@ const ProductDetail = ({
     let timerId =  React.useRef<NodeJS.Timeout | null>(null);
     const router = useRouter();
 
-
-    React.useEffect(() => {
-        async function getServerAction(){
-            await createViewedProductsAction(paramsId);
-        }
-        getServerAction();
-    }, [paramsId]);
-
     const [selectedColor, setSelectedColor] = useState<string>(productColor);
     const [selectedSize, setSelectedSize] = useState<string>(productSizes.find(
         (size: any) => size.variant_id === paramsId
@@ -71,8 +62,12 @@ const ProductDetail = ({
     const [articleIsNotSticky, setArticleIsNotSticky] = React.useState(false);
 
     React.useEffect(() => {
-        return () => clearTimeout(timerId.current!);
-    }, [timerId]);
+        async function setViewedProductCookie(){
+            await fetch(
+             `${process.env.NEXT_PUBLIC_DOMAIN}/api/cookies/${paramsId}`  );
+        }
+        setViewedProductCookie();
+    }, [paramsId]);
 
     
     React.useEffect(() => {
@@ -140,7 +135,9 @@ const ProductDetail = ({
 
         sendCartData();
 
-    }, [isSavingCart, productId, quantity, selectedColor, selectedSize, sizesObj, totalAmount]);
+        return () => clearTimeout(timerId.current!);
+
+    }, [isSavingCart, productId, quantity, selectedColor, selectedSize, sizesObj, totalAmount, csrf]);
 
 
     function handleColorChange(e: React.MouseEvent){
@@ -341,7 +338,7 @@ const ProductDetail = ({
     }
 
     const mainContent = (
-        <main className="container mx-auto bg-white lg:gap-y-28 gap-y-14 w-full min-h-screen md:px-7 px-2 lg:pt-0 pt-8 flex flex-col">
+        <main className="container mx-auto bg-white lg:gap-y-28 gap-y-14 w-full min-h-screen pl-2 pr-3 lg:pl-0 lg:pr-6 lg:pt-0 pt-8 flex flex-col">
             <section className="flex lg:flex-row flex-col gap-y-7">
                 <article className={`flex flex-col gap-y-2 w-full lg:w-[46%] ${articleIsNotSticky ? '' : 'lg:sticky lg:top-0'} lg:h-full lg:pt-8`}>
                     <Swiper
@@ -779,7 +776,7 @@ const ProductDetail = ({
                     {relatedProducts.slice(0, 4).map((product: any, i: number) => <Product key={i} product={product} isOnDetailPage={true}/>)}
                     </section>
                 </>}
-                <Reviews productReviews={productReviews} product={productTitle}/>
+                <Reviews productReviews={productReviews} product={productTitle} csrf={csrf}/>
             </section>
         </main>
     );

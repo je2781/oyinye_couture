@@ -36,10 +36,10 @@ import multiMonthPlugin from '@fullcalendar/multimonth';
 import interactionPlugin from '@fullcalendar/interaction';
 import 'react-calendar/dist/Calendar.css';
 import useWindowWidth from "../helpers/getWindowWidth";
-import { AdminSettingsModal, MobileModal } from "../layout/Modal";
+import { AdminSettingsModal } from "../layout/Modal";
 import crypto from "crypto";
 import useGlobal from "@/store/useGlobal";
-import AdminPagination from "../layout/AdminPagination";
+import AdminPagination from "../layout/pagination/AdminPagination";
 import { Chart, LinearScale, CategoryScale, BarElement, PointElement, LineElement, Filler, Legend, ArcElement } from 'chart.js';
 
 
@@ -61,7 +61,6 @@ export default function Body({
   extractedOrders,
   data, 
   enquiriesData,
-  visitors,
   searchData,
   csrf
 }: any) {
@@ -85,7 +84,6 @@ export default function Body({
 
   let listOfFeatures = '';
   const path = usePathname();
-  const router = useRouter();
   const searchParams = useSearchParams();
   let productObj = React.useRef<CartItemObj>({});
   let frontBase64ImagesObj = React.useRef<Base64ImagesObj>({});
@@ -177,10 +175,9 @@ export default function Body({
   const [deliveryOptionsData, setDeliveryOptionsData] = React.useState(Object.values(monthDeliveryOptionsData)[4]);
   const [paymentTypeData, setPaymentTypeData] = React.useState(Object.values(monthPaymentTypeData)[4]);
   let width = useWindowWidth();
-  const { isMobileModalOpen, setIsMobileModalOpen } = useGlobal();
   const [loader, setLoader] = React.useState(false);
  
-  let timerId: NodeJS.Timeout | null = null;
+  let timerId = React.useRef<NodeJS.Timeout | null>(null);;
 
   let currentBgColors: string[] = [];
 
@@ -189,11 +186,7 @@ export default function Body({
   });
 
   React.useEffect(() => {
-    return () => {
-      if (timerId) {
-        clearTimeout(timerId);
-      }
-    };
+    return () => clearTimeout(timerId.current!);
   }, [timerId]);
 
 
@@ -448,7 +441,7 @@ export default function Body({
   }
 
   React.useEffect(() => {
-    const timerId = setTimeout(async () => {
+    timerId.current = setTimeout(async () => {
       if(orderListLength !== '10'){
         try {
           setLoader(true);
@@ -463,7 +456,7 @@ export default function Body({
       }
     }, 3000);
 
-    return () => clearTimeout(timerId);
+    return () => clearTimeout(timerId.current!);
   }, [orderListLength]);
 
   React.useEffect(() => {
@@ -492,7 +485,7 @@ export default function Body({
       if (adminModal) {
         adminModal.classList.remove('slide-down');
         adminModal.classList.add('slide-up');
-        timerId = setTimeout(() => {
+        timerId.current = setTimeout(() => {
           setIsAdminSettingsOpen(false);
 
         }, 300); 
@@ -501,19 +494,6 @@ export default function Body({
 
       }
   }
-
-  const hideMobileModalHandler = () => {
-    let mobileNav = document.querySelector("#mobile-nav") as HTMLElement;
-    if (mobileNav) {
-      mobileNav.classList.remove("forward");
-      mobileNav.classList.add("backward");
-      timerId = setTimeout(() => {
-        setIsMobileModalOpen(false);
-      }, 300);
-    } else {
-      setIsMobileModalOpen(false);
-    }
-  };
 
   const sortOrderList = (e: React.MouseEvent, type: string, key = 'id') => {
     let item = e.currentTarget;
@@ -568,13 +548,6 @@ export default function Body({
     setOrders(sortedOrders);
   };
 
-  React.useEffect(() => {
-    let mobileNav = document.querySelector("#mobile-nav") as HTMLElement;
-    if (isMobileModalOpen && mobileNav) {
-      mobileNav.classList.add("forward");
-      mobileNav.classList.remove("backward");
-    }
-  }, [isMobileModalOpen]);
   
   React.useEffect(() => {
     let adminModal = document.querySelector('#admin-settings-modal') as HTMLElement;

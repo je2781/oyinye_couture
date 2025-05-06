@@ -33,6 +33,7 @@ export default async function Home() {
   const h = headers();
   const csrfToken = h.get('X-CSRF-Token') || 'missing';
 
+  //protecting public routes
   const cookieStore = cookies();
   const isAdmin = Boolean(cookieStore.get("admin_status")?.value);
   const token = cookieStore.get("access_token")?.value;

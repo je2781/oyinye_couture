@@ -15,7 +15,6 @@ export default function ResetPasswordPage({ csrf }: any) {
 
   const router = useRouter();
   const [token, setToken] = React.useState("");
-  const [error, setError] = React.useState(false);
   const [buttonDisabled, setButtonDisabled] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
@@ -97,7 +96,7 @@ export default function ResetPasswordPage({ csrf }: any) {
             onReset();
           }
         }}
-        className="flex flex-col items-center mx-auto container justify-start gap-y-4 bg-[#f7f7f7] pt-12 min-h-screen"
+        className="flex flex-col items-center justify-start gap-y-4 bg-[#f7f7f7] pt-12 min-h-screen"
       >
         <h1 className="lg:text-5xl text-3xl font-sans pb-2 font-light">
           {token.length > 0 ? "New Password" : "Reset your password"}

@@ -19,7 +19,7 @@ const ProductDetailComponent = dynamic(
 async function getData(product: string, color: string, variantId: string) {
   const cookieStore = cookies();
   const cartId = cookieStore.get("cart")?.value;
-  const viewedProducts = cookieStore.get("viewed_p")?.value;
+  const viewedProducts = cookieStore.get('viewed_p')?.value;
 
   if (cartId && cartId.length > 0) {
     const [productDataRes, cartDataRes] = await Promise.all([

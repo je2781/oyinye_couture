@@ -306,6 +306,10 @@ const Reviews = ({productReviews, product, csrf}: any) => {
                 likes: likes[index],
                 dislikes: dislikes[index],
                 reviewId: review._id
+            },{
+                headers:{
+                    'x-csrf-token': csrf
+                }
             });
         } catch (error: any) {
             setLoader(false);
@@ -332,6 +336,10 @@ const Reviews = ({productReviews, product, csrf}: any) => {
                 likes: likes[index],
                 dislikes: dislikes[index],
                 reviewId: review._id
+            },{
+                headers:{
+                    'x-csrf-token': csrf
+                }
             });
         } catch (error: any) {
             toast.error(error.message);

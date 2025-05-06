@@ -36,18 +36,8 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
     }  = {};
     let frontBase64ImagesObj: Base64ImagesObj = {};
     
-    let timerId = React.useRef<NodeJS.Timeout | null>(null)
+    let timerId = React.useRef<NodeJS.Timeout | null>(null);
 
-    React.useEffect(() => {
-        return () => {
-            if(timerId.current){
-                clearTimeout(timerId.current);
-            }
-        };
-
-    }, [timerId]);
-
-    
     //sorting extracted sizes for all dress colors and storing them for later use
     for(let color of product.colors){
         if(!isSearchProduct){
@@ -101,6 +91,9 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
         }
 
         sendCartData();
+
+        return () => clearTimeout(timerId.current!);
+
     }, [isSavingCart, product._id, quantity, selectedColor, selectedSize, sizesObj, totalAmount]);
 
     function handleColorChange(e: React.MouseEvent){

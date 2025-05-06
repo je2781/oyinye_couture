@@ -33,7 +33,8 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
   const [isCreatingUserProfile, setIsCreatingUserProfile] = useState(false);
   const [totalAmount, setTotalAmount] = useState(total);
-  const [cartI, setCartI] = useState(cartItems);
+  // Reference to track the previous cartItems
+  const prevCartItems = useRef(cartItems);
   const [isIncrementingCart, setIsIncrementingCart] = useState<
     InitialCartData
   >();
@@ -42,13 +43,20 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
   let windowWidth = useWindowWidth();
 
   useEffect(() => {
-    updateCart(cartI);
-  }, [cartI, updateCart]);
+    
+    if (
+      cartItems &&
+      JSON.stringify(cartItems) !== JSON.stringify(prevCartItems.current)
+    ) {
+      updateCart(cartItems);
+      prevCartItems.current = cartItems; // Update the previous cartItems reference
+    }
+  }, [cartItems, updateCart]);
 
-  if (cartI.length > 0) {
+  if (prevCartItems.current.length > 0) {
     //extracting product details to populate the cart page
     extractProductDetails(
-      cartI,
+      prevCartItems.current,
       cartItemObj.current,
       frontBase64ImagesObj.current
     );
@@ -88,7 +96,7 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
           cartItemObj.current = {};
           frontBase64ImagesObj.current = {};
 
-          setCartI(items);
+          prevCartItems.current = items;
           extractProductDetails(
             items,
             cartItemObj.current,
@@ -114,7 +122,7 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
     }
 
     sendCartData();
-  }, [isIncrementingCart]);
+  }, [isIncrementingCart, csrf]);
 
   useEffect(() => {
     async function removeCartData() {
@@ -140,7 +148,7 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
           cartItemObj.current = {};
           frontBase64ImagesObj.current = {};
 
-          setCartI(items);
+          prevCartItems.current = items;
           extractProductDetails(
             items,
             cartItemObj.current,
@@ -166,7 +174,7 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
     }
 
     removeCartData();
-  }, [isDeductingCart]);
+  }, [isDeductingCart, csrf]);
 
   useEffect(() => {
     const timerId = setTimeout(async () => {
@@ -188,6 +196,11 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
           if (res.data.id) {
             await axios.patch("/api/products/cart/update", {
               userId: res.data.id,
+            },
+            {
+              headers: {
+                "x-csrf-token": csrf,
+              },
             });
           }
         } catch (error: any) {
@@ -204,7 +217,7 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
         clearTimeout(timerId);
       }
     };
-  }, [email]);
+  }, [email, csrf]);
 
   const handleQuantityChange = (
     index: number,
@@ -280,7 +293,7 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
   return (
     <>
       {totalAmount === 0 ? (
-        <main className="min-h-screen w-full container mx-auto md:px-16 px-8 md:pt-12 pt-5 flex flex-col gap-y-5 justify-center items-center">
+        <main className="min-h-screen w-full container mx-auto pl-2 pr-3 lg:pl-0 lg:pr-6 md:pt-12 pt-5 flex flex-col gap-y-5 justify-center items-center">
           <i className="fa-solid cursor-pointer fa-bag-shopping text-gray-600 text-3xl"></i>
           <h1 className="font-sans text-2xl italic">Cart is Empty!</h1>
           <button className="bg-gray-700 text-[1rem] font-sans text-white px-7 py-3 hover:ring-2 ring-gray-700 border-0">

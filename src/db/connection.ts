@@ -25,13 +25,12 @@ const models = {
   Visitor: Visitor.initModel(sequelize),
 };
 
-Cart.associate({ User });
-User.associate({ Review, Order, Enquiry, Cart, Visitor });
-Review.associate({ Product, User });
-Product.associate({ Review });
-Order.associate({ User });
-Enquiry.associate({ User });
-Cart.associate({ User });
+Cart.associate(models);
+User.associate(models);
+Review.associate(models);
+Product.associate(models);
+Order.associate(models);
+Enquiry.associate(models);
 
 (async () => await sequelize.sync({ alter: true }))();
 // `alter: true` modifies the tables to match the model

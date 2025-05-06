@@ -11,7 +11,7 @@ const ratelimit = new Ratelimit({
   analytics: true,
 });
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {   
 
     const ip = req.headers.get('x-forwarded-for');
@@ -33,15 +33,9 @@ export async function GET(req: NextRequest) {
       { message: "logout successful", success: true},
     );
 
-    res.cookies.set('access_token', '', {
-        httpOnly: true,
-        maxAge: 0
-    });
+    res.cookies.delete('access_token');
 
-    res.cookies.set('admin_status', '', {
-        httpOnly: true,
-        maxAge: 0
-    });
+    res.cookies.delete('admin_status');
     return res;
   } catch (error: any) {
     return NextResponse.json(

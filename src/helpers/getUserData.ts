@@ -5,7 +5,7 @@ export const getUserData = (req: NextRequest) => {
   const userId = req.cookies.get("user")?.value;
 
   if (!userId) {
-    return '';
+    return null;
   }
 
   return userId;

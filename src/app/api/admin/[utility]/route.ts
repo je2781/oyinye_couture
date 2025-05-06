@@ -1,4 +1,4 @@
-import { sendMail } from '@/helpers/mailer';
+import { qstashClient } from '@/helpers/getHelpers';
 import { sanitizeInput } from '@/helpers/sanitize';
 import { EmailType } from '@/interfaces';
 import { Ratelimit } from '@upstash/ratelimit'
@@ -42,22 +42,26 @@ export async function POST(req: NextRequest, res: NextResponse) {
         const cleanContact = sanitizeInput(contact);
         const cleanDate = sanitizeInput(date);
 
-        await sendMail({
-            emailType: EmailType.reminder,
+         //dispatching reminder email job
+        await qstashClient.publishJSON({
+        url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.reminder]}`,
+        body: {
             email: cleanEmail,
             emailBody: {
                 message: cleanMsg,
                 contact: cleanContact,
                 date: cleanDate
             }
+        }
         });
 
-            return NextResponse.json({
-                message: 'reminder sent',
-                
-            }, {
-                status: 201
-            });
+
+        return NextResponse.json({
+            message: 'reminder sent',
+            
+        }, {
+            status: 201
+        });
         
 
     } catch (error) {
