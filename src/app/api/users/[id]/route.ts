@@ -1,15 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as argon from "argon2";
-import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
 import { models } from "@/db/connection";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import { sanitizeInput } from "@/helpers/sanitize";
+import { qstashClient } from "@/helpers/getHelpers";
 
+const redis = Redis.fromEnv();
+
+// Allow 5 requests per 10 seconds per IP
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "10s"),
+  analytics: true,
+});
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
+  res: NextResponse
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for');
+
+    const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+    if (!success) {
+      const res = NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429 }
+      );
+      res.headers.set('X-RateLimit-Limit', limit.toString());
+      res.headers.set('X-RateLimit-Remaining', remaining.toString());
+      res.headers.set('X-RateLimit-Reset', reset.toString());
+      return res;
+    }
 
     const user = await models.User.findByPk(params.id);
 
@@ -25,7 +51,7 @@ export async function GET(
       {
         success: true,
         userEmail: user.email,
-        title: user.is_admin ? 'Administrator' : 'Guest',
+        title: user.is_admin ? "Administrator" : "Guest",
         userId: user.id,
         userName: `${user.first_name} ${user.last_name}`,
         shippingInfo: user.shipping_info ?? "",
@@ -35,7 +61,6 @@ export async function GET(
       },
       { status: 200 }
     );
-
   } catch (error: any) {
     return NextResponse.json(
       {
@@ -51,9 +76,37 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const ip = req.headers.get('x-forwarded-for');
+
+    const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+    if (!success) {
+      const res = NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429 }
+      );
+      res.headers.set('X-RateLimit-Limit', limit.toString());
+      res.headers.set('X-RateLimit-Remaining', remaining.toString());
+      res.headers.set('X-RateLimit-Reset', reset.toString());
+      return res;
+    }
 
     const reqBody = await req.json();
-    const { firstName, lastName, password, enableEmailMarketing = false, avatar, checkingOut, email} = reqBody;
+
+    const {
+      firstName,
+      lastName,
+      password,
+      enableEmailMarketing = false,
+      avatar,
+      checkingOut,
+      email,
+    } = reqBody;
+
+    const cleanEmail = sanitizeInput(email);
+    const cleanFirstName = sanitizeInput(firstName);
+    const cleanLastName = sanitizeInput(lastName);
+    const cleanPass = sanitizeInput(password);
 
     const user = await models.User.findByPk(params.id);
 
@@ -64,42 +117,45 @@ export async function PATCH(
         { status: 200 }
       );
     }
-    
+
     // Update user fields
-    if(password && password.length > 0){
-      // Hash the password
-      const hash = await argon.hash(password);
+    if (cleanPass && cleanPass.length > 0) {
+      // Hash the passowrd
+      const hash = await argon.hash(cleanPass);
       user.password = hash;
     }
     user.enable_email_marketing = enableEmailMarketing;
-    user.first_name = firstName;
-    user.last_name = lastName;
-    if(avatar){
+    user.first_name = cleanFirstName;
+    user.last_name = cleanLastName;
+    if (avatar) {
       user.avatar = avatar;
     }
-    if(email){
-      user.email = email;
+    if (cleanEmail) {
+      user.email = cleanEmail;
     }
 
     const savedUser = await user.save();
 
-    if(checkingOut){
-
-      // Send password creation email
-      await sendMail({
-        password,
-        email: savedUser.email,
-        emailType: EmailType.reminder,
+    if (checkingOut) {
+      //dispatching password creation email job
+      await qstashClient.publishJSON({
+        url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.reminder]}`,
+        body: {
+          password: cleanPass,
+          email: savedUser.email,
+        },
       });
 
-      //sending verification email
-      await sendMail({
-        email: savedUser.email,
-        emailType: EmailType.verify_buyer,
-        userId: savedUser.id
+      //dispatching verification email job
+      await qstashClient.publishJSON({
+        url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.verify_buyer]}`,
+        body: {
+            email: savedUser.email,
+            userId: savedUser.id,
+        },
       });
+
     }
-
 
     return NextResponse.json(
       {
@@ -109,7 +165,6 @@ export async function PATCH(
       },
       { status: 200 }
     );
-
   } catch (error: any) {
     return NextResponse.json(
       {

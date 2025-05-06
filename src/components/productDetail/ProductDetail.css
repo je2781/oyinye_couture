@@ -6,7 +6,7 @@
     margin-top: 10px;
 }
 
-.swiper-pagination-bullet {
+.custom-pagination .swiper-pagination-bullet {
     width: 65px !important;
     height: 65px !important;
     /* object-fit: contain !important; */
@@ -19,7 +19,7 @@
     opacity: 1 !important;
   }
 
-  .swiper-pagination-bullet-active{
+  .custom-pagination .swiper-pagination-bullet-active{
     border-color: #000 !important; /* Active border color */
   }
 
@@ -37,7 +37,7 @@
   
 
   @media all and (min-width: 768px){
-    .swiper-pagination-bullet {
+    .custom-pagination .swiper-pagination-bullet {
         width: 100px !important;
         height: 100px !important;
       }

@@ -4,7 +4,7 @@ import Image from "next/image";
 import './Sidebar.css';
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from '@/i18n/routing';
+import { useRouter } from 'next/navigation';
 import { appsList, insightList, getRouteNames, viewsList } from "@/helpers/getHelpers";
 
 export default function Sidebar({pathName}: any){

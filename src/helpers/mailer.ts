@@ -5,6 +5,7 @@ import sgMail from '@sendgrid/mail';
 import crypto from "crypto";
 import ejs from "ejs";
 import path from "path";
+import { months } from "./getHelpers";
 
 
 const resetPasswordEmailData = async (
@@ -42,7 +43,7 @@ const reminderData = async (
   body?: string,
 ) => {
   const title = password ? "Your new password." : 'Appointment';
-  const date = reminderDate;
+  const date = reminderDate ?? `${months[new Date().getMonth()]} ${new Date().getDate()}. ${new Date().getFullYear()}`;
   const message =
     password ? "Use this password to login into your account and access restricted content. If you did not register your details with us, you can ignore and delete this email.": body;
 
@@ -131,10 +132,12 @@ const requestData = async (
   return ejs.renderFile(templatePath, { ...ejsData });
 };
 
+
 export const sendMail = async ({ password, email, emailType, userId, emailBody }: SendMail) => {
   try {
+    
     crypto.randomBytes(32, async (err, buffer) => {
-      let resetPasswordEmailBody, updatedTo, verifyEmailBody, reminderEmailBody, paymentRequestBody  = '';
+      let resetPasswordEmailBody, updatedTo, verifyEmailBody, reminderEmailBody, paymentRequestBody = '';
 
       //create a hash token
       const hashedToken = buffer.toString("hex");
@@ -150,7 +153,7 @@ export const sendMail = async ({ password, email, emailType, userId, emailBody }
 
       } else if(emailType === EmailType.reminder) {
         if(password){
-
+          reminderEmailBody = await reminderData(email, password, undefined, undefined);
         }else{
           reminderEmailBody = await reminderData(emailBody.contact, undefined, emailBody.date, emailBody.message);
         }
@@ -184,6 +187,7 @@ export const sendMail = async ({ password, email, emailType, userId, emailBody }
       
     });
   } catch (error) {
+
     throw error;
   }
 };

@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import React, { useEffect } from "react";
-import { useRouter } from '@/i18n/routing';
+import { useRouter } from 'next/navigation';
 import axios from "axios";
 import toast from "react-hot-toast";
-import useGlobal from "@/store/useGlobal";
 
-export default function LoginPage() {
+export default function LoginPage({csrf}: any) {
   const [user, setUser] = React.useState({
     firstName: "",
     lastName: "",
@@ -37,7 +36,11 @@ export default function LoginPage() {
   async function onSignup() {
     try {
         setIsLoading(true);
-        const res = await axios.post("/api/users/signup", user);
+        const res = await axios.post("/api/users/signup", user,{
+          headers: {
+            "x-csrf-token": csrf,
+          }
+        });
 
         if(res.data.success){
           router.push(`/login`);
@@ -110,7 +113,7 @@ export default function LoginPage() {
             onClick={onSignup}
             type="submit"
             className={`px-9 py-3 font-sans text-white ${
-              buttonDisabled ? "bg-gray-400" : "bg-black hover:ring-2 ring-black"
+              buttonDisabled ? "bg-black/70 cursor-not-allowed" : "bg-black hover:ring-2 ring-black cursor-pointer"
             } `}
           >
             {isLoading

@@ -1,14 +1,42 @@
 import { models } from '@/db/connection';
 import { getDataFromCart } from '@/helpers/getDataFromCart';
 import { getDataFromOrder } from '@/helpers/getDataFromOrder';
-import { sendMail } from '@/helpers/mailer';
+import { qstashClient } from '@/helpers/getHelpers';
+import { getUserData } from '@/helpers/getUserData';
+import { sanitizeInput } from '@/helpers/sanitize';
 import { EmailType } from '@/interfaces';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 import axios from 'axios';
 import { NextResponse, type NextRequest } from 'next/server';
 
+const redis = Redis.fromEnv();
 
-export async function GET(request: NextRequest, { params }: { params: { slug?: string[] } }) {
+// Allow 5 requests per 10 seconds per IP
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "10s"),
+  analytics: true,
+});
+
+
+export async function GET(request: NextRequest, { params }: { params: { slug?: string[] } }, res: NextResponse) {
   try {
+
+      const ip = request.headers.get('x-forwarded-for');
+
+      const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+      if (!success) {
+        const res = NextResponse.json(
+          { error: 'Rate limit exceeded' },
+          { status: 429 }
+        );
+        res.headers.set('X-RateLimit-Limit', limit.toString());
+        res.headers.set('X-RateLimit-Remaining', remaining.toString());
+        res.headers.set('X-RateLimit-Reset', reset.toString());
+        return res;
+      }
 
       if(params.slug){
         const searchParams = request.nextUrl.searchParams;
@@ -57,7 +85,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
                   price = color.sizes.find((size: any) => size.variant_id === item.variant_id).price;
                   size = color.sizes.find((size: any) => size.variant_id === item.variant_id).number;
                   frontBase64Images = color.image_front_base64;
-                  colorType = color.type;
+                  colorType = color.names;
                 }
               });
               return {
@@ -108,7 +136,24 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
 export async function POST(request: NextRequest, { params }: { params: { slug?: string[] } }) {
     try {
       
+
+      const ip = request.headers.get('x-forwarded-for');
+
+      const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+      if (!success) {
+        const res = NextResponse.json(
+          { error: 'Rate limit exceeded' },
+          { status: 429 }
+        );
+        res.headers.set('X-RateLimit-Limit', limit.toString());
+        res.headers.set('X-RateLimit-Remaining', remaining.toString());
+        res.headers.set('X-RateLimit-Reset', reset.toString());
+        return res;
+      }
+      
       const [orderId, checkoutSessionToken] = getDataFromOrder(request);
+      const userId = getUserData(request);
 
       //retrieving order data for the current checkout session
       const order = await models.Order.findByPk(orderId);
@@ -116,7 +161,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
 
       if(params.slug){
         switch (params.slug[1]) {
-          case 'transaction-status':
+          case 'transaction-status': {
             const reqBody = await request.json();
             const {txn_ref, merchant_code, amount} = reqBody;
 
@@ -171,8 +216,8 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
 
               
             }
-        
-          case 'payment-status':
+          }
+          case 'payment-status':{
             const {paymentStatus} = await request.json();
 
             if (order) {
@@ -194,22 +239,27 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
                 status: 200
               });
             }
-          case 'reminder':
+          }
+          case 'reminder':{
             const {items} = await request.json();
+
             const cartId = getDataFromCart(request);
 
             if(cartId){
               const cart = await models.Cart.findByPk(cartId);
               const extractedUser = await cart!.getUser();
-              //sending cart reminder
-              await sendMail({
-                emailType: EmailType.request,
-                email: extractedUser.email,
-                emailBody: {
-                  link: `${process.env.DOMAIN}/cart`,
-                  id: cartId,
-                  total: cart!.total_amount,
-                  items
+
+               //dispatching cart reminder email job
+              await qstashClient.publishJSON({
+                url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.request]}`,
+                body: {
+                  email: extractedUser.email,
+                  emailBody: {
+                    link: `${process.env.DOMAIN}/cart`,
+                    id: cartId,
+                    total: cart!.total_amount,
+                    items
+                  }
                 }
               });
 
@@ -229,25 +279,30 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
             }
 
             
-        
-          case 'payment-request':
+          }
+          case 'payment-request': {
             const {link, id, total} = await request.json();
 
             if (order) {
               let user = await order.getUser();
-              await sendMail({
-                email: user.email,
-                userId: user.id,
-                emailType: EmailType.request,
-                emailBody: {
-                  link,
-                  id,
-                  total
-                }
+
+              //dispatching payment request email job
+              await qstashClient.publishJSON({
+                url: `${process.env.DOMAIN}/api/mailer/${EmailType[EmailType.request]}`,
+                body: {
+                  email: user.email,
+                    userId: user.id,
+                    emailBody: {
+                      link,
+                      id,
+                      total
+                    }
+                },
               });
 
+
               return NextResponse.json({
-                message: 'payment requst sent',
+                message: 'payment request sent',
                 success: true
               }, {
                 status: 201
@@ -260,7 +315,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
                 status: 200
               });
             }
-
+          }
         }
 
       
@@ -268,12 +323,19 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
         const reqBody = await request.json();
         const {shippingInfo, billingInfo, saveBillingInfo, saveShippingInfo, paymentType, status, paymentStatus, shippingMethod, userEmail} = reqBody;
 
+        const cleanEmail = sanitizeInput(userEmail);
         const extractedUser = await models.User.findOne({
-          where: {email: userEmail}
+          where: {email: cleanEmail}
         });
 
 
         if (order && extractedUser) {
+          const extractedUser = await order.getUser();
+          //protecting against unauthorized access
+          if(extractedUser.id !== userId){
+            throw new Error('Not Authorized');
+          }
+          
           order.payment_status = paymentStatus;
           order.status = status;
           order.payment_type = paymentType;
@@ -307,9 +369,10 @@ export async function POST(request: NextRequest, { params }: { params: { slug?: 
       
        
     } catch (error: any) {
+      const e = error as Error;
       return NextResponse.json(
         {
-          error: error.message,
+          error: e.message,
         },
         { status: 500 }
       );

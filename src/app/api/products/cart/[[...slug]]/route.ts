@@ -1,74 +1,128 @@
 import { getDataFromCart } from "@/helpers/getDataFromCart";
 import { NextRequest, NextResponse } from "next/server";
-import crypto from 'crypto';
+import crypto from "crypto";
 import { models } from "@/db/connection";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import { getUserData } from "@/helpers/getUserData";
 
+const redis = Redis.fromEnv();
 
-export async function GET(req: NextRequest, { params }: { params: { slug?: string[] } }) {
-    try {
+// Allow 5 requests per 10 seconds per IP
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "10s"),
+  analytics: true,
+});
 
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { slug?: string[] } },
+  res: NextResponse
+) {
+  try {
+    const ip = req.headers.get("x-forwarded-for");
 
-        if (params.slug && params.slug[0]) {
-          let cart = await models.Cart.findByPk(params.slug![0]);
+    const { success, limit, remaining, reset } = await ratelimit.limit(
+      String(ip)
+    );
 
+    if (!success) {
+      const res = NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429 }
+      );
+      res.headers.set("X-RateLimit-Limit", limit.toString());
+      res.headers.set("X-RateLimit-Remaining", remaining.toString());
+      res.headers.set("X-RateLimit-Reset", reset.toString());
+      return res;
+    }
 
-          const cartItems = cart!.items.map((item: any) => {
-            return {
-              product: item.product,
-              quantity: item.quantity,
-              variantId: item.variant_id,
-            };
-          });
-  
-          return NextResponse.json(
-            {
-              cartItems,
-              total: cart!.total_amount,
-              success: true,
-            },
-            {
-              status: 200,
-            }
-          );
-        }else{
-          throw new Error('Invalid cart id');
-        }
-  
-  
+    if (params.slug && params.slug[0]) {
+      let cart = await models.Cart.findByPk(params.slug![0]);
 
-    } catch (error: any) {
+      const cartItems = cart!.items.map((item: any) => {
+        return {
+          product: item.product,
+          quantity: item.quantity,
+          variantId: item.variant_id,
+        };
+      });
+
       return NextResponse.json(
         {
-          error: error.message,
+          cartItems,
+          total: cart!.total_amount,
+          success: true,
         },
-        { status: 500 }
+        {
+          status: 200,
+        }
       );
+    } else {
+      throw new Error("Invalid cart id");
     }
+  } catch (error) {
+    const e = error as Error;
+    return NextResponse.json(
+      {
+        error: e.message,
+      },
+      { status: 500 }
+    );
+  }
 }
 
-export async function POST(req: NextRequest, { params }: { params: { slug?: string[] } }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { slug?: string[] } }
+) {
   try {
+    const ip = req.headers.get("x-forwarded-for");
 
-    const reqBody = await req.json();
+    const { success, limit, remaining, reset } = await ratelimit.limit(
+      String(ip)
+    );
 
-    if (params.slug && Array.isArray(params.slug) && params.slug.length > 0 && params.slug[0] === 'remove') {
-      
-      const { quantity, variantId, price } = reqBody;
+    if (!success) {
+      const res = NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429 }
+      );
+      res.headers.set("X-RateLimit-Limit", limit.toString());
+      res.headers.set("X-RateLimit-Remaining", remaining.toString());
+      res.headers.set("X-RateLimit-Reset", reset.toString());
+      return res;
+    }
+
+    //retrieving user cookie and user data
+    const userId = getUserData(req);
+
+    if (Array.isArray(params.slug) && params.slug[0] === "remove") {
+      const { quantity, variantId, price } = await req.json();
 
       const cartId = getDataFromCart(req);
 
-      if (cartId) {
+      if (cartId && userId) {
         const cart = await models.Cart.findByPk(cartId);
+
+        const cartUser = await cart!.getUser();
+
+        //protecting against unauthorized access
+        if (cartUser.id != userId) {
+          throw new Error("Not Authorized");
+        }
 
         await cart!.deductFromCart(variantId, quantity, price);
 
-        const updatedCartItems = cart!.items.filter(item => item.quantity > 0);
+        const updatedCartItems = cart!.items.filter(
+          (item) => item.quantity > 0
+        );
 
         cart!.items = updatedCartItems;
         await cart!.save();
 
         if (cart!.items.length === 0) {
-          
           await cart!.destroy();
           const res = NextResponse.json(
             {
@@ -80,9 +134,9 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             { status: 201 }
           );
 
-          res.cookies.set('cart', '', {
+          res.cookies.set("cart", "", {
             httpOnly: true,
-            path: '/',
+            path: "/",
             maxAge: 0,
           });
           return res;
@@ -104,17 +158,22 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
           { status: 201 }
         );
       } else {
-        throw new Error('Invalid cart id');
+        throw new Error("Invalid cart id");
       }
     } else {
-
-      const { price, quantity, variantId, id, totalAmount } = reqBody;
+      const { price, quantity, variantId, id, totalAmount } = await req.json();
 
       const cartId = getDataFromCart(req);
 
       const product = await models.Product.findByPk(id);
+      let extractedUser = await models.User.findByPk(userId!);
 
       if (!cartId) {
+        if(!extractedUser){
+          extractedUser = await models.User.create({
+            id: (await crypto.randomBytes(6)).toString("hex"),
+          });
+        }
 
         const newCart = await models.Cart.create({
           id: (await crypto.randomBytes(6)).toString("hex"),
@@ -128,7 +187,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
           ],
           total_amount: parseFloat(totalAmount),
         });
-
+        //saving joined table
+        await newCart.setUser(extractedUser);
 
         const remainingMilliseconds = 5184000000; // 2 months
         const expiryDate = new Date(Date.now() + remainingMilliseconds);
@@ -143,22 +203,34 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
 
         res.cookies.set("cart", newCart.id, {
           expires: expiryDate,
-          secure: process.env.NODE_ENV === 'production',
-          path: '/',
+          secure: process.env.NODE_ENV === "production",
+          path: "/",
+          sameSite: "strict",
+          httpOnly: true,
         });
 
         return res;
       } else {
+        const cart = await models.Cart.findByPk(cartId!);
 
-        const cart = await models.Cart.findByPk(cartId);
-        await cart!.addToCart(product!, parseInt(quantity), variantId, parseInt(price));
+        const cartUser = await cart!.getUser();
+        //protecting against unauthorized access
+        if (cartUser.id != userId) {
+          throw new Error("Not Authorized");
+        }
+
+        await cart!.addToCart(
+          product!,
+          parseInt(quantity),
+          variantId,
+          parseInt(price)
+        );
 
         const cartItems = cart!.items.map((item) => ({
           product: item.product,
           quantity: item.quantity,
           variantId: item.variant_id,
         }));
-
 
         return NextResponse.json(
           {
@@ -171,10 +243,11 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
         );
       }
     }
-  } catch (error: any) {
+  } catch (error) {
+    const e = error as Error;
     return NextResponse.json(
       {
-        error: error.message,
+        error: e.message,
         success: false,
       },
       { status: 500 }
@@ -182,120 +255,94 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
   }
 }
 
-
-
-export async function PATCH(req: NextRequest, { params }: { params: { slug?: string[] } }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { slug?: string[] } }
+) {
   try {
-    
+    const ip = req.headers.get("x-forwarded-for");
 
-      const reqBody = await req.json();
-      const { userId} = reqBody;
-  
-      const cartId = getDataFromCart(req);
-  
-      //creating checkout session token
-      const buffer = await crypto.randomBytes(32);
-      const hashedToken = buffer.toString("hex");
+    const { success, limit, remaining, reset } = await ratelimit.limit(
+      String(ip)
+    );
 
-      const remainingMilliseconds = 5184000000; // 2 month
-      const now = new Date();
-      const expiryDate = new Date(now.getTime() + remainingMilliseconds);
+    if (!success) {
+      const res = NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429 }
+      );
+      res.headers.set("X-RateLimit-Limit", limit.toString());
+      res.headers.set("X-RateLimit-Remaining", remaining.toString());
+      res.headers.set("X-RateLimit-Reset", reset.toString());
+      return res;
+    }
 
-      if (cartId) {
-          //retrieving cart data for the current public session and storing user data
-          const cart = await models.Cart.findByPk(cartId);
-          
-          if(userId){
-            const user = await models.User.findByPk(userId);
-            await cart!.setUser(user!);
+    const reqBody = await req.json();
 
-            //creating add to cart state in order
-            const newOrder = await models.Order.create({ 
-              id: (await crypto.randomBytes(6)).toString("hex"),
-              status: 'add to cart',
-              sales: cart!.total_amount
-              });
+    const { userId } = reqBody;
 
-            await newOrder.setUser(user!);
+    const cartId = getDataFromCart(req);
 
-            const res = NextResponse.json(
-              {
-                message: "Order created!",
-                checkout_session_token: hashedToken,
-                success: true,
-              },
-              { status: 201 }
-            );
-      
-            res.cookies.set("checkout_session_token", hashedToken, {
-              expires: expiryDate,
-              httpOnly: true,
-              path: '/',
-              secure: process.env.NODE_ENV === 'production',
-            });
-      
-            res.cookies.set("order", newOrder.id, {
-              expires: expiryDate,
-              httpOnly: true,
-              path: '/',
-              secure: process.env.NODE_ENV === 'production',
-            });
-      
-            res.cookies.set("user", userId, {
-              expires: expiryDate,
-              httpOnly: true,
-              path: '/',
-              secure: process.env.NODE_ENV === 'production',
-            });
-      
+    //creating checkout session token
+    const buffer = await crypto.randomBytes(32);
+    const hashedToken = buffer.toString("hex");
 
-            return res;
-          }
+    const remainingMilliseconds = 5184000000; // 2 month
+    const now = new Date();
+    const expiryDate = new Date(now.getTime() + remainingMilliseconds);
 
-          //creating add to cart state in order
-          const newOrder = await models.Order.create({ 
-            id: (await crypto.randomBytes(6)).toString("hex"),
-            status: 'add to cart',
-            sales: cart!.total_amount
-            });
+    if (cartId) {
+      //retrieving cart and user data for the current public session
+      const cart = await models.Cart.findByPk(cartId);
 
-          const res = NextResponse.json(
-            {
-              message: "Order created!",
-              checkout_session_token: hashedToken,
-              success: true,
-            },
-            { status: 201 }
-          );
-    
-          res.cookies.set("checkout_session_token", hashedToken, {
-            expires: expiryDate,
-            httpOnly: true,
-            path: '/',
-            secure: process.env.NODE_ENV === 'production',
-          });
-    
-          res.cookies.set("order", newOrder.id, {
-            expires: expiryDate,
-            httpOnly: true,
-            path: '/',
-            secure: process.env.NODE_ENV === 'production',
-          });
-    
+      const user = await models.User.findByPk(userId);
 
-          return res;
-      }
-    
-    
-  } catch (error: any) {
+      //creating add to cart state in order
+      const newOrder = await models.Order.create({
+        id: (await crypto.randomBytes(6)).toString("hex"),
+        status: "add to cart",
+        sales: cart!.total_amount,
+      });
+
+      await newOrder.setUser(user!);
+
+      const res = NextResponse.json(
+        {
+          message: "Order created!",
+          checkout_session_token: hashedToken,
+          success: true,
+        },
+        { status: 201 }
+      );
+
+      res.cookies.set("checkout_session_token", hashedToken, {
+        expires: expiryDate,
+        httpOnly: true,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+
+      res.cookies.set("order", newOrder.id, {
+        expires: expiryDate,
+        httpOnly: true,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+
+      return res;
+    } else {
+      throw new Error("Invalid cart id");
+    }
+  } catch (error) {
+    const e = error as Error;
     return NextResponse.json(
       {
-        error: error.message,
+        error: e.message,
         success: false,
       },
       { status: 500 }
     );
   }
 }
-  
-

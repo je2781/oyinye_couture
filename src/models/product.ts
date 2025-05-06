@@ -5,7 +5,6 @@ import {
     HasManyAddAssociationMixin,
     HasManyAddAssociationsMixin,
     HasManyGetAssociationsMixin,
-    HasOneGetAssociationMixin,
     InferAttributes,
     InferCreationAttributes,
     Model,
@@ -21,7 +20,7 @@ import {
     declare features: string[];
     declare colors: any[];
     declare description: any;
-    declare reviews: CreationOptional<Array<ForeignKey<string>>>;
+    declare collated_reviews: CreationOptional<Array<ForeignKey<string>>>;
     declare type: string;
     declare no_of_orders: CreationOptional<number>;
     declare is_hidden: CreationOptional<boolean>;
@@ -33,7 +32,10 @@ import {
   
     // ...
     static associate(models:any){
-      Product.hasMany(models.Review);
+      Product.hasMany(models.Review,{
+        foreignKey: 'product_id',
+        as: 'reviews'
+      });
 
     }
 
@@ -44,20 +46,20 @@ import {
             primaryKey: true,
             allowNull: false,
           },
-        title: DataTypes.JSONB,
+        title: DataTypes.STRING,
         is_feature: {
             type: DataTypes.BOOLEAN,
             defaultValue: false
         },
         colors: DataTypes.JSONB,
-        description: DataTypes.JSONB,
+        description: DataTypes.STRING,
         no_of_orders: {
             type: DataTypes.INTEGER
         },
-        type: DataTypes.JSONB,
+        type: DataTypes.STRING,
         is_hidden: DataTypes.BOOLEAN,
         features: DataTypes.JSONB,
-        reviews: DataTypes.JSONB,
+        collated_reviews: DataTypes.JSONB,
         createdAt: DataTypes.DATE,
         updatedAt: DataTypes.DATE,
         

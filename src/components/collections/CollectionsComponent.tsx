@@ -3,10 +3,10 @@
 import React, { useMemo } from "react";
 import ProductComponent from "../product/Product";
 import SecondaryHeader from "./filter/SecondaryHeader";
-import Pagination from "../layout/Pagination";
+import Pagination from "../layout/pagination/Pagination";
 import Setting from "./filter/Setting";
 import useWindowWidth from "../helpers/getWindowWidth";
-import { usePathname, useRouter } from "@/i18n/routing";
+import { usePathname, useRouter } from "next/navigation";
 
 
 export default function Collections({
@@ -14,7 +14,6 @@ export default function Collections({
     data,
     sortBy,
     page,
-    locale
 }: any){
   const path = usePathname();
   const sortByList = useMemo(() => [
@@ -191,23 +190,16 @@ export default function Collections({
           // Join the parameters to construct the query string
           const queryString = filteredParams.join('&');
   
-          const pathParts = path.split("/");
-  
-          if (pathParts[1] !== locale) {
-            pathParts.unshift(locale);
-          } 
-        
           // Construct the new path
-          const newPath = `/${pathParts.join("/")}`;
 
-          const url = new URL(`${window.location.origin}${newPath}`);
+          const url = new URL(`${window.location.origin}${path}`);
 
           // Construct the final URL and replace the location
           window.location.href = url.toString() + '?' + queryString;
         }
       }
       reloadPage();
-    }, [isLoading, collectionsCat, page, sort, sortByList, filter]);
+    }, [isLoading, collectionsCat, page, sort, sortByList, filter, path]);
 
     data.collectionsCat = collectionsCat;
     data.sortBy = sort;
@@ -235,7 +227,7 @@ export default function Collections({
       <main
       className={`w-full min-h-screen font-sans md:pt-12 pt-5 pb-6 gap-y-9 flex flex-col items-start relative no-products-section`}
       >
-        <header className="w-full container mx-auto px-6 max-w-7xl text-center md:text-start">
+        <header className="w-full container mx-auto pl-2 pr-3 lg:pl-0 lg:pr-6 text-center md:text-start">
           <h1 className="lg:text-4xl text-2xl">{collectionsCat === 'all' ? 'Products' : 'All Dresses'}</h1>
         </header>
         {data.products.length > 0
@@ -263,7 +255,6 @@ export default function Collections({
                     key={i}
                     product={product}
                     isSearchProduct
-                    locale={locale}
                     imageH={filter.isVisible && collectionsCat !== 'basics' ? 650: null}
                     imageW={filter.isVisible && collectionsCat !== 'basics' ? 228: null}
                     isGridView={isGridView}
