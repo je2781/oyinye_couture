@@ -16,22 +16,22 @@ module.exports = {
         defaultValue: false
       },
       title: {
-        type: Sequelize.JSONB
+        type: Sequelize.STRING
       },
       type: {
-        type: Sequelize.JSONB
+        type: Sequelize.STRING
       },
       no_of_orders: {
         type: Sequelize.INTEGER
       },
       description: {
-        type: Sequelize.JSONB
+        type: Sequelize.STRING
       },
       features: {
         type: Sequelize.JSONB,
         allowNull: true
       },
-      reviews: {
+      collated_reviews: {
         type: Sequelize.JSONB,
         allowNull: true
       },

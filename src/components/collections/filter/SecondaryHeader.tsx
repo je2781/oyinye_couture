@@ -6,7 +6,7 @@ import Image from "next/image";
 import On from "../../../../public/on.png";
 import Off from "../../../../public/off.png";
 import React from "react";
-import { FilterModal } from "@/components/ui/Modal";
+import { FilterModal } from "@/components/layout/Modal";
 import useWindowWidth from "@/components/helpers/getWindowWidth";
 
 import './SecondaryHeader.css';

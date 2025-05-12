@@ -2,8 +2,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
-import {NextIntlClientProvider} from 'next-intl';
-import {getMessages} from 'next-intl/server';
 import './globals.css';
 
 const inter = Inter({ subsets: ["latin"] });
@@ -20,10 +18,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   
-  
-  // Providing all messages to the client
-  // side is the easiest way to get started
-  const messages = await getMessages();
 
   return (
       <html lang='en'>
@@ -50,9 +44,7 @@ export default async function RootLayout({
           <div id='admin-modal'></div>
           <div id='backdrop-root'></div>
           <Toaster position="bottom-center" />
-          <NextIntlClientProvider messages={messages}>
-              {children}
-          </NextIntlClientProvider>
+          {children}
         </body>
     </html>
   );

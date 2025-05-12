@@ -5,11 +5,37 @@ import crypto from 'crypto';
 import { NextRequest, NextResponse } from "next/server";
 import { sendMail } from "@/helpers/mailer";
 import { EmailType } from "@/interfaces";
-import { Op, Sequelize } from "sequelize";
+import { Op} from "sequelize";
 import { models } from "@/db/connection";
+import { Redis } from "@upstash/redis";
+import { Ratelimit } from "@upstash/ratelimit";
 
-export async function PATCH(req: NextRequest, { params }: { params: { slug: string[] } }) {
+const redis = Redis.fromEnv();
+
+// Allow 5 requests per 10 seconds per IP
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "10s"),
+  analytics: true,
+});
+
+export async function PATCH(req: NextRequest, { params }: { params: { slug: string[] } }, res: NextResponse) {
   try {
+
+    const ip = req.headers.get('x-forwarded-for');
+
+    const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+    if (!success) {
+      const res = NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429 }
+      );
+      res.headers.set('X-RateLimit-Limit', limit.toString());
+      res.headers.set('X-RateLimit-Remaining', remaining.toString());
+      res.headers.set('X-RateLimit-Reset', reset.toString());
+      return res;
+    }
 
     if(params.slug && params.slug[1] === 'likes-dislikes'){
       const {likes, dislikes, reviewId} = await req.json();
@@ -61,7 +87,23 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
 export async function POST(req: NextRequest, { params }: { params: { slug: string[] } }) {
   try {
 
+    const ip = req.headers.get('x-forwarded-for');
+
+    const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+    if (!success) {
+      const res = NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429 }
+      );
+      res.headers.set('X-RateLimit-Limit', limit.toString());
+      res.headers.set('X-RateLimit-Remaining', remaining.toString());
+      res.headers.set('X-RateLimit-Reset', reset.toString());
+      return res;
+    }
+
     const {rating, email, name, review, headline, isMedia, avatar} = await req.json();
+
 
     const title = params.slug[0].charAt(0).toUpperCase() + params.slug[0].replace('-', ' ').slice(1);
     
@@ -108,7 +150,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       await newReview.setProduct(product!);
       await product!.addReview(newReview);
 
-      product!.reviews.push(newReview.id);
+      product!.collated_reviews.push(newReview.id);
 
       await product!.save();
 
@@ -152,7 +194,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       await newReview.setProduct(product!);
       await product!.addReview(newReview);
 
-      product!.reviews.push(newReview.id);
+      product!.collated_reviews.push(newReview.id);
 
       await product!.save();
 
@@ -180,6 +222,21 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string[] } }) {
   try {
+    const ip = req.headers.get('x-forwarded-for');
+
+    const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+    if (!success) {
+      const res = NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429 }
+      );
+      res.headers.set('X-RateLimit-Limit', limit.toString());
+      res.headers.set('X-RateLimit-Remaining', remaining.toString());
+      res.headers.set('X-RateLimit-Reset', reset.toString());
+      return res;
+    }
+
     let extractedProductsArray: any[] = [];
     let authors: any[] = [];
     let updatedProducts: any[] = [];
@@ -189,17 +246,14 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     const title = params.slug[0].charAt(0).toUpperCase() + params.slug[0].replace('-', ' ').slice(1);
 
     const product = await models.Product.findOne({
-      where: Sequelize.where(
-        Sequelize.literal(`title->>'en'`), 
-        { [Op.eq]: title }
-      ),
+      where: {title},
     });
 
     if (!product) {
       return NextResponse.json({ error: "product doesn't exist" }, { status: 404 });
     }
 
-    const extractedColorObj = product.colors.find((color: any) => color.type['en'] === params.slug[1].replace('-', ' '));
+    const extractedColorObj = product.colors.find((color: any) => color.name === params.slug[1].replace('-', ' '));
 
     if (!extractedColorObj) {
       return NextResponse.json({ error: "product color doesn't exist" }, { status: 404 });
@@ -226,7 +280,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       where: {
         colors: {
           [Op.contains]: [
-            { type: { en: extractedColorObj.type['en'] } },
+            { name: extractedColorObj.name },
             { sizes: [{ variant_id: { [Op.ne]: params.slug[2] } }] },
           ],
         },
@@ -254,6 +308,8 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 
     const reviews = await product.getReviews();
 
+    reviews.sort((a: any, b: any) => b.likes - a.likes);
+
     for (let review of reviews) {
       const user = await review.getUser();
       authors.push(user);
@@ -264,13 +320,11 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       return { ...review, author: extractedAuthor };
     });
 
-    reviews.sort((a: any, b: any) => b.likes - a.likes);
-
     return NextResponse.json({
       productSizes: extractedColorObj.sizes,
       productFrontBase64Images: extractedColorObj.image_front_base64,
       productId: product.id,
-      productColor: extractedColorObj.type,
+      productColor: extractedColorObj.name,
       productTitle: product.title,
       productColors: product.colors,
       productReviews: updatedReviews,
@@ -287,6 +341,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 
 export async function DELETE(request: NextRequest, { params }: { params: { slug: string[] } }) {
   try {
+    
     
     const product = await models.Product.findByPk(params.slug[1]); 
     

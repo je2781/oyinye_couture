@@ -6,7 +6,7 @@ import SecondaryHeader from "./filter/SecondaryHeader";
 import Pagination from "../layout/Pagination";
 import Setting from "./filter/Setting";
 import useWindowWidth from "../helpers/getWindowWidth";
-import { usePathname, useRouter } from "@/i18n/routing";
+import { usePathname, useRouter } from "next/navigation";
 
 
 export default function Collections({
@@ -14,7 +14,6 @@ export default function Collections({
     data,
     sortBy,
     page,
-    locale
 }: any){
   const path = usePathname();
   const sortByList = useMemo(() => [
@@ -191,23 +190,16 @@ export default function Collections({
           // Join the parameters to construct the query string
           const queryString = filteredParams.join('&');
   
-          const pathParts = path.split("/");
-  
-          if (pathParts[1] !== locale) {
-            pathParts.unshift(locale);
-          } 
-        
           // Construct the new path
-          const newPath = `/${pathParts.join("/")}`;
 
-          const url = new URL(`${window.location.origin}${newPath}`);
+          const url = new URL(`${window.location.origin}${path}`);
 
           // Construct the final URL and replace the location
           window.location.href = url.toString() + '?' + queryString;
         }
       }
       reloadPage();
-    }, [isLoading, collectionsCat, page, sort, sortByList, filter]);
+    }, [isLoading, collectionsCat, page, sort, sortByList, filter, path]);
 
     data.collectionsCat = collectionsCat;
     data.sortBy = sort;
@@ -263,7 +255,6 @@ export default function Collections({
                     key={i}
                     product={product}
                     isSearchProduct
-                    locale={locale}
                     imageH={filter.isVisible && collectionsCat !== 'basics' ? 650: null}
                     imageW={filter.isVisible && collectionsCat !== 'basics' ? 228: null}
                     isGridView={isGridView}

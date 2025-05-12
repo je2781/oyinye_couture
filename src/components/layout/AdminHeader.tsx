@@ -4,21 +4,18 @@ import React, { useEffect } from "react";
 import useWindowWidth from "../helpers/getWindowWidth";
 import Sidebar from "./Sidebar";
 import SearchBar from "../ui/SearchBar";
-import useAuth from "@/store/useAuth";
 import Image from "next/image";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { Link, usePathname, useRouter } from '@/i18n/routing';
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
+import Link from "next/link";
 import useGlobal from "@/store/useGlobal";
-import { AdminSettingsModal, MobileModal } from "../ui/Modal";
-import { appsList, generateBase64FromMedia, getRouteNames, insightList, reloadPageWithLocale, viewsList } from "@/helpers/getHelpers";
+import { AdminSettingsModal, MobileModal } from "./Modal";
+import { appsList, generateBase64FromMedia, getRouteNames, insightList, viewsList } from "@/helpers/getHelpers";
 
-export default function AdminHeader({sectionName, pathName, userName, userEmail, userTitle, id, avatar, locale}: any) {
+export default function AdminHeader({sectionName, pathName, userName, userEmail, userTitle, id, avatar}: any) {
   let timerId: NodeJS.Timeout | null  = null;
 
-  const path = usePathname();
-  const searchParams = useSearchParams();
   const [isAdminSettingsOpen, setIsAdminSettingsOpen] = React.useState({
     profile: false,
     settings: false
@@ -33,7 +30,6 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
   const [name, setName] = React.useState(userName);
   const [title, setTitle] = React.useState(userTitle);
   const [loader, setLoader] = React.useState(false);
-  const {lang, setLang} = useGlobal();
 
   useEffect(() => {
     setIsMobileModalOpen(false);
@@ -123,7 +119,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
     try {
       await axios.get("/api/users/logout");
       // Construct the new path
-      const newPath = `/${locale}/login`;
+      const newPath = `/login`;
 
       const url = new URL(`${window.location.origin}${newPath}`);
       
@@ -285,7 +281,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                                 <h3 className="md:w-[50%] w-full">Title</h3>
                                                 <input value={title ?? 'Administrator'} onChange={(e) => setTitle(e.target.value)} disabled className="focus:outline-none font-normal border border-gray-200 bg-gray-50 p-2 rounded-sm h-8 md:w-[50%] w-full"/>
                                               </div>
-                                              <div className="w-full flex md:flex-row flex-col md:items-center items-start gap-y-2">
+                                              {/* <div className="w-full flex md:flex-row flex-col md:items-center items-start gap-y-2">
                                                 <h3 className="md:w-[50%] w-full">Language</h3>
                                                 <div 
                                                   onClick={() => {
@@ -304,7 +300,6 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                                       className="focus:outline-none p-2 appearance-none"
                                                       onChange={(e) => {
                                                         setLang(e.target.value);
-                                                        reloadPageWithLocale(path, locale, searchParams, e.target.value);
 
                                                       }}>
                                                           <option hidden value=''>{lang === 'en' ? 'English' : lang === 'fr' ? 'French' : lang === 'nl' ? 'Dutch' : lang === 'pt-PT' ? 'Portugese (Portugal)' : lang === 'zh-TW' ? 'Chinese (traditional)' : 'Spanish'}</option>
@@ -326,7 +321,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
 
                                                       ></i>
                                                   </div>
-                                              </div>
+                                              </div> */}
                                           </div>
                                         </section>
                                         <div className='flex flex-row justify-end px-5 w-full'>
@@ -355,7 +350,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
           </div>
         </div>
         {isSearchModalOpen && (
-          <SearchBar onHideModal={hideSearchModalHandler} isAdmin={true} locale={locale} />
+          <SearchBar onHideModal={hideSearchModalHandler} isAdmin={true}/>
         )}
         {isMobileModalOpen && <MobileModal onClose={hideModalHandler} classes='bg-primary-800 px-4 pt-8'>
           

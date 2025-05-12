@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import { useRouter, usePathname } from '@/i18n/routing';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function AdminPagination({
   currentPage,

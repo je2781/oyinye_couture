@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import React from "react";
-import { QuickViewModal } from "../ui/Modal";
+import { QuickViewModal } from "../layout/Modal";
 import { Swiper, SwiperSlide } from "swiper/react";
 import 'swiper/css';
 import 'swiper/css/pagination';
@@ -11,15 +11,14 @@ import 'swiper/css/navigation';
 import {  Navigation } from 'swiper/modules';
 import useCart from "@/store/useCart";
 import Link from "next/link";
-import useAuth from "@/store/useAuth";
 import { Base64ImagesObj, DressSizesJsxObj, DressSizesObj } from "@/interfaces";
 import {regex, sizes } from "@/helpers/getHelpers";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useRouter, usePathname } from '@/i18n/routing';
+import { useRouter, usePathname } from 'next/navigation';
 
 
-const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPage, locale}: any) => {
+const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPage}: any) => {
     const {totalAmount, addItem, items} = useCart();
     const [quantity, setQuantity] = React.useState('1');
     const [zoomActivated, setZoomActivated] = React.useState(false);
@@ -57,13 +56,13 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
         color.sizes.sort((a: any, b: any) => a.number - b.number);
 
         for(let size of color.sizes){
-            colorsObj[color.type[locale]]
-            ? colorsObj[color.type[locale]].push(size.number)
-            : colorsObj[color.type[locale]] = [size.number];
+            colorsObj[color.name]
+            ? colorsObj[color.name].push(size.number)
+            : colorsObj[color.name] = [size.number];
         }
     }
     
-    const [selectedColor, setSelectedColor] = React.useState(product.colors[0].type['en']);
+    const [selectedColor, setSelectedColor] = React.useState(product.colors[0].name);
 
     const [selectedSize, setSelectedSize] = React.useState<string>(product.colors[0].sizes[0].number.toString());
 
@@ -129,7 +128,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
         /**updating active dress color ***/
         for(let color of product.colors){
             for (let i = 0; i < sizes.length; i++) {
-                if (color.type[locale] === (activeColorEl.innerText.charAt(0).toLowerCase() + activeColorEl.innerText.slice(1)) && !color.sizes.some((size: any) => size.number === colorsObj[selectedColor][i]) && colorsObj[selectedColor][i]) {
+                if (color.name === (activeColorEl.innerText.charAt(0).toLowerCase() + activeColorEl.innerText.slice(1)) && !color.sizes.some((size: any) => size.number === colorsObj[selectedColor][i]) && colorsObj[selectedColor][i]) {
                     // Setting properties of size element not contained in active dress color to 'not in stock'
                     sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('background-color', 'transparent');
                     sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('color', 'rgb(156, 163, 175)');
@@ -182,7 +181,7 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
 
 
     product.colors.forEach((color: any, i: number) => {
-        sizesJsxObj[color.type[locale]] = sizes.map((size: number, i: number) => color.sizes[0] && color.sizes[0].number === size && color.sizes[0].stock === 0 && color.is_available ?
+        sizesJsxObj[color.name] = sizes.map((size: number, i: number) => color.sizes[0] && color.sizes[0].number === size && color.sizes[0].stock === 0 && color.is_available ?
         <span key={i} className='font-sans bg-black px-6 py-2 rounded-3xl cursor-pointer text-gray-400 line-through'>UK {size}</span>
         : color.sizes[0] && color.sizes[0].number === size && color.sizes[0].stock > 0 && color.is_available ?
         <span key={i} onClick={handleSizeChange} className='font-sans bg-black px-6 py-2 rounded-3xl cursor-pointer text-white'>UK {size}</span>
@@ -201,13 +200,13 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
          
         );
 
-        frontBase64ImagesObj[color.type[locale]] = color.image_front_base64;
+        frontBase64ImagesObj[color.name] = color.image_front_base64;
         color.sizes.forEach((size: any) => {
-            sizesObj[`${color.type[locale]}-${size.number}`] =  {
+            sizesObj[`${color.name}-${size.number}`] =  {
                 price: size.price,
                 variant_id: size.variant_id,
                 stock: size.stock,
-                color: color.type[locale]
+                color: color.name
             };
         });
         
@@ -279,18 +278,18 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
             <section className="lg:p-12 p-6 lg:w-[60%] flex flex-col w-full gap-y-5 lg:overflow-y-scroll h-[60%] lg:h-full">
                 <header className="flex flex-col items-start gap-y-0">
                     <h2 className="font-sans text-xs text-gray-400 font-thin">OYINYE COUTURE</h2>
-                    <h1 className="font-medium font-sans lg:text-4xl text-2xl">{product.title[locale]}</h1>
+                    <h1 className="font-medium font-sans lg:text-4xl text-2xl">{product.title}</h1>
                 </header>
                 <section className="border border-l-0 border-r-0 border-gray-300 w-full py-4 font-medium my-2 font-sans text-gray-600">
                     <button onClick={() => {
                         if(isOnDetailPage){
                             const pathParts = path.split("/");
-                            const newPath = `/${pathParts[1]}/products/${product.title['en'].replace(' ', '-').toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].color!.toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].variant_id!}`;
+                            const newPath = `/${pathParts[1]}/products/${product.title.replace(' ', '-').toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].color!.toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].variant_id!}`;
 
 ;                           const url = new URL(`${window.location.origin}${newPath}`);
                             window.location.href = url.toString();
 ;                        }else{
-                            router.push(`/products/${product.title['en'].replace(' ', '-').toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].color!.toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].variant_id!}`);
+                            router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].color!.toLowerCase()}/${sizesObj[`${selectedColor}-${selectedSize}`].variant_id!}`);
                         }
                         
                     }}  className="cursor-pointer transition-all m-0 ease-in-out duration-200 hover:ml-2"><i className="fa-solid fa-arrow-right-long text-gray-600"></i>&nbsp;&nbsp;Go to product page</button>
@@ -304,8 +303,8 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                     <div className="flex flex-row justify-start gap-x-2 flex-wrap gap-y-2">
                         {product.colors.map((color: any, i: number) => 
                         sizesObj[`${selectedColor}-${selectedSize}`].stock === 0 ?  
-                        <span key={i} onClick={handleColorChange} className={color.is_available && i === 0 ? `cursor-pointer bg-black px-6 py-2 rounded-3xl text-gray-400 line-through` : `cursor-pointer bg-transparent border border-gray-200 px-6 py-2 rounded-3xl text-gray-400 line-through`}>{color.type[locale].charAt(0).toUpperCase() + color.type[locale].slice(1)}</span>
-                        : <span key={i} onClick={handleColorChange} className={color.is_available && i === 0 ? `bg-black px-6 py-2 rounded-3xl text-white cursor-pointer` : `cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600 px-6 py-2 rounded-3xl bg-transparent`}>{color.type[locale].charAt(0).toUpperCase() + color.type[locale].slice(1)}</span>)}
+                        <span key={i} onClick={handleColorChange} className={color.is_available && i === 0 ? `cursor-pointer bg-black px-6 py-2 rounded-3xl text-gray-400 line-through` : `cursor-pointer bg-transparent border border-gray-200 px-6 py-2 rounded-3xl text-gray-400 line-through`}>{color.name.charAt(0).toUpperCase() + color.name.slice(1)}</span>
+                        : <span key={i} onClick={handleColorChange} className={color.is_available && i === 0 ? `bg-black px-6 py-2 rounded-3xl text-white cursor-pointer` : `cursor-pointer text-gray-600 border border-gray-600 hover:ring-1 ring-gray-600 px-6 py-2 rounded-3xl bg-transparent`}>{color.name.charAt(0).toUpperCase() + color.name.slice(1)}</span>)}
                     </div>
                 </section>
                 <section className="flex flex-col items-start gap-y-2" id="size-list">
@@ -409,8 +408,8 @@ const ProductQuickView = ({ product, onHideModal, isSearchProduct, isOnDetailPag
                          text-blue-600 lg:text-[1rem] font-sans text-[.9rem]`} id='add-to-cart'><span className="md:inline-block hidden">Add&nbsp;</span><span className="md:inline-block hidden">To&nbsp;</span><span>Cart</span></button>
                     }
                 </section>
-                {toastMsgVisible && <p className="border-[#a8e8e2] border bg-[#a8e8e226] px-4 py-3 font-sans text-[1rem] text-gray-500 font-light relative" id='toast-msg'>{product.title[locale]} has been added to your cart. <Link href={`/cart`} className="underline underline-offset-2">View Cart</Link></p>}
-                {toastError && <p className="border-[#e8b7a8] border bg-[#e8b7a826] px-4 py-3 font-sans text-[1rem] text-gray-500 font-light relative" id='toast-error'>You can&apos;t add more {product.title[locale]} to the cart</p>}
+                {toastMsgVisible && <p className="border-[#a8e8e2] border bg-[#a8e8e226] px-4 py-3 font-sans text-[1rem] text-gray-500 font-light relative" id='toast-msg'>{product.title} has been added to your cart. <Link href={`/cart`} className="underline underline-offset-2">View Cart</Link></p>}
+                {toastError && <p className="border-[#e8b7a8] border bg-[#e8b7a826] px-4 py-3 font-sans text-[1rem] text-gray-500 font-light relative" id='toast-error'>You can&apos;t add more {product.title} to the cart</p>}
             </section>
         </QuickViewModal>
   );

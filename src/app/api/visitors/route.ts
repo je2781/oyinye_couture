@@ -3,6 +3,7 @@ import { models } from '@/db/connection';
 import { NextResponse, type NextRequest } from 'next/server';
 
 
+
 export async function GET(req: NextRequest) {
     try {
         let visitors = await models.Visitor.findAll();

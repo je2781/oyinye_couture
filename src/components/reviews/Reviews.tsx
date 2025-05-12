@@ -2,15 +2,14 @@
 
 import Stars from '../../../public/shooting-stars.svg';
 import Image from 'next/image';
-import { ReviewsModal } from '../ui/Modal';
+import { ReviewsModal } from '../layout/Modal';
 import React from 'react';
-import {decodedBase64, generateBase64FromMedia, reloadPageWithLocale } from '@/helpers/getHelpers';
+import {decodedBase64, generateBase64FromMedia, reloadPage } from '@/helpers/getHelpers';
 import toast from 'react-hot-toast';
 import axios from 'axios';
-import { useRouter, usePathname } from '@/i18n/routing';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname} from 'next/navigation';
 
-const Reviews = ({productReviews, product, locale}: any) => {
+const Reviews = ({productReviews, product, csrf}: any) => {
     let averageRating = 0;
     const [isModalOpen, setIsModalOpen] = React.useState(false);
     const [mediaBase64, setMediaBase64] = React.useState({
@@ -277,11 +276,15 @@ const Reviews = ({productReviews, product, locale}: any) => {
                 avatar: mediaBase64.image,
                 headline,
                 isMedia: review.length === 0
+            },{
+                headers: {
+                    "x-csrf-token": csrf,
+                  }
             });
         } catch (error: any) {
             toast.error(error.message);
         }finally{
-            reloadPageWithLocale(path, locale, searchParams);
+            reloadPage(path, searchParams);
         }
 
     }

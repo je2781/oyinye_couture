@@ -1,8 +1,19 @@
 
 import { models } from "@/db/connection";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 import * as argon from "argon2";
 import { NextRequest, NextResponse } from "next/server";
 import { Op } from "sequelize";
+
+const redis = Redis.fromEnv();
+
+// Allow 5 requests per 10 seconds per IP
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "10s"),
+  analytics: true,
+});
 
 // export async function GET(req: NextRequest) {
 //   try {
@@ -23,10 +34,26 @@ import { Op } from "sequelize";
 // }
 
 export async function POST(req: NextRequest) {
+  
   try {
+    const ip = req.headers.get('x-forwarded-for');
+
+    const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+    if (!success) {
+      const res = NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429 }
+      );
+      res.headers.set('X-RateLimit-Limit', limit.toString());
+      res.headers.set('X-RateLimit-Remaining', remaining.toString());
+      res.headers.set('X-RateLimit-Reset', reset.toString());
+      return res;
+    }
+
     const reqBody = await req.json();
 
-    const {password, confirmPassword, token } = reqBody;
+    const {password, confirmPassword, token} = reqBody;
 
     if (password.trim() !== confirmPassword.trim()) {
       return NextResponse.json(
