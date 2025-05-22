@@ -1,0 +1,28 @@
+// tsconfig.base.json
+{
+    "compilerOptions": {
+      "target": "ESNext",
+      "module": "ESNext",
+      "moduleResolution": "Node",
+      "jsx": "preserve",
+      "baseUrl": ".",
+      "paths": {
+        "@ui/*": ["packages/ui/*"],
+        "@helpers/*": ["packages/helpers/*"],
+        "@models/*": ["packages/models/*"],
+        "@templates/*": ["packages/templates/*"],
+        "@store/*": ["packages/store/*"],
+        "@interfaces/*": ["packages/interfaces/*"],
+        "@middleware/*": ["packages/middleware/*"],
+        "@locales/*": ["packages/locales/*"],
+        "@css/*": ["packages/css/*"],
+        "@/*": ["apps/admin/src/*", "apps/web/src/*"],
+        
+      },
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true
+    }
+  }
+  

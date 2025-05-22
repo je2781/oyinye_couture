@@ -1,0 +1,380 @@
+import { models } from '@db/connection';
+import { getDataFromCart } from '@helpers/getDataFromCart';
+import { getDataFromOrder } from '@helpers/getDataFromOrder';
+import { getUserData } from '@helpers/getUserData';
+import { sanitizeInput } from '@helpers/sanitize';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+import axios from 'axios';
+import { NextResponse, type NextRequest } from 'next/server';
+
+const redis = Redis.fromEnv();
+
+// Allow 5 requests per 10 seconds per IP
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "10s"),
+  analytics: true,
+});
+
+
+export async function GET(request: NextRequest, { params }: { params: { slug?: string[] } }, res: NextResponse) {
+  try {
+
+      const ip = request.headers.get('x-forwarded-for');
+
+      const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+      if (!success) {
+        const res = NextResponse.json(
+          { message: 'Rate limit exceeded' },
+          { status: 429 }
+        );
+        res.headers.set('X-RateLimit-Limit', limit.toString());
+        res.headers.set('X-RateLimit-Remaining', remaining.toString());
+        res.headers.set('X-RateLimit-Reset', reset.toString());
+        return res;
+      }
+
+      if(params.slug){
+        const searchParams = request.nextUrl.searchParams;
+        let page = searchParams.get('page');
+        const updatedPage = +page! || 1;
+        const ITEMS_PER_PAGE = +params.slug[0];
+      
+        let totalItems = (await models.Order.findAndCountAll()).count;
+        let orders = await models.Order.findAll({
+          offset: (updatedPage-1) * ITEMS_PER_PAGE,
+          limit: ITEMS_PER_PAGE,
+          include: [{ model: models.User, as: 'orderUser' }]
+        });
+
+        const currentPage = updatedPage;
+        const hasPreviousPage = currentPage > 1;
+        const hasNextPage =
+            totalItems > currentPage * ITEMS_PER_PAGE;
+        const lastPage = 
+             Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+        if (orders.length === 0) {
+            return NextResponse.json(
+              {
+                hasNextPage,
+                hasPreviousPage,
+                lastPage,
+                currentPage,
+                isActivePage: updatedPage,
+                nextPage: currentPage + 1,
+                previousPage: currentPage - 1,
+                orders
+            },
+                { status: 200 }
+            );
+        }
+
+        const updatedOrders = orders.map((order) => ({
+            id: order.id,
+            items: order.items.map(item => {
+              let price: number = 0;
+              let frontBase64Images: string[] = [];
+              let colorType: string  = '';
+              let size: number = 0;
+              item.product.colors.forEach((color: any) => {
+                if(color.sizes.find((size: any) => size.variant_id === item.variant_id)){
+                  price = color.sizes.find((size: any) => size.variant_id === item.variant_id).price;
+                  size = color.sizes.find((size: any) => size.variant_id === item.variant_id).number;
+                  frontBase64Images = color.image_front_base64;
+                  colorType = color.names;
+                }
+              });
+              return {
+                quantity: item.quantity,
+                variantId: item.variant_id,
+                productType: item.product.type,
+                total: price * item.quantity,
+                frontBase64Images,
+                color: colorType,
+                size
+              };
+            }),
+            totalQuantity: order.items.map(item => item.quantity).reduce((prev: number, current: number) => prev + current, 0),
+            sales: order.sales,
+            date: order.createdAt,
+            status: order.status,
+            paymentType: order.payment_type ?? '',
+            paymentStatus: order.payment_status ?? '',
+            shippingMethod: order.shipping_method ?? ''
+        }));
+
+
+        return NextResponse.json({
+            hasNextPage,
+            hasPreviousPage,
+            lastPage,
+            currentPage,
+            isActivePage: updatedPage,
+            nextPage: currentPage + 1,
+            previousPage: currentPage - 1,
+            orders: updatedOrders,
+            success: true
+        }, {
+            status: 200
+        });
+      }
+
+  } catch (error: any) {
+      return NextResponse.json(
+          {
+              error: error.message,
+          },
+          { status: 500 }
+      );
+  }
+}
+ 
+export async function POST(request: NextRequest, { params }: { params: { slug?: string[] } }) {
+    try {
+      
+
+      const ip = request.headers.get('x-forwarded-for');
+
+      const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+      if (!success) {
+        const res = NextResponse.json(
+          { message: 'Rate limit exceeded' },
+          { status: 429 }
+        );
+        res.headers.set('X-RateLimit-Limit', limit.toString());
+        res.headers.set('X-RateLimit-Remaining', remaining.toString());
+        res.headers.set('X-RateLimit-Reset', reset.toString());
+        return res;
+      }
+      
+      const [orderId, checkoutSessionToken] = getDataFromOrder(request);
+      const userId = getUserData(request);
+
+      //retrieving order data for the current checkout session
+      const order = await models.Order.findByPk(orderId,{
+        include: [{ model: models.User, as: 'orderUser' }]
+      });
+
+
+      if(params.slug){
+        switch (params.slug[1]) {
+          case 'transaction-status': {
+            const reqBody = await request.json();
+            const {txn_ref, merchant_code, amount} = reqBody;
+
+            const res = await axios.get(`https://webpay.interswitchng.com/collections/api/v1/gettransaction.json?merchantcode=${
+              merchant_code
+            }&transactionreference=${
+            txn_ref
+            }&amount=${amount}`);
+
+            if(res.data.ResponseCode === '10' || res.data.ResponseCode === '11' || res.data.ResponseCode === '00'){
+              //trimming data object
+              delete res.data.ResponseCode;
+
+              if (order) {
+                order.payment_info = res.data;
+                order.payment_status = 'paid';
+                order.status = 'closed';
+      
+                await order.save();
+
+                return NextResponse.json({
+                  message: res.data.ResponseDescription,
+                  success: true
+                }, {
+                  status: 201
+                });
+              }else{
+                return NextResponse.json({
+                  message: 'No order has been created',
+                  success: false
+                }, {
+                  status: 404
+                });
+              }
+
+            }else{
+
+              if (order) {
+                order.payment_info = res.data;
+                order.payment_status = 'failed';
+      
+                await order.save();
+
+                return NextResponse.json({
+                  message: res.data.ResponseDescription
+                }, {
+                  status: 201
+                });
+              }else{
+                return NextResponse.json({
+                  message: 'No order has been created',
+                  success: false
+                }, {
+                  status: 404
+                });
+              }
+
+              
+            }
+          }
+          case 'payment-status':{
+            const {paymentStatus} = await request.json();
+
+            if (order) {
+              order.payment_status = paymentStatus;
+    
+              await order.save();
+
+              return NextResponse.json({
+                message: 'order updated',
+                success: true
+              }, {
+                status: 201
+              });
+            }else{
+              return NextResponse.json({
+                message: 'No order has been created',
+                success: false
+              }, {
+                status: 404
+              });
+            }
+          }
+          case 'reminder':{
+            const {items} = await request.json();
+
+            const cartId = getDataFromCart(request);
+
+            if(cartId){
+              const cart = await models.Cart.findByPk(cartId,{
+                include: [{ model: models.User, as: 'cartUser' }]
+              });
+              const extractedUser = await models.User.findByPk(cart!.user_id);
+
+              return NextResponse.json({
+                message: 'cart reminder sent',
+                emailJob: {
+                  email: extractedUser!.email,
+                  emailBody: {
+                    link: `${process.env.DOMAIN!}/cart`,
+                    id: cartId,
+                    total: cart!.total_amount,
+                    items
+                  }
+                },
+                success: true
+              }, {
+                status: 201
+              });
+            }else{
+              return NextResponse.json({
+                message: 'invalid cart id',
+              }, {
+                status: 400
+              });
+            }
+
+            
+          }
+          case 'payment-request': {
+            const {link, id, total} = await request.json();
+
+            if (order) {
+              let user = await models.User.findByPk(order!.user_id);
+
+              return NextResponse.json({
+                message: 'payment request sent',
+                emailJob: {
+                  email: user!.email,
+                  userId: user!.id,
+                  emailBody: {
+                    link,
+                    id,
+                    total
+                  }
+                },
+                success: true
+              }, {
+                status: 201
+              });
+            }else{
+              return NextResponse.json({
+                message: 'No order has been created',
+              }, {
+                status: 404
+              });
+            }
+          }
+        }
+
+      
+      }else{
+        const reqBody = await request.json();
+        const {shippingInfo, billingInfo, saveBillingInfo, saveShippingInfo, paymentType, status, paymentStatus, shippingMethod, userEmail} = reqBody;
+
+        const cleanEmail = sanitizeInput(userEmail);
+        const extractedUser = await models.User.findOne({
+          where: {email: cleanEmail!}
+        });
+
+
+        if (order && extractedUser) {
+          //protecting against unauthorized access
+          if(order!.user_id != userId){
+            return NextResponse.json({
+              message: 'Not Authorized'
+            }, {
+              status: 401
+            });
+          }
+          
+          order.payment_status = paymentStatus;
+          order.status = status;
+          order.payment_type = paymentType;
+          order.shipping_method = shippingMethod;
+
+          extractedUser.save_billing_info = saveBillingInfo;
+          extractedUser.save_shipping_info = saveShippingInfo;
+          extractedUser.shipping_info = shippingInfo;
+          extractedUser.billing_info = billingInfo;
+  
+          await order.save();
+          await extractedUser.save();
+
+          return NextResponse.json({
+            message: 'order updated',
+            success: true
+          }, {
+            status: 201
+          });
+        }else{
+          return NextResponse.json({
+            message: 'No user has created an order',
+            success: false
+          }, {
+            status: 404
+          });
+        }
+
+      }
+    
+      
+       
+    } catch (error: any) {
+      const e = error as Error;
+      return NextResponse.json(
+        {
+          error: e.message,
+        },
+        { status: 500 }
+      );
+    }
+}
+ 
+

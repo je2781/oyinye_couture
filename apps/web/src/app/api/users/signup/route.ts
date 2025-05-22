@@ -1,0 +1,166 @@
+import { NextRequest, NextResponse } from "next/server";
+import * as argon from "argon2";
+import { getVisitData } from "@/helpers/getVisitData";
+import crypto from "crypto";
+import { models } from "@/db/connection";
+import { Redis } from "@upstash/redis";
+import { Ratelimit } from "@upstash/ratelimit";
+import { sanitizeInput } from "@/helpers/sanitize";
+import { getUserData } from "@/helpers/getUserData";
+
+const redis = Redis.fromEnv();
+
+// Allow 5 requests per 10 seconds per IP
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "10s"),
+  analytics: true,
+});
+
+export async function POST(req: NextRequest, res: NextResponse) {
+  try {
+    const ip = req.headers.get("x-forwarded-for");
+
+    const { success, limit, remaining, reset } = await ratelimit.limit(
+      String(ip)
+    );
+
+    if (!success) {
+      const res = NextResponse.json(
+        { message: "Rate limit exceeded" },
+        { status: 429 }
+      );
+      res.headers.set("X-RateLimit-Limit", limit.toString());
+      res.headers.set("X-RateLimit-Remaining", remaining.toString());
+      res.headers.set("X-RateLimit-Reset", reset.toString());
+      return res;
+    }
+    const reqBody = await req.json();
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      enableEmailMarketing,
+    } = reqBody;
+
+    const cleanFirstName = sanitizeInput(firstName);
+    const cleanLastName = sanitizeInput(lastName);
+    const cleanEmail = sanitizeInput(email);
+    const cleanPassword = sanitizeInput(password);
+
+    //retrieving user id for users created earlier and also visitor id
+    const userId = getUserData(req);
+    const visitId = getVisitData(req);
+
+    const user = await models.User.findOne({
+      where: { email: cleanEmail! },
+    });
+
+    //check if user with email exists
+    if (user) {
+      return NextResponse.json(
+        { message: "User already exists" },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    //check if user with id exists
+    if (userId) {
+      const extractedUser = await models.User.findByPk(userId);
+      extractedUser!.email = cleanEmail ?? "";
+      extractedUser!.first_name = cleanFirstName ?? "";
+      extractedUser!.last_name = cleanLastName ?? "";
+      extractedUser!.password = cleanPassword
+        ? await argon.hash(cleanPassword!)
+        : "";
+      extractedUser!.enable_email_marketing = enableEmailMarketing
+        ? true
+        : false;
+      await extractedUser!.save();
+
+      return NextResponse.json(
+        {
+          message: `${
+            enableEmailMarketing
+              ? "user has joined mailing list"
+              : "User created successfully"
+          }`,
+          success: true,
+          user: extractedUser,
+        },
+        {
+          status: 201,
+        }
+      );
+    }
+
+    //checking if only email is provided
+    if (cleanEmail && !cleanPassword && !cleanFirstName && !cleanLastName) {
+      const newUser = await models.User.create({
+        id: (await crypto.randomBytes(6)).toString("hex"),
+        email: cleanEmail,
+        visitor_id: visitId ?? "",
+      });
+
+      return NextResponse.json(
+        {
+          message: "User created successfully",
+          success: true,
+          id: newUser.id,
+        },
+        { status: 201 }
+      );
+    }
+
+    //checking if on signup page or footer to sign up for mailing list
+    if (cleanPassword && cleanFirstName && cleanLastName) {
+      const hash = await argon.hash(cleanPassword);
+
+      const newUser = await models.User.create({
+        id: (await crypto.randomBytes(6)).toString("hex"),
+        email: cleanEmail!,
+        password: hash,
+        first_name: cleanFirstName,
+        visitor_id: visitId ?? "",
+        last_name: cleanLastName,
+      });
+
+
+      return NextResponse.json(
+        {
+          message: "User created successfully",
+          success: true,
+          user: newUser,
+        },
+        { status: 201 }
+      );
+    } else {
+      const newUser = await models.User.create({
+        id: (await crypto.randomBytes(6)).toString("hex"),
+        email: cleanEmail!,
+        enable_email_marketing: true,
+        visitor_id: visitId ?? "",
+      });
+
+      return NextResponse.json(
+        {
+          message: "user has joined mailing list",
+          success: true,
+          id: newUser.id,
+        },
+        { status: 201 }
+      );
+    }
+  } catch (error) {
+    const e = error as Error;
+    return NextResponse.json(
+      {
+        error: e.message,
+      },
+      { status: 500 }
+    );
+  }
+}

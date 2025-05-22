@@ -1,0 +1,386 @@
+import { getDataFromCart } from "@helpers/getDataFromCart";
+import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
+import { models } from "@db/connection";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import { getUserData } from "@helpers/getUserData";
+import { getVisitData } from "@helpers/getVisitData";
+
+const redis = Redis.fromEnv();
+
+// Allow 5 requests per 10 seconds per IP
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "10s"),
+  analytics: true,
+});
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { slug?: string[] } },
+  res: NextResponse
+) {
+  try {
+    const ip = req.headers.get("x-forwarded-for");
+
+    const { success, limit, remaining, reset } = await ratelimit.limit(
+      String(ip)
+    );
+
+    if (!success) {
+      const res = NextResponse.json(
+        { message: "Rate limit exceeded" },
+        { status: 429 }
+      );
+      res.headers.set("X-RateLimit-Limit", limit.toString());
+      res.headers.set("X-RateLimit-Remaining", remaining.toString());
+      res.headers.set("X-RateLimit-Reset", reset.toString());
+      return res;
+    }
+
+    if (params.slug && params.slug[0]) {
+      let cart = await models.Cart.findByPk(params.slug![0], {
+        include: [{ model: models.User, as: "cartUser" }],
+      });
+
+      const cartItems = cart!.items.map((item: any) => {
+        return {
+          product: item.product,
+          quantity: item.quantity,
+          variantId: item.variant_id,
+        };
+      });
+
+      return NextResponse.json(
+        {
+          cartItems,
+          total: cart!.total_amount,
+          success: true,
+        },
+        {
+          status: 200,
+        }
+      );
+    } else {
+      return NextResponse.json({
+        message: 'Invalid cart id',
+      }, {
+        status: 400
+      });
+    }
+  } catch (error) {
+    const e = error as Error;
+    return NextResponse.json(
+      {
+        error: e.message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { slug?: string[] } }
+) {
+  try {
+    const ip = req.headers.get("x-forwarded-for");
+
+    const { success, limit, remaining, reset } = await ratelimit.limit(
+      String(ip)
+    );
+
+    if (!success) {
+      const res = NextResponse.json(
+        { message: "Rate limit exceeded" },
+        { status: 429 }
+      );
+      res.headers.set("X-RateLimit-Limit", limit.toString());
+      res.headers.set("X-RateLimit-Remaining", remaining.toString());
+      res.headers.set("X-RateLimit-Reset", reset.toString());
+      return res;
+    }
+
+    //retrieving user cookie and visitor cookie
+    const userId = getUserData(req);
+    const visitId = getVisitData(req);
+
+    if (Array.isArray(params.slug) && params.slug[0] === "remove") {
+      const { quantity, variantId, price } = await req.json();
+
+      const cartId = getDataFromCart(req);
+
+      if (cartId && userId) {
+        const cart = await models.Cart.findByPk(cartId, {
+          include: [{ model: models.User, as: "cartUser" }],
+        });
+
+        //protecting against unauthorized access
+        if (cart!.user_id != userId) {
+          return NextResponse.json({
+            message: 'Not authorized',
+          }, {
+            status: 401
+          });
+        }
+
+        await cart!.deductFromCart(variantId, quantity, price);
+
+        const updatedCartItems = cart!.items.filter(
+          (item) => item.quantity > 0
+        );
+
+        cart!.items = updatedCartItems;
+        await cart!.save();
+
+        if (cart!.items.length === 0) {
+          await cart!.destroy();
+          const res = NextResponse.json(
+            {
+              message: "Cart updated successfully",
+              totalAmount: 0,
+              items: [],
+              success: true,
+            },
+            { status: 201 }
+          );
+
+          res.cookies.set("cart", "", {
+            httpOnly: true,
+            path: "/",
+            maxAge: 0,
+          });
+          return res;
+        }
+
+        const cartItems = cart!.items.map((item) => ({
+          product: item.product,
+          quantity: item.quantity,
+          variantId: item.variant_id,
+        }));
+
+        return NextResponse.json(
+          {
+            message: "Cart updated successfully",
+            totalAmount: cart!.total_amount,
+            items: cartItems,
+            success: true,
+          },
+          { status: 201 }
+        );
+      } else {
+        return NextResponse.json({
+          message: 'Invalid cart id',
+        }, {
+          status: 400
+        });
+      }
+    } else {
+      const { price, quantity, variantId, id, totalAmount } = await req.json();
+
+      const cartId = getDataFromCart(req);
+
+      const product = await models.Product.findByPk(id, {
+        include: [{ model: models.Review, as: "reviews" }],
+      });
+      let extractedUser = await models.User.findByPk(userId!);
+
+      if (!cartId) {
+        //setting up response for cookie
+        const remainingMilliseconds = 5184000000; // 2 months
+        const expiryDate = new Date(Date.now() + remainingMilliseconds);
+
+        const res = NextResponse.json(
+          {
+            message: "Cart created successfully",
+            success: true,
+          },
+          { status: 201 }
+        );
+
+        if (!extractedUser) {
+          extractedUser = await models.User.create({
+            id: (await crypto.randomBytes(6)).toString("hex"),
+            visitor_id: visitId ?? "",
+          });
+
+          res.cookies.set("user", extractedUser.id, {
+            httpOnly: true,
+            expires: expiryDate,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            path: "/",
+          });
+        }
+
+        const newCart = await models.Cart.create(
+          {
+            id: (await crypto.randomBytes(6)).toString("hex"),
+            items: [
+              {
+                id: (await crypto.randomBytes(6)).toString("hex"),
+                variant_id: variantId,
+                quantity: parseInt(quantity),
+                product: product!,
+              },
+            ],
+            user_id: extractedUser.id,
+            total_amount: parseFloat(totalAmount),
+          }
+        );
+
+        res.cookies.set("cart", newCart.id, {
+          expires: expiryDate,
+          secure: process.env.NODE_ENV === "production",
+          path: "/",
+          sameSite: "strict",
+          httpOnly: true,
+        });
+
+        return res;
+      } else {
+        const cart = await models.Cart.findByPk(cartId!, {
+          include: [{ model: models.User, as: "cartUser" }],
+        });
+
+        //protecting against unauthorized access
+        if (cart!.user_id != userId) {
+          return NextResponse.json({
+            message: 'Not authorized',
+          }, {
+            status: 401
+          });
+        }
+
+        await cart!.addToCart(
+          product!,
+          parseInt(quantity),
+          variantId,
+          parseFloat(price)
+        );
+
+        const cartItems = cart!.items.map((item) => ({
+          product: item.product,
+          quantity: item.quantity,
+          variantId: item.variant_id,
+        }));
+
+        return NextResponse.json(
+          {
+            message: "Cart updated successfully",
+            totalAmount: cart!.total_amount,
+            items: cartItems,
+            success: true,
+          },
+          { status: 201 }
+        );
+      }
+    }
+  } catch (error) {
+    const e = error as Error;
+    return NextResponse.json(
+      {
+        error: e.message,
+        success: false,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { slug?: string[] } }
+) {
+  try {
+    const ip = req.headers.get("x-forwarded-for");
+
+    const { success, limit, remaining, reset } = await ratelimit.limit(
+      String(ip)
+    );
+
+    if (!success) {
+      const res = NextResponse.json(
+        { message: "Rate limit exceeded" },
+        { status: 429 }
+      );
+      res.headers.set("X-RateLimit-Limit", limit.toString());
+      res.headers.set("X-RateLimit-Remaining", remaining.toString());
+      res.headers.set("X-RateLimit-Reset", reset.toString());
+      return res;
+    }
+
+    const reqBody = await req.json();
+
+    const { userId } = reqBody;
+
+    const cartId = getDataFromCart(req);
+
+    //creating checkout session token
+    const buffer = await crypto.randomBytes(32);
+    const hashedToken = buffer.toString("hex");
+
+    const remainingMilliseconds = 5184000000; // 2 month
+    const now = new Date();
+    const expiryDate = new Date(now.getTime() + remainingMilliseconds);
+
+    if (cartId) {
+      //retrieving cart and user data for the current public session
+      const cart = await models.Cart.findByPk(cartId);
+
+      //creating add to cart state in order
+      const newOrder = await models.Order.create(
+        {
+          id: (await crypto.randomBytes(6)).toString("hex"),
+          status: "add to cart",
+          sales: cart!.total_amount,
+          user_id: userId
+        },
+      );
+
+      const res = NextResponse.json(
+        {
+          message: "Order created!",
+          checkout_session_token: hashedToken,
+          order: newOrder,
+          success: true,
+        },
+        { status: 201 }
+      );
+
+      res.cookies.set("checkout_session_token", hashedToken, {
+        expires: expiryDate,
+        httpOnly: true,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+
+      res.cookies.set("order", newOrder.id, {
+        expires: expiryDate,
+        httpOnly: true,
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+
+      return res;
+    } else {
+      return NextResponse.json({
+        message: 'Invalid cart id',
+      }, {
+        status: 400
+      });
+    }
+  } catch (error) {
+    const e = error as Error;
+    return NextResponse.json(
+      {
+        error: e.message,
+        success: false,
+      },
+      { status: 500 }
+    );
+  }
+}
