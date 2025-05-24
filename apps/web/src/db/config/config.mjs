@@ -1,10 +1,10 @@
 
 export const options = {
-  username: process.env.USER,
-  password: process.env.PASS,
-  database: process.env.DB_NAME,
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
+  username: process.env.WEB_USER,
+  password: process.env.WEB_PASS,
+  database: process.env.WEB_DB_NAME,
+  host: process.env.WEB_DB_HOST,
+  port: process.env.WEB_DB_PORT,
   dialect: 'postgres',
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   migrationStorageTableName: 'migrations',
@@ -16,16 +16,19 @@ export const options = {
   },
 };
 
-// if(process.env.NODE_ENV === 'production'){
-//   options.dialectOptions = {
-//     ssl: {
-//       require: false, 
-//       rejectUnauthorized: false
-//     }
-//   }
-// }
-
-export default {
-  development: options,
-  production: options
+if(process.env.NODE_ENV === 'production'){
+  options.dialectOptions = {
+    ssl: {
+      require: false, 
+      rejectUnauthorized: false
+    }
+  }
 }
+
+const config =  {
+  development: options,
+  production: options,
+  test: options
+}
+
+export default config;

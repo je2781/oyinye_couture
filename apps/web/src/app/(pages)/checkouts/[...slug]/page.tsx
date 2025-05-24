@@ -4,16 +4,16 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 async function getCheckout() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const cartId = cookieStore.get("cart")?.value;
   const orderId = cookieStore.get("order")?.value;
   const userId = cookieStore.get("user")?.value;
 
   if(cartId && cartId.length > 0){
     const [userDataRes, countryDataRes,cartDataRes] = await Promise.all([
-      fetch(`${process.env.DOMAIN!}/api/users/${userId}`),
+      fetch(`${process.env.WEB_DOMAIN!}/api/users/${userId}`),
       fetch(`https://ipinfo.io?token=${process.env.IPINFO_TOKEN}`),
-      fetch(`${process.env.DOMAIN!}/api/products/cart/${cartId}`, {cache: 'no-cache'})
+      fetch(`${process.env.WEB_DOMAIN!}/api/products/cart/${cartId}`, {cache: 'no-cache'})
     ]);
 
     const [userData, countryData, cartData] = await Promise.all([userDataRes.json(), countryDataRes.json(), cartDataRes.json()]);
@@ -39,18 +39,18 @@ async function getCheckout() {
 async function CheckoutPage() {
   const data = await getCheckout();
 
-  const h = headers();
+  const h = await headers();
   const csrfToken = h.get('X-CSRF-Token') || 'missing';
 
   const checkoutData = {...data, csrf: csrfToken};
 
   //protecting public routes
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const isAdmin = Boolean(cookieStore.get("admin_status")?.value);
   const token = cookieStore.get("access_token")?.value;
 
   if (token && isAdmin) {
-    redirect("/admin/summary");
+    redirect(`${process.env.ADMIN_DOMAIN}/admin/summary`);
   }
 
   return (

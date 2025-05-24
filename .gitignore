@@ -2,8 +2,7 @@
 
 # Dependencies
 node_modules
-.pnp
-.pnp.js
+
 
 # Local env files
 .env
@@ -30,9 +29,13 @@ dist
 
 # Debug
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # Misc
 .DS_Store
 *.pem
+
+#dev support
+ngrok.yml
+/packages/db/
+Dockerfile
+docker-compose.yml

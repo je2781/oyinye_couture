@@ -4,7 +4,7 @@ import {
   Base64ImagesObj,
   DressSizesJsxObj,
   DressSizesObj,
-} from "@/interfaces";
+} from "../../../../interfaces";
 import axios from "axios";
 import React, { useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -14,8 +14,8 @@ import "swiper/css/pagination";
 import "swiper/css/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import useCart from "@/store/useCart";
-import { regex, sizes } from "@/helpers/getHelpers";
+import useCart from "../../../../store/useCart";
+import { qstashClient, regex, sizes } from "../../../../utils/getHelpers";
 
 import toast from "react-hot-toast";
 import Product from "../product/Product";
@@ -61,7 +61,7 @@ const ProductDetail = ({
     React.useEffect(() => {
         async function setViewedProductCookie(){
             await fetch(
-             `${process.env.NEXT_PUBLIC_DOMAIN}/api/cookies/${paramsId}`  );
+             `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/cookies/${paramsId}`  );
         }
         setViewedProductCookie();
     }, [paramsId]);
@@ -100,9 +100,9 @@ const ProductDetail = ({
                 setLoader(true);
                 try {
                     const res = await axios.post('/api/products/cart', {
-                        price: sizesObj[`${selectedColor}-${selectedSize}`].price,
+                        price: sizesObj[`${selectedColor}-${selectedSize}`]!.price,
                         quantity: parseInt(quantity),
-                        variantId: sizesObj[`${selectedColor}-${selectedSize}`].variant_id!,
+                        variantId: sizesObj[`${selectedColor}-${selectedSize}`]!.variant_id!,
                         id: productId,
                         totalAmount
                     },{
@@ -168,20 +168,20 @@ const ProductDetail = ({
         if (productColors) {
             for(let color of productColors){
                 for (let i = 0; i < sizes.length; i++) {
-                    if (color.name === (activeColorEl.innerText.charAt(0).toLowerCase() + activeColorEl.innerText.slice(1)) && !color.sizes.some((size: any) => size.number === colorsObj[selectedColor][i]) && colorsObj[selectedColor][i]) {
+                    if (color.name === (activeColorEl.innerText.charAt(0).toLowerCase() + activeColorEl.innerText.slice(1)) && !color.sizes.some((size: any) => size.number === colorsObj[selectedColor]![i]) && colorsObj[selectedColor]![i]) {
                         // Setting properties of size element not contained in active dress color to 'not in stock'
-                        sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('background-color', 'transparent');
-                        sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].style.setProperty('color', 'rgb(156, 163, 175)');
-                        sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor][i].toString())].classList.add('border', 'border-gray-200');
+                        sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor]![i]!.toString())]!.style.setProperty('background-color', 'transparent');
+                        sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor]![i]!.toString())]!.style.setProperty('color', 'rgb(156, 163, 175)');
+                        sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === colorsObj[selectedColor]![i]!.toString())]!.classList.add('border', 'border-gray-200');
                         
                         // Setting properties of first size element contained in active dress color to 'current selection'
-                        sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())].style.setProperty('background-color', 'black');
-                        sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())].style.setProperty('color', 'white');
-                        sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())].classList.remove('hover:ring-1', 'ring-gray-600');
+                        sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())]!.style.setProperty('background-color', 'black');
+                        sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())]!.style.setProperty('color', 'white');
+                        sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === color.sizes[0].number.toString())]!.classList.remove('hover:ring-1', 'ring-gray-600');
                         // Setting properties of other size elements contained in active dress color to 'available for selection'
                         if (color.sizes.slice(1).length > 0) {
                             for (let size of color.sizes.slice(1)) {
-                                sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === size.number.toString())].style.setProperty('color', 'rgb(75, 85, 99)');
+                                sizeEls[sizeEls.findIndex(el => el.innerText.split(' ')[1] === size.number.toString())]!.style.setProperty('color', 'rgb(75, 85, 99)');
                             }
                         }
                         //updating active dress size and pathname of current route
@@ -223,9 +223,9 @@ const ProductDetail = ({
 
         //updating active dress size and pathname of current route
         const extractedColor = productColors.find((color: any) => color.name === selectedColor);
-        const extractedSize = extractedColor.sizes.find((size: any) => size.number === parseInt(activeSizeEl.innerText.split(' ')[1]));
+        const extractedSize = extractedColor.sizes.find((size: any) => size.number === parseInt(activeSizeEl.innerText.split(' ')[1]!));
         history.pushState(null, '', `/products/${productTitle.replace(' ', '-').toLowerCase()}/${selectedColor.toLowerCase().replace(' ', '-')}/${extractedSize?.variant_id}`);
-        setSelectedSize(activeSizeEl.innerText.split(' ')[1]);
+        setSelectedSize(activeSizeEl.innerText.split(' ')[1]!);
     }
 
 
@@ -235,7 +235,7 @@ const ProductDetail = ({
             color.sizes.sort((a: any, b: any) => a.number - b.number);
             for(let size of color.sizes){
                 colorsObj[color.name]
-                ? colorsObj[color.name].push(size.number)
+                ? colorsObj[color.name]!.push(size.number)
                 : colorsObj[color.name] = [size.number];
             }
 
@@ -590,15 +590,15 @@ const ProductDetail = ({
                         </div>}
                         <button className="font-sans xl:px-44 px-28 py-2 ring-gray-600 hover:ring-1 border border-gray-600 text-gray-600 flex flex-row justify-center items-center"
                             onClick={() => {
-                                if(items.some((item: any) => item.variantId === sizesObj[`${selectedColor}-${selectedSize}`].variant_id)){
+                                if(items.some((item: any) => item.variantId === sizesObj[`${selectedColor}-${selectedSize}`]!.variant_id)){
                                     setToastError(true);
                                 }else{
                                     //adding item to cart
                                     addItem({
                                         price:
-                                        sizesObj[`${selectedColor}-${selectedSize}`].price,
+                                        sizesObj[`${selectedColor}-${selectedSize}`]!.price,
                                         quantity: parseInt(quantity),
-                                        variantId: sizesObj[`${selectedColor}-${selectedSize}`].variant_id,
+                                        variantId: sizesObj[`${selectedColor}-${selectedSize}`]!.variant_id,
                                         id: productId,
                                     });
                                     //sending cart data to data layer
@@ -631,13 +631,26 @@ const ProductDetail = ({
                                     throw new Error(cartUpdateRes.data.message);
                                 }
 
-                                const res = await axios.get('/api/checkouts');
+                                const checkoutRes = await axios.get('/api/checkouts');
 
-                                if(res.status != 200){
-                                    throw new Error(res.data.message);
+                                if(checkoutRes.status != 200){
+                                    throw new Error(checkoutRes.data.message);
                                 }
-                        
-                                router.push(`/checkouts/cn/${res.data.checkout_session_token}`);
+
+                                
+                                //dispatching order_created job
+                                await qstashClient.publishJSON({
+                                    url: `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/admin?utility=order_created`,
+                                    maxRetries: 1,
+                                    body: {
+                                        order: checkoutRes.data.order
+                                    },
+                                    headers: {
+                                    "x-internal-qstash-key": process.env.NEXT_PUBLIC_QSTASH_INTERNAL_KEY!
+                                    },
+                                });
+
+                                router.push(`/checkouts/cn/${checkoutRes.data.checkout_session_token}`);
                                } catch (error) {
                                 const e = error as Error;
                                 toast.error(e.message);

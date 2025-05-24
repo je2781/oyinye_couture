@@ -9,7 +9,9 @@
     "./react-internal": "./react-internal.js"
   },
   "devDependencies": {
+    "@eslint/config-array": "^0.20.0",
     "@eslint/js": "^9.27.0",
+    "@eslint/plugin-kit": "^0.3.1",
     "@next/eslint-plugin-next": "^15.3.0",
     "eslint": "^9.27.0",
     "eslint-config-prettier": "^10.1.1",

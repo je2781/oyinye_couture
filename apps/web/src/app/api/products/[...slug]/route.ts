@@ -1,12 +1,12 @@
-import { randomReference } from "@helpers/getHelpers";
-import { getVisitData } from "@helpers/getVisitData";
+import { randomReference } from "packages/utils/getHelpers";
+import { getVisitData } from "packages/utils/getVisitData";
 import * as argon from "argon2";
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { Op } from "sequelize";
-import { models } from "@db/connection";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
+import { initializeSequelize } from "@/web/src/db/connection";
 
 const redis = Redis.fromEnv();
 
@@ -19,9 +19,13 @@ const ratelimit = new Ratelimit({
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string[] } }
+  { params }: { params: Promise<{ slug: string[] }> }
 ) {
   try {
+    const { models } = await initializeSequelize();
+
+    const qParams = await params;
+
     const ip = req.headers.get("x-forwarded-for");
     const { success, limit, remaining, reset } = await ratelimit.limit(
       String(ip)
@@ -38,8 +42,8 @@ export async function GET(
       return rateLimitRes;
     }
 
-    let extractedProductsArray: any[] = [];
-    let authors: any[] = [];
+    const extractedProductsArray: any[] = [];
+    const authors: any[] = [];
     let updatedProducts: any[] = [];
 
     const viewedProducts =
@@ -49,11 +53,11 @@ export async function GET(
 
     // ===== Load the product first =====
     const title =
-      params.slug[0].charAt(0).toUpperCase() +
-      params.slug[0].replace("-", " ").slice(1);
+      qParams.slug[0].charAt(0).toUpperCase() +
+      qParams.slug[0].replace("-", " ").slice(1);
     const product = await models.Product.findOne({
       where: { title },
-      include: [{ model: models.Review, as: 'reviews' }],
+      include: [{ model: models.Review, as: "reviews" }],
     });
 
     if (!product) {
@@ -64,7 +68,7 @@ export async function GET(
     }
 
     const extractedColorObj = product.colors.find(
-      (color: any) => color.name === params.slug[1].replace("-", " ")
+      (color: any) => color.name === qParams.slug[1].replace("-", " ")
     );
     if (!extractedColorObj) {
       return NextResponse.json(
@@ -76,8 +80,8 @@ export async function GET(
     if (viewedProducts) {
       const viewedProductsArray = JSON.parse(viewedProducts);
 
-      for (let viewedProduct of viewedProductsArray) {
-        let extractedProduct = await models.Product.findOne({
+      for (const viewedProduct of viewedProductsArray) {
+        const extractedProduct = await models.Product.findOne({
           where: {
             colors: {
               [Op.contains]: [{ sizes: [{ variant_id: viewedProduct }] }],
@@ -95,7 +99,7 @@ export async function GET(
         colors: {
           [Op.contains]: [
             { name: extractedColorObj.name },
-            { sizes: [{ variant_id: { [Op.ne]: params.slug[2] } }] },
+            { sizes: [{ variant_id: { [Op.ne]: qParams.slug[2] } }] },
           ],
         },
       },
@@ -110,21 +114,21 @@ export async function GET(
     });
 
     if (carts.length > 0) {
-      for (let cart of carts) {
-        let products = cart.items.map((item: any) => item.product);
+      for (const cart of carts) {
+        const products = cart.items.map((item: any) => item.product);
         updatedProducts.push(...products);
       }
     }
 
     const reviews = await models.Review.findAll({
       where: {
-        product_id: product.id
+        product_id: product.id,
       },
-      include: [{model: models.User, as: 'author'}]
+      include: [{ model: models.User, as: "author" }],
     });
     reviews.sort((a: any, b: any) => b.likes - a.likes);
 
-    for (let review of reviews) {
+    for (const review of reviews) {
       const user = await models.User.findByPk(review.author_id);
       authors.push(user);
     }
@@ -171,9 +175,13 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { slug: string[] } }
+  { params }: { params: Promise<{ slug: string[] }> }
 ) {
   try {
+    const {models} = await initializeSequelize();
+
+    const qParams = await params;
+
     const ip = req.headers.get("x-forwarded-for");
 
     const { success, limit, remaining, reset } = await ratelimit.limit(
@@ -191,7 +199,7 @@ export async function PATCH(
       return res;
     }
 
-    if (params.slug && params.slug[1] === "likes-dislikes") {
+    if (qParams.slug && qParams.slug[1] === "likes-dislikes") {
       const { likes, dislikes, reviewId } = await req.json();
 
       const review = await models.Review.findByPk(reviewId);
@@ -218,7 +226,7 @@ export async function PATCH(
           },
           {
             where: {
-              id: params.slug[1],
+              id: qParams.slug[1],
             },
           }
         );
@@ -240,9 +248,13 @@ export async function PATCH(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { slug: string[] } }
+  { params }: { params: Promise<{ slug: string[] }> }
 ) {
   try {
+    const {models} = await initializeSequelize();
+
+    const qParams = await params;
+
     const ip = req.headers.get("x-forwarded-for");
 
     const { success, limit, remaining, reset } = await ratelimit.limit(
@@ -271,8 +283,8 @@ export async function POST(
     } = await req.json();
 
     const title =
-      params.slug[0].charAt(0).toUpperCase() +
-      params.slug[0].replace("-", " ").slice(1);
+     qParams.slug[0].charAt(0).toUpperCase() +
+     qParams.slug[0].replace("-", " ").slice(1);
 
     const user = await models.User.findOne({
       where: { email: email },
@@ -280,46 +292,36 @@ export async function POST(
 
     const product = await models.Product.findOne({
       where: { title: title },
-      include: [{ model: models.Review, as: 'reviews' }],
+      include: [{ model: models.Review, as: "reviews" }],
     });
 
     if (!user) {
       const visitId = getVisitData(req);
 
-      let newPassword = randomReference();
+      const newPassword = randomReference();
 
       const hash = await argon.hash(newPassword);
 
-      const newUser = await models.User.create(
-        {
-          id: (await crypto.randomBytes(6)).toString("hex"),
-          email,
-          visitor_id: visitId ?? '',
-          password: hash,
-          first_name: name.split(" ").length === 2 ? name.split(" ")[0] : name,
-          last_name: name.split(" ").length === 2 ? name.split(" ")[1] : name,
-          avatar,
-        },
-        {
-          include: [{ model: models.Visitor, as: 'visitor' }],
-        }
-      );
+      const newUser = await models.User.create({
+        id: (await crypto.randomBytes(6)).toString("hex"),
+        email,
+        visitor_id: visitId ?? "",
+        password: hash,
+        first_name: name.split(" ").length === 2 ? name.split(" ")[0] : name,
+        last_name: name.split(" ").length === 2 ? name.split(" ")[1] : name,
+        avatar,
+      });
 
       //updating product with new user review
-      const newReview = await models.Review.create(
-        {
-          id: (await crypto.randomBytes(6)).toString("hex"),
-          headline,
-          rating: +rating,
-          author_id: newUser.id,
-          content: review,
-          is_media: isMedia,
-          product_id: product!.id
-        },
-        {
-          include: [{ model: models.User, as: 'author' },{ model: models.Product, as: 'product' }],
-        }
-      );
+      const newReview = await models.Review.create({
+        id: (await crypto.randomBytes(6)).toString("hex"),
+        headline,
+        rating: +rating,
+        author_id: newUser.id,
+        content: review,
+        is_media: isMedia,
+        product_id: product!.id,
+      });
 
       product!.collated_reviews.push(newReview.id);
 
@@ -330,7 +332,7 @@ export async function POST(
           message: "product updated successfully",
           emailJob: {
             user: newUser,
-            password: newPassword
+            password: newPassword,
           },
           success: true,
         },
@@ -350,8 +352,6 @@ export async function POST(
         product_id: product!.id,
         content: review,
         is_media: isMedia,
-      },{
-        include: [{ model: models.User, as: 'author' },{ model: models.Product, as: 'product' }],
       });
 
       product!.collated_reviews.push(newReview.id);
@@ -377,10 +377,14 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { slug: string[] } }
+  { params }: { params: Promise<{ slug: string[] }> }
 ) {
   try {
-    const product = await models.Product.findByPk(params.slug[1]);
+    const {models} = await initializeSequelize();
+
+    const qParams = await params;
+
+    const product = await models.Product.findByPk(qParams.slug[1]);
 
     await product!.destroy();
 

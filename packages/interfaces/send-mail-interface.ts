@@ -1,3 +1,6 @@
+import User from "@/admin/src/models/user";
+import { Model } from "sequelize";
+
 export enum EmailType{
     verify_account, reset, reminder, request, verify_reviewer, verify_buyer
 }

@@ -1,12 +1,14 @@
 
-import { models } from '@/db/connection';
+import { initializeSequelize } from '@/admin/src/db/connection';
 import { NextResponse, type NextRequest } from 'next/server';
 
 
 
 export async function GET(req: NextRequest) {
     try {
-        let visitors = await models.Visitor.findAll();
+        const {models} = await initializeSequelize();
+        
+        const visitors = await models.Visitor.findAll();
 
 
         return NextResponse.json({

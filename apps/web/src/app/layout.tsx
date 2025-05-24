@@ -2,7 +2,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "react-hot-toast";
-import '@css/global.css';
+import './globals.css';
+import * as env from 'dotenv';
+
+env.config({path: '../../../../.env'});
 
 const inter = Inter({ subsets: ["latin"] });
 

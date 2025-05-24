@@ -11,7 +11,7 @@ import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import Link from "next/link";
 import useGlobal from "../../../../../store/useGlobal";
 import { AdminSettingsModal, MobileModal } from "../Modal";
-import { appsList, generateBase64FromMedia, getRouteNames, insightList, viewsList } from "../../../../../helpers/getHelpers";
+import { appsList, generateBase64FromMedia, getRouteNames, insightList, viewsList } from "../../../../../utils/getHelpers";
 
 export default function AdminHeader({sectionName, pathName, userName, userEmail, userTitle, id, avatar, csrf}: any) {
   let timerId = React.useRef<NodeJS.Timeout | null>(null);
@@ -112,7 +112,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
 
   const onLogout = async () => {
     try {
-      await axios.post("/api/users/logout",{
+      await axios.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/users/logout`,{
         headers:{
           'x-csrf-token': csrf
         }
@@ -120,7 +120,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
       // Construct the new path
       const newPath = `/login`;
 
-      const url = new URL(`${window.location.origin}${newPath}`);
+      const url = new URL(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}${newPath}`);
       
       router.push(url.toString());
 

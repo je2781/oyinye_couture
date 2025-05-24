@@ -5,8 +5,8 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { EmailType } from "@/interfaces";
-import { qstashClient } from "@/helpers/getHelpers";
+import { EmailType } from "../../../../interfaces";
+import { qstashClient } from "../../../../utils/getHelpers";
 
 export default function ResetPasswordPage({ csrf }: any) {
   const [user, setUser] = React.useState({
@@ -53,7 +53,7 @@ export default function ResetPasswordPage({ csrf }: any) {
       if (res.status === 201 && res.data.user) {
         //dispatching password reset email job
         await qstashClient.publishJSON({
-          url: `${process.env.NEXT_PUBLIC_DOMAIN}/api/mailer?type=${
+          url: `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/mailer?type=${
             EmailType[EmailType.reset]
           }`,
           maxRetries: 1,

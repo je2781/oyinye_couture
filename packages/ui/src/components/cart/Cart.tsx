@@ -5,7 +5,7 @@ import {
   extractProductDetails,
   qstashClient,
   regex,
-} from "../../../../helpers/getHelpers";
+} from "../../../../utils/getHelpers";
 import { Base64ImagesObj, CartItemObj } from "../../../../interfaces";
 import useCart from "../../../../store/useCart";
 import axios from "axios";
@@ -208,11 +208,11 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
             }
           );
 
-          if (res.data.id && res.status === 201) {
-           const updateRes =  await axios.patch(
+          if (res.data.user && res.status === 201) {
+            const updateRes = await axios.patch(
               `/api/products/cart/update`,
               {
-                userId: res.data.id,
+                userId: res.data.user.id,
               },
               {
                 headers: {
@@ -221,11 +221,24 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
               }
             );
 
+            //dispatching user_created job
+            await qstashClient.publishJSON({
+              url: `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/admin?utility=user_created`,
+              maxRetries: 1,
+              body: {
+                user: res.data.user,
+              },
+              headers: {
+                "x-internal-qstash-key": process.env
+                  .NEXT_PUBLIC_QSTASH_INTERNAL_KEY!,
+              },
+            });
+
             //dispatching order_created job
             await qstashClient.publishJSON({
-              url: `${process.env.NEXT_PUBLIC_DOMAIN}/api/admin/order`,
+              url: `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/admin?utility=order_created`,
               body: {
-                order: updateRes.data.order
+                order: updateRes.data.order,
               },
               maxRetries: 1,
               headers: {
@@ -311,6 +324,18 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
     try {
       setIsCreatingCheckout(true);
       const res = await axios.get("/api/checkouts");
+
+      //dispatching order_created job
+      await qstashClient.publishJSON({
+        url: `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/admin?utility=order_created`,
+        body: {
+          order: res.data.order,
+        },
+        maxRetries: 1,
+        headers: {
+          "x-internal-qstash-key": process.env.NEXT_PUBLIC_QSTASH_INTERNAL_KEY!,
+        },
+      });
 
       router.push(`/checkouts/cn/${res.data.checkout_session_token}`);
     } catch (error) {

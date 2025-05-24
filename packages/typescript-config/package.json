@@ -5,5 +5,10 @@
   "license": "MIT",
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "@eslint/config-array": "^0.20.0",
+    "@eslint/plugin-kit": "^0.3.1",
+    "eslint": "^8.57.1"
   }
 }

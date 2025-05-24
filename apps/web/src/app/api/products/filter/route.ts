@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { models } from "@/db/connection";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
+import { initializeSequelize } from "@/web/src/db/connection";
 
 const redis = Redis.fromEnv();
 
@@ -14,8 +14,10 @@ const ratelimit = new Ratelimit({
 
 
 
-export async function POST(req: NextRequest, res: NextResponse) {
+export async function POST(req: NextRequest) {
   try {
+    const {models} = await initializeSequelize();
+    
     const ip = req.headers.get('x-forwarded-for');
 
     const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
@@ -34,7 +36,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
     const reqBody = await req.json();
 
     const searchParams = req.nextUrl.searchParams;
-    let type = searchParams.get("type");
+    const type = searchParams.get("type");
 
     const {
       noOfFilters,

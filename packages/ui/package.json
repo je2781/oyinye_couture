@@ -11,6 +11,8 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
+    "@eslint/config-array": "^0.20.0",
+    "@eslint/plugin-kit": "^0.3.1",
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
     "@turbo/gen": "^2.5.0",

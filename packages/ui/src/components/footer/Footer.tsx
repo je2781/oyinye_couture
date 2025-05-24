@@ -6,8 +6,9 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { qstashClient } from "../../../../utils/getHelpers";
 
-export default function Footer({csrf}: any) {
+export default function Footer({ csrf }: any) {
   const [loader, setLoader] = React.useState(false);
 
   return (
@@ -182,16 +183,33 @@ export default function Footer({csrf}: any) {
 
             try {
               setLoader(true);
-              const res = await axios.post("/api/users/signup", {
-                email: leadEmail!.value,
-                enableEmailMarketing: true,
-              }, {
-                headers: {
-                  "x-csrf-token": csrf,
+              const res = await axios.post(
+                "/api/users/signup",
+                {
+                  email: leadEmail!.value,
+                  enableEmailMarketing: true,
                 },
-              });
+                {
+                  headers: {
+                    "x-csrf-token": csrf,
+                  },
+                }
+              );
 
-              if(res.status != 201){
+              if (res.data.user && res.status === 201) {
+                //dispatching user_created job
+                await qstashClient.publishJSON({
+                  url: `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/admin?utility=user_created`,
+                  maxRetries: 1,
+                  body: {
+                    user: res.data.user,
+                  },
+                  headers: {
+                    "x-internal-qstash-key": process.env
+                      .NEXT_PUBLIC_QSTASH_INTERNAL_KEY!,
+                  },
+                });
+              } else {
                 throw new Error(res.data.message);
               }
             } catch (error) {
@@ -205,7 +223,10 @@ export default function Footer({csrf}: any) {
           }}
           className="lg:w-[50%] w-full flex flex-col gap-y-5 pt-5 lg:pt-0"
         >
-          <p className="text-sm">Join the oyinye couture community to stay updated on promotions and new releases.</p>
+          <p className="text-sm">
+            Join the oyinye couture community to stay updated on promotions and
+            new releases.
+          </p>
           <div className="flex flex-col items-start gap-y-1">
             <div className="inline-flex flex-row border border-gray-500/60 w-full pl-2 pr-1 rounded-sm justify-between items-center">
               <input
@@ -213,7 +234,10 @@ export default function Footer({csrf}: any) {
                 id="subscribe"
                 placeholder="youremail@example.com"
               />
-              <button type="submit" className="px-3 py-2 bg-gray-600 text-white text-[.85rem] rounded-sm">
+              <button
+                type="submit"
+                className="px-3 py-2 bg-gray-600 text-white text-[.85rem] rounded-sm"
+              >
                 {loader ? "Processing" : "Join"}
               </button>
             </div>

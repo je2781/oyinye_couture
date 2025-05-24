@@ -12,7 +12,7 @@ import { Navigation } from "swiper/modules";
 import useCart from "../../../../store/useCart";
 import Link from "next/link";
 import { Base64ImagesObj, DressSizesJsxObj, DressSizesObj } from "../../../../interfaces";
-import { regex, sizes } from "../../../../helpers/getHelpers";
+import { regex, sizes } from "../../../../utils/getHelpers";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter, usePathname } from "next/navigation";

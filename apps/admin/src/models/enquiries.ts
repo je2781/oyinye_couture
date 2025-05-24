@@ -1,0 +1,58 @@
+import {
+    CreationOptional,
+    DataTypes,
+    ForeignKey,
+    InferAttributes,
+    InferCreationAttributes,
+    Model,
+    Sequelize,
+  } from "sequelize";
+  
+  
+  class Enquiry extends Model<InferAttributes<Enquiry>, InferCreationAttributes<Enquiry>> {
+    declare id: string;
+    declare contact: CreationOptional<any>;
+    declare order: CreationOptional<any>;
+    declare user_id: ForeignKey<string>
+    declare createdAt: CreationOptional<Date>;
+    declare updatedAt: CreationOptional<Date>;
+
+    static associate(models: any){
+      Enquiry.belongsTo(models.User, {foreignKey: 'user_id', as: 'user'});
+
+    }
+
+    static initModel(sequelize: Sequelize){
+      return   Enquiry.init({
+        id: {
+            type: DataTypes.STRING,
+            primaryKey: true,
+            allowNull: false,
+          },
+        contact: DataTypes.JSONB,
+        order: DataTypes.JSONB,
+        user_id: {
+          type: DataTypes.STRING,
+          references: {
+            model: 'users',
+            key: 'id'
+          },
+          onDelete: 'CASCADE'
+        },
+        createdAt: DataTypes.DATE,
+        updatedAt: DataTypes.DATE
+    
+    }, {
+        tableName: "enquiries",
+        sequelize,
+        timestamps: true,
+    }
+      );
+    }
+
+  }
+
+
+
+export default Enquiry;
+

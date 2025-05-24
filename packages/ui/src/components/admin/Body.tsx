@@ -22,7 +22,7 @@ import {
   extractProductDetail,
   handleProductEdit,
   qstashClient,
-} from "../../../../helpers/getHelpers";
+} from "../../../../utils/getHelpers";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination } from "swiper/modules";
 import React from "react";
@@ -444,7 +444,7 @@ export default function Body({
       if(orderListLength !== '10'){
         try {
           setLoader(true);
-          const res = await axios.get(`/api/orders/${orderListLength}?page=1`);
+          const res = await axios.get(`/api/admin/orders/${orderListLength}?page=1`);
           setOrders(res.data.orders);
         } catch (error) {
           const e = error as Error;
@@ -2432,7 +2432,7 @@ export default function Body({
                               <button onClick={async (e) => {
                                 try {
                                   setIsLoading(true);
-                                  const res = await axios.post('/api/orders/send/reminder',{
+                                  const res = await axios.post('/api/admin/orders/send/reminder',{
                                     items: order.items
                                   },{
                                     headers: {
@@ -2443,7 +2443,7 @@ export default function Body({
                                   if(res.status === 201 && res.data.emailJob){
                                       //dispatching cart reminder email job
                                     await qstashClient.publishJSON({
-                                      url: `${process.env.NEXT_PUBLIC_DOMAIN}/api/mailer?type=${EmailType[EmailType.request]}`,
+                                      url: `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/mailer?type=${EmailType[EmailType.request]}`,
                                       body: res.data.emailJob,
                                       maxRetries: 1,
                                       headers: {
@@ -2504,7 +2504,7 @@ export default function Body({
                                     }
                                     try {
                                       setIsLoading(true);
-                                      await axios.post('/api/orders/update/payment-status', {
+                                      await axios.post('/api/admin/orders/update/payment-status', {
                                         paymentStatus: selectedStatus.value
                                       },{
                                         headers: {
@@ -2565,7 +2565,7 @@ export default function Body({
                                           if(res.status === 201 && res.data.emailJob){
                                             //dispatching cart reminder email job
                                             await qstashClient.publishJSON({
-                                              url: `${process.env.NEXT_PUBLIC_DOMAIN}/api/mailer?type=${EmailType[EmailType.request]}`,
+                                              url: `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/mailer?type=${EmailType[EmailType.request]}`,
                                               body: res.data.emailJob,
                                               maxRetries: 1,
                                               headers: {
@@ -4360,7 +4360,7 @@ export default function Body({
                                     if(res.status === 201 && res.data.emailJob){
                                         //dispatching reminder email job
                                       await qstashClient.publishJSON({
-                                        url: `${process.env.NEXT_PUBLIC_DOMAIN!}/api/mailer?type${EmailType[EmailType.reminder]}`,
+                                        url: `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN!}/api/mailer?type${EmailType[EmailType.reminder]}`,
                                         body: res.data.emailJob,
                                         maxRetries: 1,
                                         headers: {

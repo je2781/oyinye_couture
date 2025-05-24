@@ -4,7 +4,7 @@ import './Sidebar.css';
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { appsList, insightList, getRouteNames, viewsList } from "../../../../helpers/getHelpers";
+import { appsList, insightList, getRouteNames, viewsList } from "../../../../utils/getHelpers";
 
 export default function Sidebar({pathName}: any){
     const parentElementRef = useRef<HTMLDivElement>(null);

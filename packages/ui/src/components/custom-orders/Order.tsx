@@ -1,6 +1,6 @@
 "use client";
 
-import { generateBase64FromMedia, qstashClient } from "../../../../helpers/getHelpers";
+import { generateBase64FromMedia, qstashClient } from "../../../../utils/getHelpers";
 import { EmailType } from "../../../../interfaces";
 import axios from "axios";
 import { Country } from "country-state-city";
@@ -91,7 +91,7 @@ export default function Order({ country, csrf }: any) {
       if (res.status === 201 && res.data.emailJob) {
         //dispatching password creation email job
         await qstashClient.publishJSON({
-          url: `${process.env.NEXT_PUBLIC_DOMAIN}/api/mailer?type=${
+          url: `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/mailer?type=${
             EmailType[EmailType.reminder]
           }`,
           maxRetries: 1,
@@ -106,7 +106,7 @@ export default function Order({ country, csrf }: any) {
 
         //dispatching verification email job
         await qstashClient.publishJSON({
-          url: `${process.env.NEXT_PUBLIC_DOMAIN}/api/mailer?type=${
+          url: `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/mailer?type=${
             EmailType[EmailType.verify_account]
           }`,
           maxRetries: 1,

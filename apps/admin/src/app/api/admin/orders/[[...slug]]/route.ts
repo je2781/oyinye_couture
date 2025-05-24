@@ -1,12 +1,9 @@
-import { models } from '@db/connection';
-import { getDataFromCart } from '@helpers/getDataFromCart';
-import { getDataFromOrder } from '@helpers/getDataFromOrder';
-import { getUserData } from '@helpers/getUserData';
-import { sanitizeInput } from '@helpers/sanitize';
+import { getDataFromCart } from 'packages/utils/getDataFromCart';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
-import axios from 'axios';
 import { NextResponse, type NextRequest } from 'next/server';
+import { getDataFromOrder } from 'packages/utils/getDataFromOrder';
+import { initializeSequelize } from '@/admin/src/db/connection';
 
 const redis = Redis.fromEnv();
 
@@ -18,8 +15,12 @@ const ratelimit = new Ratelimit({
 });
 
 
-export async function GET(request: NextRequest, { params }: { params: { slug?: string[] } }, res: NextResponse) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
   try {
+
+      const {models} = await initializeSequelize();
+
+      const qParams = await params;
 
       const ip = request.headers.get('x-forwarded-for');
 
@@ -36,14 +37,14 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
         return res;
       }
 
-      if(params.slug){
+      if(qParams.slug){
         const searchParams = request.nextUrl.searchParams;
-        let page = searchParams.get('page');
+        const page = searchParams.get('page');
         const updatedPage = +page! || 1;
-        const ITEMS_PER_PAGE = +params.slug[0];
+        const ITEMS_PER_PAGE = +qParams.slug[0];
       
-        let totalItems = (await models.Order.findAndCountAll()).count;
-        let orders = await models.Order.findAll({
+        const totalItems = (await models.Order.findAndCountAll()).count;
+        const orders = await models.Order.findAll({
           offset: (updatedPage-1) * ITEMS_PER_PAGE,
           limit: ITEMS_PER_PAGE,
           include: [{ model: models.User, as: 'orderUser' }]
@@ -72,9 +73,9 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
             );
         }
 
-        const updatedOrders = orders.map((order) => ({
+        const updatedOrders = orders.map((order: any) => ({
             id: order.id,
-            items: order.items.map(item => {
+            items: order.items.map((item: any) => {
               let price: number = 0;
               let frontBase64Images: string[] = [];
               let colorType: string  = '';
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
                 size
               };
             }),
-            totalQuantity: order.items.map(item => item.quantity).reduce((prev: number, current: number) => prev + current, 0),
+            totalQuantity: order.items.map((item: any) => item.quantity).reduce((prev: number, current: number) => prev + current, 0),
             sales: order.sales,
             date: order.createdAt,
             status: order.status,
@@ -132,5 +133,137 @@ export async function GET(request: NextRequest, { params }: { params: { slug?: s
   }
 }
  
+ 
+export async function POST(request: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
+  try {
+    const {models} = await initializeSequelize();
 
+    const qParams = await params;
+
+    const ip = request.headers.get('x-forwarded-for');
+
+    const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
+
+    if (!success) {
+      const res = NextResponse.json(
+        { message: 'Rate limit exceeded' },
+        { status: 429 }
+      );
+      res.headers.set('X-RateLimit-Limit', limit.toString());
+      res.headers.set('X-RateLimit-Remaining', remaining.toString());
+      res.headers.set('X-RateLimit-Reset', reset.toString());
+      return res;
+    }
+    
+    const [orderId, checkoutSessionToken] = getDataFromOrder(request);
+
+    //retrieving order data for the current checkout session
+    const order = await models.Order.findByPk(orderId,{
+      include: [{ model: models.User, as: 'orderUser' }]
+    });
+
+
+    if(qParams.slug){
+      switch (qParams.slug[1]) {
+        case 'payment-status':{
+          const {paymentStatus} = await request.json();
+
+          if (order) {
+            order.payment_status = paymentStatus;
+  
+            await order.save();
+
+            return NextResponse.json({
+              message: 'order updated',
+              success: true
+            }, {
+              status: 201
+            });
+          }else{
+            return NextResponse.json({
+              message: 'No order has been created',
+              success: false
+            }, {
+              status: 404
+            });
+          }
+        }
+        case 'reminder':{
+          const {items} = await request.json();
+
+          const cartId = getDataFromCart(request);
+
+          if(order && cartId){
+            const extractedUser = await models.User.findByPk(order!.user_id);
+
+            return NextResponse.json({
+              message: 'cart reminder sent',
+              emailJob: {
+                email: extractedUser!.email,
+                emailBody: {
+                  link: `${process.env.ADMIN_DOMAIN!}/cart`,
+                  id: cartId,
+                  total: order!.sales,
+                  items
+                }
+              },
+              success: true
+            }, {
+              status: 201
+            });
+          }else{
+            return NextResponse.json({
+              message: 'invalid cart id',
+            }, {
+              status: 400
+            });
+          }
+
+          
+        }
+        case 'payment-request': {
+          const {link, id, total} = await request.json();
+
+          if (order) {
+            const user = await models.User.findByPk(order!.user_id);
+
+            return NextResponse.json({
+              message: 'payment request sent',
+              emailJob: {
+                email: user!.email,
+                userId: user!.id,
+                emailBody: {
+                  link,
+                  id,
+                  total
+                }
+              },
+              success: true
+            }, {
+              status: 201
+            });
+          }else{
+            return NextResponse.json({
+              message: 'No order has been created',
+            }, {
+              status: 404
+            });
+          }
+        }
+      }
+
+    
+    }
+    
+     
+  } catch (error: any) {
+    const e = error as Error;
+    return NextResponse.json(
+      {
+        error: e.message,
+      },
+      { status: 500 }
+    );
+  }
+}
 

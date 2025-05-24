@@ -8,15 +8,13 @@
       "baseUrl": ".",
       "paths": {
         "@ui/*": ["packages/ui/*"],
-        "@helpers/*": ["packages/helpers/*"],
-        "@models/*": ["packages/models/*"],
+        "@utils/*": ["packages/utils/*"],
         "@templates/*": ["packages/templates/*"],
         "@store/*": ["packages/store/*"],
         "@interfaces/*": ["packages/interfaces/*"],
         "@middleware/*": ["packages/middleware/*"],
         "@locales/*": ["packages/locales/*"],
-        "@css/*": ["packages/css/*"],
-        "@/*": ["apps/admin/src/*", "apps/web/src/*"],
+        "@/*": ["apps/*"],
         
       },
       "strict": true,

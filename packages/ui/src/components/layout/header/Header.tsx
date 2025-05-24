@@ -11,6 +11,7 @@ import useWindowWidth from "../../helpers/getWindowWidth";
 import { MobileModal } from "../Modal";
 import useCart from "../../../../../store/useCart";
 import useGlobal from "../../../../../store/useGlobal";
+import { Autocomplete } from "@mui/material";
 
 export default function Header({ cartItems, isCheckout, isAuth }: any) {
   let timerId: NodeJS.Timeout | null = null;
@@ -154,9 +155,9 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
         </button>
         <Link href="/" className="inline-block max-w-[150px] relative">
           {isCheckout ? (
-            <Image src='/oyinye.png' alt="logo" className="bg-cover" width={1240} />
+            <Image src='/oyinye.png' alt="logo" className="bg-cover" width={1240} height={960}/>
           ) : (
-            <Image src='/oyinye.png' alt="logo" className="bg-contain" />
+            <Image src='/oyinye.png' alt="logo" className="bg-contain" width={640} height={580}/>
           )}
         </Link>
         {!isCheckout && (

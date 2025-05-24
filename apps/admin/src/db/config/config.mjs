@@ -1,10 +1,10 @@
 
 export const options = {
-  username: process.env.USER,
-  password: process.env.PASS,
-  database: process.env.DB_NAME,
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
+  username: process.env.ADMIN_USER,
+  password: process.env.ADMIN_PASS,
+  database: process.env.ADMIN_DB_NAME,
+  host: process.env.ADMIN_DB_HOST,
+  port: process.env.ADMIN_DB_PORT,
   dialect: 'postgres',
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   migrationStorageTableName: 'migrations',
@@ -25,7 +25,10 @@ if(process.env.NODE_ENV === 'production'){
   }
 }
 
-export default {
+const config =  {
   development: options,
-  production: options
+  production: options,
+  test: options
 }
+
+export default config;

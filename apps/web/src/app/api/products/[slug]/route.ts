@@ -1,5 +1,5 @@
 
-import { models } from '@/db/connection';
+import { initializeSequelize } from '@/web/src/db/connection';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { NextResponse, type NextRequest } from 'next/server';
@@ -16,8 +16,11 @@ const ratelimit = new Ratelimit({
 
 
 
-export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
+    const {models} = await initializeSequelize();
+
+    const qParams = await params;
 
     const ip = request.headers.get('x-forwarded-for');
 
@@ -34,24 +37,24 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       return res;
     }
 
-    let priceList: number[] = [];
+    const priceList: number[] = [];
     let filterSettings: any[] = [];
     const ITEMS_PER_PAGE = 21;
 
-    if(params.slug === 'search'){
+    if(qParams.slug === 'search'){
 
       const searchParams = request.nextUrl.searchParams;
-      let query = searchParams.get('q');
-      let page = searchParams.get('page');
-      let sort = searchParams.get('sort_by');
-      let gte = searchParams.get('filter.v.price.gte');
-      let lte = searchParams.get('filter.v.price.lte');
-      let availability = searchParams.get('filter.v.availability');
-      let productType = searchParams.get('filter.p.product_type');
+      const query = searchParams.get('q');
+      const page = searchParams.get('page');
+      const sort = searchParams.get('sort_by');
+      const gte = searchParams.get('filter.v.price.gte');
+      const lte = searchParams.get('filter.v.price.lte');
+      const availability = searchParams.get('filter.v.availability');
+      const productType = searchParams.get('filter.p.product_type');
       const updatedPage = +page! || 1;
       
 
-      let totalItems = await models.Product.count({
+      const totalItems = await models.Product.count({
         where: {
           [Op.and]: [
             {
@@ -86,8 +89,8 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         products = products.filter(product => product.type === productType);
       }
 
-      for (let product of products) {
-        for (let color of product.colors) {
+      for (const product of products) {
+        for (const color of product.colors) {
           color.sizes.forEach((size: any) => priceList.push(size.price));
         }
       }
@@ -123,32 +126,32 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
 
       // Filtering products based on price range
       if (lte) {
-        for (let product of products) {
-          for (let color of product.colors) {
+        for (const product of products) {
+          for (const color of product.colors) {
             color.sizes = color.sizes.filter((size: any) => size.price <= parseInt(lte));
           }
         }
       }
 
       if (gte) {
-        for (let product of products) {
-          for (let color of product.colors) {
+        for (const product of products) {
+          for (const color of product.colors) {
             color.sizes = color.sizes.filter((size: any) => size.price >= parseInt(gte));
           }
         }
       }
 
       if (gte && lte) {
-        for (let product of products) {
-          for (let color of product.colors) {
+        for (const product of products) {
+          for (const color of product.colors) {
             color.sizes = color.sizes.filter((size: any) => (size.price >= parseInt(gte) && size.price <= parseInt(lte)));
           }
         }
       }
 
       // Sorting sizes and checking availability
-      for (let product of products) {
-        for (let color of product.colors) {
+      for (const product of products) {
+        for (const color of product.colors) {
           if (availability) {
             color.sizes = color.sizes.filter((size: any) => size.stock > 0);
           }
@@ -165,8 +168,8 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
           products.sort((a, b) => (a.colors?.[0]?.sizes?.[0]?.price || 0) - (b.colors?.[0]?.sizes?.[0]?.price || 0));
           break;
         default:
-          for (let product of products) {
-            let noOfOrders = await models.Order.count({
+          for (const product of products) {
+            const noOfOrders = await models.Order.count({
               where: {
                 items: {
                   [Op.contains]: [{ product: { id: product.id } }]
@@ -199,18 +202,18 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
       }, { status: 200 });
     }
 
-    if(params.slug === 'collections'){
+    if(qParams.slug === 'collections'){
       const searchParams = request.nextUrl.searchParams;
       let products: any[] = [];
       let totalItems = 0;
-      let page = searchParams.get('page');
-      let sort = searchParams.get('sort_by');
-      let dressColor = searchParams.get('filter.p.m.custom.colors');
-      let dressFeature = searchParams.get('filter.p.m.custom.feature');
-      let dressLength = searchParams.get('filter.p.m.custom.dress_length');
-      let fabric = searchParams.get('filter.p.m.custom.fabric');
-      let neckLine = searchParams.get('filter.p.m.custom.neckline');
-      let sleeveLength = searchParams.get('filter.p.m.custom.sleeve_length');
+      const page = searchParams.get('page');
+      const sort = searchParams.get('sort_by');
+      const dressColor = searchParams.get('filter.p.m.custom.colors');
+      const dressFeature = searchParams.get('filter.p.m.custom.feature');
+      const dressLength = searchParams.get('filter.p.m.custom.dress_length');
+      const fabric = searchParams.get('filter.p.m.custom.fabric');
+      const neckLine = searchParams.get('filter.p.m.custom.neckline');
+      const sleeveLength = searchParams.get('filter.p.m.custom.sleeve_length');
       const updatedPage = +page! || 1;
     
       if(dressColor){
@@ -430,8 +433,8 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
           });
           break;
         case 'best-selling':
-          for(let product of products){
-            let noOfOrders = await models.Order.count({
+          for(const product of products){
+            const noOfOrders = await models.Order.count({
               where: {
                 items: {
                   [Op.contains] : [{product: {id: product.id}}]
@@ -480,8 +483,11 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
 }
 
  
-export async function POST(request: NextRequest, { params }: { params: { slug: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
     try {
+
+      const {models} = await initializeSequelize();
+      
 
       const ip = request.headers.get('x-forwarded-for');
 
@@ -521,8 +527,15 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
     }
 }
  
-export async function PATCH(request: NextRequest, { params }: { params: { slug: string } }) {
+
+
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
     try {
+
+
+      const qParams = await params;
+
+      const {models} = await initializeSequelize();
 
       const ip = request.headers.get('x-forwarded-for');
 
@@ -545,7 +558,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { slug: 
         ...reqBody
       },{
         where: {
-          id: params.slug
+          id: qParams.slug
         }
       });    
       

@@ -1,41 +1,46 @@
-import Header from "@/components/layout/header/Header";
+import Header from "@ui/src/components/layout/header/Header";
 import dynamic from "next/dynamic";
 import { cookies, headers } from "next/headers";
-import Footer from "@/components/footer/Footer";
+import Footer from "@ui/src/components/footer/Footer";
 import { redirect } from "next/navigation";
 
-const CartComponent = dynamic(() => import('../../../components/cart/Cart'),{
-  loading: () => <div className="flex justify-center items-center flex-col gap-y-2 bg-white h-screen w-full md:px-16 px-8 md:pt-12 pt-5 " >
-    <h1 className="font-sans text-gray-600">Fetching Cart data...</h1>
-    <span className="border-4 border-transparent rounded-full border-t-gray-600 border-r-gray-600 w-[36px] h-[36px] spin animate-spin"></span>
-</div>
+const CartComponent = dynamic(() => import("@ui/src/components/cart/Cart"), {
+  loading: () => (
+    <div className="flex justify-center items-center flex-col gap-y-2 bg-white h-screen w-full md:px-16 px-8 md:pt-12 pt-5">
+      <h1 className="font-sans text-gray-600">Fetching Cart data...</h1>
+      <span className="border-4 border-transparent rounded-full border-t-gray-600 border-r-gray-600 w-[36px] h-[36px] spin animate-spin"></span>
+    </div>
+  ),
 });
 
 async function getCart() {
-  const cookieStore = cookies();
-  const cartId = cookieStore.get('cart')?.value;
-  const userId = cookieStore.get('user')?.value;
+  const cookieStore = await cookies();
+  const cartId = cookieStore.get("cart")?.value;
+  const userId = cookieStore.get("user")?.value;
 
-  if(cartId && cartId.length > 0){
-  
+  if (cartId && cartId.length > 0) {
     const [userDataRes, cartDataRes] = await Promise.all([
-      fetch(`${process.env.DOMAIN!}/api/users/${userId}`),
-      fetch(`${process.env.DOMAIN!}/api/products/cart/${cartId}`, {cache: 'no-cache'})
+      fetch(`${process.env.WEB_DOMAIN!}/api/users/${userId}`),
+      fetch(`${process.env.WEB_DOMAIN!}/api/products/cart/${cartId}`, {
+        cache: "no-cache",
+      }),
     ]);
 
-    const [userData, cartData] = await Promise.all([userDataRes.json(), cartDataRes.json()]);
+    const [userData, cartData] = await Promise.all([
+      userDataRes.json(),
+      cartDataRes.json(),
+    ]);
 
     return {
       cartItems: cartData.cartItems,
       total: cartData.total,
-      userEmail: userData ? userData.userEmail : ''
+      userEmail: userData ? userData.userEmail : "",
     };
-  }else{
+  } else {
     return {
       cartItems: [],
       total: 0,
-      userEmail: ''
-
+      userEmail: "",
     };
   }
 }
@@ -43,25 +48,25 @@ async function getCart() {
 async function CartPage() {
   const data = await getCart();
 
-  const h = headers();
-  const csrfToken = h.get('X-CSRF-Token') || 'missing';
+  const h = await headers();
+  const csrfToken = h.get("X-CSRF-Token") || "missing";
 
-  const cartData = {...data, csrf: csrfToken};
-  
+  const cartData = { ...data, csrf: csrfToken };
+
   //protecting public routes
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const isAdmin = Boolean(cookieStore.get("admin_status")?.value);
   const token = cookieStore.get("access_token")?.value;
 
   if (token && isAdmin) {
-    redirect("/admin/summary");
+    redirect(`${process.env.ADMIN_DOMAIN}/admin/summary`);
   }
 
   return (
     <>
       <Header cartItems={data.cartItems} />
       <CartComponent {...cartData} />
-      <Footer  csrfToken={csrfToken}/>
+      <Footer csrfToken={csrfToken} />
     </>
   );
 }

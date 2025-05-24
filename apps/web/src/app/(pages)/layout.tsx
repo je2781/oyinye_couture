@@ -1,12 +1,12 @@
 // app/providers.tsx
 'use client';
 
-import { AuthContextProvider } from "@/store/authContext";
+import { AuthContextProvider } from "@store/authContext";
 import { useEffect, useReducer, useState } from "react";
-import { CartContextProvider } from "@/store/cartContext";
-import { ProductContextProvider } from "@/store/productContext";
-import { cartReducer, defaultCartState } from "@/helpers/getHelpers";
-import { GlobalContextProvider } from "@/store/globalContext";
+import { CartContextProvider } from "@store/cartContext";
+import { ProductContextProvider } from "@store/productContext";
+import { cartReducer, defaultCartState, qstashClient } from "packages/utils/getHelpers";
+import { GlobalContextProvider } from "@store/globalContext";
 
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -27,6 +27,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           }
         });
         const data = await res.json();
+        
+         //dispatching visitor_created job
+         await qstashClient.publishJSON({
+          url: `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/admin?utility=visitor_created`,
+          body: {
+            visitor: data.visitor
+          },
+          maxRetries: 1,
+          headers: {
+            "x-internal-qstash-key": process.env.NEXT_PUBLIC_QSTASH_INTERNAL_KEY!
+          }
+        });
         setAllProducts(data.products);
       } catch (error) {}
     }

@@ -1,12 +1,12 @@
 "use client";
 
-import { qstashClient } from "../../../../helpers/getHelpers";
 import { EmailType } from "../../../../interfaces";
 import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
 import toast from "react-hot-toast";
+import { qstashClient } from "../../../../utils/getHelpers";
 
 export default function OthersComponent({ name, csrf }: any) {
   const [email, setEmail] = React.useState("");
@@ -67,25 +67,38 @@ export default function OthersComponent({ name, csrf }: any) {
         }
       );
 
+      //dispatching enquiry_created job
+      await qstashClient.publishJSON({
+        url: `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/admin?utility=enquiry_created`,
+        maxRetries: 1,
+        body: {
+          enquiry: res.data.enquiry,
+        },
+        headers: {
+          "x-internal-qstash-key": process.env.NEXT_PUBLIC_QSTASH_INTERNAL_KEY!,
+        },
+      });
+
       if (res.status === 201 && res.data.emailJob) {
         //dispatching password creation email job
         await qstashClient.publishJSON({
-          url: `${process.env.NEXT_PUBLIC_DOMAIN}/api/mailer?type=${
+          url: `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/mailer?type=${
             EmailType[EmailType.reminder]
           }`,
           maxRetries: 1,
           body: {
             email: res.data.emailJob.user.email,
-            password: res.data.emailJob.password
+            password: res.data.emailJob.password,
           },
           headers: {
-            "x-internal-qstash-key": process.env.NEXT_PUBLIC_QSTASH_INTERNAL_KEY!
-          }
+            "x-internal-qstash-key": process.env
+              .NEXT_PUBLIC_QSTASH_INTERNAL_KEY!,
+          },
         });
 
         //dispatching verification email job
         await qstashClient.publishJSON({
-          url: `${process.env.NEXT_PUBLIC_DOMAIN}/api/mailer?type=${
+          url: `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/mailer?type=${
             EmailType[EmailType.verify_account]
           }`,
           maxRetries: 1,
@@ -94,10 +107,11 @@ export default function OthersComponent({ name, csrf }: any) {
             userId: res.data.emailJob.user.id,
           },
           headers: {
-            "x-internal-qstash-key": process.env.NEXT_PUBLIC_QSTASH_INTERNAL_KEY!
-          }
+            "x-internal-qstash-key": process.env
+              .NEXT_PUBLIC_QSTASH_INTERNAL_KEY!,
+          },
         });
-      } else if(res.status != 201){
+      } else if (res.status != 201) {
         throw new Error(res.data.message);
       }
     } catch (error) {

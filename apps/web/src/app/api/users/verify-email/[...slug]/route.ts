@@ -1,15 +1,19 @@
 
-import { models } from "@/db/connection";
+import { initializeSequelize } from "@/web/src/db/connection";
 import { NextRequest, NextResponse } from "next/server";
 import { Op } from "sequelize";
 
 
-export async function GET(req: NextRequest, {params}: {params: {slug: string[]}}) {
+export async function GET(req: NextRequest, {params}: {params: Promise<{slug: string[]}>}) {
   try {
 
+    const {models} = await initializeSequelize();
+
+    const qParams = await params;
+    
     const user = await models.User.findOne({
       where: {
-        verify_token: params.slug[1],
+        verify_token: qParams.slug[1],
         verify_token_expiry_date: {
           [Op.gt]:  new Date()
         }
@@ -25,7 +29,7 @@ export async function GET(req: NextRequest, {params}: {params: {slug: string[]}}
         ); 
     }
 
-    switch (params.slug[0]) {
+    switch (qParams.slug[0]) {
       case 'buyer':
         user.buyer_is_verified = true;
         break;
@@ -42,7 +46,7 @@ export async function GET(req: NextRequest, {params}: {params: {slug: string[]}}
     await user.save();
 
     return NextResponse.json(
-      { message: `${params.slug[0].charAt(0).toUpperCase() + params.slug[0].slice(1)} verified`, success: true},
+      { message: `${qParams.slug[0].charAt(0).toUpperCase() + qParams.slug[0].slice(1)} verified`, success: true},
       { status: 200 }
     );
   } catch (error: any) {

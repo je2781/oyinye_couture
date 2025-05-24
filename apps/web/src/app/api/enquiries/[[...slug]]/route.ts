@@ -1,12 +1,13 @@
-import { randomReference } from '@/helpers/getHelpers';
-import { getVisitData } from '@/helpers/getVisitData';
+import { randomReference } from 'packages/utils/getHelpers';
+import { getVisitData } from 'packages/utils/getVisitData';
 import * as argon from "argon2";
 import { NextResponse, type NextRequest } from 'next/server';
 import crypto from 'crypto';
-import { models } from '@/db/connection';
 import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
-import { sanitizeInput } from '@/helpers/sanitize';
+import { sanitizeInput } from 'packages/utils/sanitize';
+import Enquiry from '@/admin/src/models/enquiries';
+import { initializeSequelize } from '@/web/src/db/connection';
 
 const redis = Redis.fromEnv();
 
@@ -17,128 +18,11 @@ const ratelimit = new Ratelimit({
   analytics: true,
 });
 
-export async function DELETE(req: NextRequest, { params }: { params: { slug?: string[] } }, res: NextResponse) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ slug?: string[] }> }) {
     try {
+      const {models} = await initializeSequelize();
 
-        if(params.slug && params.slug.length > 0){
-          const enq = await models.Enquiry.findByPk(params.slug![1]);
-
-          await enq!.destroy();
-
-          return NextResponse.json(
-            {
-              message: "enquiry deleted",
-              success: true,
-            },
-            { status: 201 }
-          );
-        }else{
-
-          return NextResponse.json(
-            {
-                message: 'invalid enquiry id',
-                success: false
-            },
-            { status: 400 }
-          );
-        }
-        
-
-    } catch (error: any) {
-        return NextResponse.json(
-            {
-                error: error.message,
-            },
-            { status: 500 }
-        );
-    }
-}
-
-export async function PATCH(req: NextRequest, { params }: { params: { slug?: string[] } }) {
-    try {
-
-      const ip = req.headers.get('x-forwarded-for');
-
-      const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
-
-      if (!success) {
-        const res = NextResponse.json(
-          { message: 'Rate limit exceeded' },
-          { status: 429 }
-        );
-        res.headers.set('X-RateLimit-Limit', limit.toString());
-        res.headers.set('X-RateLimit-Remaining', remaining.toString());
-        res.headers.set('X-RateLimit-Reset', reset.toString());
-        return res;
-      }
-        const {
-            isRead,
-            isUnRead,
-            isBooking,
-            isContact,
-            saved
-        } = await req.json();
-
-
-        
-        if(params.slug && params.slug.length > 0){
-          const enq = await models.Enquiry.findByPk(params.slug![1]);
-
-          if(!enq ){
-            return NextResponse.json(
-              {
-                message: "Enquiry doesn't exist",
-                success: false,
-              },
-              { status: 200 }
-            );
-          }else{
-            if(isBooking){
-              enq.order.read = isRead ?? false;
-              enq.order.unRead = isUnRead ?? true;
-              enq.order.saved = saved ?? false;
-  
-              await enq.save();
-            }
-            if(isContact){
-              enq.contact.read = isRead ?? false;
-              enq.contact.unRead = isUnRead ?? true;
-              enq.contact.saved = saved ?? false;
-  
-              await enq.save();
-            }
-      
-            return NextResponse.json(
-              {
-                message: "enquiry updated",
-                success: true,
-              },
-              { status: 201 }
-            );
-          }
-        }else{
-          return NextResponse.json(
-            {
-                message: 'invalid enquiry id',
-                success: false
-            },
-            { status: 400 }
-          );
-        }
-        
-
-    } catch (error: any) {
-        return NextResponse.json(
-            {
-                error: error.message,
-            },
-            { status: 500 }
-        );
-    }
-}
-
-export async function POST(req: NextRequest, { params }: { params: { slug?: string[] } }) {
-    try {
+      const qParams = await params;
 
       const ip = req.headers.get('x-forwarded-for');
 
@@ -178,12 +62,15 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
         const cleanMsg = sanitizeInput(message);
 
 
+        let newEnquiry: Enquiry | null = null;
+
+
         const user = await models.User.findOne({where: {email: cleanEmail!}});
     
         if(!user){
           const visitId = getVisitData(req);
     
-          let newPassword = randomReference();
+          const newPassword = randomReference();
     
           const hash = await argon.hash(newPassword);
           
@@ -199,9 +86,9 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
           });
 
     
-          if(params.slug![0] === 'custom-order'){
+          if(qParams.slug![0] === 'custom-order'){
             //creating new appointment
-            await models.Enquiry.create({
+            newEnquiry =  await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
               user_id: newUser.id,
               order: {
@@ -215,7 +102,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             });
 
           }else{
-            await models.Enquiry.create({
+            newEnquiry =  await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
               user_id: newUser.id,
               contact: {
@@ -230,6 +117,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
           return NextResponse.json(
             {
               message: "enquiry created",
+              enquiry: newEnquiry.get({plain: true}),
               emailJob: {
                 user,
                 password: newPassword
@@ -244,10 +132,10 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
 
           await user.save();
 
-          if(params.slug![0] === 'custom-order'){
+          if(qParams.slug![0] === 'custom-order'){
 
             //creating new appointment
-            await models.Enquiry.create({
+            newEnquiry =  await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
               user_id: user.id,
               order: {
@@ -261,7 +149,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
             });
       
           }else{
-            await models.Enquiry.create({
+            newEnquiry =  await models.Enquiry.create({
               id: (await crypto.randomBytes(6)).toString("hex"),
               user_id: user.id,
               contact: {
@@ -276,6 +164,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
           return NextResponse.json(
             {
               message: "enquiry created",
+              enquiry: newEnquiry.get({plain: true}),
               success: true,
             },
             { status: 201 }
@@ -293,98 +182,5 @@ export async function POST(req: NextRequest, { params }: { params: { slug?: stri
     }
 }
 
-export async function GET(req: NextRequest, { params }: { params: { slug?: string[] } }) {
-    try {
-        const ip = req.headers.get('x-forwarded-for');
-
-        const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
-
-        if (!success) {
-          const res = NextResponse.json(
-            { message: 'Rate limit exceeded' },
-            { status: 429 }
-          );
-          res.headers.set('X-RateLimit-Limit', limit.toString());
-          res.headers.set('X-RateLimit-Remaining', remaining.toString());
-          res.headers.set('X-RateLimit-Reset', reset.toString());
-          return res;
-        }
-
-        let updatedEnquiries = [];
-
-        if(params.slug && params.slug.length > 0){
-          const searchParams = req.nextUrl.searchParams;
-          let page = searchParams.get('page');
-          const updatedPage = +page! || 1;
-          const ITEMS_PER_PAGE = +params.slug[0];
-  
-          let totalEnquiries = (await models.Enquiry.findAndCountAll()).count;
-          let enquiries = await models.Enquiry.findAll({
-            offset: (updatedPage-1) * ITEMS_PER_PAGE,
-            limit: ITEMS_PER_PAGE,
-            include: [{ model: models.User, as: 'user' }]
-          });
-  
-          const currentPage = updatedPage;
-          const hasPreviousPage = currentPage > 1;
-          const hasNextPage =
-              totalEnquiries > currentPage * ITEMS_PER_PAGE;
-          const lastPage = 
-               Math.ceil(totalEnquiries / ITEMS_PER_PAGE);
-
-          if (enquiries.length === 0) {
-            return NextResponse.json(
-              {
-                hasNextPage,
-                hasPreviousPage,
-                lastPage,
-                currentPage,
-                isActivePage: updatedPage,
-                nextPage: currentPage + 1,
-                previousPage: currentPage - 1,
-                enquiries
-            },
-                { status: 200 }
-            );
-          }
-              
-          for(let enq of enquiries){
-            const user = await models.User.findByPk(enq.user_id);
-            updatedEnquiries.push({
-              ...enq,
-              author: {
-                full_name: `${user!.first_name} ${user!.last_name}`,
-                email: user!.email,
-              }
-            });
-          }
-  
-      
-          return NextResponse.json(
-            {
-              message: "enquiries retrieved",
-              hasNextPage,
-              hasPreviousPage,
-              lastPage,
-              currentPage,
-              isActivePage: updatedPage,
-              nextPage: currentPage + 1,
-              previousPage: currentPage - 1,
-              enquiries: updatedEnquiries,
-              success: true,
-            },
-            { status: 200 }
-          );
-        }
-
-    } catch (error: any) {
-        return NextResponse.json(
-            {
-                error: error.message,
-            },
-            { status: 500 }
-        );
-    }
-}
 
 

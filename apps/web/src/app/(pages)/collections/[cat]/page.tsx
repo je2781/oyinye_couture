@@ -1,6 +1,6 @@
-import Collections from "@/components/collections/CollectionsComponent";
-import Footer from "@/components/footer/Footer";
-import Header from "@/components/layout/header/Header";
+import Collections from "@ui/src/components/collections/CollectionsComponent";
+import Footer from "@ui/src/components/footer/Footer";
+import Header from "@ui/src/components/layout/header/Header";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -30,7 +30,7 @@ async function getCollectionData(
   // Join the parameters to construct the query string
   const queryString = filteredParams.join("&");
 
-  let uri = `${process.env.DOMAIN!}/api/products/collections?${queryString}`;
+  const uri = `${process.env.WEB_DOMAIN!}/api/products/collections?${queryString}`;
 
   const res = await fetch(uri, { cache: "no-cache" });
   const data = await res.json();
@@ -39,12 +39,12 @@ async function getCollectionData(
 }
 
 async function getCart() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const cartId = cookieStore.get("cart")?.value;
 
   if (cartId && cartId.length > 0) {
     const res = await fetch(
-      `${process.env.DOMAIN!}/api/products/cart/${cartId}`,
+      `${process.env.WEB_DOMAIN!}/api/products/cart/${cartId}`,
       { cache: "no-cache" }
     );
     const data = await res.json();
@@ -81,16 +81,16 @@ const CollectionsPage = async ({ params, searchParams }: any) => {
   );
   const cartItems = await getCart();
 
-  const h = headers();
+  const h = await headers();
   const csrfToken = h.get("X-CSRF-Token") || "missing";
 
   //protecting public routes
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const isAdmin = Boolean(cookieStore.get("admin_status")?.value);
   const token = cookieStore.get("access_token")?.value;
 
   if (token && isAdmin) {
-    redirect("/admin/summary");
+    redirect(`${process.env.ADMIN_DOMAIN}/admin/summary`);
   }
 
   return (

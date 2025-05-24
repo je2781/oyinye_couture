@@ -1,37 +1,47 @@
 import { Sequelize } from "sequelize";
 import { SequelizeOptions } from "sequelize-typescript";
-import { options } from "./config/config.mjs";
-import Cart from "@models/cart";
-import User from "@models/user";
-import Review from "@models/review";
-import Order from "@models/order";
-import Enquiry from "@models/enquiries";
-import Visitor from "@models/visitor";
-import Product from "@models/product";
-import Filter from "@models/filter";
+import Cart from "@/web/src/models/cart";
+import User from "@/web/src/models/user";
+import Review from "@/web/src/models/review";
+import Order from "@/web/src/models/order";
+import Enquiry from "@/web/src/models/enquiries";
+import Visitor from "@/web/src/models/visitor";
+import Product from "@/web/src/models/product";
+import Filter from "@/web/src/models/filter";
 
-const dbOptions = <SequelizeOptions>options;
-dbOptions.dialectModule = require("pg");
-const sequelize = new Sequelize(dbOptions);
+const env = process.env.NODE_ENV || "development";
 
-const models = {
-  User: User.initModel(sequelize),
-  Product: Product.initModel(sequelize),
-  Enquiry: Enquiry.initModel(sequelize),
-  Filter: Filter.initModel(sequelize),
-  Order: Order.initModel(sequelize),
-  Cart: Cart.initModel(sequelize),
-  Review: Review.initModel(sequelize),
-  Visitor: Visitor.initModel(sequelize),
-};
+export async function initializeSequelize() {
+  const configModule = await import("./config/config.mjs");
+  const dbOptions = configModule.default[env] as SequelizeOptions;
 
-Cart.associate(models);
-User.associate(models);
-Review.associate(models);
-Product.associate(models);
-Order.associate(models);
-Enquiry.associate(models);
+  dbOptions.dialectModule = require("pg"); // Or pg if using Postgres
 
-(async () => await sequelize.sync({ alter: process.env.NODE_ENV === 'development' ? true : false }))();
-// `alter: true` modifies the tables to match the model
-export { sequelize, models };
+  const sequelize = new Sequelize(dbOptions);
+
+  const models = {
+    User: User.initModel(sequelize),
+    Product: Product.initModel(sequelize),
+    Enquiry: Enquiry.initModel(sequelize),
+    Filter: Filter.initModel(sequelize),
+    Order: Order.initModel(sequelize),
+    Cart: Cart.initModel(sequelize),
+    Review: Review.initModel(sequelize),
+    Visitor: Visitor.initModel(sequelize),
+  };
+  
+  Cart.associate(models);
+  User.associate(models);
+  Review.associate(models);
+  Product.associate(models);
+  Order.associate(models);
+  Enquiry.associate(models);
+
+  // Sync models with DB
+  await sequelize.sync({ alter: env === "development" });
+
+  return { sequelize, models };
+}
+
+
+

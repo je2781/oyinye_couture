@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as argon from "argon2";
-import { getVisitData } from "@/helpers/getVisitData";
+import { getVisitData } from "packages/utils/getVisitData";
 import crypto from "crypto";
-import { models } from "@/db/connection";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
-import { sanitizeInput } from "@/helpers/sanitize";
-import { getUserData } from "@/helpers/getUserData";
+import { sanitizeInput } from "packages/utils/sanitize";
+import { getUserData } from "packages/utils/getUserData";
+import { initializeSequelize } from "@/web/src/db/connection";
 
 const redis = Redis.fromEnv();
 
@@ -17,8 +17,10 @@ const ratelimit = new Ratelimit({
   analytics: true,
 });
 
-export async function POST(req: NextRequest, res: NextResponse) {
+export async function POST(req: NextRequest) {
   try {
+    const {models} = await initializeSequelize();
+    
     const ip = req.headers.get("x-forwarded-for");
 
     const { success, limit, remaining, reset } = await ratelimit.limit(
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
     const userId = getUserData(req);
     const visitId = getVisitData(req);
 
-    const user = await models.User.findOne({
+    let user = await models.User.findOne({
       where: { email: cleanEmail! },
     });
 
@@ -69,17 +71,17 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
     //check if user with id exists
     if (userId) {
-      const extractedUser = await models.User.findByPk(userId);
-      extractedUser!.email = cleanEmail ?? "";
-      extractedUser!.first_name = cleanFirstName ?? "";
-      extractedUser!.last_name = cleanLastName ?? "";
-      extractedUser!.password = cleanPassword
+      user = await models.User.findByPk(userId);
+      user!.email = cleanEmail ?? "";
+      user!.first_name = cleanFirstName ?? "";
+      user!.last_name = cleanLastName ?? "";
+      user!.password = cleanPassword
         ? await argon.hash(cleanPassword!)
         : "";
-      extractedUser!.enable_email_marketing = enableEmailMarketing
+      user!.enable_email_marketing = enableEmailMarketing
         ? true
         : false;
-      await extractedUser!.save();
+      await user!.save();
 
       return NextResponse.json(
         {
@@ -89,7 +91,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
               : "User created successfully"
           }`,
           success: true,
-          user: extractedUser,
+          user: user!.get({plain: true}),
         },
         {
           status: 201,
@@ -99,7 +101,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
     //checking if only email is provided
     if (cleanEmail && !cleanPassword && !cleanFirstName && !cleanLastName) {
-      const newUser = await models.User.create({
+      user = await models.User.create({
         id: (await crypto.randomBytes(6)).toString("hex"),
         email: cleanEmail,
         visitor_id: visitId ?? "",
@@ -109,7 +111,8 @@ export async function POST(req: NextRequest, res: NextResponse) {
         {
           message: "User created successfully",
           success: true,
-          id: newUser.id,
+          user: user.get({plain: true}),
+          id: user.id,
         },
         { status: 201 }
       );
@@ -119,7 +122,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
     if (cleanPassword && cleanFirstName && cleanLastName) {
       const hash = await argon.hash(cleanPassword);
 
-      const newUser = await models.User.create({
+      user = await models.User.create({
         id: (await crypto.randomBytes(6)).toString("hex"),
         email: cleanEmail!,
         password: hash,
@@ -133,12 +136,12 @@ export async function POST(req: NextRequest, res: NextResponse) {
         {
           message: "User created successfully",
           success: true,
-          user: newUser,
+          user: user.get({plain: true}),
         },
         { status: 201 }
       );
     } else {
-      const newUser = await models.User.create({
+      user = await models.User.create({
         id: (await crypto.randomBytes(6)).toString("hex"),
         email: cleanEmail!,
         enable_email_marketing: true,
@@ -149,7 +152,8 @@ export async function POST(req: NextRequest, res: NextResponse) {
         {
           message: "user has joined mailing list",
           success: true,
-          id: newUser.id,
+          user: user.get({plain: true}),
+          id: user.id,
         },
         { status: 201 }
       );

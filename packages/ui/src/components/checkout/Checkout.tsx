@@ -12,7 +12,7 @@ import {
   extractProductDetails,
   qstashClient,
   randomReference,
-} from "../../../..//helpers/getHelpers";
+} from "../../../../utils/getHelpers";
 import { Base64ImagesObj, CartItemObj, EmailType } from "../../../..//interfaces";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -179,7 +179,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
       if(userRes.status === 201 && userRes.data.emailJob){
           //dispatching password creation email job
           await qstashClient.publishJSON({
-            url: `${process.env.NEXT_PUBLIC_DOMAIN}/api/mailer?type=${EmailType[EmailType.reminder]}`,
+            url: `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/mailer?type=${EmailType[EmailType.reminder]}`,
             maxRetries: 1,
             body: {
               password: userRes.data.emailJob.password,
@@ -192,7 +192,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
     
           //dispatching verification email job
           await qstashClient.publishJSON({
-            url: `${process.env.NEXT_PUBLIC_DOMAIN}/api/mailer?type=${EmailType[EmailType.verify_buyer]}`,
+            url: `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/mailer?type=${EmailType[EmailType.verify_buyer]}`,
             maxRetries: 1,
             body: {
                 email: userRes.data.emailJob.user.email,
@@ -295,7 +295,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
               }
             }
           },
-          `${process.env.NEXT_PUBLIC_DOMAIN!}${path}`
+          `${process.env.NEXT_PUBLIC_WEB_DOMAIN!}${path}`
         );
       
       }

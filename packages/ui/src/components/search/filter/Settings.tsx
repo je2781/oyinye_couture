@@ -1,5 +1,5 @@
 
-import { regex } from "../../../../../helpers/getHelpers";
+import { regex } from "../../../../../utils/getHelpers";
 import Slider from "@mui/material/Slider";
 import { SyntheticEvent, useRef } from "react";
 

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { getDataFromCart } from "@helpers/getDataFromCart";
-import { getDataFromOrder } from "@helpers/getDataFromOrder";
-import { models } from "@db/connection";
+import { getDataFromCart } from "packages/utils/getDataFromCart";
+import { getDataFromOrder } from "packages/utils/getDataFromOrder";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
+import { initializeSequelize } from "@/web/src/db/connection";
 
 const redis = Redis.fromEnv();
 
@@ -17,6 +17,8 @@ const ratelimit = new Ratelimit({
 
 export async function GET(req: NextRequest) {
   try {
+    const {models} = await initializeSequelize();
+
     const ip = req.headers.get('x-forwarded-for');
 
     const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
@@ -33,7 +35,7 @@ export async function GET(req: NextRequest) {
     }
 
     const cartId = getDataFromCart(req);
-    let orderItems: any[] = [];
+    const orderItems: any[] = [];
 
     const [orderId, checkoutSessionToken] = getDataFromOrder(req);
 
@@ -52,7 +54,7 @@ export async function GET(req: NextRequest) {
           );
         }
 
-        const cartItems = cart.items.map((item, i) => {
+        const cartItems = cart.items.map((item: any) => {
           return {
             product: item.product,
             quantity: item.quantity,
@@ -60,7 +62,7 @@ export async function GET(req: NextRequest) {
           };
         });
 
-        for (let item of cartItems) {
+        for (const item of cartItems) {
           orderItems.push({
             id: (await crypto.randomBytes(6)).toString("hex"),
             variant_id: item.variant_id,
@@ -79,6 +81,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(
           {
             message: "session token retrieved",
+            order: order.get({plain: true}),
             checkout_session_token: checkoutSessionToken,
             success: true,
           },

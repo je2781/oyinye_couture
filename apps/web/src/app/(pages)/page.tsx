@@ -1,27 +1,27 @@
 
-import Hero from "@/components/hero/Hero";
+import Hero from "@ui/src/components/hero/Hero";
 import { cookies, headers} from "next/headers";
-import About from "@/components/about/AboutUs";
-import Footer from "@/components/footer/Footer";
-import ViewCollection from "@/components/collections/ViewCollection";
-import Header from "@/components/layout/header/Header";
+import About from "@ui/src/components/about/AboutUs";
+import Footer from "@ui/src/components/footer/Footer";
+import ViewCollection from "@ui/src/components/collections/ViewCollection";
+import Header from "@ui/src/components/layout/header/Header";
 import { redirect } from "next/navigation";
 
 async function getData() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const cartId = cookieStore.get('cart')?.value;
 
   if(cartId && cartId.length > 0){
     const [cartDataRes, productDataRes] = await Promise.all([
-      fetch(`${process.env.DOMAIN!}/api/products/cart/${cartId}`),
-      fetch(`${process.env.DOMAIN!}/api/products?hidden=false`, {cache: 'no-store'})
+      fetch(`${process.env.WEB_DOMAIN!}/api/products/cart/${cartId}`),
+      fetch(`${process.env.WEB_DOMAIN!}/api/products?hidden=false`, {cache: 'no-store'})
     ]);
 
     const [cartData, productData] = await Promise.all([cartDataRes.json(), productDataRes.json()]);
   
     return [cartData.cartItems, productData.products];
   }else{
-    const productDataRes = await fetch(`${process.env.DOMAIN!}/api/products?hidden=false`, {cache: 'no-store'});
+    const productDataRes = await fetch(`${process.env.WEB_DOMAIN!}/api/products?hidden=false`, {cache: 'no-store'});
     const productData = await productDataRes.json();
     return [[], productData.products];
   }
@@ -30,16 +30,16 @@ async function getData() {
 export default async function Home() {
   
   const [cartItems, products] = await getData();
-  const h = headers();
+  const h = await headers();
   const csrfToken = h.get('X-CSRF-Token') || 'missing';
 
   //protecting public routes
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const isAdmin = Boolean(cookieStore.get("admin_status")?.value);
   const token = cookieStore.get("access_token")?.value;
 
   if (token && isAdmin) {
-    redirect("/admin/summary");
+    redirect(`${process.env.ADMIN_DOMAIN}/admin/summary`);
   }
 
   return (

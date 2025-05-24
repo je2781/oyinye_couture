@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { ReviewsModal } from '../layout/Modal';
 import React from 'react';
-import {decodedBase64, generateBase64FromMedia, qstashClient, reloadPage } from '../../../../helpers/getHelpers';
+import {decodedBase64, generateBase64FromMedia, qstashClient, reloadPage } from '../../../../utils/getHelpers';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useSearchParams, useRouter, usePathname} from 'next/navigation';
@@ -287,7 +287,7 @@ const Reviews = ({productReviews, product, csrf}: any) => {
 
                     //dispatching password creation email job
                     await qstashClient.publishJSON({
-                        url: `${process.env.NEXT_PUBLIC_DOMAIN}/api/mailer?type=${
+                        url: `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/mailer?type=${
                             EmailType[EmailType.reminder]
                         }`,
                         maxRetries: 1,
@@ -303,7 +303,7 @@ const Reviews = ({productReviews, product, csrf}: any) => {
         
                 //dispatching verification email job
                 await qstashClient.publishJSON({
-                    url: `${process.env.NEXT_PUBLIC_DOMAIN}/api/mailer?type=${
+                    url: `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/mailer?type=${
                         EmailType[EmailType.verify_reviewer]
                     }`,
                     maxRetries: 1,

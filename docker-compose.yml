@@ -1,62 +1,31 @@
 
 services:
-  admin:
-    image: je278/oyinye-admin:1.6
-    restart: always
-    build:
-      context: .
-      target: development
-      dockerfile: ./apps/admin/Dockerfile
-    volumes:
-      - /app/node_modules
-    ports:
-      - 3001:3000
-    env_file: ./apps/admin/.env
-    environment:
-      NODE_ENV: ${NODE_ENV}
-      DOMAIN: ${DOMAIN}
-      USER: ${USER}
-      PASS: ${PASS}
-      DB_NAME: ${DB_NAME}
-      DB_PORT: ${DB_PORT}
-      DB_HOST: ${DB_HOST}
-      NEXT_PUBLIC_DOMAIN: ${NEXT_PUBLIC_DOMAIN}
-      IPINFO_TOKEN: ${IPINFO_TOKEN}
-      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
-      UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL}
-      UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN}
-      QSTASH_URL: ${QSTASH_URL}
-      QSTASH_TOKEN: ${QSTASH_TOKEN}
-      NEXT_PUBLIC_QSTASH_TOKEN: ${NEXT_PUBLIC_QSTASH_TOKEN}
-      QSTASH_CURRENT_SIGNING_KEY: ${QSTASH_CURRENT_SIGNING_KEY}
-      QSTASH_NEXT_SIGNING_KEY: ${QSTASH_NEXT_SIGNING_KEY}
-      NEXT_PUBLIC_QSTASH_INTERNAL_KEY: ${NEXT_PUBLIC_QSTASH_INTERNAL_KEY}
-      QSTASH_INTERNAL_KEY: ${QSTASH_INTERNAL_KEY}
-    depends_on:
-      - admin_db
   web:
     image: je278/oyinye-web:1.6
     restart: always
     build:
       context: .
       target: development
-      dockerfile: ./apps/web/Dockerfile
+      dockerfile: Dockerfile
+      args:
+        - APP_DIR=apps/web
+        - APP_PORT=3000
     ports:
        - 3000:3000
     volumes:
-      - /app/
-      - ./src/db/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
-    env_file: ./apps/web/.env
+      - .:/app
+      - /app/node_modules
+    env_file: .env
     environment:
       JWT_SECRET: ${JWT_SECRET}
       NODE_ENV: ${NODE_ENV}
-      DOMAIN: ${DOMAIN}
-      USER: ${USER}
-      PASS: ${PASS}
-      DB_NAME: ${DB_NAME}
-      DB_PORT: ${DB_PORT}
-      DB_HOST: ${DB_HOST}
-      NEXT_PUBLIC_DOMAIN: ${NEXT_PUBLIC_DOMAIN}
+      DOMAIN: ${WEB_DOMAIN}
+      USER: ${WEB_USER}
+      PASS: ${WEB_PASS}
+      DB_NAME: ${WEB_DB_NAME}
+      DB_PORT: ${WEB_DB_PORT}
+      DB_HOST: ${WEB_DB_HOST}
+      NEXT_PUBLIC_DOMAIN: ${NEXT_PUBLIC_WEB_DOMAIN}
       IPINFO_TOKEN: ${IPINFO_TOKEN}
       NEXT_PUBLIC_MER_CODE: ${NEXT_PUBLIC_MER_CODE}
       NEXT_PUBLIC_PAY_ITEM_ID: ${NEXT_PUBLIC_PAY_ITEM_ID}
@@ -70,62 +39,92 @@ services:
       QSTASH_NEXT_SIGNING_KEY: ${QSTASH_NEXT_SIGNING_KEY}
       NEXT_PUBLIC_QSTASH_INTERNAL_KEY: ${NEXT_PUBLIC_QSTASH_INTERNAL_KEY}
       QSTASH_INTERNAL_KEY: ${QSTASH_INTERNAL_KEY}
+    command: sh -c "npm run sequelize:apply && npm run dev"
     depends_on:
       - web_db
+  web_db:
+    image: postgres
+    env_file: .env
+    ports:
+      - ${WEB_DB_PORT}:5432
+    restart: always
+    volumes:
+      - web_db_data:/var/lib/postgresql/data/
+      - ./apps/web/src/db/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
+      # - ./src/ssl/certs/:/certs/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -p ${WEB_DB_PORT} -U ${WEB_USER} -d ${WEB_DB_NAME}"]
+      start_period: 0s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_USER: ${WEB_USER}
+      POSTGRES_PASSWORD: ${WEB_PASS}
+      POSTGRES_DB: ${WEB_DB_NAME}
+      # Enable SSL
+      # POSTGRES_SSL_CERT: /certs/server.crt
+      # POSTGRES_SSL_KEY: /certs/server.key
+      # POSTGRES_SSL_CA: /certs/root.crt
+  admin:
+    image: je278/oyinye-admin:1.6
+    restart: always
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+      args:
+        - APP_DIR=apps/admin
+        - APP_PORT=3001
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - 3001:3000
+    env_file: .env
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      DOMAIN: ${ADMIN_DOMAIN}
+      USER: ${ADMIN_USER}
+      PASS: ${ADMIN_PASS}
+      DB_NAME: ${ADMIN_DB_NAME}
+      DB_PORT: ${ADMIN_DB_PORT}
+      DB_HOST: ${ADMIN_DB_HOST}
+      NEXT_PUBLIC_DOMAIN: ${NEXT_PUBLIC_ADMIN_DOMAIN}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL}
+      UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN}
+      QSTASH_URL: ${QSTASH_URL}
+      QSTASH_TOKEN: ${QSTASH_TOKEN}
+      NEXT_PUBLIC_QSTASH_TOKEN: ${NEXT_PUBLIC_QSTASH_TOKEN}
+      QSTASH_CURRENT_SIGNING_KEY: ${QSTASH_CURRENT_SIGNING_KEY}
+      QSTASH_NEXT_SIGNING_KEY: ${QSTASH_NEXT_SIGNING_KEY}
+      NEXT_PUBLIC_QSTASH_INTERNAL_KEY: ${NEXT_PUBLIC_QSTASH_INTERNAL_KEY}
+      QSTASH_INTERNAL_KEY: ${QSTASH_INTERNAL_KEY}
+    command: sh -c "npm run sequelize:apply && npm run dev"
+    depends_on:
+      - admin_db
+  
   admin_db:
     image: postgres
+    env_file: .env
     ports:
-      - ${DB_PORT}:5432
-    container_name: postgres
+      - 5436:5432
     restart: always
-    env_file: ./apps/admin/.env
     volumes:
       - admin_db_data:/var/lib/postgresql/data/
       # - ./src/ssl/certs/:/certs/
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -p ${DB_PORT} -U ${USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -p ${ADMIN_DB_PORT} -U ${ADMIN_USER} -d ${ADMIN_DB_NAME}"]
       start_period: 0s
       interval: 10s
       timeout: 5s
       retries: 5
     environment:
-      POSTGRES_USER: ${USER}
-      POSTGRES_PASSWORD: ${PASS}
-      POSTGRES_DB: ${DB_NAME}
-      # Enable SSL
-      # POSTGRES_SSL_CERT: /certs/server.crt
-      # POSTGRES_SSL_KEY: /certs/server.key
-      # POSTGRES_SSL_CA: /certs/root.crt
-  web_db:
-    image: postgres
-    ports:
-      - ${DB_PORT}:5432
-    container_name: postgres
-    restart: always
-    env_file: ./apps/web/.env
-    volumes:
-      - web_db_data:/var/lib/postgresql/data/
-      - ./src/db/docker-entrypoint-initdb.d/:/docker-entrypoint-initdb.d/
-      # - ./src/ssl/certs/:/certs/
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -p ${DB_PORT} -U ${USER} -d ${DB_NAME}"]
-      start_period: 0s
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    environment:
-      POSTGRES_USER: ${USER}
-      POSTGRES_PASSWORD: ${PASS}
-      POSTGRES_DB: ${DB_NAME}
-      # Enable SSL
-      # POSTGRES_SSL_CERT: /certs/server.crt
-      # POSTGRES_SSL_KEY: /certs/server.key
-      # POSTGRES_SSL_CA: /certs/root.crt
+      POSTGRES_USER: ${ADMIN_USER}
+      POSTGRES_PASSWORD: ${ADMIN_PASS}
+      POSTGRES_DB: ${ADMIN_DB_NAME}
 
 volumes:
-  admin_db_data:
   web_db_data:
-
-
-
-
+  admin_db_data:

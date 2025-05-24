@@ -4,8 +4,8 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { qstashClient } from "@/helpers/getHelpers";
-import { EmailType } from "@/interfaces";
+import { qstashClient } from "../../../../utils/getHelpers";
+import { EmailType } from "../../../../interfaces";
 
 export default function SignupPage({ csrf }: any) {
   const [user, setUser] = React.useState({
@@ -58,13 +58,25 @@ export default function SignupPage({ csrf }: any) {
       if (res.status === 201 && res.data.user) {
         //dispatching verification email job
         await qstashClient.publishJSON({
-          url: `${process.env.NEXT_PUBLIC_DOMAIN}/api/mailer?type=${
+          url: `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/mailer?type=${
             EmailType[EmailType.verify_account]
           }`,
           maxRetries: 1,
           body: {
             email: res.data.user.email,
             userId: res.data.user.id,
+          },
+          headers: {
+            "x-internal-qstash-key": process.env.NEXT_PUBLIC_QSTASH_INTERNAL_KEY!
+          },
+        });
+
+        //dispatching user_created job
+        await qstashClient.publishJSON({
+          url: `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/admin?utility=user_created`,
+          maxRetries: 1,
+          body: {
+            user: res.data.user
           },
           headers: {
             "x-internal-qstash-key": process.env.NEXT_PUBLIC_QSTASH_INTERNAL_KEY!

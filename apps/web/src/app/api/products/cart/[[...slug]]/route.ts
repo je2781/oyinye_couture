@@ -1,11 +1,11 @@
-import { getDataFromCart } from "@helpers/getDataFromCart";
+import { getDataFromCart } from "packages/utils/getDataFromCart";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { models } from "@db/connection";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { getUserData } from "@helpers/getUserData";
-import { getVisitData } from "@helpers/getVisitData";
+import { getUserData } from "packages/utils/getUserData";
+import { getVisitData } from "packages/utils/getVisitData";
+import { initializeSequelize } from "@/web/src/db/connection";
 
 const redis = Redis.fromEnv();
 
@@ -18,10 +18,14 @@ const ratelimit = new Ratelimit({
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug?: string[] } },
+  { params }: { params: Promise<{ slug?: string[] }> },
   res: NextResponse
 ) {
   try {
+    const {models} = await initializeSequelize();
+
+    const qParams = await params;
+    
     const ip = req.headers.get("x-forwarded-for");
 
     const { success, limit, remaining, reset } = await ratelimit.limit(
@@ -39,8 +43,8 @@ export async function GET(
       return res;
     }
 
-    if (params.slug && params.slug[0]) {
-      let cart = await models.Cart.findByPk(params.slug![0], {
+    if (qParams.slug && qParams.slug[0]) {
+      const cart = await models.Cart.findByPk(qParams.slug![0], {
         include: [{ model: models.User, as: "cartUser" }],
       });
 
@@ -82,9 +86,13 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { slug?: string[] } }
+  { params }: { params: Promise<{ slug?: string[] }> }
 ) {
   try {
+    const {models} = await initializeSequelize();
+
+
+    const qParams = await params;
     const ip = req.headers.get("x-forwarded-for");
 
     const { success, limit, remaining, reset } = await ratelimit.limit(
@@ -106,7 +114,7 @@ export async function POST(
     const userId = getUserData(req);
     const visitId = getVisitData(req);
 
-    if (Array.isArray(params.slug) && params.slug[0] === "remove") {
+    if (Array.isArray(qParams.slug) && qParams.slug[0] === "remove") {
       const { quantity, variantId, price } = await req.json();
 
       const cartId = getDataFromCart(req);
@@ -291,9 +299,11 @@ export async function POST(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { slug?: string[] } }
+  { params }: { params: Promise<{ slug?: string[] }> }
 ) {
   try {
+    const {models} = await initializeSequelize();
+
     const ip = req.headers.get("x-forwarded-for");
 
     const { success, limit, remaining, reset } = await ratelimit.limit(
@@ -343,7 +353,7 @@ export async function PATCH(
         {
           message: "Order created!",
           checkout_session_token: hashedToken,
-          order: newOrder,
+          order:  newOrder.get({ plain: true }),
           success: true,
         },
         { status: 201 }

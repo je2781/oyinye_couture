@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import toast from "react-hot-toast";
-import useAuth from "@/store/useAuth";
+import useAuth from "../../../../store/useAuth";
 
 export default function LoginPage({ message, success, csrf }: any) {
   const [user, setUser] = React.useState({
@@ -74,7 +74,7 @@ export default function LoginPage({ message, success, csrf }: any) {
 
           toast.success("Login successful!");
           if (extractedUser.is_admin) {
-            router.push("/admin/summary");
+            router.push(`${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/admin/summary`);
           } else {
             router.push(`/`);
           }

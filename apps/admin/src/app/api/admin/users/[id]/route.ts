@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as argon from "argon2";
-import { models } from "@/db/connection";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { sanitizeInput } from "@/helpers/sanitize";
+import { sanitizeInput } from "packages/utils/sanitize";
+import { initializeSequelize} from "@/admin/src/db/connection";
 
 const redis = Redis.fromEnv();
 
@@ -16,10 +16,14 @@ const ratelimit = new Ratelimit({
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
-  res: NextResponse
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+
+    const {models} = await initializeSequelize();
+
+    const qParams = await params;
+    
     const ip = req.headers.get('x-forwarded-for');
 
     const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
@@ -35,7 +39,7 @@ export async function GET(
       return res;
     }
 
-    const user = await models.User.findByPk(params.id);
+    const user = await models.User.findByPk(qParams.id);
 
     // Check if user exists
     if (!user) {
@@ -71,9 +75,13 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const {models} = await initializeSequelize();
+
+    const qParams = await params;
+
     const ip = req.headers.get('x-forwarded-for');
 
     const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));
@@ -105,7 +113,7 @@ export async function PATCH(
     const cleanLastName = sanitizeInput(lastName);
     const cleanPass = sanitizeInput(password);
 
-    const user = await models.User.findByPk(params.id);
+    const user = await models.User.findByPk(qParams.id);
 
     // Check if user exists
     if (!user) {

@@ -1,5 +1,5 @@
 
-import { models } from "@/db/connection";
+import { initializeSequelize } from "@/web/src/db/connection";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import * as argon from "argon2";
@@ -36,6 +36,8 @@ const ratelimit = new Ratelimit({
 export async function POST(req: NextRequest) {
   
   try {
+    const {models} = await initializeSequelize();
+    
     const ip = req.headers.get('x-forwarded-for');
 
     const { success, limit, remaining, reset } = await ratelimit.limit(String(ip));

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SignatureError } from "@upstash/qstash";
 import { verifySignatureAppRouter} from "@upstash/qstash/nextjs";
-import { sendMail } from "@helpers/mailer";
 import { EmailType } from "@interfaces/index";
+import { sendMail } from "@/web/src/utils/mailer";
 
 export const POST = verifySignatureAppRouter(
   async (req: NextRequest) => {
