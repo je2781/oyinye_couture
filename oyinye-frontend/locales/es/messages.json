@@ -1,0 +1,179 @@
+{
+  "app": {
+    "header": {
+      "item1": "Hogar",
+      "item2": "Colecciones",
+      "item3": "Acerca de",
+      "item4": "Contacto"
+    },
+    "hero": {
+      "slide1": {
+        "paragraph": "TE MERECES EL MEJOR VESTIDO PARA CADA OCASIÓN",
+        "action": {
+          "text": "Comprar todo"
+        }
+      },
+      "slide2": {
+        "paragraph": "HAGA UN PEDIDO PARA REALIZAR SU TRABAJO PERSONALIZADO",
+        "action": {
+          "text": "Realizar pedido"
+        }
+      }
+    },
+    "aboutus": {
+      "header": "A Historia",
+      "paragraph": "Nisi nulla tempor magna cillum excepteur. Fugiat ullamco occaecat in nulla tempor consequat quis aute incididunt velit. Excepteur anim officia magna elit ipsum. Laboris commodo dolor magna consectetur cillum eiusmod eiusmod quis veniam magna labore et proident deserunt. Amet laboris enim aute pariatur sunt commodo elit officia culpa nostrud enim aliquip commodo.",
+      "action": {
+        "text": "Leer más"
+      }
+    },
+    "collection": {
+      "header": "Colección de Oyinye",
+      "paragraph": "Deja que la ropa de ocasión de Oyinye te inspire",
+      "action": {
+        "text": "Compra ahora"
+      },
+      "featured": {
+        "text": "Productos destacados",
+        "action": {
+          "text": "Ver todo"
+        }
+      }
+    },
+    "detail": {
+      "shipping": {
+        "p1": "Envío",
+        "p2": "calculado al finalizar la compra"
+      },
+      "soldout": {
+        "text": "Agotado"
+      },
+      "section1": {
+        "header": "Color"
+      },
+      "section2": {
+        "header": "Tamaño"
+      },
+      "section3": {
+        "header": "Cantidad"
+      },
+      "action": {
+        "text1": "Añadir a la cesta",
+        "text2": "Compre ya"
+      },
+      "warning": {
+        "p1": "No puedes agregar más",
+        "p2": "al carrito"
+      },
+      "section4": {
+        "header": "Tabla de tallas"
+      },
+      "section5": {
+        "header": "Envío"
+      },
+      "section6": {
+        "header": "También te puede gustar"
+      },
+      "section7": {
+        "header": "OPINIONES DE CLIENTES",
+        "paragraph": {
+          "p1": "Buscamos seguidores",
+          "p2": "Estar entre nuestra tribu"
+        },
+        "reviews": {
+          "search": {
+            "results": {
+              "p1": "Nosotras encontramos",
+              "p2": "reseñas coincidentes"
+            },
+            "noResults": {
+              "p1": "No hay reseña coincidente",
+              "p2": "Intente borrar o cambiar los filtros.",
+              "action": {
+                "text": "Limpiar filtros"
+              }
+            }
+          },
+          "review": {
+            "comment": "¿Fue útil esta reseña?",
+            "new": {
+              "header": "COMPARTE TUS PENSAMIENTOS",
+              "form": {
+                "label1": "CALIFICA TU EXPERIENCIA", 
+                "error1": "Se requiere una calificación de estrellas",
+                "label2": {
+                  "p1": "ESCRIBE UNA RESEÑA",
+                  "p2": "o subir una reseña"
+                }, 
+                "error2": "Se requiere revisar el contenido",
+                "label3": "AÑADIR UN TÍTULO",
+                "error3": "Se requiere un titular",
+                "label4": "NOMBRE COMPLETO",
+                "error4": "Se requiere un nombre",
+                "label5": "SU DIRECCIÓN DE CORREO ELECTRÓNICO",
+                "info5": "Le enviaremos un correo electrónico para verificar que esta reseña proviene de usted.",
+                "error5": "Se requiere un correo electrónico",
+                "required": {
+                  "text": "campos obligatorios"
+                }
+              }
+            }
+          },
+          "action": {
+            "text": "Sea el primero en escribir una reseña"
+          }
+        }
+
+      }
+    },
+    "contact": {
+      "header": "Nuestro estudio",
+      "section1": {
+        "header": "Encuéntranos",
+        "paragraph": {
+          "p1": "Por favor llámanos al",
+          "p2": "o envíanos un correo electrónico si deseas visitar nuestro estudio."
+        }
+      },
+      "section2": {
+        "header": "Contacta con nosotras",
+        "paragraph": {
+          "p1": "Tiene alguna pregunta o busca más información sobre nuestros productos,",
+          "p2": "por favor complete el siguiente formulario o envíenos un correo electrónico a",
+          "p3": "y estaremos en contacto."
+        }
+      },
+      "form": {
+        	"header": "Formulario de contacto",
+          "label1": "NOMBRE DE PILA",
+          "label2": "APELLIDO",
+          "label3": "CORREO ELECTRÓNICO",
+          "label4": "SUJETO",
+          "label5": "MENSAJE",
+          "action": {
+            "text": "Enviar formulario"
+          }
+      }
+    },
+    "footer": {
+      "item1": "Sobre nosotras",
+      "item2": "Contacta con nosotras",
+      "item3": "Guía de tallas",
+      "item4": "Hecho a la medida",
+      "item5": "Política de envío",
+      "item6": "Política de devoluciones",
+      "item7": "política de privacidad",
+      "item8": "Idioma",
+      "menu": "Menú",
+      "newsletter": {
+        "header": "Hoja informativa",
+        "paragraph": "Únase a la comunidad de alta costura de oyinye para mantenerse actualizado sobre promociones y nuevos lanzamientos.",
+        "action": {
+          "text": "Unirse",
+          "loading": "Tratamiento"
+        }
+      }
+      
+    }
+  }
+}

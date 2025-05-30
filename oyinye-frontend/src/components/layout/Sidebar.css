@@ -1,0 +1,183 @@
+.collapse-bar {
+  animation: collapse-bar 200ms ease-out forwards;
+  -webkit-animation: collapse-bar 200ms ease-out forwards;
+}
+
+.expand-bar {
+  animation: expand-bar 200ms ease-out forwards;
+  -webkit-animation: expand-bar 200ms ease-out forwards;
+}
+
+.arrowl-rotate {
+  animation: arrow-left-rotate 300ms ease-out forwards;
+  -webkit-animation: arrow-left-rotate 300ms ease-out forwards;
+}
+
+.arrowl-rotate-clock {
+  animation: arrow-left-rotate-clock 300ms ease-out forwards;
+  -webkit-animation: arrow-left-rotate-clock 300ms ease-out forwards;
+}
+
+.ar-rotate {
+  animation: angle-right-rotate 300ms ease-out forwards;
+  -webkit-animation: angle-right-rotate 300ms ease-out forwards;
+}
+
+.ar-rotate-anticlock {
+  animation: angle-right-rotate-anticlock 300ms ease-out forwards;
+  -webkit-animation: angle-right-rotate-anticlock 300ms ease-out forwards;
+}
+
+/* Apply the animation to the element */
+.fade-in-out {
+  animation: fadeInOut 200ms forwards;
+}
+/* Define the animation */
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+
+#tooltip::before {
+  content: '';
+  position: absolute;
+  top:25%;
+  left: -1rem; /* adjust to align with the Apps h1 tag */
+  border-width: 0.5rem;
+  border-style: solid;
+  border-color: transparent #1f1f2b transparent transparent; /* adjust the color according to your theme */
+}
+
+@keyframes collapse-bar {
+  from {
+    width: 16%;
+  }
+  to {
+    width: 6%;
+  }
+}
+
+@keyframes expand-bar {
+  from {
+    width: 6%;
+  }
+  to {
+    width: 16%;
+  }
+}
+
+@keyframes arrow-left-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-180deg);
+  }
+}
+
+@keyframes arrow-left-rotate-clock {
+  from {
+    transform: rotate(-180deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes angle-right-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(90deg);
+  }
+}
+
+@keyframes angle-right-rotate-anticlock {
+  from {
+    transform: rotate(90deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+
+
+@-webkit-keyframes collapse-bar {
+  from {
+    width: 16%;
+  }
+  to {
+    width: 6%;
+  }
+}
+@-webkit-keyframes expand-bar {
+  from {
+    width: 6%;
+  }
+  to {
+    width: 16%;
+  }
+}
+@-webkit-keyframes arrow-left-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-180deg);
+  }
+}
+
+@-webkit-keyframes arrow-left-rotate-clock {
+  from {
+    transform: rotate(-180deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@media all and (min-width: 768px) and (max-width: 1280px) {
+  @keyframes collapse-bar {
+    from {
+      width: 23%;
+    }
+    to {
+      width: 7%;
+    }
+  }
+  
+  @keyframes expand-bar {
+    from {
+      width: 7%;
+    }
+    to {
+      width: 23%;
+    }
+  }
+  @-webkit-keyframes collapse-bar {
+    from {
+      width: 23%;
+    }
+    to {
+      width: 7%;
+    }
+  }
+  
+  @-webkit-keyframes expand-bar {
+    from {
+      width: 7%;
+    }
+    to {
+      width: 23%;
+    }
+  }
+}

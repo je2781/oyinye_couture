@@ -1,0 +1,9 @@
+.rotate-anticlockwise-180 {
+    transform: rotate(-180deg) !important;
+    transition: transform 0.4s ease !important;
+}
+
+.rotate-clockwise-180 {
+    transform: rotate(180deg) !important;
+    transition: transform 0.4s  !important;
+}

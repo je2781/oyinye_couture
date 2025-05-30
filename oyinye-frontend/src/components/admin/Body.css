@@ -1,0 +1,37 @@
+label:hover{
+    box-shadow: 0 2px 7px 6px rgba(255, 255, 255, 0.1);
+    -webkit-box-shadow: 0 2px 7px 6px rgba(255, 255, 255, 0.1);
+}
+
+
+.custom-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.swiper-pagination-bullet {
+  width: 25px !important;
+  height: 25px !important;
+  /* object-fit: contain !important; */
+  margin: 0 6px !important; /* Adjust spacing as needed */
+  cursor: pointer !important;
+  border-radius: 50% !important;
+  border: 2px solid transparent !important;
+  background-size: contain !important;
+  background-position: center !important;
+  opacity: 1 !important;
+}
+
+.swiper-pagination-bullet-active{
+  border-color: #000 !important; /* Active border color */
+}
+
+
+@media all and (min-width: 768px){
+  .swiper-pagination-bullet {
+      width: 35px !important;
+      height: 35px !important;
+    }
+}
+
