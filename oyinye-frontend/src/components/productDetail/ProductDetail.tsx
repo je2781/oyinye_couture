@@ -5,7 +5,7 @@ import {
   DressSizesJsxObj,
   DressSizesObj,
 } from "@/interfaces";
-import axios from "axios";
+import api from "@/helpers/axios";
 import React, { useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Navigation } from "swiper/modules";
@@ -22,6 +22,7 @@ import Product from "../product/Product";
 import Reviews from "../reviews/Reviews";
 
 import './ProductDetail.css';
+import { useRouter } from "next/navigation";
 
 const ProductDetail = ({
     productSizes,
@@ -55,14 +56,7 @@ const ProductDetail = ({
     const [isSavingCart, setIsSavingCart] = React.useState(false);
     const [toastError, setToastError] = React.useState(false);
     const [articleIsNotSticky, setArticleIsNotSticky] = React.useState(false);
-
-    React.useEffect(() => {
-        async function setViewedProductCookie(){
-            await fetch(
-             `/api/cookies/${paramsId}`  );
-        }
-        setViewedProductCookie();
-    }, [paramsId]);
+    const router = useRouter();
 
     
     React.useEffect(() => {
@@ -97,13 +91,14 @@ const ProductDetail = ({
                 setToastError(false);
                 setLoader(true);
                 try {
-                    const res = await axios.post(`/api/products/cart`, {
+                    const res = await api.post(`/api/products/cart`, {
                         price: sizesObj[`${selectedColor}-${selectedSize}`]!.price,
                         quantity: parseInt(quantity),
                         variantId: sizesObj[`${selectedColor}-${selectedSize}`]!.variant_id!,
                         id: productId,
                         totalAmount
                     },{
+                        withCredentials: true,
                         headers: {
                             "x-csrf-token": csrf,
                           }
@@ -185,7 +180,7 @@ const ProductDetail = ({
                         //updating active dress size and pathname of current route
                         const extractedColor = productColors.find((color: any) => color.name === (activeColorEl.innerText.charAt(0).toLowerCase() + activeColorEl.innerText.slice(1)));
                         const extractedSize = extractedColor.sizes.find((size: any) => size.number === color.sizes[0].number)
-                        history.pushState(null, '', `/products/${productTitle.replace(' ', '-')}/${extractedColor.name.replace(' ', '-')}/${extractedSize?.variant_id}`);
+                        history.pushState(null, '', `/api/products${productTitle.replace(' ', '-')}/${extractedColor.name.replace(' ', '-')}/${extractedSize?.variant_id}`);
                 
                         setSelectedSize(color.sizes[0].number.toString());
                     }
@@ -222,7 +217,7 @@ const ProductDetail = ({
         //updating active dress size and pathname of current route
         const extractedColor = productColors.find((color: any) => color.name === selectedColor);
         const extractedSize = extractedColor.sizes.find((size: any) => size.number === parseInt(activeSizeEl.innerText.split(' ')[1]!));
-        history.pushState(null, '', `/products/${productTitle.replace(' ', '-').toLowerCase()}/${selectedColor.toLowerCase().replace(' ', '-')}/${extractedSize?.variant_id}`);
+        history.pushState(null, '', `/api/products${productTitle.replace(' ', '-').toLowerCase()}/${selectedColor.toLowerCase().replace(' ', '-')}/${extractedSize?.variant_id}`);
         setSelectedSize(activeSizeEl.innerText.split(' ')[1]!);
     }
 
@@ -607,7 +602,7 @@ const ProductDetail = ({
                         <button onClick={async() => {
                             try {
                                 setIsBuyingNow(true);
-                                const cartPostRes = await axios.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cart`, {
+                                const cartPostRes = await api.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cart`, {
                                     price: sizesObj[`${selectedColor}-${selectedSize}`]?.price ?? 0, quantity: parseInt(quantity), variantId: paramsId, id: productId, totalAmount:  sizesObj[`${selectedColor}-${selectedSize}`]?.price ?? 0 * parseInt(quantity)
                                 },{
                                     withCredentials: true,
@@ -620,7 +615,7 @@ const ProductDetail = ({
                                     throw new Error(cartPostRes.data.message);
                                 }
 
-                                const cartUpdateRes = await axios.patch(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cart/update`,{
+                                const cartUpdateRes = await api.patch(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cart/update`,{
                                     withCredentials: true,
                                     headers: {
                                         "x-csrf-token": csrf,
@@ -632,16 +627,14 @@ const ProductDetail = ({
                                     throw new Error(cartUpdateRes.data.message);
                                 }
 
-                                const checkoutRes = await axios.get(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cart/checkouts`,{
-                                    withCredentials: true
-                                });
+                                const checkoutRes = await api.get(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cart/checkouts`);
 
                                 if(checkoutRes.status != 200){
                                     throw new Error(checkoutRes.data.message);
                                 }
 
 
-                                window.location.href = `/checkouts/cn/${checkoutRes.data.checkout_session_token}`;
+                                router.push(`/checkouts/cn/${checkoutRes.data.checkout_session_token}`);
                                } catch (error) {
                                 const e = error as Error;
                                 toast.error(e.message);
@@ -680,7 +673,7 @@ const ProductDetail = ({
                             <div id='sizes-content' className="border border-gray-200 pt-3 pb-6 px-5 lg:ml-3 lg:mr-12 mr-5 flex-col gap-y-4 hidden">
                                 <header className="flex flex-row justify-between">
                                     <div className="lg:w-[65%] w-[60%]"></div>
-                                    <Image src='/oyinye.png' alt="logo" role='presentation' width={240} height={240} className="lg:w-[35%] w-[40%]"/>
+                                    <Image src='/oyinye.png' priority={true} alt="logo" role='presentation' width={240} height={240} className="lg:w-[35%] w-[40%]"/>
                                 </header>
                                 <div className="flex flex-col items-start w-full gap-y-1">
                                     <header className="w-full flex flex-col gap-y-5">

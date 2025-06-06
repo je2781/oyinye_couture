@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import useCart from "../../../../../store/useCart";
+import useCart from "@/store/useCart";
 
 const HeaderCartButton = (props: any) => {
   const { items } = useCart();

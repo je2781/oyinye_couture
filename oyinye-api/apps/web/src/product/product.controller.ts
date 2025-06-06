@@ -1,5 +1,5 @@
 import {
-    Body,
+  Body,
   Controller,
   Get,
   Param,
@@ -11,16 +11,16 @@ import {
   Res,
   UseGuards,
 } from "@nestjs/common";
-import { RateLimitGuard } from "libs/common/guard/rate-limit.guard";
 import { ProductService } from "./product.service";
 import { Request, Response } from "express";
 import { SearchQueryDto } from "./dto/search-query.dto";
 import { ProductParamsDto } from "./dto/product-param.dto";
 import { UpdateReviewFeedbackDto } from "./dto/update-review-feedback.dto";
 import { CollectionsQueryDto } from "./dto/collections-query.dto";
+import { JwtGuard } from "@app/common";
+import { Csrf } from "ncsrf";
 
-@Controller("products")
-@UseGuards(RateLimitGuard)
+@Controller("api/products")
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
@@ -34,11 +34,19 @@ export class ProductController {
     return this.productService.get(params, viewedP, req, res);
   }
 
+  @UseGuards(JwtGuard)
+  @Csrf()
   @Patch("reviews/likes-dislikes/update")
-  updateReview(@Res() res: Response, @Body() body: UpdateReviewFeedbackDto) {
-    return this.productService.updateReview(res, body);
+  updateReview(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Body() body: UpdateReviewFeedbackDto
+  ) {
+    return this.productService.updateReview(req, res, body);
   }
 
+  @UseGuards(JwtGuard)
+  @Csrf()
   @Post(":title/update")
   createReview(
     @Param("title") title: string,
@@ -55,7 +63,7 @@ export class ProductController {
     @Req() req: Request,
     @Res() res: Response
   ) {
-    return this.productService.getResults(queryParams, req, res, 'search');
+    return this.productService.getResults(queryParams, req, res, "search");
   }
 
   @Get("collections")
@@ -65,12 +73,12 @@ export class ProductController {
     @Req() req: Request,
     @Res() res: Response
   ) {
-    return this.productService.getResults(queryParams, req, res, 'collections');
+    return this.productService.getResults(queryParams, req, res, "collections");
   }
 
   @Get()
   getProducts(
-    @Query('hidden', ParseBoolPipe) hidden: boolean,
+    @Query("hidden", ParseBoolPipe) hidden: boolean,
     @Req() req: Request,
     @Res() res: Response
   ) {

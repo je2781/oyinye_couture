@@ -1,0 +1,48 @@
+{
+  "pages": {
+    "/(pages)/admin/[section]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/(pages)/admin/[section]/page.css",
+      "static/chunks/app/(pages)/admin/[section]/page.js"
+    ],
+    "/(pages)/admin/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/(pages)/admin/layout.css",
+      "static/chunks/app/(pages)/admin/layout.js"
+    ],
+    "/(pages)/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/layout.js"
+    ],
+    "/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/layout.css",
+      "static/chunks/app/layout.js"
+    ],
+    "/not-found": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/not-found.js"
+    ],
+    "/(pages)/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/(pages)/page.css",
+      "static/chunks/app/(pages)/page.js"
+    ],
+    "/_not-found/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/_not-found/page.js"
+    ],
+    "/(pages)/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(pages)/login/page.js"
+    ]
+  }
+}

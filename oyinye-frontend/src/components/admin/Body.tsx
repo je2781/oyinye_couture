@@ -30,17 +30,14 @@ import { usePathname } from "next/navigation";
 import {
   Base64ImagesObj,
   CartItemObj,
-  EmailType,
   Locale,
   SizeData,
   Value,
 } from "../../interfaces";
-import axios from "axios";
 import Calendar from "react-calendar";
 import FullCalendar from "@fullcalendar/react";
 import multiMonthPlugin from "@fullcalendar/multimonth";
 import interactionPlugin from "@fullcalendar/interaction";
-import "react-calendar/dist/Calendar.css";
 import useWindowWidth from "../helpers/getWindowWidth";
 import { AdminSettingsModal } from "../layout/Modal";
 import crypto from "crypto";
@@ -57,6 +54,7 @@ import {
   ArcElement,
 } from "chart.js";
 
+import "react-calendar/dist/Calendar.css";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import Link from "next/link";
 import ProductComponent from "../product/Product";
@@ -66,6 +64,7 @@ import "swiper/css/pagination";
 import "swiper/css/navigation";
 import "./Body.css";
 import { useSearchParams } from "next/navigation";
+import api from "@/helpers/axios";
 
 Chart.register(
   LinearScale,
@@ -553,7 +552,7 @@ export default function Body({
       if (orderListLength !== "10") {
         try {
           setLoader(true);
-          const res = await axios.get(
+          const res = await api.get(
             `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/orders/${orderListLength}?page=1`,
             {
               withCredentials: true,
@@ -746,8 +745,8 @@ export default function Body({
 
   async function deleteProduct(id: string) {
     // setExtractedProducts(prevProducts => prevProducts.filter((prod: any) => prod.id !== id));
-    await axios.patch(
-      `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/products/update/${id}?hide=true`,
+    await api.patch(
+      `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/productsupdate/${id}?hide=true`,
       {
         withCredentials: true,
         headers: {
@@ -2631,7 +2630,7 @@ export default function Body({
                                 onClick={async (e) => {
                                   try {
                                     setIsLoading(true);
-                                    const res = await axios.post(
+                                    const res = await api.post(
                                       `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/orders/${order.id}/reminder`,
                                       {
                                         items: order.items,
@@ -2715,7 +2714,7 @@ export default function Body({
                                       }
                                       try {
                                         setIsLoading(true);
-                                        await axios.post(
+                                        await api.post(
                                           `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/orders/${order.id}/payment-status`,
                                           {
                                             paymentStatus: selectedStatus.value,
@@ -2780,7 +2779,7 @@ export default function Body({
                                           }
                                           try {
                                             setIsLoading(true);
-                                            const res = await axios.post(
+                                            const res = await api.post(
                                               `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/orders/${order.id}/payment-request`,
                                               {
                                                 link: link.value.trim(),
@@ -2913,7 +2912,7 @@ export default function Body({
                                   onClick={async (e) => {
                                     try {
                                       setIsLoading(true);
-                                      const res = await axios.post(
+                                      const res = await api.post(
                                         `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/orders/${order.id}/reminder`,
                                         {
                                           items: order.items,
@@ -4336,7 +4335,7 @@ export default function Body({
                                         newEmailItems[i]!.dataset.enqId
                                     )
                                   );
-                                  await axios.delete(
+                                  await api.delete(
                                     `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/enquiries/delete/${
                                       newEmailItems[i]!.dataset.enqId
                                     }`,
@@ -4386,7 +4385,7 @@ export default function Body({
                                         return updatedEnqs;
                                       });
 
-                                      await axios.patch(
+                                      await api.patch(
                                         `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/enquiries/update/${
                                           newEmailItems[i]!.dataset.enqId
                                         }`,
@@ -4448,7 +4447,7 @@ export default function Body({
                                         return updatedEnqs;
                                       });
 
-                                      await axios.patch(
+                                      await api.patch(
                                         `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/enquiries/update/${
                                           newEmailItems[i]!.dataset.enqId
                                         }`,
@@ -5249,7 +5248,7 @@ export default function Body({
                                 });
 
                                 try {
-                                  await axios.patch(
+                                  await api.patch(
                                     `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/enquiries/update/${enq.id.toString()}`,
                                     {
                                       isRead: true,
@@ -5394,7 +5393,7 @@ export default function Body({
                                           });
 
                                           try {
-                                            await axios.patch(
+                                            await api.patch(
                                               `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/enquiries/update/${enq.id.toString()}`,
                                               {
                                                 isRead: false,
@@ -5424,7 +5423,7 @@ export default function Body({
                                                   enq.id.toString()
                                               )
                                             );
-                                            await axios.delete(
+                                            await api.delete(
                                               `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/enquiries/delete/${enq.id.toString()}`,
                                               {
                                                 withCredentials: true,
@@ -5568,7 +5567,7 @@ export default function Body({
                                 });
 
                                 try {
-                                  await axios.patch(
+                                  await api.patch(
                                     `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/enquiries/update/${enq.id.toString()}`,
                                     {
                                       isRead: true,
@@ -5813,7 +5812,7 @@ export default function Body({
                                           });
 
                                           try {
-                                            await axios.patch(
+                                            await api.patch(
                                               `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/enquiries/update/${enq.id.toString()}`,
                                               {
                                                 isRead: false,
@@ -5843,7 +5842,7 @@ export default function Body({
                                                   enq.id.toString()
                                               )
                                             );
-                                            await axios.delete(
+                                            await api.delete(
                                               `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/enquiries/delete/${enq.id.toString()}`,
                                               {
                                                 withCredentials: true,
@@ -5933,7 +5932,7 @@ export default function Body({
                               }
                               try {
                                 setLoader(true);
-                                const res = await axios.post(
+                                const res = await api.post(
                                   `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/enquiries/send-reminder`,
                                   {
                                     email: enq.author.email,
@@ -6318,8 +6317,8 @@ export default function Body({
                           try {
                             setIsLoading(true);
                             if (selectedProduct.current.is_hidden) {
-                              await axios.patch(
-                                `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/products/update/${selectedProduct.current.id}?hide=false`,
+                              await api.patch(
+                                `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/productsupdate/${selectedProduct.current.id}?hide=false`,
                                 {
                                   withCredentials: true,
                                   headers: {
@@ -6328,8 +6327,8 @@ export default function Body({
                                 }
                               );
                             } else {
-                              await axios.patch(
-                                `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/products/update/${selectedProduct.current.id}?hide=true`,
+                              await api.patch(
+                                `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/productsupdate/${selectedProduct.current.id}?hide=true`,
                                 {
                                   withCredentials: true,
                                   headers: {

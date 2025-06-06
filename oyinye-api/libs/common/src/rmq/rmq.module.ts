@@ -21,7 +21,7 @@ export class RMQModule {
                         transport: Transport.RMQ,
                         options: {
                           urls: [
-                            configService.get<string>("NODE_ENV")! === 'development' ?configService.get<string>("DEV_RABBITMQ_URL")! : configService.get<string>("PROD_RABBITMQ_URL")! 
+                            configService.get<string>("PROD_RABBITMQ_URL")! 
                           ],
                           queue: configService.get<string>(`RABBITMQ_${name}_QUEUE`),
                         },

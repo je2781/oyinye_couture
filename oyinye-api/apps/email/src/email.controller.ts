@@ -1,43 +1,52 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { EmailService } from './email.service';
-import { EventPattern, Payload } from '@nestjs/microservices';
+import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
+import { JwtGuard, RMQService } from '@app/common';
 
 @Controller()
+@UseGuards(JwtGuard)
 export class EmailController {
-  constructor(private readonly emailService: EmailService) {}
+  constructor(private readonly emailService: EmailService, private rmqService: RMQService) {}
 
   @EventPattern('cart_reminder')
-  handleCartReminder(@Payload() data) {
-    return this.emailService.sendMail(data);
+ async handleCartReminder(@Payload() data, @Ctx() context: RmqContext) {
+    await this.emailService.sendMail(data);
+    this.rmqService.ack(context);
   }
 
   @EventPattern('payment_request_reminder')
-  handlePaymentRequest(@Payload() data) {
-    return this.emailService.sendMail(data);
+  async handlePaymentRequest(@Payload() data, @Ctx() context: RmqContext) {
+    await this.emailService.sendMail(data);
+    this.rmqService.ack(context);
   }
 
   @EventPattern('password_created')
-  handlePasswordCreate(@Payload() data) {
-    return this.emailService.sendMail(data);
+  async handlePasswordCreate(@Payload() data, @Ctx() context: RmqContext) {
+    await this.emailService.sendMail(data);
+    this.rmqService.ack(context);
   }
 
   @EventPattern('account_verify')
-  handleAccountVerify(@Payload() data) {
-    return this.emailService.sendMail(data);
+  async handleAccountVerify(@Payload() data, @Ctx() context: RmqContext) {
+    await this.emailService.sendMail(data);
+    this.rmqService.ack(context);
   }
 
   @EventPattern('reviewer_verify')
-  handleReviewerVerify(@Payload() data) {
-    return this.emailService.sendMail(data);
+  async handleReviewerVerify(@Payload() data, @Ctx() context: RmqContext) {
+    await this.emailService.sendMail(data);
+    this.rmqService.ack(context);
   }
 
   @EventPattern('password_reset')
-  handlePasswordReset(@Payload() data) {
-    return this.emailService.sendMail(data);
+  async handlePasswordReset(@Payload() data, @Ctx() context: RmqContext) {
+    await this.emailService.sendMail(data);
+    this.rmqService.ack(context);
   }
 
   @EventPattern('appointment_reminder')
-  handleAppointmnetReminder(@Payload() data) {
-    return this.emailService.sendMail(data);
+  async handleAppointmnetReminder(@Payload() data, @Ctx() context: RmqContext) {
+    await this.emailService.sendMail(data);
+    this.rmqService.ack(context);
   }
 }

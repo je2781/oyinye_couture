@@ -5,7 +5,6 @@ import { Product } from "./product.entity";
 import { Request, Response } from "express";
 import { Cart } from "../cart/cart.entity";
 import { Review } from "../review/review.entity";
-import { User } from "../user/user.entity";
 import { lastValueFrom } from "rxjs";
 import { ADMIN_SERVICE, EMAIL_SERVICE } from "../constants/service";
 import { ClientProxy } from "@nestjs/microservices";
@@ -16,13 +15,14 @@ import {
   randomReference,
 } from "libs/common/utils/getHelpers";
 import * as argon2 from "argon2";
-import { Visitor } from "../visitor/visitor.entity";
 import { EmailType } from "libs/common/interfaces";
 import { ProductParamsDto } from "./dto/product-param.dto";
 import { UpdateReviewFeedbackDto } from "./dto/update-review-feedback.dto";
 import * as crypto from "crypto";
 import { Filter } from "../filter/filter.entity";
 import { Order } from "../order/order.entity";
+import { ConfigService } from "@nestjs/config";
+import { User } from "../user/user.entity";
 
 @Injectable()
 export class ProductService {
@@ -32,14 +32,13 @@ export class ProductService {
     @InjectRepository(Cart) private readonly cartRepo: Repository<Cart>,
     @InjectRepository(Review) private readonly reviewRepo: Repository<Review>,
     @InjectRepository(User) private readonly userRepo: Repository<User>,
-    @InjectRepository(Visitor)
-    private readonly visitorRepo: Repository<Visitor>,
     @InjectRepository(Filter)
     private readonly filterRepo: Repository<Filter>,
     @InjectRepository(Order)
     private readonly orderRepo: Repository<Order>,
     @Inject(ADMIN_SERVICE) private readonly adminClient: ClientProxy,
-    @Inject(EMAIL_SERVICE) private readonly emailClient: ClientProxy
+    @Inject(EMAIL_SERVICE) private readonly emailClient: ClientProxy,
+    private configService: ConfigService
   ) {}
 
   private setViewedProductCookie(
@@ -48,14 +47,11 @@ export class ProductService {
     variantId: string
   ) {
     const viewedP = req.cookies["viewed_p"];
-    const updatedRes = res.status(200).json({
-      message: "cookie set",
-    });
 
     if (!viewedP) {
-      updatedRes.cookie("viewed_p", JSON.stringify([variantId]), {
+      res.cookie("viewed_p", JSON.stringify([variantId]), {
         expires: new Date(new Date().getTime() + 5184000000), // Expires in 2 month,
-        secure: process.env.NODE_ENV === "production",
+        secure: this.configService.get("NODE_ENV") === "production",
         httpOnly: true,
       });
     } else {
@@ -71,14 +67,16 @@ export class ProductService {
         viewedProductsArray.pop();
       }
 
-      updatedRes.cookie("viewed_p", JSON.stringify(viewedProductsArray), {
+      res.cookie("viewed_p", JSON.stringify(viewedProductsArray), {
         expires: new Date(new Date().getTime() + 2629746000), // Expires in 1 month,
-        secure: process.env.NODE_ENV === "production",
+        secure: this.configService.get("NODE_ENV") === "production",
         httpOnly: true,
       });
     }
 
-    return updatedRes;
+    return res.status(200).json({
+      message: "cookie set",
+    });
   }
 
   async get(
@@ -88,7 +86,7 @@ export class ProductService {
     res: Response
   ) {
     try {
-      const updatedRes = this.setViewedProductCookie(req, res, params[2]);
+      this.setViewedProductCookie(req, res, params[2]);
 
       let extractedProductsArray: Product[] = [];
       let authors: User[] = [];
@@ -165,7 +163,6 @@ export class ProductService {
         where: {
           product,
         },
-        relations: { user: true },
       });
       reviews.sort((a, b) => b.likes - a.likes);
 
@@ -190,7 +187,7 @@ export class ProductService {
         (prod) => prod.id !== product.id
       );
 
-      return updatedRes.status(200).json({
+      return res.status(200).json({
         productSizes: extractedColorObj.sizes,
         productFrontBase64Images: extractedColorObj.image_front_base64,
         productId: product.id,
@@ -209,7 +206,11 @@ export class ProductService {
     }
   }
 
-  async updateReview(res: Response, body: UpdateReviewFeedbackDto) {
+  async updateReview(
+    req: Request,
+    res: Response,
+    body: UpdateReviewFeedbackDto
+  ) {
     try {
       const { likes, dislikes, reviewId } = body;
 
@@ -221,7 +222,12 @@ export class ProductService {
       await this.reviewRepo.save(review!);
 
       //dispatching review_updated job
-      await lastValueFrom(this.adminClient.emit("review_updated", review));
+      await lastValueFrom(
+        this.adminClient.emit("review_updated", {
+          review,
+          access_token: req.cookies["access_token"],
+        })
+      );
 
       return res.status(201).json({
         message: "Product reviews updated successfully",
@@ -269,11 +275,9 @@ export class ProductService {
 
         const hash = await argon2.hash(newPassword);
 
-        const getVisitor = await this.visitorRepo.findOneBy({ id: visitId });
 
         user = this.userRepo.create({
           email,
-          visitor: getVisitor!,
           password: hash,
           first_name: name.split(" ").length === 2 ? name.split(" ")[0] : name,
           last_name: name.split(" ").length === 2 ? name.split(" ")[1] : name,
@@ -283,7 +287,12 @@ export class ProductService {
         await this.userRepo.save(user);
 
         //dispatching user_created job
-        await lastValueFrom(this.adminClient.emit("user_created", user));
+        await lastValueFrom(
+          this.adminClient.emit("user_created", {
+            user,
+            access_token: req.cookies["access_token"],
+          })
+        );
 
         //dispatching password_created job
         await lastValueFrom(
@@ -291,6 +300,7 @@ export class ProductService {
             password: newPassword,
             emailType: EmailType.reminder,
             email: user.email,
+            access_token: req.cookies["access_token"],
           })
         );
 
@@ -306,6 +316,7 @@ export class ProductService {
           this.emailClient.emit("account_verify", {
             token: verifyAccountToken,
             EmailType: EmailType.verify_account,
+            access_token: req.cookies["access_token"],
           })
         );
 
@@ -313,7 +324,6 @@ export class ProductService {
         newReview = this.reviewRepo.create({
           headline,
           rating: +rating,
-          user,
           content: review,
           is_media: isMedia,
           product,
@@ -329,7 +339,6 @@ export class ProductService {
         newReview = this.reviewRepo.create({
           headline,
           rating: +rating,
-          user,
           product,
           content: review,
           is_media: isMedia,
@@ -350,6 +359,7 @@ export class ProductService {
         this.emailClient.emit("reviewer_verify", {
           token: verifyReviewerToken,
           emailType: EmailType.verify_reviewer,
+          access_token: req.cookies["access_token"],
         })
       );
 
@@ -779,46 +789,10 @@ export class ProductService {
 
       products = await this.productRepo.find({ where: { is_hidden: hidden } });
 
-      const updatedRes = res.status(200).json({
+      return res.status(200).json({
         products,
         success: true,
       });
-
-      //creating cookie to track leads
-      const visitId = getVisitData(req);
-
-      if (!visitId) {
-        const ip = req.header("x-forwarded-for") || "0.0.0.0";
-        const userAgent = req.header("user-agent") || "";
-
-        const device = getDeviceType(userAgent);
-
-        const browser = getBrowser(userAgent);
-
-        if (browser != "Unknown") {
-          const newVisitor = this.visitorRepo.create({
-            ip,
-            browser,
-            device,
-          });
-
-          await newVisitor.save();
-
-          const remainingMilliseconds = 5184000000; // 2 months
-          const now = new Date();
-          const expiryDate = new Date(now.getTime() + remainingMilliseconds);
-
-          updatedRes.cookie("visit", newVisitor.id, {
-            expires: expiryDate,
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            path: "/",
-            sameSite: "strict",
-          });
-        }
-      }
-
-      return updatedRes;
     } catch (error) {
       const e = error as Error;
       return res.status(500).json({

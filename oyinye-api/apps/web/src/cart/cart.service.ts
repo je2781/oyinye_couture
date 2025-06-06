@@ -9,21 +9,21 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Cart } from "./cart.entity";
-import { User } from "../user/user.entity";
-import { Product } from "../product/product.entity";
 import { Order } from "../order/order.entity";
 import { Request, Response } from "express";
 import { getDataFromCart } from "libs/common/utils/getDataFromCart";
 import { getUserData } from "libs/common/utils/getUserData";
 import { getVisitData } from "libs/common/utils/getVisitData";
-import { ADMIN_SERVICE } from "../constants/service";
+import { ADMIN_SERVICE, AUTH_SERVICE } from "../constants/service";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom } from "rxjs";
-import { Visitor } from "../visitor/visitor.entity";
 import * as crypto from "crypto";
 import { CartItemDto } from "./dto/cart-item.dto";
 import { CreateCartDto } from "./dto";
 import { getDataFromOrder } from "libs/common/utils/getDataFromOrder";
+import { ConfigService } from "@nestjs/config";
+import { Product } from "../product/product.entity";
+import { User } from "../user/user.entity";
 
 @Injectable()
 export class CartService {
@@ -40,10 +40,9 @@ export class CartService {
     @InjectRepository(Order)
     private orderRepository: Repository<Order>,
 
-    @InjectRepository(Visitor)
-    private visitorRepo: Repository<Visitor>,
-
-    @Inject(ADMIN_SERVICE) private adminClient: ClientProxy
+    @Inject(ADMIN_SERVICE) private adminClient: ClientProxy,
+    @Inject(AUTH_SERVICE) private authClient: ClientProxy,
+    private configService: ConfigService
   ) {}
 
   async getCart(cartId: string, res: Response) {
@@ -103,6 +102,7 @@ export class CartService {
           this.adminClient.emit("cart_updated", {
             id: cartId,
             data: cart!,
+            access_token: req.cookies['access_token']
           })
         );
 
@@ -110,11 +110,14 @@ export class CartService {
           await this.cartRepository.delete(cartId);
 
           //dispatching cart_destroyed job
-          await lastValueFrom(this.adminClient.emit("cart_destroyed", cartId));
+          await lastValueFrom(this.adminClient.emit("cart_destroyed", {
+            id: cartId,
+            access_token: req.cookies['access_token']
+          }));
 
-          const updatedRes = res.clearCookie("cart");
+          res.clearCookie("cart");
 
-          return updatedRes.status(204).json({
+          return res.status(204).json({
             message: "Cart updated successfully",
             totalAmount: 0,
             items: [],
@@ -184,7 +187,6 @@ export class CartService {
 
       //retrieving cookies
       const userId = getUserData(req);
-      const visitId = getVisitData(req);
       const cartId = getDataFromCart(req);
 
       const product = await this.productRepository.findOne({
@@ -206,29 +208,29 @@ export class CartService {
         const remainingMilliseconds = 5184000000; // 2 months
         const expiryDate = new Date(Date.now() + remainingMilliseconds);
 
-        const updatedRes = res.status(201).json({
-          message: "Cart created successfully",
-          success: true,
-        });
-
         if (!user) {
-          const getVisitor = await this.visitorRepo.findOne({
-            where: { id: visitId },
-          });
-          user = this.userRepository.create({
-            visitor: getVisitor!,
-          });
+ 
+          user = this.userRepository.create();
 
           await this.userRepository.save(user);
 
           //dispatching user_created job
-          await lastValueFrom(this.adminClient.emit("user_created", user));
+          await lastValueFrom(this.adminClient.emit("user_created", {
+            user,
+            access_token: req.cookies['access_token']
 
-          updatedRes.cookie("user", user.id, {
+          }));
+          await lastValueFrom(this.authClient.emit("user_created", {
+            user,
+            access_token: req.cookies['access_token']
+
+          }));
+
+          res.cookie("user", user.id, {
             httpOnly: true,
             expires: expiryDate,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
+            secure: this.configService.get('NODE_ENV') === "production",
+            sameSite: "lax",
             path: "/",
           });
         }
@@ -249,17 +251,24 @@ export class CartService {
         await this.cartRepository.save(cart);
 
         //dispatching cart_created job
-        await lastValueFrom(this.adminClient.emit("cart_created", cart));
+        await lastValueFrom(this.adminClient.emit("cart_created", {
+          cart,
+          access_token: req.cookies['access_token']
 
-        updatedRes.cookie("cart", cart.id, {
+        }));
+
+        res.cookie("cart", cart.id, {
           httpOnly: true,
           expires: expiryDate,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
+          secure: this.configService.get('NODE_ENV') === "production",
+          sameSite: "lax",
           path: "/",
         });
 
-        return updatedRes;
+        return res.status(201).json({
+          message: "Cart created successfully",
+          success: true,
+        });
       } else {
         await this.addToCart(
           cartId,
@@ -309,31 +318,32 @@ export class CartService {
       await this.orderRepository.save(order);
 
       //dispatching order_created job
-      await lastValueFrom(this.adminClient.emit("order_created", order));
+      await lastValueFrom(this.adminClient.emit("order_created", {
+        order,
+        access_token: req.cookies['access_token']
+      }));
 
-      const updatedRes = res.status(201).json({
+      res.cookie("checkout_session_token", hashedToken, {
+        expires: expiryDate,
+        httpOnly: true,
+        path: "/",
+        secure: this.configService.get('NODE_ENV') === "production",
+        sameSite: "lax",
+      });
+
+      res.cookie("order", order.id, {
+        expires: expiryDate,
+        httpOnly: true,
+        path: "/",
+        secure: this.configService.get('NODE_ENV') === "production",
+        sameSite: "lax",
+      });
+
+      return res.status(201).json({
         message: "Order created!",
         checkout_session_token: hashedToken,
         success: true,
       });
-
-      updatedRes.cookie("checkout_session_token", hashedToken, {
-        expires: expiryDate,
-        httpOnly: true,
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-
-      updatedRes.cookie("order", order.id, {
-        expires: expiryDate,
-        httpOnly: true,
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      });
-
-      return updatedRes;
     } catch (error) {
       const e = error as Error;
       return res.status(500).json({
@@ -389,7 +399,11 @@ export class CartService {
       await order.save();
 
       //dispatching order_updated job
-      await lastValueFrom(this.adminClient.emit("order_updated", order));
+      await lastValueFrom(this.adminClient.emit("order_updated", {
+        order,
+        access_token: req.cookies['access_token']
+
+      }));
 
       return res.status(200).json({
         message: "session token retrieved",

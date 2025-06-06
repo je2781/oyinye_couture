@@ -5,71 +5,56 @@ import Footer from "@/components/footer/Footer";
 import ViewCollection from "@/components/collections/ViewCollection";
 import Header from "@/components/layout/header/Header";
 import { redirect } from "next/navigation";
+import { getCsrfToken } from "@/helpers/getHelpers";
+import api from "@/helpers/axios";
 
-async function getData(token?: string) {
+async function getData() {
   const cookieStore = cookies();
   const cartId = cookieStore.get("cart")?.value;
 
   if (cartId && cartId.length > 0) {
     const [cartDataRes, productDataRes] = await Promise.all([
-      fetch(`${process.env.WEB_DOMAIN}/api/products/cart/${cartId}`, {
+      api.get(`${process.env.WEB_DOMAIN}/api/products/cart/${cartId}`),
+      api.get(`${process.env.WEB_DOMAIN}/api/products?hidden=false`, {
         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }),
-      fetch(`${process.env.WEB_DOMAIN}/api/products?hidden=false`, {
-        cache: "no-store",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
         },
       }),
     ]);
 
-    const [cartData, productData] = await Promise.all([
-      cartDataRes.json(),
-      productDataRes.json(),
-    ]);
-
-    return [cartData.cartItems, productData.products];
+    return [cartDataRes.data.cartItems, productDataRes.data.products];
   } else {
-    const productDataRes = await fetch(
+    const productDataRes = await api.get(
       `${process.env.WEB_DOMAIN}/api/products?hidden=false`,
       {
-        cache: "no-store",
         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
         },
       }
     );
-    const productData = await productDataRes.json();
-    return [[], productData.products];
+    return [[], productDataRes.data.products];
   }
 }
 
 export default async function Home() {
-  
   //protecting public routes
   const cookieStore = cookies();
   const isAdmin = Boolean(cookieStore.get("admin_status")?.value);
   const token = cookieStore.get("access_token")?.value;
-  
+  const csrfToken = await getCsrfToken();
+
   if (token && isAdmin) {
     redirect("/admin/summary");
   }
 
-  const [cartItems, products] = await getData(token);
-  const h = headers();
-  const csrfToken = h.get("X-CSRF-Token") || "missing";
+  const [cartItems, products] = await getData();
 
   return (
     <>
       <Header cartItems={cartItems} />
       <Hero />
       <About />
-      <ViewCollection featuredProducts={products} csrrf={csrfToken}/>
+      <ViewCollection featuredProducts={products} csrrf={csrfToken} />
       <Footer csrfToken={csrfToken} />
     </>
   );

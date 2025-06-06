@@ -5,9 +5,8 @@ import { ReviewsModal } from '../layout/Modal';
 import React from 'react';
 import {decodedBase64, generateBase64FromMedia, reloadPage } from '@/helpers/getHelpers';
 import toast from 'react-hot-toast';
-import axios from 'axios';
+import api from '@helpers/axios';
 import { useSearchParams, usePathname} from 'next/navigation';
-import { EmailType } from '@/interfaces';
 
 const Reviews = ({productReviews, product, csrf}: any) => {
     let averageRating = 0;
@@ -267,7 +266,7 @@ const Reviews = ({productReviews, product, csrf}: any) => {
 
         try {
             setLoader(true);
-            const res =  await axios.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/${product}/update`, {
+            const res =  await api.post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/products${product}/update`, {
                 rating: starRatingStatement ? getRating(starRatingStatement.innerText) : 0,
                 email,
                 name,
@@ -276,7 +275,6 @@ const Reviews = ({productReviews, product, csrf}: any) => {
                 headline,
                 isMedia: review.length === 0
             },{
-                withCredentials: true,
                 headers: {
                     "x-csrf-token": csrf,
                   }
@@ -307,7 +305,7 @@ const Reviews = ({productReviews, product, csrf}: any) => {
 
         try {
             setLoader(true);
-            await axios.patch(`/api/products/reviews/likes-dislikes/update`, {
+            await api.patch(`/api/productsreviews/likes-dislikes/update`, {
                 likes: likes[index],
                 dislikes: dislikes[index],
                 reviewId: review.id
@@ -337,7 +335,7 @@ const Reviews = ({productReviews, product, csrf}: any) => {
 
         try {
             setLoader(true);
-            await axios.patch(`/api/products/reviews/likes-dislikes/update`, {
+            await api.patch(`/api/productsreviews/likes-dislikes/update`, {
                 likes: likes[index],
                 dislikes: dislikes[index],
                 reviewId: review.id

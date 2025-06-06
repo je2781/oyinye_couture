@@ -149,7 +149,7 @@ export default function Collections({
       async function reloadPage(){
         if (isLoading) {
           if(filter.noOfFilters > 0){
-            await fetch(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/filter?type=collections`,{
+            await api.get(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/filter?type=collections`,{
               method: 'POST',
               body: JSON.stringify(filter),
               credentials: 'include'

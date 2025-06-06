@@ -1,19 +1,23 @@
-import { Controller } from "@nestjs/common";
+import { Controller, UseGuards } from "@nestjs/common";
 import { OrderService } from "./order.service";
-import { EventPattern, Payload } from "@nestjs/microservices";
+import { Ctx, EventPattern, Payload, RmqContext } from "@nestjs/microservices";
+import { JwtGuard, RMQService } from "@app/common";
 
 @Controller()
+@UseGuards(JwtGuard)
 export class OrderEventController {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(private readonly orderService: OrderService, private readonly rmqService: RMQService) {}
 
   @EventPattern("order_updated")
-  async handleOrderUpdate(@Payload() update) {
-    return this.orderService.updateOrder(update.id, update.data);
+  async handleOrderUpdate(@Payload() update, @Ctx() context: RmqContext) {
+    await  this.orderService.updateOrder(update.id, update.data);
+    this.rmqService.ack(context);
   }
 
   @EventPattern("order_created")
-  async handleOrderCreate(@Payload() data) {
+  async handleOrderCreate(@Payload() data, @Ctx() context: RmqContext) {
     await this.orderService.createOrder(data);
+    this.rmqService.ack(context);
   }
 
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import toast from "react-hot-toast";
-import axios from "axios";
+import api from "@/helpers/axios";
 import React from "react";
 import Link from "next/link";
 
@@ -180,14 +180,13 @@ export default function Footer({ csrfToken }: {csrfToken: string}) {
 
             try {
               setLoader(true);
-              const res = await axios.post(
-                `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/users/signup`,
+              const res = await api.post(
+                `${process.env.NEXT_PUBLIC_AUTH_DOMAIN}/api/auth/signup`,
                 {
                   email: leadEmail!.value,
                   enableEmailMarketing: true,
                 },
                 {
-                  withCredentials: true,
                   headers: {
                     "x-csrf-token": csrfToken,
                   },

@@ -4,13 +4,14 @@ import { useEffect } from "react";
 import Image from "next/image";
 import React from "react";
 import ProductQuickView from "./ProductQuickView";
-import { usePathname} from 'next/navigation';
+import { usePathname, useRouter} from 'next/navigation';
 import useWindowWidth from "../helpers/getWindowWidth";
 
 const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDetailPage, isAdmin, handleEdit, handleDelete, csrf}: any) => {
     const[isModalOpen, setIsModalOpen] = React.useState(false);
     let width = useWindowWidth();
     const path = usePathname();
+    const router = useRouter();
 
     //sorting out the sizes of the first dress
     if(!isSearchProduct &&  !isAdmin){
@@ -150,12 +151,12 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
             onClick={() => {
               if(isOnDetailPage){
                 const pathParts = path.split("/");
-                const newPath = `/${pathParts[1]}/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name.replace(' ', '-')}/${product.colors[0].sizes[0].variant_id}`;
+                const newPath = `/${pathParts[1]}/api/products${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name.replace(' ', '-')}/${product.colors[0].sizes[0].variant_id}`;
 
                 const url = new URL(`${window.location.origin}${newPath}`);
                 window.location.href = url.toString();
               }else{
-                window.location.href = `/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name.replace(' ', '-')}/${product.colors[0].sizes[0].variant_id}`;
+                router.push(`/api/products${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name.replace(' ', '-')}/${product.colors[0].sizes[0].variant_id}`);
               }
               
               

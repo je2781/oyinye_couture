@@ -50,28 +50,38 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 #database entrypoint
-oyinye-api/apps/*/src/docker-entrypoint-initdb.d/
-oyinye-api/apps/*/src/migrations/
-oyinye-api/apps/*/typeorm.config.ts
+oyinye-api/docker-entrypoint-initdb.d/
+oyinye-api/docker-entrypoint-initauthdb.d/
+oyinye-api/apps/**/migrations/
+oyinye-api/docker-compose.yaml
+oyinye-frontend/docker-compose.yaml
+oyinye-frontend/Dockerfile
+oyinye-api/typeorm.config.ts
 
-#docker files
+#files for dev and production
 oyinye-api/apps/*/Dockerfile
 oyinye-api/docker-compose.yaml
 oyinye-api/.dockerignore
+*.sh
+oyinye-frontend/.dockerignore
 oyinye-frontend/Dockerfile
 oyinye-frontend/docker-compose.yml
+oyinye-frontend/ngrok.yml
+oyinye-frontend/.next/
+oyinye-frontend/locales/
+
+#files for csrf
+oyinye-api/libs/common/src/csrf/
 
 # dotenv environment variable files
-oyinye-api/apps/*/.env
+oyinye-api/.env.*
 oyinye-frontend/.env
 .env.development.local
 .env.test.local
 .env.production.local
-.env.
 
 # compiled output
-oyinye-api/dist
-oyinye-frontend/dist
-oyinye-api/node_modules
-oyinye-frontend/node_modules
-/build
+oyinye-api/dist/
+oyinye-frontend/.next/
+oyinye-api/node_modules/
+oyinye-frontend/node_modules/

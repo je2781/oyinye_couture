@@ -11,62 +11,56 @@ import {
   Res,
   UseGuards,
 } from "@nestjs/common";
-import { Request, Response } from "express";
 import { ProductService } from "./product.service";
+import { JwtGuard } from "@app/common";
 import { Product } from "./product.entity";
-import { JwtGuard, RateLimitGuard } from "libs/common/guard";
+import { Request, Response } from "express";
+import { Csrf } from "ncsrf";
 
-@Controller("products")
-@UseGuards(JwtGuard)
-@UseGuards(RateLimitGuard)
+@Controller("api/products")
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Patch("update/:id")
+  @Csrf()
+  @UseGuards(JwtGuard)
   async hideProduct(
     @Param("id") id: string,
-    @Query("hide", ParseBoolPipe) hide: boolean,
-    @Req() req: Request,
-    @Res() res: Response
+    @Query("hide", ParseBoolPipe) hide: boolean
   ) {
-    return this.productService.hide(id, hide, req, res);
+    return this.productService.hide(id, hide);
   }
 
   @Post("new")
-  async createProduct(
-    @Body() product: Product,
-    @Req() req: Request,
-    @Res() res: Response
-  ) {
-    return this.productService.createProduct(product, req, res);
+  @Csrf()
+  @UseGuards(JwtGuard)
+  async createProduct(@Body() product: Product) {
+    return this.productService.createProduct(product);
   }
 
   @Patch(":id")
-  async updateProduct(
-    @Param("id") id: string,
-    @Body() product: Product,
+  @Csrf()
+  @UseGuards(JwtGuard)
+  async updateProduct(@Param("id") id: string, @Body() product: Product) {
+    return this.productService.updateProduct(id, product);
+  }
+
+  @Get()
+  getProducts(
+    @Query("hidden", ParseBoolPipe) hidden: boolean,
     @Req() req: Request,
     @Res() res: Response
   ) {
-    return this.productService.updateProduct(id, product, req, res);
+    return this.productService.getProducts(req, res, hidden);
   }
 
   @Get("search")
-  GetSearchResults(
+  getSearchResults(
     @Query()
     queryParams: { q: string; page: string },
     @Req() req: Request,
     @Res() res: Response
   ) {
     return this.productService.getSearchResults(queryParams, req, res);
-  }
-
-  @Get()
-  getProducts(
-    @Query('hidden', ParseBoolPipe) hidden: boolean,
-    @Req() req: Request,
-    @Res() res: Response
-  ) {
-    return this.productService.getProducts(req, res, hidden);
   }
 }

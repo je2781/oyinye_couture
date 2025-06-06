@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import React, { useEffect } from "react";
-import axios from "axios";
+import api from "@/helpers/axios";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 export default function ResetPasswordPage({ csrf }: any) {
   const [user, setUser] = React.useState({
@@ -16,6 +17,7 @@ export default function ResetPasswordPage({ csrf }: any) {
   const [buttonDisabled, setButtonDisabled] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (user.password.length > 0 && user.confirmPassword.length > 0) {
@@ -35,13 +37,12 @@ export default function ResetPasswordPage({ csrf }: any) {
   async function onReset() {
     try {
       setIsLoading(true);
-      const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/users/reset`,
+      const res = await api.post(
+        `${process.env.NEXT_PUBLIC_AUTH_DOMAIN}/api/auth/reset`,
         {
           email: user.email
         },
         {
-          withCredentials: true,
           headers: {
             "x-csrf-token": csrf,
           },
@@ -51,7 +52,7 @@ export default function ResetPasswordPage({ csrf }: any) {
         throw new Error(res.data.message);
       }
 
-      window.location.href = `/login`;
+      router.replace('/login');
     } catch (error) {
       const e = error as Error;
       toast.error(e.message);
@@ -64,21 +65,21 @@ export default function ResetPasswordPage({ csrf }: any) {
     try {
       setIsLoading(true);
 
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/users/new-password`,
+      await api.post(
+        `${process.env.NEXT_PUBLIC_AUTH_DOMAIN}/api/auth/new-password`,
         {
           ...user,
           token,
         },
         {
-          withCredentials: true,
           headers: {
             "x-csrf-token": csrf,
           },
         }
       );
 
-      window.location.href = `/login`;
+      router.replace('/login');
+
     } catch (error) {
       const e = error as Error;
       toast.error(e.message, {

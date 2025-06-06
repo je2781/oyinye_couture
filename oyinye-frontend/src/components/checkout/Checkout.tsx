@@ -13,7 +13,7 @@ import {
   randomReference,
 } from "@/helpers/getHelpers";
 import { Base64ImagesObj, CartItemObj } from "@/interfaces";
-import axios from "axios";
+import api from "@/helpers/axios";
 import toast from "react-hot-toast";
 import useWindowWidth from "../helpers/getWindowWidth";
 import {usePathname } from 'next/navigation';
@@ -163,7 +163,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
     try {
       setLoader(true);
       //updating user account
-      await axios.patch(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/users/${userId}`, {
+      await api.patch(`${process.env.NEXT_PUBLIC_AUTH_DOMAIN}/api/auth/users/${userId}`, {
         firstName,
         lastName,
         password: randomReference(),
@@ -177,7 +177,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
       });
 
       //updating order
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/orders`, {
+      const res = await api.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/orders`, {
         shippingInfo: {
           firstName: firstName.shipping,
           lastName: lastName.shipping,
@@ -242,7 +242,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
             if (response.desc) {
               try {
                 
-                const res = await axios.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/orders/update/transaction-status`, {
+                const res = await api.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/orders/update/transaction-status`, {
                   txn_ref: transactionRef,
                   merchant_code: `${process.env.NEXT_PUBLIC_MER_CODE}`,
                   amount: (shippingMethod + parseFloat(total) + tax) * 100
@@ -269,7 +269,7 @@ export default function Checkout({ cartItems, total, orderId, country, userEmail
               }
             }
           },
-          `${process.env.NEXT_PUBLIC_DOMAIN!}${path}`
+          `${process.env.NEXT_PUBLIC_WEB_DOMAIN!}${path}`
         );
       
       }

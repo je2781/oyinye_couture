@@ -4,14 +4,13 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import React, { useEffect, useRef } from "react";
-import useAuth from "../../../../../store/useAuth";
+import useAuth from "@/store/useAuth";
 import HeaderCartButton from "./HeaderCartButton";
 import SearchBar from "../../ui/SearchBar";
 import useWindowWidth from "../../helpers/getWindowWidth";
 import { MobileModal } from "../Modal";
-import useCart from "../../../../../store/useCart";
-import useGlobal from "../../../../../store/useGlobal";
-import { Autocomplete } from "@mui/material";
+import useCart from "@/store/useCart";
+import useGlobal from "@/store/useGlobal";
 
 export default function Header({ cartItems, isCheckout, isAuth }: any) {
   let timerId: NodeJS.Timeout | null = null;
@@ -155,9 +154,9 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
         </button>
         <Link href="/" className="inline-block max-w-[150px] relative">
           {isCheckout ? (
-            <Image src='/oyinye.png' alt="logo" className="bg-cover" width={1240} height={960}/>
+            <Image src='/oyinye.png' priority={true} alt="logo" className="bg-cover" width={1240} height={960}/>
           ) : (
-            <Image src='/oyinye.png' alt="logo" className="bg-contain" width={720} height={620}/>
+            <Image src='/oyinye.png' priority={true} alt="logo" className="bg-contain" width={720} height={620}/>
           )}
         </Link>
         {!isCheckout && (
@@ -309,7 +308,7 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
           <ul>
             <li>
               <Link
-                href={authStatus ? "/profile" : "/login"}
+                href={"/login"}
                 className="inline-flex flex-row gap-x-3 items-center"
               >
                 <i className="fa-solid cursor-pointer fa-user text-lg font-medium text-gray-500 font-sans"></i>

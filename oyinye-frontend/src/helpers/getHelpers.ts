@@ -6,10 +6,12 @@ import {
   DressColorObj,
   SizeData,
 } from "@/interfaces";
-import axios from "axios";
 import crypto from "crypto";
 import toast from "react-hot-toast";
 import countries from "i18n-iso-countries";
+import api from "./axios";
+import { cookies } from "next/headers";
+import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 
 
 let now = new Date();
@@ -721,7 +723,7 @@ export async function handleSubmit(
 
   try {
     setIsLoading(true);
-    await axios.post("/api/products/new", Product,{
+    await api.post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/products/new`, Product,{
       headers: {
         "Content-Type": "application/json",
         "x-csrf-token": csrf
@@ -828,7 +830,8 @@ export async function handleProductEdit(
       }),
     };
 
-    await axios.patch(`/api/products/${product.id}`, Product,{
+    await api.patch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/products/${product.id}`, Product,{
+      withCredentials: true,
       headers: {
         "x-csrf-token": csrf,
       }
@@ -2007,6 +2010,13 @@ export const getDataset = (orders: any[]) => {
 
   return [dailyData, dailyProductTypeData, dailyVisitorsData, dailyDeliveryOptionsData, dailyPaymentTypeData, monthData, monthProductTypeData, monthVisitorsData, monthDeliveryOptionsData, monthPaymentTypeData, annualData, annualProductTypeData, annualVisitorsData, annualDeliveryOptionsData, annualPaymentTypeData];
     
+}
+
+export async function getCsrfToken(): Promise<string> {
+  const tokenRes = await api.get(
+    `${process.env.AUTH_DOMAIN}/api/auth/token`
+  );
+  return tokenRes.data.token;
 }
 
 

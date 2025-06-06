@@ -1,6 +1,8 @@
 import Collections from "@/components/collections/CollectionsComponent";
 import Footer from "@/components/footer/Footer";
 import Header from "@/components/layout/header/Header";
+import api from "@/helpers/axios";
+import { getCsrfToken } from "@/helpers/getHelpers";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -35,37 +37,30 @@ async function getCollectionData(
 
   let uri = `${process.env.WEB_DOMAIN}/api/products/collections?${queryString}`;
 
-  const res = await fetch(uri, {
-    cache: "no-cache",
+  const res = await api.get(uri, {
     headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+        "Cache-Control": "no-store",
+       }
   });
-  const data = await res.json();
 
-  return data;
+  return res.data;
 }
 
 async function getCart() {
   const cookieStore = cookies();
   const cartId = cookieStore.get("cart")?.value;
-  const token = cookieStore.get("access_token")?.value;
 
   if (cartId && cartId.length > 0) {
-    const res = await fetch(
+    const res = await api.get(
       `${process.env.WEB_DOMAIN}/api/products/cart/${cartId}`,
       {
-        cache: "no-cache",
         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        "Cache-Control": "no-store",
+       }
       }
     );
-    const data = await res.json();
 
-    return data.cartItems;
+    return res.data.cartItems;
   } else {
     return [];
   }
@@ -76,6 +71,7 @@ const CollectionsPage = async ({ params, searchParams }: any) => {
   const cookieStore = cookies();
   const isAdmin = Boolean(cookieStore.get("admin_status")?.value);
   const token = cookieStore.get("access_token")?.value;
+  const csrfToken = await getCsrfToken();
 
   if (token && isAdmin) {
     redirect("/admin/summary");
@@ -106,9 +102,6 @@ const CollectionsPage = async ({ params, searchParams }: any) => {
   );
   const cartItems = await getCart();
 
-  const h = headers();
-  const csrfToken = h.get("X-CSRF-Token") || "missing";
-
   return (
     <>
       <Header cartItems={cartItems} />
@@ -126,7 +119,7 @@ const CollectionsPage = async ({ params, searchParams }: any) => {
           },
           sortBy,
           page,
-          csrf: csrfToken
+          csrf: csrfToken,
         }}
       />
       <Footer csrfToken={csrfToken} />

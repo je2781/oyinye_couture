@@ -2,43 +2,32 @@ import Header from "@/components/layout/header/Header";
 import Checkout from "@/components/checkout/Checkout";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getCsrfToken } from "@/helpers/getHelpers";
+import api from "@/helpers/axios";
 
 async function getCheckout() {
   const cookieStore = cookies();
   const cartId = cookieStore.get("cart")?.value;
   const orderId = cookieStore.get("order")?.value;
   const userId = cookieStore.get("user")?.value;
-  const token = cookieStore.get("access_token")?.value;
 
   if (cartId && cartId.length > 0) {
     const [userDataRes, countryDataRes, cartDataRes] = await Promise.all([
-      fetch(`${process.env.WEB_DOMAIN}/api/users/${userId}`, {
+      api.get(`${process.env.AUTH_DOMAIN}/api/auth/users/${userId}`),
+      api.get(`https://ipinfo.io?token=${process.env.IPINFO_TOKEN}`),
+      api.get(`${process.env.WEB_DOMAIN}/api/products/cart/${cartId}`, {
         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }),
-      fetch(`https://ipinfo.io?token=${process.env.IPINFO_TOKEN}`),
-      fetch(`${process.env.WEB_DOMAIN}/api/products/cart/${cartId}`, {
-        cache: "no-cache",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+          "Cache-Control": "no-store",
+         }
       }),
     ]);
 
-    const [userData, countryData, cartData] = await Promise.all([
-      userDataRes.json(),
-      countryDataRes.json(),
-      cartDataRes.json(),
-    ]);
 
     return {
-      ...cartData,
+      ...cartDataRes.data,
       orderId,
-      country: countryData.country,
-      ...userData,
+      country: countryDataRes.data.country,
+      ...userDataRes.data,
     };
   } else {
     return {
@@ -56,6 +45,7 @@ async function CheckoutPage() {
   const cookieStore = cookies();
   const isAdmin = Boolean(cookieStore.get("admin_status")?.value);
   const token = cookieStore.get("access_token")?.value;
+  const csrfToken = await getCsrfToken();
 
   if (token && isAdmin) {
     redirect("/admin/summary");
@@ -63,11 +53,7 @@ async function CheckoutPage() {
 
   const data = await getCheckout();
 
-  const h = headers();
-  const csrfToken = h.get("X-CSRF-Token") || "missing";
-
   const checkoutData = { ...data, csrf: csrfToken };
-
 
   return (
     <>

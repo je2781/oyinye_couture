@@ -1,8 +1,7 @@
 "use client";
 
 import { generateBase64FromMedia} from "@/helpers/getHelpers";
-import { EmailType } from "@/interfaces";
-import axios from "axios";
+import api from "@/helpers/axios";
 import { Country } from "country-state-city";
 import React from "react";
 import toast from "react-hot-toast";
@@ -66,7 +65,7 @@ export default function Order({ country, csrf }: any) {
 
     try {
       setLoader(true);
-      const res = await axios.post(
+      const res = await api.post(
         `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/enquiries/custom-order`,
         {
           email,
@@ -82,7 +81,6 @@ export default function Order({ country, csrf }: any) {
           })),
         },
         {
-          withCredentials: true,
           headers: {
             "x-csrf-token": csrf,
           },

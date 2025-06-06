@@ -3,8 +3,8 @@
 
 import Image from "next/image";
 import React, { SyntheticEvent, useRef } from "react";
-import { FilterModal} from "../../layout/Modal";
-import { regex } from "../../../../../utils/getHelpers";
+import { FilterModal} from "@/components/layout/Modal";
+import { regex } from "@/helpers/getHelpers";
 import Slider from "@mui/material/Slider";
 
 export default function SecondaryHeader({

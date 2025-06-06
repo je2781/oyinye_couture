@@ -13,9 +13,9 @@ import useCart from "@/store/useCart";
 import Link from "next/link";
 import { Base64ImagesObj, DressSizesJsxObj, DressSizesObj } from "@/interfaces";
 import { regex, sizes } from "@/helpers/getHelpers";
-import axios from "axios";
+import api from "@/helpers/axios";
 import toast from "react-hot-toast";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const ProductQuickView = ({
   product,
@@ -32,6 +32,7 @@ const ProductQuickView = ({
   const [isSavingCart, setIsSavingCart] = React.useState(false);
   const [toastError, setToastError] = React.useState(false);
   const path = usePathname();
+  const router = useRouter();
 
   let sizesJsxObj: DressSizesJsxObj = {};
   let sizesObj: DressSizesObj = React.useMemo(() => ({}), []);
@@ -72,7 +73,7 @@ const ProductQuickView = ({
         setToastError(false);
         setProgressIndicator(true);
         try {
-          const res = await axios.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cart`, {
+          const res = await api.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cart`, {
             price: sizesObj[`${selectedColor}-${selectedSize}`]!.price,
             quantity: parseInt(quantity),
             variantId: sizesObj[`${selectedColor}-${selectedSize}`]!.variant_id,
@@ -472,7 +473,7 @@ const ProductQuickView = ({
                 const pathParts = path.split("/");
                 const newPath = `/${
                   pathParts[1]
-                }/products/${product.title
+                }/api/products${product.title
                   .replace(" ", "-")
                   .toLowerCase()}/${sizesObj[
                   `${selectedColor}-${selectedSize}`
@@ -483,15 +484,13 @@ const ProductQuickView = ({
                 const url = new URL(`${window.location.origin}${newPath}`);
                 window.location.href = url.toString();
               } else {
-                window.location.href =
-                  `/products/${product.title
+                router.push(`/api/products${product.title
                     .replace(" ", "-")
                     .toLowerCase()}/${sizesObj[
                     `${selectedColor}-${selectedSize}`
                   ]!.color!.toLowerCase()}/${sizesObj[
                     `${selectedColor}-${selectedSize}`
-                  ]!.variant_id!}`
-                ;
+                  ]!.variant_id!}`);
               }
             }}
             className="cursor-pointer transition-all m-0 ease-in-out duration-200 hover:ml-2"

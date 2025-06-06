@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ILike, Repository } from "typeorm";
-import { Product } from "./product.entity";
 import { Request, Response } from "express";
+import { Product } from "./product.entity";
 
 @Injectable()
 export class ProductService {
@@ -10,23 +10,20 @@ export class ProductService {
     @InjectRepository(Product) private productRepo: Repository<Product>
   ) {}
 
-  async hide(id: string, hide: boolean, req: Request, res: Response) {
-    return this.productRepo.update(id, {
+  async hide(id: string, hide: boolean) {
+    await this.productRepo.update(id, {
       is_hidden: hide,
     });
+
+    return { message: "product hidden!" };
   }
 
-  async createProduct(product: Product, req: Request, res: Response) {
-    const newProduct = await this.productRepo.save(product);
+  async createProduct(product: Product) {
+    await this.productRepo.save(product);
     return { message: "product created!" };
   }
 
-  async updateProduct(
-    id: string,
-    product: Product,
-    req: Request,
-    res: Response
-  ) {
+  async updateProduct(id: string, product: Product) {
     await this.productRepo.update(id, product);
     return { message: "product updated!" };
   }
@@ -50,7 +47,6 @@ export class ProductService {
         order: { createdAt: "DESC" },
         skip: (updatedPage - 1) * ITEMS_PER_PAGE,
         take: ITEMS_PER_PAGE,
-       
       });
 
       const currentPage = updatedPage;
@@ -95,24 +91,21 @@ export class ProductService {
     } catch (error) {}
   }
 
-    async getProducts(req: Request, res: Response, hidden: boolean) {
-      try {
-        let products: Product[] = [];
-  
-        products = await this.productRepo.find({ where: { is_hidden: hidden } });
-  
-        return res.status(200).json({
-          products,
-          success: true
-        });
-      
-  
-      } catch (error) {
-        const e = error as Error;
-        return res.status(500).json({
-          erro: e.message,
-        });
-      }
+  async getProducts(req: Request, res: Response, hidden: boolean) {
+    try {
+      let products: Product[] = [];
+
+      products = await this.productRepo.find({ where: { is_hidden: hidden } });
+
+      return res.status(200).json({
+        products,
+        success: true,
+      });
+    } catch (error) {
+      const e = error as Error;
+      return res.status(500).json({
+        erro: e.message,
+      });
     }
-  
+  }
 }

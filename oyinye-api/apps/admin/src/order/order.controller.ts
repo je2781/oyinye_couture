@@ -11,18 +11,16 @@ import {
   } from '@nestjs/common';
   import { Request, Response } from 'express';
   import { OrderService } from './order.service';
-import { RateLimitGuard } from 'libs/common/guard/rate-limit.guard';
-import { JwtGuard } from 'libs/common/guard';
+  import { JwtGuard } from '@app/common';
+import { Csrf } from 'ncsrf';
+
   
-  @Controller('orders')
-  @UseGuards(RateLimitGuard)
-  @UseGuards(JwtGuard)
+  @Controller('api/orders')
   export class OrderController {
     constructor(private readonly orderService: OrderService) {}
   
     @Get(':perPage')
     async get(
-      @Req() req: Request,
       @Res() res: Response,
       @Param('perPage') perPage: string,
       @Query('page') page: string,
@@ -31,6 +29,8 @@ import { JwtGuard } from 'libs/common/guard';
     }
   
     @Post(':orderId/reminder')
+    @Csrf()
+    @UseGuards(JwtGuard)
     async sendCartReminder(
       @Req() req: Request,
       @Res() res: Response,
@@ -41,6 +41,8 @@ import { JwtGuard } from 'libs/common/guard';
     }
   
     @Post(':orderId/payment-status')
+    @Csrf()
+    @UseGuards(JwtGuard)
     async updateOrderPaymentStatus(
       @Req() req: Request,
       @Res() res: Response,
@@ -51,6 +53,8 @@ import { JwtGuard } from 'libs/common/guard';
     }
   
     @Post(':orderId/payment-request')
+    @Csrf()
+    @UseGuards(JwtGuard)
     async sendOrderPaymentRequest(
       @Req() req: Request,
       @Res() res: Response,

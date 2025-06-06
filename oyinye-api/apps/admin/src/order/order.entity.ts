@@ -2,29 +2,27 @@
 
 import {
   Entity,
-  PrimaryColumn,
   Column,
-  ManyToOne,
-  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { AbstractEntity } from '@app/common';
-import { User } from '../user/user.entity';
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
+import { AbstractEntity } from "@app/common/index";
+import { User } from "../user/user.entity";
 
-@Entity({ name: 'orders' })
-export class Order extends AbstractEntity<Order>{
-
-  @Column({ type: 'jsonb', nullable: true })
+@Entity({ name: "orders" })
+export class Order extends AbstractEntity<Order> {
+  @Column({ type: "jsonb", nullable: true })
   payment_info: any;
 
   @Column({ nullable: true })
   status: string;
 
-  @Column({ nullable: true, type: 'float' }) // or 'double precision' for PostgreSQL
+  @Column({ nullable: true, type: "float" }) // or 'double precision' for PostgreSQL
   sales?: number;
 
-  @Column({ type: 'jsonb', default: [] })
+  @Column({ type: "jsonb", default: [] })
   items: any[];
 
   @Column({ nullable: true })
@@ -36,16 +34,13 @@ export class Order extends AbstractEntity<Order>{
   @Column({ nullable: true })
   payment_status?: string;
 
-
-  @ManyToOne(() => User, user => user.orders, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'user_id' })
+  @ManyToOne(() => User, (user) => user.orders)
+  @JoinColumn({ name: "user_id" })
   user: User;
 
-  @CreateDateColumn({ name: 'createdAt' })
+  @CreateDateColumn({ name: "createdAt" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updatedAt' })
+  @UpdateDateColumn({ name: "updatedAt" })
   updatedAt: Date;
 }

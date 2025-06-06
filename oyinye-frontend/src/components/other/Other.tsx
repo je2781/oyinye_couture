@@ -1,6 +1,6 @@
 "use client";
 
-import axios from "axios";
+import api from "@/helpers/axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
@@ -14,6 +14,7 @@ export default function OthersComponent({ name, csrf }: any) {
   const [message, setMessage] = React.useState("");
   const [subject, setSubject] = React.useState("");
   const [buttonDisabled, setButtonDisabled] = React.useState(true);
+  const router = useRouter();
   let content: JSX.Element = <></>;
 
   React.useEffect(() => {
@@ -49,7 +50,7 @@ export default function OthersComponent({ name, csrf }: any) {
 
     try {
       setLoader(true);
-      const res = await axios.post(
+      const res = await api.post(
         `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/enquiries/contact`,
         {
           email,
@@ -76,7 +77,7 @@ export default function OthersComponent({ name, csrf }: any) {
       setLoader(false);
       toast.success("Contact Request has been sent");
 
-      window.location.href = `/`;
+      router.push('/');
     }
   }
 

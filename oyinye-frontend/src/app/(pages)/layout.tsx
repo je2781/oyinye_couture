@@ -7,6 +7,7 @@ import { CartContextProvider } from "@/store/cartContext";
 import { ProductContextProvider } from "@/store/productContext";
 import { cartReducer, defaultCartState } from "@/helpers/getHelpers";
 import { GlobalContextProvider } from "@/store/globalContext";
+import api from "@/helpers/axios";
 
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -19,21 +20,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    async function fetchAllProducts() {
+    async function getAllProducts() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products?hidden=false`, {
+        const res = await api.get(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products?hidden=false`, {
           headers: {
             'Cache-Control': 'no-store',
           },
-          credentials: "include"
         },
       );
-        const data = await res.json();
-        setAllProducts(data.products);
+        setAllProducts(res.data.products);
       } catch (error) {}
     }
 
-    fetchAllProducts();
+    getAllProducts();
   }, []);
 
   const cartContext = {

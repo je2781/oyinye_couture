@@ -1,31 +1,25 @@
 import {
   Injectable,
-  BadRequestException,
   NotFoundException,
   Inject,
 } from "@nestjs/common";
-import * as argon2 from "argon2";
-import * as crypto from "crypto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { Enquiry } from "./enquiry.entity";
-import { User } from "../user/user.entity";
 import { Request, Response } from "express";
 import { sanitizeInput } from "libs/common/utils/sanitize";
 import { lastValueFrom } from "rxjs";
 import { ClientProxy } from "@nestjs/microservices";
 import { EMAIL_SERVICE } from "../constants/service";
+import { Enquiry } from "./enquiry.entity";
 
 @Injectable()
 export class EnquiryService {
   constructor(
     @InjectRepository(Enquiry) private enquiryRepo: Repository<Enquiry>,
-    @InjectRepository(User) private userRepo: Repository<User>,
     @Inject(EMAIL_SERVICE) private emailClient: ClientProxy
   ) {}
 
   async getEnquiries(
-    req: Request,
     res: Response,
     pageSize: number,
     page: number
@@ -35,7 +29,7 @@ export class EnquiryService {
         order: { createdAt: "DESC" },
         skip: (page - 1) * pageSize,
         take: pageSize,
-        relations: { user: true },
+        relations: {user: true}
       });
 
       let updatedEnquiries: any[] = [];
@@ -59,16 +53,11 @@ export class EnquiryService {
       }
 
       for (const enq of enquiries) {
-        const user = await this.userRepo.findOne({
-          where: {
-            id: enq.user.id,
-          },
-        });
         updatedEnquiries.push({
           ...enq,
           author: {
-            full_name: `${user!.first_name} ${user!.last_name}`,
-            email: user!.email,
+            full_name: `${enq.user.first_name!} ${enq.user.last_name!}`,
+            email: enq.user.email!,
           },
         });
       }
@@ -145,6 +134,7 @@ export class EnquiryService {
           contact: cleanContact,
           date: cleanDate,
         },
+        access_token: req.cookies['access_token']
       })
     );
 

@@ -1,15 +1,19 @@
 "use client";
 
-
-import axios from "axios";
+import api from "@/helpers/axios";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import "./Cart.css";
 import useWindowWidth from "../helpers/getWindowWidth";
 import { Base64ImagesObj, CartItemObj } from "@/interfaces";
 import useCart from "@/store/useCart";
-import { emailPattern, extractProductDetails, regex } from "@/helpers/getHelpers";
+import {
+  emailPattern,
+  extractProductDetails,
+  regex,
+} from "@/helpers/getHelpers";
+import "./Cart.css";
+import { useRouter } from "next/navigation";
 
 interface InitialCartData {
   price: number;
@@ -22,7 +26,7 @@ interface InitialCartData {
 export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
   let cartItemObj = useRef<CartItemObj>({});
   let frontBase64ImagesObj = useRef<Base64ImagesObj>({});
-
+  const router = useRouter();
   const { updateCart } = useCart();
   const [loader, setLoader] = useState(false);
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
@@ -69,7 +73,7 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
       if (isIncrementingCart) {
         setLoader(true);
         try {
-          const res = await axios.post(
+          const res = await api.post(
             `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cart`,
             {
               price: isIncrementingCart.price,
@@ -132,7 +136,7 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
       if (isDeductingCart) {
         setLoader(true);
         try {
-          const res = await axios.post(
+          const res = await api.post(
             `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cart/remove`,
             {
               price: isDeductingCart.price,
@@ -192,21 +196,20 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
       if (emailPattern.test(email)) {
         try {
           setIsCreatingUserProfile(true);
-          const res = await axios.post(
-            `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/users/signup`,
+          const res = await api.post(
+            `${process.env.NEXT_PUBLIC_AUTH_DOMAIN}/api/auth/signup`,
             {
               email,
             },
             {
-              withCredentials: true,
               headers: {
-                "x-csrf-token": csrf,
+                "x-csrf-token": csrf
               },
             }
           );
 
           if (res.data.user && res.status === 201) {
-            const updateRes = await axios.patch(
+            const updateRes = await api.patch(
               `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cart/update`,
               {
                 userId: res.data.user.id,
@@ -218,7 +221,6 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
                 },
               }
             );
-
           } else {
             throw new Error(res.data.message);
           }
@@ -296,11 +298,11 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
 
     try {
       setIsCreatingCheckout(true);
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cart/checkouts`,{
-        withCredentials: true
-      });
+      const res = await api.get(
+        `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cart/checkouts`
+      );
 
-      window.location.href =`/checkouts/cn/${res.data.checkout_session_token}`;
+      router.push(`/checkouts/cn/${res.data.checkout_session_token}`);
     } catch (error) {
       const e = error as Error;
       toast.error(e.message);
@@ -439,13 +441,12 @@ export default function CartInfo({ total, cartItems, userEmail, csrf }: any) {
                     <section className="flex md:flex-row flex-col justify-between md:items-center items-start w-full gap-y-4">
                       <article
                         className="md:w-[62%] w-full flex-row flex justify-between items-start cursor-pointer"
-                        onClick={() => {
-                          window.location.href =
-                            `/products/${item
+                        onClick={() =>
+                          router.push(
+                            `/api/products${item
                               .title!.replace(" ", "-")
-                              .toLowerCase()}/${item.color!.toLowerCase()}/${item.variant_id!}`;
-                        }
-                          
+                              .toLowerCase()}/${item.color!.toLowerCase()}/${item.variant_id!}`
+                          )
                         }
                       >
                         <div className="flex flex-row md:gap-x-7 gap-x-3 items-start">

@@ -4,12 +4,13 @@ import React, { useEffect } from "react";
 import Sidebar from "../Sidebar";
 import SearchBar from "@/components/ui/SearchBar";
 import Image from "next/image";
-import axios from "axios";
+import api from "@/helpers/axios";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import useGlobal from "@/store/useGlobal";
 import { AdminSettingsModal, MobileModal } from "../Modal";
-import { appsList, generateBase64FromMedia, getRouteNames, insightList, viewsList } from "../../../helpers/getHelpers";
+import { appsList, generateBase64FromMedia, getRouteNames, insightList, viewsList } from "@/helpers/getHelpers";
+import { useRouter } from "next/navigation";
 
 export default function AdminHeader({sectionName, pathName, userName, userEmail, userTitle, id, avatar, csrf}: any) {
   let timerId = React.useRef<NodeJS.Timeout | null>(null);
@@ -18,6 +19,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
     profile: false,
     settings: false
   });
+  const router = useRouter();
   const [isSearchModalOpen, setIsSearchModalOpen] = React.useState(false);
   const {isMobileModalOpen, setIsMobileModalOpen} = useGlobal();
   const [imageBase64, setImageBase64] = React.useState('');
@@ -109,18 +111,13 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
 
   const onLogout = async () => {
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/users/logout`,{
-        withCredentials: true,
+      await api.post(`${process.env.NEXT_PUBLIC_AUTH_DOMAIN}/api/auth/logout`,{
         headers:{
           'x-csrf-token': csrf
         }
       });
       // Construct the new path
-      const newPath = `/login`;
-
-      const url = new URL(`${newPath}`);
-      
-      window.location.href = url.toString();
+      router.replace('/login');
 
     } catch (error: any) {
       toast.error(error.message);
@@ -213,7 +210,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                       e.preventDefault();
                                       try {
                                         setLoader(true);
-                                        await axios.patch(`${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/users/${id}`, {
+                                        await api.patch(`${process.env.NEXT_PUBLIC_AUTH_DOMAIN}/api/auth/users/${id}`, {
                                           firstName: name.split(' ')[0],
                                           lastName: name.split(' ')[1],
                                           password,
@@ -399,9 +396,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                             <ul className="flex-col text-secondary-400 flex gap-y-3">
                             {insightList.map((item: any, i: number) => (
                                 <li
-                                onClick={() => {
-                                    window.location.href = `${process.env.NEXT_PUBLIC_DOMAIN}/admin/summary`;
-                                }} 
+                                onClick={() => router.push(`admin/summary`)} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2" key={i}>
                                     <div 
                                         className={`${pathName === 'summary' ? 'text-white' : 'text-secondary-400'} inline-flex flex-row gap-x-4 items-center`}
@@ -459,9 +454,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                             <ul className="flex-col text-secondary-400 flex gap-y-3">
                             {appsList.map((item: any, i: number) => (
                                 <li
-                                onClick={() => {
-                                  window.location.href = `${process.env.NEXT_PUBLIC_DOMAIN}/admin/${routeNames[i]}`;
-                                }} 
+                                onClick={() => router.push(`/admin/${routeNames[i]}`)} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2" key={i}>
                                     <div 
                                         className={`${pathName == routeNames[i] ? 'text-white' : 'text-secondary-400'} inline-flex flex-row gap-x-4 items-center`}
@@ -516,9 +509,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                             <ul className="flex-col text-secondary-400 flex gap-y-3">
                             {viewsList.map((item: any, i: number) => (
                                 <li
-                                onClick={() => {
-                                    window.location.href = `${process.env.NEXT_PUBLIC_DOMAIN}/admin/orders`;
-                                }} 
+                                onClick={() => router.push(`admin/orders`)} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-[3px]" key={i}>
                                     <div 
                                         className={`${pathName === 'orders' ? 'text-white' : 'text-secondary-400'} inline-flex flex-row gap-x-4 items-center`}

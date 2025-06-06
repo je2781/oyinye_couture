@@ -3,12 +3,14 @@
 import './Sidebar.css';
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { appsList, insightList, getRouteNames, viewsList } from "../../../../utils/getHelpers";
+import { appsList, insightList, getRouteNames, viewsList } from "@/helpers/getHelpers";
+import { useRouter } from 'next/navigation';
 
 export default function Sidebar({pathName}: any){
     const parentElementRef = useRef<HTMLDivElement>(null);
     const arrowLeftRef = useRef<HTMLElement>(null);
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const router = useRouter();
     const [animate, setAnimate] = useState({
         apps: false,
         views: false,
@@ -152,9 +154,7 @@ export default function Sidebar({pathName}: any){
                                 <li 
                                     className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2"
                                     key={i}
-                                    onClick={() => {
-                                        window.location.href =`${process.env.NEXT_PUBLIC_DOMAIN}/admin/summary`;
-                                      }}
+                                    onClick={() => router.push(`/admin/summary`)}
                                 >
                                     <div 
                                     className={`${pathName === 'summary' ? 'text-white' : 'text-secondary-400'} inline-flex flex-row gap-x-4 items-center`}>
@@ -174,7 +174,7 @@ export default function Sidebar({pathName}: any){
                             {insightList.map((item: any, i: number) => (
                                 <li
                                 onClick={() => {
-                                    window.location.href =`${process.env.NEXT_PUBLIC_DOMAIN}/admin/summary`;
+                                    router.push('/admin/summary');
                                 }} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2" key={i}>
                                     <div 
@@ -252,7 +252,7 @@ export default function Sidebar({pathName}: any){
                                     className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2"
                                     key={i}
                                     onClick={() => {
-                                        window.location.href =`${process.env.NEXT_PUBLIC_DOMAIN}/admin/${routeNames[i]}`;
+                                        router.push(`/admin/${routeNames[i]}`);
                                     }}
                                 >
                                     <div 
@@ -273,7 +273,7 @@ export default function Sidebar({pathName}: any){
                             {appsList.map((item: any, i: number) => (
                                 <li
                                 onClick={() => {
-                                    window.location.href = `${process.env.NEXT_PUBLIC_DOMAIN}/admin/${routeNames[i]}`;
+                                    router.push(`/admin/${routeNames[i]}`);
                                 }} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2" key={i}>
                                     <div 
@@ -348,7 +348,7 @@ export default function Sidebar({pathName}: any){
                                     className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2"
                                     key={i}
                                     onClick={() => {
-                                        window.location.href =`${process.env.NEXT_PUBLIC_DOMAIN}/admin/orders`;
+                                        router.push(`admin/orders`);
                                       }}
                                 >
                                     <div 
@@ -368,9 +368,7 @@ export default function Sidebar({pathName}: any){
                             <ul className="flex-col text-secondary-400 flex gap-y-3">
                             {viewsList.map((item: any, i: number) => (
                                 <li
-                                onClick={() => {
-                                    window.location.href =`${process.env.NEXT_PUBLIC_DOMAIN}/admin/orders`;
-                                }} 
+                                onClick={() => router.push(`admin/orders`)} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-[3px]" key={i}>
                                     <div 
                                         className={`${pathName === 'orders' ? 'text-white' : 'text-secondary-400'} inline-flex flex-row gap-x-4 items-center`}

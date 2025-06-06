@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect } from "react";
-import axios from "axios";
+import api from "@/helpers/axios";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 
 export default function SignupPage({ csrf }: any) {
@@ -12,7 +13,7 @@ export default function SignupPage({ csrf }: any) {
     email: "",
     password: "",
   });
-
+  const router = useRouter();
   const [buttonDisabled, setButtonDisabled] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(false);
@@ -45,8 +46,7 @@ export default function SignupPage({ csrf }: any) {
       }
 
       setIsLoading(true);
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/users/signup`, user, {
-        withCredentials: true,
+      const res = await api.post(`${process.env.NEXT_PUBLIC_AUTH_DOMAIN}/api/auth/signup`, user, {
         headers: {
           "x-csrf-token": csrf,
         },
@@ -60,7 +60,7 @@ export default function SignupPage({ csrf }: any) {
       toast.error(e.message);
     } finally {
       setIsLoading(false);
-      window.location.href =`/login`;
+      router.replace('/login');
     }
   }
 

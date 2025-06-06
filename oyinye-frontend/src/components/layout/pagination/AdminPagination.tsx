@@ -12,6 +12,7 @@ export default function AdminPagination({
   nextPage,
   isActivePage}: any) {
     const path = usePathname();
+    const router = useRouter();
   return (
     <section className="no-underline space-x-2 text-center mt-36">
       {currentPage !== 1 && (
@@ -21,7 +22,7 @@ export default function AdminPagination({
             e.preventDefault();
             // Programmatically navigate to the base route (without ?page=1)
             
-            window.location.href = path;
+            router.push(path);
           }}
           className={`${
             isActivePage === 1 ? "bg-accent" : ""

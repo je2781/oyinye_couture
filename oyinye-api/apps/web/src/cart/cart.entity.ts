@@ -5,28 +5,27 @@ import {
   UpdateDateColumn,
   JoinColumn,
   OneToOne,
-} from 'typeorm';
+} from "typeorm";
 
-import { AbstractEntity } from '@app/common';
-import { User } from '../user/user.entity';
-import { Product } from '../product/product.entity';
+import { AbstractEntity } from "@app/common/index";
+import { User } from "../user/user.entity";
 
-@Entity('carts')
+@Entity("carts")
 export class Cart extends AbstractEntity<Cart> {
-  @Column({ type: 'jsonb', default: [] })
+  @Column({ type: "jsonb", default: [] })
   items: any[];
 
-  @Column('float')
+  @Column("float")
   total_amount: number;
 
-  @OneToOne(() => User, user => user.cart, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' })
+  @OneToOne(() => User, (user) => user.cart)
+  @JoinColumn({ name: "user_id" })
   user: User;
 
-  @CreateDateColumn({ name: 'createdAt' })
+  @CreateDateColumn({ name: "createdAt" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updatedAt' })
+  @UpdateDateColumn({ name: "updatedAt" })
   updatedAt: Date;
 
   async clearCart() {
@@ -35,13 +34,13 @@ export class Cart extends AbstractEntity<Cart> {
   }
 
   async addToCart(
-    product: Product,
+    product: any,
     quantity: number,
     variantId: string,
     price: number
   ) {
     const updatedCartItems = [...this.items];
-    const index = updatedCartItems.findIndex(i => i.variant_id === variantId);
+    const index = updatedCartItems.findIndex((i) => i.variant_id === variantId);
     const item = updatedCartItems[index];
 
     if (item) {
@@ -63,14 +62,10 @@ export class Cart extends AbstractEntity<Cart> {
     return this.save();
   }
 
-  async deductFromCart(
-    variantId: string,
-    quantity: number,
-    price: number
-  ) {
+  async deductFromCart(variantId: string, quantity: number, price: number) {
     const updatedCartItems = [...this.items];
-    const index = updatedCartItems.findIndex(i => i.variant_id === variantId);
-    if (index === -1) throw new Error('Item not found in the cart');
+    const index = updatedCartItems.findIndex((i) => i.variant_id === variantId);
+    if (index === -1) throw new Error("Item not found in the cart");
 
     const item = updatedCartItems[index];
     const remaining = item.quantity - quantity;

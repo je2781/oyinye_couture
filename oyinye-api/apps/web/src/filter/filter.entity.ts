@@ -1,4 +1,4 @@
-import { AbstractEntity } from '@app/common';
+import { AbstractEntity } from '@app/common/index';
 import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('filters')

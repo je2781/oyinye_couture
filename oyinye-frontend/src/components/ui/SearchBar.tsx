@@ -5,11 +5,13 @@ import Image from "next/image";
 import { SearchModal } from "../layout/Modal";
 import Link from "next/link";
 import useProduct from "@/store/useProduct";
+import { useRouter } from "next/navigation";
 
 const SearchBar = ({ onHideModal, isAdmin}: any) => {
   const [query, setQuery] = React.useState("");
   const {allProducts} = useProduct();
   const [isLoading, setIsLoading] = React.useState(false);
+  const router = useRouter();
 
   let currentUrl = isAdmin ? `/admin/products?q=${query}&options[prefix]=last&page=1` 
   : `/search/products?q=${query}&options[prefix]=last&sort_by=relevance&page=1`;
@@ -112,7 +114,7 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
                           <li
                             className=" hover:underline-offset-1 hover:underline cursor-pointer hover:bg-gray-100 px-5 py-2"
                             key={i}
-                            onClick={() => window.location.href =`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name}/${product.colors[0].sizes[0].variant_id!}`} 
+                            onClick={() => router.push(`/api/products${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name}/${product.colors[0].sizes[0].variant_id!}`)} 
                           >
                             <span className="font-sans text-gray-400 text-[.8rem]">
                               {product.title.charAt(0)}
@@ -155,7 +157,7 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
                   <ul className="flex flex-col">
                     {allProducts.slice(0, 4).map((product: any, i: number) => (
                       <li key={i}>
-                        <article onClick={() => window.location.href =`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name}/${product.colors[0].sizes[0].variant_id!}`} 
+                        <article onClick={() => router.push(`/api/products${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name}/${product.colors[0].sizes[0].variant_id!}`)} 
                         className="flex flex-row items-start gap-x-5 px-4 py-3 hover:bg-gray-100 cursor-pointer">
                           <Image
                             alt={`Product ${i + 1}`}

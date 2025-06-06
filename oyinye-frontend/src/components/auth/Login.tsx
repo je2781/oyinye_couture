@@ -2,15 +2,17 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
-import axios from "axios";
+import api from "@/helpers/axios";
 import toast from "react-hot-toast";
 import useAuth from "@/store/useAuth";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage({ message, success, csrf }: any) {
   const [user, setUser] = React.useState({
     email: "",
     password: "",
   });
+  const router = useRouter();
 
   const [buttonDisabled, setButtonDisabled] = React.useState(true);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -54,8 +56,7 @@ export default function LoginPage({ message, success, csrf }: any) {
       }
 
       setIsLoading(true);
-      const res = await axios.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/users/login`, user, {
-        withCredentials: true,
+      const res = await api.post(`${process.env.NEXT_PUBLIC_AUTH_DOMAIN}/api/auth/login`, user, {
         headers: {
           "x-csrf-token": csrf,
         },
@@ -73,9 +74,9 @@ export default function LoginPage({ message, success, csrf }: any) {
 
           toast.success("Login successful!");
           if (extractedUser.is_admin) {
-            window.location.href = `/admin/summary`;
+            router.push('/admin/summary');
           } else {
-            window.location.href = `/`;
+            router.replace('/');
           }
         }
       } else {

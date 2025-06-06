@@ -1,6 +1,8 @@
 import Footer from "@/components/footer/Footer";
 import Header from "@/components/layout/header/Header";
 import SearchResults from "@/components/search/SearchResults";
+import api from "@/helpers/axios";
+import { getCsrfToken } from "@/helpers/getHelpers";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -11,8 +13,7 @@ async function getSearchData(
   lowerBoundary?: string,
   upperBoundary?: string,
   availability?: string,
-  productType?: string,
-  token?: string,
+  productType?: string
 ) {
   const queryParams = [
     `q=${query}`,
@@ -34,36 +35,30 @@ async function getSearchData(
 
   let uri = `${process.env.WEB_DOMAIN}/api/products/search?${queryString}`;
 
-  const res = await fetch(uri, {
-    cache: "no-cache",
+  const res = await api.get(uri, {
     headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
     },
   });
-  const data = await res.json();
 
-  return data;
+  return res.data;
 }
 
-async function getCart(token?: string) {
+async function getCart() {
   const cookieStore = cookies();
   const cartId = cookieStore.get("cart")?.value;
 
   if (cartId && cartId.length > 0) {
-    const res = await fetch(
+    const res = await api.get(
       `${process.env.WEB_DOMAIN}/api/products/cart/${cartId}`,
       {
-        cache: "no-cache",
         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
         },
       }
     );
-    const data = await res.json();
 
-    return data.cartItems;
+    return res.data.cartItems;
   } else {
     return [];
   }
@@ -74,6 +69,7 @@ const SearchPage = async ({ params, searchParams }: any) => {
   const cookieStore = cookies();
   const isAdmin = Boolean(cookieStore.get("admin_status")?.value);
   const token = cookieStore.get("access_token")?.value;
+  const csrfToken = await getCsrfToken();
 
   if (token && isAdmin) {
     redirect("/admin/summary");
@@ -94,13 +90,9 @@ const SearchPage = async ({ params, searchParams }: any) => {
     lowerBoundary,
     upperBoundary,
     availability,
-    productType,
-    token,
+    productType
   );
-  const cartItems = await getCart(token);
-
-  const h = headers();
-  const csrfToken = h.get("X-CSRF-Token") || "missing";
+  const cartItems = await getCart();
 
   return (
     <>

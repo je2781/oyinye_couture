@@ -3,14 +3,14 @@
 import Link from "next/link";
 import Pagination from "../layout/pagination/Pagination";
 import React from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import ProductComponent from "../product/Product";
 import useProduct from "@/store/useProduct";
 import useWindowWidth from "../helpers/getWindowWidth";
 import SecondaryHeader from "./filter/SecondaryHeader";
 import FilterSettings from "./filter/Settings";
-import axios from "axios";
+import api from "@/helpers/axios";
 import toast from "react-hot-toast";
 
 export default function SearchResults({
@@ -29,6 +29,7 @@ export default function SearchResults({
     []
   );
   const path = usePathname();
+  const router = useRouter();
   const productTypeList = ["Dresses", "Pants", "Jumpsuits"];
   //updating sortby product type params
   switch (
@@ -127,7 +128,7 @@ export default function SearchResults({
       if (isLoading) {
         if (filter.noOfFilters > 0) {
           try {
-            const res = await axios.post(`/api/products/filter?type=search`,filter, {
+            const res = await api.post(`/api/productsfilter?type=search`,filter, {
               headers: {
                 "x-csrf-token": csrf
               }
@@ -380,14 +381,12 @@ export default function SearchResults({
                                 <li
                                   className=" hover:underline-offset-1 hover:underline cursor-pointer hover:bg-gray-100 px-5 py-2"
                                   key={i}
-                                  onClick={() =>
-                                    window.location.href =
-                                      `/products/${product.title
+                                  onClick={() => router.push(`/api/products${product.title
                                         .replace(" ", "-")
                                         .toLowerCase()}/${JSON.stringify(
                                         product.colors[0].name
                                       )}/${product.colors[0].sizes[0]
-                                        .variant_id!}`
+                                        .variant_id!}`)
                                     
                                   }
                                 >
@@ -446,14 +445,11 @@ export default function SearchResults({
                         .map((product: any, i: number) => (
                           <li key={i}>
                             <article
-                              onClick={() =>
-                                window.location.href =
-                                  `/products/${product.title
+                              onClick={() => router.push(`/api/products${product.title
                                     .replace(" ", "-")
                                     .toLowerCase()}/${
                                     product.colors[0].name
-                                  }/${product.colors[0].sizes[0].variant_id!}`
-                                
+                                  }/${product.colors[0].sizes[0].variant_id!}`)
                               }
                               className="flex flex-row items-start gap-x-5 px-4 py-3 hover:bg-gray-100 cursor-pointer"
                             >

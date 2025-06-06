@@ -7,31 +7,40 @@ import {
   Param,
   Query,
   Body,
-  UseGuards
-} from '@nestjs/common';
-import { Request, Response } from 'express';
-import { OrderService } from './order.service';
-import { RateLimitGuard } from 'libs/common/guard/rate-limit.guard';
+  UseGuards,
+} from "@nestjs/common";
+import { Request, Response } from "express";
+import { OrderService } from "./order.service";
+import { JwtGuard } from "@app/common";
+import { Csrf } from "ncsrf";
 
-@Controller('orders')
-@UseGuards(RateLimitGuard)
+@Controller("api/orders")
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
-  @Post('update/transaction-status')
+  @UseGuards(JwtGuard)
+  @Csrf()
+  @Post("update/transaction-status")
   async updateTransactionStatus(
     @Req() req: Request,
-    @Res() res: Response,
-    @Body() body: any,
+    @Res({ passthrough: true }) res: Response,
+    @Body() body: any
   ) {
-    return this.orderService.handlePostRequest(req, res, body, 'transaction-status');
+    return this.orderService.handlePostRequest(
+      req,
+      res,
+      body,
+      "transaction-status"
+    );
   }
 
+  @UseGuards(JwtGuard)
+  @Csrf()
   @Post()
   async updateOrder(
     @Req() req: Request,
-    @Res() res: Response,
-    @Body() body: any,
+    @Res({ passthrough: true }) res: Response,
+    @Body() body: any
   ) {
     return this.orderService.handlePostRequest(req, res, body);
   }

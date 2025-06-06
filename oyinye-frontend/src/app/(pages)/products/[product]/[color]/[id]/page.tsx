@@ -1,5 +1,7 @@
 import Footer from "@/components/footer/Footer";
 import Header from "@/components/layout/header/Header";
+import api from "@/helpers/axios";
+import { getCsrfToken } from "@/helpers/getHelpers";
 import dynamic from "next/dynamic";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -9,7 +11,7 @@ const ProductDetailComponent = dynamic(
   {
     loading: () => (
       <main className="flex justify-center items-center flex-col gap-y-2 bg-white h-screen w-full">
-        <h1 className="font-sans text-gray-600">Fetching Product...</h1>
+        <h1 className="font-sans text-gray-600">api.geting Product...</h1>
         <span className="border-4 border-transparent rounded-full border-t-gray-600 border-r-gray-600 w-[36px] h-[36px] spin"></span>
       </main>
     ),
@@ -19,49 +21,37 @@ const ProductDetailComponent = dynamic(
 async function getData(product: string, color: string, variantId: string) {
   const cookieStore = cookies();
   const cartId = cookieStore.get("cart")?.value;
-  const token = cookieStore.get("access_token")?.value;
   const viewedProducts = cookieStore.get("viewed_p")?.value;
 
   if (cartId && cartId.length > 0) {
     const [productDataRes, cartDataRes] = await Promise.all([
-      fetch(
+      api.get(
         `${process.env.WEB_DOMAIN}/api/products/${product}/${color}/${variantId}?viewed_p=${viewedProducts}`,
         {
-          cache: "no-cache",
           headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
           },
         }
       ),
-      fetch(`${process.env.WEB_DOMAIN}/api/products/cart/${cartId}`, {
-        cache: "no-cache",
+      api.get(`${process.env.WEB_DOMAIN}/api/products/cart/${cartId}`, {
         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
         },
       }),
     ]);
 
-    const [productData, cartData] = await Promise.all([
-      productDataRes.json(),
-      cartDataRes.json(),
-    ]);
 
-    return [productData, cartData.cartItems];
+    return [productDataRes.data, cartDataRes.data.cartItems];
   } else {
-    const productDataRes = await fetch(
+    const productDataRes = await api.get(
       `${process.env.WEB_DOMAIN}/api/products/${product}/${color}/${variantId}?viewed_p=${viewedProducts}`,
       {
-        cache: "no-cache",
         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
         },
       }
     );
-    const productData = await productDataRes.json();
-    return [productData, []];
+    return [productDataRes.data, []];
   }
 }
 
@@ -74,6 +64,7 @@ const ProductPage = async ({
   const cookieStore = cookies();
   const isAdmin = Boolean(cookieStore.get("admin_status")?.value);
   const token = cookieStore.get("access_token")?.value;
+  const csrfToken = await getCsrfToken();
 
   if (token && isAdmin) {
     redirect("/admin/summary");
@@ -85,15 +76,11 @@ const ProductPage = async ({
     params.id
   );
 
-  const h = headers();
-  const csrfToken = h.get("X-CSRF-Token") || "missing";
-
   const data = {
     ...productData,
     paramsId: params.id,
     csrf: csrfToken,
   };
-
 
   return (
     <>

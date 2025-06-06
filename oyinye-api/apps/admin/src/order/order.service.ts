@@ -4,22 +4,17 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from "@nestjs/common";
 import { Response, Request } from "express";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, ILike } from "typeorm";
-import { Order } from "./order.entity";
-import { Cart } from "../cart/cart.entity";
-import { getDataFromOrder } from "libs/common/utils/getDataFromOrder";
-import { getUserData } from "libs/common/utils/getUserData";
+import { Repository} from "typeorm";
 import { getDataFromCart } from "libs/common/utils/getDataFromCart";
 import { ClientProxy } from "@nestjs/microservices";
 import { EMAIL_SERVICE } from "../constants/service";
 import { lastValueFrom } from "rxjs";
-import { sanitizeInput } from "libs/common/utils/sanitize";
-import { User } from "../user/user.entity";
 import { EmailType } from "libs/common/interfaces";
+import { Order } from "./order.entity";
+import { Cart } from "../cart/cart.entity";
 
 @Injectable()
 export class OrderService {
@@ -37,7 +32,7 @@ export class OrderService {
         order: { createdAt: "DESC" },
         skip: (page - 1) * perPage,
         take: perPage,
-        relations: { user: true },
+        relations: {user: true}
       });
 
       const currentPage = page;
@@ -133,7 +128,7 @@ export class OrderService {
         where: {
           id: orderId,
         },
-        relations: { user: true },
+        relations: {user: true}
       });
 
       if (!order) throw new NotFoundException("order with id doesn't exist");
@@ -152,13 +147,14 @@ export class OrderService {
             order.status = "closed";
             order.payment_status = paymentStatus;
             await this.orderRepository.save(order);
+            
 
             await this.cartRepository.delete(cartId);
 
             //clearing cart cookie for paid order
-            const updatedRes = res.clearCookie("cart");
+            res.clearCookie("cart");
 
-            return updatedRes.status(201).json({
+            return res.status(201).json({
               message: "order updated",
               success: true,
             });
@@ -176,13 +172,12 @@ export class OrderService {
           const { items } = body;
           const cart = await this.cartRepository.findOne({
             where: { id: cartId },
-            relations: { user: true },
           });
 
           //dispatching cart reminder job
           await lastValueFrom(
             this.emailClient.emit("cart_reminder", {
-              email: cart!.user.email,
+              email: order.user.email,
               emailType: EmailType.request,
               emailBody: {
                 link: `${process.env.WEB_DOMAIN}/cart`,
@@ -190,6 +185,7 @@ export class OrderService {
                 total: cart!.total_amount,
                 items,
               },
+              access_token: req.cookies['access_token']
             })
           );
 
@@ -213,6 +209,7 @@ export class OrderService {
                 id,
                 total,
               },
+              access_token: req.cookies['access_token']
             })
           );
 
