@@ -92,12 +92,12 @@ export default function Footer({ csrfToken }: {csrfToken: string}) {
             <div
               onClick={() => {
                 let downAngle = document.querySelector("i.lang-angle-down");
-                if (!downAngle?.classList.contains("ad-rotate")) {
-                  downAngle?.classList.add("ad-rotate");
-                  downAngle?.classList.remove("ad-rotate-anticlock");
+                if (!downAngle?.classList.contains("animate-rotate-down")) {
+                  downAngle?.classList.add("animate-rotate-down");
+                  downAngle?.classList.remove("animate-rotate-up");
                 } else {
-                  downAngle?.classList.remove("ad-rotate");
-                  downAngle?.classList.add("ad-rotate-anticlock");
+                  downAngle?.classList.remove("animate-rotate-down");
+                  downAngle?.classList.add("animate-rotate-up");
                 }
               }}
               className="relative border border-gray-400 rounded-sm p-1 focus:border-gray-600 md:w-[40%] w-[55%] cursor-pointer"

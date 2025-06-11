@@ -1,10 +1,20 @@
 // src/entities/product.entity.ts
 
-import { Entity, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
-import { AbstractEntity} from "@app/common";
+import {
+  Entity,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  PrimaryColumn,
+} from "typeorm";
 
 @Entity({ name: "products" })
-export class Product extends AbstractEntity<Product> {
+export class Product {
+  @PrimaryColumn({ type: 'varchar', length: 36 })
+  id: string;
+
   @Column({ default: false })
   is_feature: boolean;
 
@@ -16,6 +26,9 @@ export class Product extends AbstractEntity<Product> {
 
   @Column({ type: "jsonb" })
   colors: any[];
+
+  @Column({ type: "jsonb", default: [] })
+  collated_reviews: any[];
 
   @Column({ type: "text", nullable: true })
   description: string;
@@ -34,5 +47,4 @@ export class Product extends AbstractEntity<Product> {
 
   @UpdateDateColumn({ name: "updatedAt" })
   updatedAt: Date;
-
 }

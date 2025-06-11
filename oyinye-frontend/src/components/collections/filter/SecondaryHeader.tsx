@@ -37,8 +37,8 @@ export default function SecondaryHeader({
       "#filter-settings"
     ) as HTMLElement;
     if (isFilterModalOpen && filterSettings) {
-      filterSettings.classList.add("forward");
-      filterSettings.classList.remove("backward");
+      filterSettings.classList.add("animate-forward");
+      filterSettings.classList.remove("animate-backward");
     }
   }, [isFilterModalOpen]);
 
@@ -51,8 +51,8 @@ export default function SecondaryHeader({
       "#filter-settings"
     ) as HTMLElement;
     if (filterSettings) {
-      filterSettings.classList.remove("forward");
-      filterSettings.classList.add("backward");
+      filterSettings.classList.remove("animate-forward");
+      filterSettings.classList.add("animate-backward");
       timerId = setTimeout(() => {
         setIsFilterModalOpen(false);
       }, 300);
@@ -247,14 +247,14 @@ export default function SecondaryHeader({
                     );
 
                     if (upAngle && header) {
-                      if (!upAngle.classList.contains("au-rotate")) {
-                        upAngle.classList.add("au-rotate");
-                        upAngle.classList.remove("au-rotate-clock");
+                      if (!upAngle.classList.contains("animate-rotate-up-up")) {
+                        upAngle.classList.add("animate-rotate-up-up");
+                        upAngle.classList.remove("animate-rotate-up-down");
                         content?.classList.remove("show");
                         content?.classList.add("hide", "hidden");
                       } else {
-                        upAngle.classList.remove("au-rotate");
-                        upAngle.classList.add("au-rotate-clock");
+                        upAngle.classList.remove("animate-rotate-up-up");
+                        upAngle.classList.add("animate-rotate-up-down");
                         content?.classList.add("show");
                         content?.classList.remove("hide", "hidden");
                       }
@@ -305,15 +305,15 @@ export default function SecondaryHeader({
                     );
 
                     if (downAngle && header) {
-                      if (!downAngle.classList.contains("ad-rotate")) {
-                        downAngle.classList.add("ad-rotate");
-                        downAngle.classList.remove("ad-rotate-anticlock");
+                      if (!downAngle.classList.contains("animate-rotate-down")) {
+                        downAngle.classList.add("animate-rotate-down");
+                        downAngle.classList.remove("animate-rotate-up");
                         content?.classList.add("show");
                         content?.classList.remove("hide", "hidden");
                         header.classList.add("border-b-0");
                       } else {
-                        downAngle.classList.remove("ad-rotate");
-                        downAngle.classList.add("ad-rotate-anticlock");
+                        downAngle.classList.remove("animate-rotate-down");
+                        downAngle.classList.add("animate-rotate-up");
                         content?.classList.remove("show");
                         content?.classList.add("hide", "hidden");
                         header.classList.remove("border-b-0");

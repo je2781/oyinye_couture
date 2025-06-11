@@ -134,6 +134,7 @@ export class AuthService {
         //clearing guest cookie because guest no longer exists
         res.clearCookie("guest");
       }
+      
 
       res.cookie("access_token", accessToken, {
         httpOnly: true,
@@ -617,14 +618,18 @@ export class AuthService {
     if (getUserData(req)) {
       user = await this.userRepo.findOneBy({ id: getUserData(req) });
 
-      //1. changing auth user back to guest
-      user!.is_guest = true;
-      await user!.save();
-
       token = this.jwtService.sign({ sub: getUserData(req) });
 
-      //2. clearing user cookie because no longer exists
-      res.clearCookie("user");
+      //updating non-admin user
+      if(!user.is_admin){
+        //1. changing auth user back to guest
+        user!.is_guest = true;
+        await user!.save();
+        
+        //2. clearing user cookie because no longer exists
+        res.clearCookie("user");
+      }
+
     } else if (getGuestData(req)) {
       token = this.jwtService.sign({ sub: getGuestData(req) });
       user = {id: getGuestData(req)};
@@ -643,12 +648,15 @@ export class AuthService {
       sameSite: "lax",
     });
 
-    res.cookie("guest", user!.id, {
-      httpOnly: true,
-      path: "/",
-      secure: this.configService.get("NODE_ENV") === "production",
-      sameSite: "lax",
-    });
+    //saving guest cookie for non-admin users
+    if(!user.is_admin){
+      res.cookie("guest", user!.id, {
+        httpOnly: true,
+        path: "/",
+        secure: this.configService.get("NODE_ENV") === "production",
+        sameSite: "lax",
+      });
+    }
 
     return res.status(200).json({ accessToken: token });
   }

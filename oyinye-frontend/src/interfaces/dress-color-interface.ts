@@ -1,4 +1,3 @@
-import { DressSize } from "./dress-size-interface";
 
 export interface SizeData {
   color: string;
@@ -8,7 +7,7 @@ export interface SizeData {
 }
   export interface DressColorObj {
     [key: string]: {
-      imageFront: string[],
-      imageBack: string,
+      imageFront: File[] | null,
+      imageBack: File | null,
     };
   }

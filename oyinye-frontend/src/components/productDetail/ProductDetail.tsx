@@ -23,6 +23,7 @@ import Reviews from "../reviews/Reviews";
 
 import './ProductDetail.css';
 import { useRouter } from "next/navigation";
+import { headers } from "next/headers";
 
 const ProductDetail = ({
     productSizes,
@@ -57,6 +58,14 @@ const ProductDetail = ({
     const [toastError, setToastError] = React.useState(false);
     const [articleIsNotSticky, setArticleIsNotSticky] = React.useState(false);
     const router = useRouter();
+
+    React.useEffect(() => {
+        async function setViewedProductsCookie(){
+            api.get(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/cookie/${paramsId}`)
+        }
+
+        setViewedProductsCookie();
+    }, []);
 
     
     React.useEffect(() => {
@@ -344,15 +353,15 @@ const ProductDetail = ({
                         clickable: true,
                         el: '.custom-pagination',
                         renderBullet: (index, className) => {
-                            const images = frontBase64ImagesObj[selectedColor] ? frontBase64ImagesObj[selectedColor] : productFrontBase64Images;
+                            const images = productFrontBase64Images;
 
-                            return `<span class="${className}" style="background-image: url(${images[index]}) !important;"></span>`;
+                            return `<span class="${className}" style="background-image: url(${images[index].replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN)}) !important;"></span>`;
                         },
                     }}
                     navigation
                     className="lg:h-[480px] h-64 w-full"
                     >
-                        {(frontBase64ImagesObj[selectedColor] ? frontBase64ImagesObj[selectedColor] : productFrontBase64Images).map((image: string, i: number) => (
+                        {(productFrontBase64Images).map((image: string, i: number) => (
                             <SwiperSlide key={i}>
                             <div
                                 id="image-zoom"
@@ -361,7 +370,7 @@ const ProductDetail = ({
                                 } relative h-full flex flex-row`}
                                 style={
                                 {
-                                    "--url": `url(${image})`,
+                                    "--url": `url(${image.replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN!)})`,
                                     "--zoom-x": "0%",
                                     "--zoom-y": "0%",
                                     "--display": "none",
@@ -650,14 +659,14 @@ const ProductDetail = ({
                                     let content = document.querySelector("#sizes-content");
 
                                     if (downAngle && header && content) {
-                                        if (!downAngle.classList.contains("ad-rotate")) {
-                                            downAngle.classList.add("ad-rotate");
-                                            downAngle.classList.remove("ad-rotate-anticlock");
+                                        if (!downAngle.classList.contains("animate-rotate-down")) {
+                                            downAngle.classList.add("animate-rotate-down");
+                                            downAngle.classList.remove("animate-rotate-up");
                                             content.classList.add("show");
                                             content.classList.remove("hide", "hidden");
                                         } else {
-                                            downAngle.classList.remove("ad-rotate");
-                                            downAngle.classList.add("ad-rotate-anticlock");
+                                            downAngle.classList.remove("animate-rotate-down");
+                                            downAngle.classList.add("animate-rotate-up");
                                             content.classList.remove("show");
                                             content.classList.add("hide", "hidden");
                                         }
@@ -762,14 +771,14 @@ const ProductDetail = ({
                                     let content = header.parentNode?.querySelector("#shipping-content");
 
                                     if (downAngle && header) {
-                                    if (!downAngle.classList.contains("ad-rotate")) {
-                                        downAngle.classList.add("ad-rotate");
-                                        downAngle.classList.remove("ad-rotate-anticlock");
+                                    if (!downAngle.classList.contains("animate-rotate-down")) {
+                                        downAngle.classList.add("animate-rotate-down");
+                                        downAngle.classList.remove("animate-rotate-up");
                                         content?.classList.add("show");
                                         content?.classList.remove("hide", "hidden");
                                     } else {
-                                        downAngle.classList.remove("ad-rotate");
-                                        downAngle.classList.add("ad-rotate-anticlock");
+                                        downAngle.classList.remove("animate-rotate-down");
+                                        downAngle.classList.add("animate-rotate-up");
                                         content?.classList.remove("show");
                                         content?.classList.add("hide", "hidden");
                                     }

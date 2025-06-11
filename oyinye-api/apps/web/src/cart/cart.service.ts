@@ -13,7 +13,6 @@ import { Order } from "../order/order.entity";
 import { Request, Response } from "express";
 import { getDataFromCart } from "libs/common/utils/getDataFromCart";
 import { getUserData } from "libs/common/utils/getUserData";
-import { getVisitData } from "libs/common/utils/getVisitData";
 import { ADMIN_SERVICE, AUTH_SERVICE } from "../constants/service";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom } from "rxjs";
@@ -254,7 +253,6 @@ export class CartService {
         await lastValueFrom(this.adminClient.emit("cart_created", {
           cart,
           access_token: req.cookies['access_token']
-
         }));
 
         res.cookie("cart", cart.id, {

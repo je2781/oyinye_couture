@@ -8,10 +8,7 @@ import { Review } from "../review/review.entity";
 import { lastValueFrom } from "rxjs";
 import { ADMIN_SERVICE, EMAIL_SERVICE } from "../constants/service";
 import { ClientProxy } from "@nestjs/microservices";
-import { getVisitData } from "libs/common/utils/getVisitData";
 import {
-  getBrowser,
-  getDeviceType,
   randomReference,
 } from "libs/common/utils/getHelpers";
 import * as argon2 from "argon2";
@@ -41,43 +38,6 @@ export class ProductService {
     private configService: ConfigService
   ) {}
 
-  private setViewedProductCookie(
-    req: Request,
-    res: Response,
-    variantId: string
-  ) {
-    const viewedP = req.cookies["viewed_p"];
-
-    if (!viewedP) {
-      res.cookie("viewed_p", JSON.stringify([variantId]), {
-        expires: new Date(new Date().getTime() + 5184000000), // Expires in 2 month,
-        secure: this.configService.get("NODE_ENV") === "production",
-        httpOnly: true,
-      });
-    } else {
-      const viewedProductsArray = JSON.parse(viewedP);
-
-      // Add the new product variant id to the beginning of the array
-      if (!viewedProductsArray.includes(variantId)) {
-        viewedProductsArray.unshift(variantId);
-      }
-
-      // Limit the number of stored product variant ids (e.g., to the 10 most recent)
-      if (viewedProductsArray.length > 10) {
-        viewedProductsArray.pop();
-      }
-
-      res.cookie("viewed_p", JSON.stringify(viewedProductsArray), {
-        expires: new Date(new Date().getTime() + 2629746000), // Expires in 1 month,
-        secure: this.configService.get("NODE_ENV") === "production",
-        httpOnly: true,
-      });
-    }
-
-    return res.status(200).json({
-      message: "cookie set",
-    });
-  }
 
   async get(
     params: ProductParamsDto,
@@ -86,11 +46,11 @@ export class ProductService {
     res: Response
   ) {
     try {
-      this.setViewedProductCookie(req, res, params[2]);
-
       let extractedProductsArray: Product[] = [];
       let authors: User[] = [];
       let updatedProducts: Product[] = [];
+      let reviews: Review[] = [];
+      let updatedReviews: any[] = [];
 
       const viewedProducts = viewedP;
 
@@ -101,7 +61,7 @@ export class ProductService {
 
       const product = await this.productRepo.findOne({
         where: { title },
-        relations: { reviews: true },
+        
       });
 
       if (!product) throw new NotFoundException("product doesn't exit");
@@ -159,24 +119,27 @@ export class ProductService {
         }
       }
 
-      const reviews = await this.reviewRepo.find({
-        where: {
-          product,
-        },
-      });
-      reviews.sort((a, b) => b.likes - a.likes);
+      for(const reviewId of product.collated_reviews){
 
-      for (const review of reviews) {
-        const user = await this.userRepo.findOneBy({ id: review.user.id });
-        authors.push(user!);
+        reviews = await this.reviewRepo.find({
+          where: {
+            id: reviewId,
+          },
+        });
+        reviews.sort((a, b) => b.likes - a.likes);
+  
+        for (const review of reviews) {
+          const user = await this.userRepo.findOneBy({ id: review.user.id });
+          authors.push(user!);
+        }
+  
+        updatedReviews = reviews.map((review) => {
+          const extractedAuthor = authors.find(
+            (author) => author.id === review.user.id
+          );
+          return { ...review, author: extractedAuthor };
+        });
       }
-
-      const updatedReviews = reviews.map((review) => {
-        const extractedAuthor = authors.find(
-          (author) => author.id === review.user.id
-        );
-        return { ...review, author: extractedAuthor };
-      });
 
       updatedProducts = [
         ...updatedProducts,
@@ -263,13 +226,11 @@ export class ProductService {
         where: {
           title,
         },
-        relations: { reviews: true },
       });
 
       if (!product) throw new NotFoundException("product doesn't exist");
 
       if (!user) {
-        const visitId = getVisitData(req);
 
         let newPassword = randomReference();
 
@@ -326,7 +287,6 @@ export class ProductService {
           rating: +rating,
           content: review,
           is_media: isMedia,
-          product,
         });
 
         await this.reviewRepo.save(newReview);
@@ -339,13 +299,25 @@ export class ProductService {
         newReview = this.reviewRepo.create({
           headline,
           rating: +rating,
-          product,
           content: review,
           is_media: isMedia,
         });
 
         await this.reviewRepo.save(newReview);
       }
+
+      //dispatching product_updated job
+      product.collated_reviews = [...product.collated_reviews, newReview.id];
+
+      await this.productRepo.save(product);
+
+      await lastValueFrom(
+        this.adminClient.emit("product_updated", {
+          id: product.id,
+          data: product,
+          access_token: req.cookies["access_token"],
+        })
+      );
 
       //dispatching reviewer_verify job
       const verifyReviewerToken = (await crypto.randomBytes(32)).toString(
@@ -406,7 +378,7 @@ export class ProductService {
           order: { createdAt: "DESC" },
           skip: (updatedPage - 1) * ITEMS_PER_PAGE,
           take: ITEMS_PER_PAGE,
-          relations: { reviews: true },
+          
         });
 
         if (productType) {
@@ -522,7 +494,7 @@ export class ProductService {
             }
             products.sort((a, b) => {
               if (b.no_of_orders === a.no_of_orders) {
-                return b.reviews.length - a.reviews.length;
+                return b.collated_reviews.length - a.collated_reviews.length;
               }
               return b.no_of_orders - a.no_of_orders;
             });
@@ -568,7 +540,7 @@ export class ProductService {
             order: { createdAt: "DESC" },
             skip: (updatedPage - 1) * ITEMS_PER_PAGE,
             take: ITEMS_PER_PAGE,
-            relations: { reviews: true },
+            
           });
           totalItems = count;
           products = rows;
@@ -583,7 +555,7 @@ export class ProductService {
             order: { createdAt: "DESC" },
             skip: (updatedPage - 1) * ITEMS_PER_PAGE,
             take: ITEMS_PER_PAGE,
-            relations: { reviews: true },
+            
           });
           totalItems = count;
           products = rows;
@@ -598,7 +570,7 @@ export class ProductService {
             order: { createdAt: "DESC" },
             skip: (updatedPage - 1) * ITEMS_PER_PAGE,
             take: ITEMS_PER_PAGE,
-            relations: { reviews: true },
+            
           });
           totalItems = count;
           products = rows;
@@ -613,7 +585,7 @@ export class ProductService {
             order: { createdAt: "DESC" },
             skip: (updatedPage - 1) * ITEMS_PER_PAGE,
             take: ITEMS_PER_PAGE,
-            relations: { reviews: true },
+            
           });
           totalItems = count;
           products = rows;
@@ -628,7 +600,7 @@ export class ProductService {
             order: { createdAt: "DESC" },
             skip: (updatedPage - 1) * ITEMS_PER_PAGE,
             take: ITEMS_PER_PAGE,
-            relations: { reviews: true },
+            
           });
           totalItems = count;
           products = rows;
@@ -643,7 +615,7 @@ export class ProductService {
             order: { createdAt: "DESC" },
             skip: (updatedPage - 1) * ITEMS_PER_PAGE,
             take: ITEMS_PER_PAGE,
-            relations: { reviews: true },
+            
           });
           totalItems = count;
           products = rows;
@@ -654,7 +626,7 @@ export class ProductService {
             },
             skip: (updatedPage - 1) * ITEMS_PER_PAGE,
             take: ITEMS_PER_PAGE,
-            relations: { reviews: true },
+            
           });
           totalItems = count;
           products = rows;
@@ -747,7 +719,7 @@ export class ProductService {
 
             products.sort((a, b) => {
               if (b.no_of_orders === a.no_of_orders) {
-                return b.reviews.length - a.reviews.length;
+                return b.collated_reviews.length - a.collated_reviews.length;
               }
               return b.no_of_orders - a.no_of_orders;
             });
@@ -799,5 +771,47 @@ export class ProductService {
         erro: e.message,
       });
     }
+  }
+
+  async createProduct(data: any){
+    await this.productRepo.save(data);
+  }
+
+  async updateProduct(id: string, data: any){
+    await this.productRepo.update(id, data);
+  }
+
+  async setViewedProductsCookie(req: Request, res: Response, variantId: string){
+    const viewedP = req.cookies["viewed_p"];
+
+    if (!viewedP) {
+      res.cookie("viewed_p", JSON.stringify([variantId]), {
+        expires: new Date(new Date().getTime() + 5184000000), // Expires in 2 month,
+        secure: this.configService.get("NODE_ENV") === "production",
+        httpOnly: true,
+      });
+    } else {
+      const viewedProductsArray = JSON.parse(viewedP);
+
+      // Add the new product variant id to the beginning of the array
+      if (!viewedProductsArray.includes(variantId)) {
+        viewedProductsArray.unshift(variantId);
+      }
+
+      // Limit the number of stored product variant ids (e.g., to the 10 most recent)
+      if (viewedProductsArray.length > 10) {
+        viewedProductsArray.pop();
+      }
+
+      res.cookie("viewed_p", JSON.stringify(viewedProductsArray), {
+        expires: new Date(new Date().getTime() + 2629746000), // Expires in 1 month,
+        secure: this.configService.get("NODE_ENV") === "production",
+        httpOnly: true,
+      });
+    }
+
+    return res.status(200).json({
+      message: "cookie set",
+    });
   }
 }

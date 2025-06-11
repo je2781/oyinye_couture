@@ -24,7 +24,7 @@ export class CartEventController{
 
     @EventPattern("cart_created")
     async handleCartCreate(@Payload() data, @Ctx() context: RmqContext) {
-      await this.cartService.createCart(data);
+      await this.cartService.createCart(data.cart);
       this.rmqService.ack(context);
     }
 }

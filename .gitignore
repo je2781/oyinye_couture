@@ -53,15 +53,18 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 oyinye-api/docker-entrypoint-initdb.d/
 oyinye-api/docker-entrypoint-initauthdb.d/
 oyinye-api/apps/**/migrations/
-oyinye-api/docker-compose.yaml
-oyinye-frontend/docker-compose.yaml
+oyinye-api/docker-compose.backend.yaml
+oyinye-frontend/docker-compose.frontend.yml
 oyinye-frontend/Dockerfile
+oyinye-api/Dockerfile
 oyinye-api/typeorm.config.ts
 
 #files for dev and production
 oyinye-api/apps/*/Dockerfile
 oyinye-api/docker-compose.yaml
 oyinye-api/.dockerignore
+oyinye-api/public/
+oyinye-frontend/.dockerignore
 *.sh
 oyinye-frontend/.dockerignore
 oyinye-frontend/Dockerfile

@@ -4,19 +4,26 @@ import { ValidationPipe } from "@nestjs/common";
 import { AdminModule } from "./admin.module";
 import { ConfigService } from "@nestjs/config";
 import { setupCsrfProtection } from "@app/common";
+import { NestExpressApplication } from "@nestjs/platform-express";
+import { join } from "path";
+import { json } from "express";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AdminModule);
+  const app = await NestFactory.create<NestExpressApplication>(AdminModule);
   const configService = app.get(ConfigService);
   const port = configService.get<number>("PORT") ?? 8080;
 
+  app.use(json());
+
+  // Serve static files from /public
+  app.useStaticAssets(join(process.cwd(), 'public'));
+
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: true,
     credentials: true, // allows cookies/authorization headers
   });
 
   setupCsrfProtection(app);
-
 
   app.useGlobalPipes(
     new ValidationPipe({

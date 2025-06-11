@@ -20,6 +20,11 @@ const nextConfig = {
         hostname: 'cdn.jsdelivr.net',
         pathname: '/**',
       },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        pathname: '/**',
+      },
     ],
   }
 };

@@ -5,7 +5,7 @@ import { ReviewsModal } from '../layout/Modal';
 import React from 'react';
 import {decodedBase64, generateBase64FromMedia, reloadPage } from '@/helpers/getHelpers';
 import toast from 'react-hot-toast';
-import api from '@helpers/axios';
+import api from '@/helpers/axios';
 import { useSearchParams, usePathname} from 'next/navigation';
 
 const Reviews = ({productReviews, product, csrf}: any) => {
@@ -69,8 +69,8 @@ const Reviews = ({productReviews, product, csrf}: any) => {
             //hiding ratings dropdown
             ratingsDropdown?.classList.add('hide');
             ratingsDropdown?.classList.remove('show');
-            downAngle?.classList.remove("ad-rotate");
-            downAngle?.classList.add("ad-rotate-anticlock");
+            downAngle?.classList.remove("animate-rotate-down");
+            downAngle?.classList.add("animate-rotate-up");
     
             setSelectedRating(rating);
         }
@@ -305,7 +305,7 @@ const Reviews = ({productReviews, product, csrf}: any) => {
 
         try {
             setLoader(true);
-            await api.patch(`/api/productsreviews/likes-dislikes/update`, {
+            await api.patch(`/api/products/reviews/likes-dislikes/update`, {
                 likes: likes[index],
                 dislikes: dislikes[index],
                 reviewId: review.id
@@ -335,7 +335,7 @@ const Reviews = ({productReviews, product, csrf}: any) => {
 
         try {
             setLoader(true);
-            await api.patch(`/api/productsreviews/likes-dislikes/update`, {
+            await api.patch(`/api/products/reviews/likes-dislikes/update`, {
                 likes: likes[index],
                 dislikes: dislikes[index],
                 reviewId: review.id
@@ -380,14 +380,14 @@ const Reviews = ({productReviews, product, csrf}: any) => {
                     let downAngle = e.currentTarget.querySelector("i.ratings-angle-down");
                     let ratingsDropdown = document.getElementById("ratings-dropdown");
                     if(downAngle && ratingsDropdown){
-                        if(!downAngle.classList.contains("ad-rotate")){
-                            downAngle.classList.add("ad-rotate");
-                            downAngle.classList.remove("ad-rotate-anticlock");
+                        if(!downAngle.classList.contains("animate-rotate-down")){
+                            downAngle.classList.add("animate-rotate-down");
+                            downAngle.classList.remove("animate-rotate-up");
                             ratingsDropdown.classList.remove('hide');
                             ratingsDropdown.classList.add('show');
                         }else{
-                            downAngle.classList.remove("ad-rotate");
-                            downAngle.classList.add("ad-rotate-anticlock");
+                            downAngle.classList.remove("animate-rotate-down");
+                            downAngle.classList.add("animate-rotate-up");
                             ratingsDropdown.classList.add('hide');
                             ratingsDropdown.classList.remove('show');
                         }
@@ -441,8 +441,8 @@ const Reviews = ({productReviews, product, csrf}: any) => {
                     let ratingsDropdown = document.getElementById("ratings-dropdown");
 
                     if(ratingsDropdown?.classList.contains('show')){
-                        downAngle?.classList.remove("ad-rotate");
-                        downAngle?.classList.add("ad-rotate-anticlock");
+                        downAngle?.classList.remove("animate-rotate-down");
+                        downAngle?.classList.add("animate-rotate-up");
                         ratingsDropdown?.classList.add('hide');
                         ratingsDropdown?.classList.remove('show');
                     }

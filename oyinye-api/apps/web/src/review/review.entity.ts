@@ -30,10 +30,6 @@ export class Review extends AbstractEntity<Review> {
   @Column({ type: "int", default: 0 })
   dislikes: number;
 
-  @ManyToOne(() => Product, (product) => product.reviews)
-  @JoinColumn({ name: "product_id" })
-  product: Product;
-
   @ManyToOne(() => User, (user) => user.reviews)
   @JoinColumn({ name: "user_id" })
   user: User;

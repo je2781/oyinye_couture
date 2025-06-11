@@ -87,8 +87,8 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
   useEffect(() => {
     let mobileNav = document.querySelector("#mobile-nav") as HTMLElement;
     if (isMobileModalOpen && mobileNav) {
-      mobileNav.classList.add("forward");
-      mobileNav.classList.remove("backward");
+      mobileNav.classList.add("animate-forward");
+      mobileNav.classList.remove("animate-backward");
     }
   }, [isMobileModalOpen]);
 
@@ -107,8 +107,8 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
   const hideModalHandler = () => {
     let mobileNav = document.querySelector("#mobile-nav") as HTMLElement;
     if (mobileNav) {
-      mobileNav.classList.remove("forward");
-      mobileNav.classList.add("backward");
+      mobileNav.classList.remove("animate-forward");
+      mobileNav.classList.add("animate-backward");
       timerId = setTimeout(() => {
         setIsMobileModalOpen(false);
       }, 300);
@@ -118,11 +118,8 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
   };
 
   useEffect(() => {
-    if (windowWidth > 768) {
-      setIsMobileModalOpen(false);
-    } else {
-      setIsMobileModalOpen(false);
-    }
+    setIsMobileModalOpen(false);
+
   }, [setIsMobileModalOpen, windowWidth]);
 
   return (
@@ -183,17 +180,17 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
                         "collections-dropdown"
                       );
                       if (downAngle && collectionsDropdown) {
-                        if (!downAngle.classList.contains("ad-rotate")) {
-                          downAngle.classList.add("ad-rotate");
-                          downAngle.classList.remove("ad-rotate-anticlock");
+                        if (!downAngle.classList.contains("animate-rotate-down")) {
+                          downAngle.classList.add("animate-rotate-down");
+                          downAngle.classList.remove("animate-rotate-up");
                           collectionsDropdown.classList.remove(
                             "hide",
                             "hidden"
                           );
                           collectionsDropdown.classList.add("show");
                         } else {
-                          downAngle.classList.remove("ad-rotate");
-                          downAngle.classList.add("ad-rotate-anticlock");
+                          downAngle.classList.remove("animate-rotate-down");
+                          downAngle.classList.add("animate-rotate-up");
                           collectionsDropdown.classList.add("hide", "hidden");
                           collectionsDropdown.classList.remove("show");
                         }
@@ -305,24 +302,24 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
       {isSearchModalOpen && <SearchBar onHideModal={hideSearchModalHandler} />}
       {isMobileModalOpen && (
         <MobileModal onClose={hideModalHandler}>
-          <ul>
+          <ul className="text-lg">
             <li>
               <Link
                 href={"/login"}
-                className="inline-flex flex-row gap-x-3 items-center"
+                className="inline-flex flex-row gap-x-3 items-center text-gray-500 "
               >
-                <i className="fa-solid cursor-pointer fa-user text-lg font-medium text-gray-500 font-sans"></i>
+                <i className="fa-solid cursor-pointer fa-user font-medium text-gray-500 font-sans"></i>
                 Login
               </Link>
             </li>
           </ul>
-          <ul className="inline-flex flex-col gap-y-6 mt-3">
+          <ul className="inline-flex flex-col gap-y-6 text-gray-500 font-sans text-lg">
             {menuItems.map((item) => (
               <li key={item.name}>
                 {item.name !== "Collections" ? (
                   <Link
                     href={item.href}
-                    className="text-lg font-medium text-gray-500 font-sans"
+                    className="font-medium "
                   >
                     {item.name}
                   </Link>
@@ -337,17 +334,17 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
                           "collections-dropdown-for-sm-screen"
                         );
                         if (downAngle && collectionsDropdown) {
-                          if (!downAngle.classList.contains("ad-rotate")) {
-                            downAngle.classList.add("ad-rotate");
-                            downAngle.classList.remove("ad-rotate-anticlock");
+                          if (!downAngle.classList.contains("animate-rotate-down")) {
+                            downAngle.classList.add("animate-rotate-down");
+                            downAngle.classList.remove("animate-rotate-up");
                             collectionsDropdown.classList.remove(
                               "hide",
                               "hidden"
                             );
                             collectionsDropdown.classList.add("show");
                           } else {
-                            downAngle.classList.remove("ad-rotate");
-                            downAngle.classList.add("ad-rotate-anticlock");
+                            downAngle.classList.remove("animate-rotate-down");
+                            downAngle.classList.add("animate-rotate-up");
                             collectionsDropdown.classList.add("hide", "hidden");
                             collectionsDropdown.classList.remove("show");
                           }
@@ -357,7 +354,7 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
                     >
                       <span
                         style={{ textDecorationThickness: "2px" }}
-                        className="text-gray-500 font-sans text-lg font-medium"
+                        className="font-medium"
                       >
                         {item.name}
                       </span>
@@ -365,7 +362,7 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
                     </div>
                     <ul
                       id="collections-dropdown-for-sm-screen"
-                      className="hide hidden flex-col p-1 text-[1rem] bg-white text-gray-500 font-light"
+                      className="hide hidden flex-col p-1 text-[1rem] bg-white font-light"
                     >
                       {[
                         "All Dresses",

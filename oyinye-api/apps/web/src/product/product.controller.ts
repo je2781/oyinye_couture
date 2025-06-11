@@ -84,4 +84,9 @@ export class ProductController {
   ) {
     return this.productService.getProducts(req, res, hidden);
   }
+
+  @Get('cookie/:variantId')
+  async setCookie(@Res() res: Response, @Req() req: Request, @Param('variantId') variantId: string){
+    return this.productService.setViewedProductsCookie(req, res, variantId);
+  }
 }

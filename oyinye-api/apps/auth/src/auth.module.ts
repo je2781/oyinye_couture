@@ -49,6 +49,8 @@ import { APP_GUARD } from "@nestjs/core";
         RABBITMQ_EMAIL_QUEUE: joi.string().required(),
         RABBITMQ_AUTH_QUEUE: joi.string().required(),
         RABBITMQ_WEB_QUEUE: joi.string().required(),
+        CSRF_SECRET: joi.string().required(),
+        CSRF_SECRET_2: joi.string().required(),
       }),
       envFilePath: ".env.auth",
     }),

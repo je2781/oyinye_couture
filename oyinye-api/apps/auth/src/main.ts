@@ -5,19 +5,21 @@ import { NestExpressApplication } from "@nestjs/platform-express";
 import { ConfigService } from "@nestjs/config";
 import { AuthModule } from "./auth.module";
 import { setupCsrfProtection } from "@app/common";
+import { json } from "express";
 
 async function bootstrap() {
   const app = await NestFactory.create(AuthModule);
   const configService = app.get(ConfigService);
   const port = configService.get<number>("PORT") ?? 8000;
 
+  app.use(json());
+
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: true,
     credentials: true, // allows cookies/authorization headers
   });
 
   setupCsrfProtection(app);
-
 
   app.useGlobalPipes(
     new ValidationPipe({

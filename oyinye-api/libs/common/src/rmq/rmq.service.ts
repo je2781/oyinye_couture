@@ -12,7 +12,7 @@ export class RMQService {
       options: {
         noAck,
         urls: [
-          this.configService.get<string>("PROD_RABBITMQ_URL")! 
+          this.configService.get<string>("NODE_ENV")! === 'development' ? this.configService.get<string>("DEV_RABBITMQ_URL")! : this.configService.get<string>("PROD_RABBITMQ_URL")!  
 
         ],
         queue: this.configService.get<string>(`RABBITMQ_${queue}_QUEUE`)!,

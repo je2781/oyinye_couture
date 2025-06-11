@@ -12,7 +12,7 @@ export class EnquiryEventController{
 
     @EventPattern('enquiry_created')
     async handleEnquiryCreate(@Payload() data, @Ctx() context: RmqContext){
-       await this.enquiryService.createEnquiry(data);
+       await this.enquiryService.createEnquiry(data.enquiry);
        this.rmqService.ack(context);
     }
 

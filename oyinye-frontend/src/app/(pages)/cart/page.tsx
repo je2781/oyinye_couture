@@ -9,7 +9,7 @@ import api from "@/helpers/axios";
 const CartComponent = dynamic(() => import("../../../components/cart/Cart"), {
   loading: () => (
     <div className="flex justify-center items-center flex-col gap-y-2 bg-white h-screen w-full md:px-16 px-8 md:pt-12 pt-5 ">
-      <h1 className="font-sans text-gray-600">api.geting Cart data...</h1>
+      <h1 className="font-sans text-gray-600">getting Cart data...</h1>
       <span className="border-4 border-transparent rounded-full border-t-gray-600 border-r-gray-600 w-[36px] h-[36px] spin"></span>
     </div>
   ),

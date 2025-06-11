@@ -10,6 +10,7 @@ import { Filter } from "../filter/filter.entity";
 import { User } from "../user/user.entity";
 import { Review } from "../review/review.entity";
 import { Cart } from "../cart/cart.entity";
+import { ProductEventController } from "./product.event.controller";
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { Cart } from "../cart/cart.entity";
     RMQModule.register(ADMIN_SERVICE),
     RMQModule.register(AUTH_SERVICE),
   ],
-  controllers: [ProductController],
+  controllers: [ProductController, ProductEventController],
   providers: [ProductService],
 })
 export class ProductModule {}

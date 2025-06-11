@@ -4,14 +4,14 @@ import {
   CartItemObj,
   CartState,
   DressColorObj,
+  FileImagesObj,
   SizeData,
 } from "@/interfaces";
 import crypto from "crypto";
 import toast from "react-hot-toast";
 import countries from "i18n-iso-countries";
 import api from "./axios";
-import { cookies } from "next/headers";
-import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
+import namer from 'color-namer'
 
 
 let now = new Date();
@@ -546,13 +546,13 @@ export const colorsReducer = (state: DressColorObj[], action: any) => {
         [action.color.name]: {
           imageFront: action.color.front
             ? [
-                ...existingColorObj[action.color.name].imageFront,
+                ...existingColorObj[action.color.name].imageFront!,
                 action.color.front,
               ]
-            : existingColorObj[action.color.name].imageFront,
+            : existingColorObj[action.color.name].imageFront!,
           imageBack: action.color.back
             ? action.color.back
-            : existingColorObj[action.color.name].imageBack,
+            : existingColorObj[action.color.name].imageBack!,
         },
       };
 
@@ -657,16 +657,14 @@ export async function handleSubmit(
   // }
 
   if (
-    Object.values(dressColorsState[dressColorsState.length - 1])[0].imageFront
-      .length === 0
+    !Object.values(dressColorsState[dressColorsState.length - 1])[0].imageFront
   ) {
     return toast.error(`front image(s) missing`, {
       position: "top-center",
     });
   }
   if (
-    Object.values(dressColorsState[dressColorsState.length - 1])[0].imageBack
-      .length === 0
+    !Object.values(dressColorsState[dressColorsState.length - 1])[0].imageBack
   ) {
     return toast.error(`back image missing`, {
       position: "top-center",
@@ -685,47 +683,60 @@ export async function handleSubmit(
 
   const hashedId = (await crypto.randomBytes(6)).toString("hex");
 
-  const Product = {
-    title,
-    description: desc,
-    no_of_orders: 0,
-    type,
-    reviews: [],
-    is_feature: isFeature,
-    features: [
-      embelishment,
-      sleeveL,
-      dresslength,
-      fabric,
-      neckLine].filter(element => element !== ""),
-    colors: currentBgColors.map((bgColor) => {
-      let updatedSizeData = sizeDataArray
-        .filter((datum) => datum !== undefined)
-        .filter((datum) => datum.color === bgColor);
-        
-      return {
-        name: bgColor,
-        image_front_base64: Object.values(
-          dressColorsState[dressColorsState.length - 1]
-        )[0].imageFront,
-        image_back_base64: Object.values(
-          dressColorsState[dressColorsState.length - 1]
-        )[0].imageBack,
-        sizes: updatedSizeData.map((datum) => ({
-          number: datum.number!,
-          price: parseFloat(datum.price!),
-          stock: datum.stock ? datum.stock : 0,
-          variant_id: hashedId,
-        })),
-      };
-    }),
-  };
+  const formData = new FormData();
+
+  formData.append('title', title);
+  formData.append('description', desc);
+  formData.append('no_of_orders', JSON.stringify(0));
+  formData.append('type', type);
+  formData.append('is_feature', JSON.stringify(isFeature));
+  formData.append('reviews', JSON.stringify([]));
+
+  const features = [embelishment, sleeveL, dresslength, fabric, neckLine].filter(f => f !== '');
+  formData.append('features', JSON.stringify(features));
+
+  currentBgColors.forEach((bgColor, index) => {
+    const colorName = namer(bgColor).basic[0].name;
+    const hex = bgColor;
+
+    const colorData = Object.values(dressColorsState[dressColorsState.length - 1])[0];
+
+    const frontImages = colorData.imageFront || [];
+    frontImages.forEach((img, imgIndex) => {
+      formData.append(`colors_${index}_image_front_base64_${imgIndex}`, img);
+    });
+
+    const backImg = colorData.imageBack;
+    if (backImg) {
+      formData.append(`colors_${index}_image_back_base64`, backImg);
+    }
+
+    formData.append(`colors_${index}_name`, colorName);
+    formData.append(`colors_${index}_hex_code`, hex);
+
+    const sizes = sizeDataArray
+      .filter(Boolean)
+      .filter(datum => datum.color === bgColor)
+      .map(datum => ({
+        number: datum.number!,
+        price: parseFloat(datum.price!),
+        stock: datum.stock ?? 0,
+        variant_id: hashedId
+      }));
+
+    sizes.forEach((size, sizeIndex) => {
+      Object.entries(size).forEach(([key, value]) => {
+        formData.append(`colors_${index}_sizes_${sizeIndex}_${key}`, String(value));
+      });
+    });
+  });
+
 
   try {
     setIsLoading(true);
-    await api.post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/products/new`, Product,{
+    await api.post(`${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/products/new`, formData,{
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "multipart/form-data",
         "x-csrf-token": csrf
       },
     });
@@ -777,63 +788,80 @@ export async function handleProductEdit(
   csrf: string
 ){
   e.preventDefault();
-  const colorFrontImages: string[][] = [];
-  const colorBackImages: string[][] = [];
+ 
+  const colorFrontFileImages: File[][] = [];
+  const colorBackFileImages: File[][] = [];
+  const frontFileImagesObj: FileImagesObj = {};
+  const backFileImagesObj: FileImagesObj = {};
 
   // Store the keys once to avoid calling Object.keys repeatedly
   const frontKeys = Object.keys(frontBase64ImagesObj);
   const backKeys = Object.keys(backBase64ImagesObj);
 
   // Extract front images in chunks of 3
-  for (let i = 0; i < visibleImages.imagesFront.length; i += 3) {
-    colorFrontImages.push(visibleImages.imagesFront.slice(i, i + 3));
+  for (let i = 0; i < visibleImages.imagesFrontFile.length; i += 3) {
+    colorFrontFileImages.push(visibleImages.imagesFrontFile.slice(i, i + 3));
   }
 
   // Assign the front images to frontBase64ImagesObj based on the front keys
   frontKeys.forEach((key, i) => {
-    frontBase64ImagesObj[key] = colorFrontImages[i] || [];
+    frontFileImagesObj[key] = colorFrontFileImages[i] || [];
   });
 
   // Extract back images one by one
-  for (let i = 0; i < visibleImages.imagesBack.length; i++) {
-    colorBackImages.push(visibleImages.imagesBack.slice(i, i + 1));
+  for (let i = 0; i < visibleImages.imagesBackFile.length; i++) {
+    colorBackFileImages.push(visibleImages.imagesBackFile.slice(i, i + 1));
   }
 
   // Assign the back images to backBase64ImagesObj based on the back keys
   backKeys.forEach((key, i) => {
-    backBase64ImagesObj[key] = colorBackImages[i] || [];
+    backFileImagesObj[key] = colorBackFileImages[i] || [];
   });
   
   try {
     setLoader(true);
-    const Product = {
-      ...product,
-      type,
-      description: desc,
-      is_feature: isFeature
-      ,
-      features:  dressFeatures.split(',').map(feature => feature.trim()),
-      colors: product.colors.map((color: any) => {
-        return {
-          ...color,
-          name: color.name,
-          hex_code: color.hex_code,
-          image_front_base64: frontBase64ImagesObj[color.hex_code],
-          image_back_base64: backBase64ImagesObj[color.hex_code][0],
-          sizes: Object.values(productObj).filter(obj => obj.hex_code === color.hex_code).map(obj => {
-            delete obj.hex_code;
-            delete obj.color;
+    const formData = new FormData();
 
-            return obj;
-          }),
-        };
-      }),
-    };
+    formData.append('type', type);
+    formData.append('description', desc);
+    formData.append('is_feature', JSON.stringify(isFeature));
+    formData.append('reviews', JSON.stringify(product.collated_reviews));
+    formData.append('features', JSON.stringify(dressFeatures.split(',').map(f => f.trim())));
 
-    await api.patch(`${process.env.NEXT_PUBLIC_DOMAIN}/api/products/${product.id}`, Product,{
-      withCredentials: true,
+    // Loop through colors
+    product.colors.forEach((color: any, colorIndex: number) => {
+      formData.append(`colors_${colorIndex}_name`, color.name);
+      formData.append(`colors_${colorIndex}_hex_code`, color.hex_code);
+
+      // front images (array of base64)
+      const frontImages = frontFileImagesObj[color.hex_code] || [];
+      frontImages.forEach((img, imgIndex) => {
+        formData.append(`colors_${colorIndex}_image_front_base64_${imgIndex}`, img);
+      });
+
+      // back image (first one)
+      const backImage = backFileImagesObj[color.hex_code][0];
+      if (backImage) {
+        formData.append(`colors_${colorIndex}_image_back_base64`,  backImage);
+      }
+
+      // sizes
+      const sizes = Object.values(productObj).filter(obj => obj.hex_code === color.hex_code).map(obj => {
+        const { hex_code, color, ...rest } = obj;
+        return rest;
+      });
+
+      sizes.forEach((sizeObj, sizeIndex) => {
+        Object.entries(sizeObj).forEach(([key, value]) => {
+          formData.append(`colors_${colorIndex}_sizes_${sizeIndex}_${key}`, String(value));
+        });
+      });
+    });
+
+    await api.patch(`${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/products/${product.id}`, formData,{
       headers: {
         "x-csrf-token": csrf,
+        "Content-Type": "multipart/form-data"
       }
     });
     //reloading page
@@ -868,12 +896,11 @@ export async function handleBackImageupload(
   const file = e.target.files![0];
   try {
 
-    let base64Str = await generateBase64FromMedia(file);
     dispatchAction({
       type: "ADD",
       color: {
         type: currentBgColors[currentBgColors.length - 1],
-        back: base64Str,
+        back: file,
       },
     });
   } catch (error) {
@@ -907,12 +934,11 @@ export async function handleFrontImagesupload(
   const file = e.target.files![0];
   try {
 
-    let base64Str = await generateBase64FromMedia(file);
     dispatchAction({
       type: "ADD",
       color: {
         type: currentBgColors[currentBgColors.length - 1],
-        front: base64Str,
+        front: file,
       },
     });
   } catch (error) {
@@ -2018,6 +2044,25 @@ export async function getCsrfToken(): Promise<string> {
   );
   return tokenRes.data.token;
 }
+
+function base64ToFile(base64: string, filename: string): File {
+  if (!base64.includes(',')) throw new Error('Invalid base64 string');
+
+  const [prefix, data] = base64.split(',');
+  const mime = prefix.match(/:(.*?);/)?.[1] || 'image/webp';
+
+  const binary = atob(data);
+  const len = binary.length;
+  const u8arr = new Uint8Array(len);
+
+  for (let i = 0; i < len; i++) {
+    u8arr[i] = binary.charCodeAt(i);
+  }
+
+  return new File([u8arr], filename, { type: mime });
+}
+
+
 
 
 

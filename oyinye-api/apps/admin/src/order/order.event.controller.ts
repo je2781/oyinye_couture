@@ -16,7 +16,7 @@ export class OrderEventController {
 
   @EventPattern("order_created")
   async handleOrderCreate(@Payload() data, @Ctx() context: RmqContext) {
-    await this.orderService.createOrder(data);
+    await this.orderService.createOrder(data.order);
     this.rmqService.ack(context);
   }
 

@@ -17,15 +17,15 @@ export default function Setting({
                 let content = header.parentNode?.querySelector("#fabric-content");
 
                 if (downAngle && header) {
-                if (!downAngle.classList.contains("ad-rotate")) {
-                    downAngle.classList.add("ad-rotate");
-                    downAngle.classList.remove("ad-rotate-anticlock");
+                if (!downAngle.classList.contains("animate-rotate-down")) {
+                    downAngle.classList.add("animate-rotate-down");
+                    downAngle.classList.remove("animate-rotate-up");
                     content?.classList.add("show");
                     content?.classList.remove("hide", 'hidden');
                     header.classList.add('border-b-0');
                 } else {
-                    downAngle.classList.remove("ad-rotate");
-                    downAngle.classList.add("ad-rotate-anticlock");
+                    downAngle.classList.remove("animate-rotate-down");
+                    downAngle.classList.add("animate-rotate-up");
                     content?.classList.remove("show");
                     content?.classList.add("hide", 'hidden');
                     header.classList.remove('border-b-0');

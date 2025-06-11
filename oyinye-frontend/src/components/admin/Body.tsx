@@ -138,10 +138,14 @@ export default function Body({
   const [visibleImages, setVisibleImages] = React.useState<{
     position: string;
     imagesFront: string[];
+    imagesFrontFile: File[];
     imagesBack: string[];
+    imagesBackFile: File[];
   }>({
     position: "front",
     imagesFront: [],
+    imagesFrontFile: [],
+    imagesBackFile: [],
     imagesBack: [],
   });
   const [extractedProducts, setExtractedProducts] = React.useState<any[]>(
@@ -597,8 +601,8 @@ export default function Body({
     });
 
     if (adminModal) {
-      adminModal.classList.remove("slide-down");
-      adminModal.classList.add("slide-up");
+      adminModal.classList.remove("animate-slide-down");
+      adminModal.classList.add("animate-slide-up");
       timerId.current = setTimeout(() => {
         setIsAdminSettingsOpen(false);
       }, 300);
@@ -672,8 +676,8 @@ export default function Body({
       "#admin-settings-modal"
     ) as HTMLElement;
     if (isAdminSettingsOpen && adminModal) {
-      adminModal.classList.add("slide-down");
-      adminModal.classList.remove("slide-up");
+      adminModal.classList.add("animate-slide-down");
+      adminModal.classList.remove("animate-slide-up");
     }
   }, [isAdminSettingsOpen]);
 
@@ -746,7 +750,7 @@ export default function Body({
   async function deleteProduct(id: string) {
     // setExtractedProducts(prevProducts => prevProducts.filter((prod: any) => prod.id !== id));
     await api.patch(
-      `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/productsupdate/${id}?hide=true`,
+      `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/products/update/${id}?hide=true`,
       {
         withCredentials: true,
         headers: {
@@ -4241,20 +4245,20 @@ export default function Body({
                         "i.active-action-angle-down"
                       );
 
-                      if (calendarAngleDown?.classList.contains("ad-rotate")) {
-                        calendarAngleDown?.classList.remove("ad-rotate");
-                        calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                      if (calendarAngleDown?.classList.contains("animate-rotate-down")) {
+                        calendarAngleDown?.classList.remove("animate-rotate-down");
+                        calendarAngleDown?.classList.add("animate-rotate-up");
                       }
-                      if (filterAngleDown?.classList.contains("ad-rotate")) {
-                        filterAngleDown?.classList.remove("ad-rotate");
-                        filterAngleDown?.classList.add("ad-rotate-anticlock");
+                      if (filterAngleDown?.classList.contains("animate-rotate-down")) {
+                        filterAngleDown?.classList.remove("animate-rotate-down");
+                        filterAngleDown?.classList.add("animate-rotate-up");
                       }
                       if (
-                        activeActionAngleDown?.classList.contains("ad-rotate")
+                        activeActionAngleDown?.classList.contains("animate-rotate-down")
                       ) {
-                        activeActionAngleDown?.classList.remove("ad-rotate");
+                        activeActionAngleDown?.classList.remove("animate-rotate-down");
                         activeActionAngleDown?.classList.add(
-                          "ad-rotate-anticlock"
+                          "animate-rotate-up"
                         );
                       }
 
@@ -4266,14 +4270,14 @@ export default function Body({
                       });
 
                       if (downAngle && actionsDropdown) {
-                        if (!downAngle.classList.contains("ad-rotate")) {
-                          downAngle.classList.add("ad-rotate");
-                          downAngle.classList.remove("ad-rotate-anticlock");
+                        if (!downAngle.classList.contains("animate-rotate-down")) {
+                          downAngle.classList.add("animate-rotate-down");
+                          downAngle.classList.remove("animate-rotate-up");
                           actionsDropdown.classList.remove("hide", "hidden");
                           actionsDropdown.classList.add("show");
                         } else {
-                          downAngle.classList.remove("ad-rotate");
-                          downAngle.classList.add("ad-rotate-anticlock");
+                          downAngle.classList.remove("animate-rotate-down");
+                          downAngle.classList.add("animate-rotate-up");
                           actionsDropdown.classList.add("hide", "hidden");
                           actionsDropdown.classList.remove("show");
                         }
@@ -4478,10 +4482,10 @@ export default function Body({
                             }
 
                             if (downAngle && actionsDropdown) {
-                              if (!downAngle.classList.contains("ad-rotate")) {
-                                downAngle.classList.add("ad-rotate");
+                              if (!downAngle.classList.contains("animate-rotate-down")) {
+                                downAngle.classList.add("animate-rotate-down");
                                 downAngle.classList.remove(
-                                  "ad-rotate-anticlock"
+                                  "animate-rotate-up"
                                 );
                                 actionsDropdown.classList.remove(
                                   "hide",
@@ -4489,8 +4493,8 @@ export default function Body({
                                 );
                                 actionsDropdown.classList.add("show");
                               } else {
-                                downAngle.classList.remove("ad-rotate");
-                                downAngle.classList.add("ad-rotate-anticlock");
+                                downAngle.classList.remove("animate-rotate-down");
+                                downAngle.classList.add("animate-rotate-up");
                                 actionsDropdown.classList.add("hide", "hidden");
                                 actionsDropdown.classList.remove("show");
                               }
@@ -4529,20 +4533,20 @@ export default function Body({
                         "i.active-action-angle-down"
                       );
 
-                      if (actionsAngleDown?.classList.contains("ad-rotate")) {
-                        actionsAngleDown?.classList.remove("ad-rotate");
-                        actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                      if (actionsAngleDown?.classList.contains("animate-rotate-down")) {
+                        actionsAngleDown?.classList.remove("animate-rotate-down");
+                        actionsAngleDown?.classList.add("animate-rotate-up");
                       }
-                      if (filterAngleDown?.classList.contains("ad-rotate")) {
-                        filterAngleDown?.classList.remove("ad-rotate");
-                        filterAngleDown?.classList.add("ad-rotate-anticlock");
+                      if (filterAngleDown?.classList.contains("animate-rotate-down")) {
+                        filterAngleDown?.classList.remove("animate-rotate-down");
+                        filterAngleDown?.classList.add("animate-rotate-up");
                       }
                       if (
-                        activeActionAngleDown?.classList.contains("ad-rotate")
+                        activeActionAngleDown?.classList.contains("animate-rotate-down")
                       ) {
-                        activeActionAngleDown?.classList.remove("ad-rotate");
+                        activeActionAngleDown?.classList.remove("animate-rotate-down");
                         activeActionAngleDown?.classList.add(
-                          "ad-rotate-anticlock"
+                          "animate-rotate-up"
                         );
                       }
 
@@ -4554,14 +4558,14 @@ export default function Body({
                       });
 
                       if (downAngle && calendarDropdown) {
-                        if (!downAngle.classList.contains("ad-rotate")) {
-                          downAngle.classList.add("ad-rotate");
-                          downAngle.classList.remove("ad-rotate-anticlock");
+                        if (!downAngle.classList.contains("animate-rotate-down")) {
+                          downAngle.classList.add("animate-rotate-down");
+                          downAngle.classList.remove("animate-rotate-up");
                           calendarDropdown.classList.remove("hide", "hidden");
                           calendarDropdown.classList.add("show");
                         } else {
-                          downAngle.classList.remove("ad-rotate");
-                          downAngle.classList.add("ad-rotate-anticlock");
+                          downAngle.classList.remove("animate-rotate-down");
+                          downAngle.classList.add("animate-rotate-up");
                           calendarDropdown.classList.add("hide", "hidden");
                           calendarDropdown.classList.remove("show");
                         }
@@ -4784,10 +4788,10 @@ export default function Body({
                             });
 
                             if (downAngle && calendarDropdown) {
-                              if (!downAngle.classList.contains("ad-rotate")) {
-                                downAngle.classList.add("ad-rotate");
+                              if (!downAngle.classList.contains("animate-rotate-down")) {
+                                downAngle.classList.add("animate-rotate-down");
                                 downAngle.classList.remove(
-                                  "ad-rotate-anticlock"
+                                  "animate-rotate-up"
                                 );
                                 calendarDropdown.classList.remove(
                                   "hide",
@@ -4795,8 +4799,8 @@ export default function Body({
                                 );
                                 calendarDropdown.classList.add("show");
                               } else {
-                                downAngle.classList.remove("ad-rotate");
-                                downAngle.classList.add("ad-rotate-anticlock");
+                                downAngle.classList.remove("animate-rotate-down");
+                                downAngle.classList.add("animate-rotate-up");
                                 calendarDropdown.classList.add(
                                   "hide",
                                   "hidden"
@@ -4962,20 +4966,20 @@ export default function Body({
                         "i.active-action-angle-down"
                       );
 
-                      if (calendarAngleDown?.classList.contains("ad-rotate")) {
-                        calendarAngleDown?.classList.remove("ad-rotate");
-                        calendarAngleDown?.classList.add("ad-rotate-anticlock");
+                      if (calendarAngleDown?.classList.contains("animate-rotate-down")) {
+                        calendarAngleDown?.classList.remove("animate-rotate-down");
+                        calendarAngleDown?.classList.add("animate-rotate-up");
                       }
-                      if (actionsAngleDown?.classList.contains("ad-rotate")) {
-                        actionsAngleDown?.classList.remove("ad-rotate");
-                        actionsAngleDown?.classList.add("ad-rotate-anticlock");
+                      if (actionsAngleDown?.classList.contains("animate-rotate-down")) {
+                        actionsAngleDown?.classList.remove("animate-rotate-down");
+                        actionsAngleDown?.classList.add("animate-rotate-up");
                       }
                       if (
-                        activeActionAngleDown?.classList.contains("ad-rotate")
+                        activeActionAngleDown?.classList.contains("animate-rotate-down")
                       ) {
-                        activeActionAngleDown?.classList.remove("ad-rotate");
+                        activeActionAngleDown?.classList.remove("animate-rotate-down");
                         activeActionAngleDown?.classList.add(
-                          "ad-rotate-anticlock"
+                          "animate-rotate-up"
                         );
                       }
 
@@ -4987,14 +4991,14 @@ export default function Body({
                       });
 
                       if (downAngle && filterDropdown) {
-                        if (!downAngle.classList.contains("ad-rotate")) {
-                          downAngle.classList.add("ad-rotate");
-                          downAngle.classList.remove("ad-rotate-anticlock");
+                        if (!downAngle.classList.contains("animate-rotate-down")) {
+                          downAngle.classList.add("animate-rotate-down");
+                          downAngle.classList.remove("animate-rotate-up");
                           filterDropdown.classList.remove("hide", "hidden");
                           filterDropdown.classList.add("show");
                         } else {
-                          downAngle.classList.remove("ad-rotate");
-                          downAngle.classList.add("ad-rotate-anticlock");
+                          downAngle.classList.remove("animate-rotate-down");
+                          downAngle.classList.add("animate-rotate-up");
                           filterDropdown.classList.add("hide", "hidden");
                           filterDropdown.classList.remove("show");
                         }
@@ -5204,14 +5208,14 @@ export default function Body({
 
                                 if (
                                   activeActionAngleDown?.classList.contains(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   )
                                 ) {
                                   activeActionAngleDown?.classList.remove(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   );
                                   activeActionAngleDown?.classList.add(
-                                    "ad-rotate-anticlock"
+                                    "animate-rotate-up"
                                   );
                                 }
 
@@ -5283,11 +5287,11 @@ export default function Body({
 
                                 if (downAngle && activeActionDropdown) {
                                   if (
-                                    !downAngle.classList.contains("ad-rotate")
+                                    !downAngle.classList.contains("animate-rotate-down")
                                   ) {
-                                    downAngle.classList.add("ad-rotate");
+                                    downAngle.classList.add("animate-rotate-down");
                                     downAngle.classList.remove(
-                                      "ad-rotate-anticlock"
+                                      "animate-rotate-up"
                                     );
                                     activeActionDropdown.classList.remove(
                                       "hide",
@@ -5295,9 +5299,9 @@ export default function Body({
                                     );
                                     activeActionDropdown.classList.add("show");
                                   } else {
-                                    downAngle.classList.remove("ad-rotate");
+                                    downAngle.classList.remove("animate-rotate-down");
                                     downAngle.classList.add(
-                                      "ad-rotate-anticlock"
+                                      "animate-rotate-up"
                                     );
                                     activeActionDropdown.classList.add(
                                       "hide",
@@ -5331,14 +5335,14 @@ export default function Body({
 
                                       if (
                                         activeActionAngleDown?.classList.contains(
-                                          "ad-rotate"
+                                          "animate-rotate-down"
                                         )
                                       ) {
                                         activeActionAngleDown?.classList.remove(
-                                          "ad-rotate"
+                                          "animate-rotate-down"
                                         );
                                         activeActionAngleDown?.classList.add(
-                                          "ad-rotate-anticlock"
+                                          "animate-rotate-up"
                                         );
                                       }
 
@@ -5485,50 +5489,50 @@ export default function Body({
 
                                 if (
                                   calendarAngleDown?.classList.contains(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   )
                                 ) {
                                   calendarAngleDown?.classList.remove(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   );
                                   calendarAngleDown?.classList.add(
-                                    "ad-rotate-anticlock"
+                                    "animate-rotate-up"
                                   );
                                 }
                                 if (
                                   filterAngleDown?.classList.contains(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   )
                                 ) {
                                   filterAngleDown?.classList.remove(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   );
                                   filterAngleDown?.classList.add(
-                                    "ad-rotate-anticlock"
+                                    "animate-rotate-up"
                                   );
                                 }
                                 if (
                                   actionsAngleDown?.classList.contains(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   )
                                 ) {
                                   actionsAngleDown?.classList.remove(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   );
                                   actionsAngleDown?.classList.add(
-                                    "ad-rotate-anticlock"
+                                    "animate-rotate-up"
                                   );
                                 }
                                 if (
                                   activeActionAngleDown?.classList.contains(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   )
                                 ) {
                                   activeActionAngleDown?.classList.remove(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   );
                                   activeActionAngleDown?.classList.add(
-                                    "ad-rotate-anticlock"
+                                    "animate-rotate-up"
                                   );
                                 }
 
@@ -5614,38 +5618,38 @@ export default function Body({
 
                                 if (
                                   calendarAngleDown?.classList.contains(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   )
                                 ) {
                                   calendarAngleDown?.classList.remove(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   );
                                   calendarAngleDown?.classList.add(
-                                    "ad-rotate-anticlock"
+                                    "animate-rotate-up"
                                   );
                                 }
                                 if (
                                   filterAngleDown?.classList.contains(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   )
                                 ) {
                                   filterAngleDown?.classList.remove(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   );
                                   filterAngleDown?.classList.add(
-                                    "ad-rotate-anticlock"
+                                    "animate-rotate-up"
                                   );
                                 }
                                 if (
                                   actionsAngleDown?.classList.contains(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   )
                                 ) {
                                   actionsAngleDown?.classList.remove(
-                                    "ad-rotate"
+                                    "animate-rotate-down"
                                   );
                                   actionsAngleDown?.classList.add(
-                                    "ad-rotate-anticlock"
+                                    "animate-rotate-up"
                                   );
                                 }
 
@@ -5658,11 +5662,11 @@ export default function Body({
 
                                 if (downAngle && activeActionDropdown) {
                                   if (
-                                    !downAngle.classList.contains("ad-rotate")
+                                    !downAngle.classList.contains("animate-rotate-down")
                                   ) {
-                                    downAngle.classList.add("ad-rotate");
+                                    downAngle.classList.add("animate-rotate-down");
                                     downAngle.classList.remove(
-                                      "ad-rotate-anticlock"
+                                      "animate-rotate-up"
                                     );
                                     activeActionDropdown.classList.remove(
                                       "hide",
@@ -5670,9 +5674,9 @@ export default function Body({
                                     );
                                     activeActionDropdown.classList.add("show");
                                   } else {
-                                    downAngle.classList.remove("ad-rotate");
+                                    downAngle.classList.remove("animate-rotate-down");
                                     downAngle.classList.add(
-                                      "ad-rotate-anticlock"
+                                      "animate-rotate-up"
                                     );
                                     activeActionDropdown.classList.add(
                                       "hide",
@@ -5715,50 +5719,50 @@ export default function Body({
 
                                       if (
                                         calendarAngleDown?.classList.contains(
-                                          "ad-rotate"
+                                          "animate-rotate-down"
                                         )
                                       ) {
                                         calendarAngleDown?.classList.remove(
-                                          "ad-rotate"
+                                          "animate-rotate-down"
                                         );
                                         calendarAngleDown?.classList.add(
-                                          "ad-rotate-anticlock"
+                                          "animate-rotate-up"
                                         );
                                       }
                                       if (
                                         filterAngleDown?.classList.contains(
-                                          "ad-rotate"
+                                          "animate-rotate-down"
                                         )
                                       ) {
                                         filterAngleDown?.classList.remove(
-                                          "ad-rotate"
+                                          "animate-rotate-down"
                                         );
                                         filterAngleDown?.classList.add(
-                                          "ad-rotate-anticlock"
+                                          "animate-rotate-up"
                                         );
                                       }
                                       if (
                                         actionsAngleDown?.classList.contains(
-                                          "ad-rotate"
+                                          "animate-rotate-down"
                                         )
                                       ) {
                                         actionsAngleDown?.classList.remove(
-                                          "ad-rotate"
+                                          "animate-rotate-down"
                                         );
                                         actionsAngleDown?.classList.add(
-                                          "ad-rotate-anticlock"
+                                          "animate-rotate-up"
                                         );
                                       }
                                       if (
                                         activeActionAngleDown?.classList.contains(
-                                          "ad-rotate"
+                                          "animate-rotate-down"
                                         )
                                       ) {
                                         activeActionAngleDown?.classList.remove(
-                                          "ad-rotate"
+                                          "animate-rotate-down"
                                         );
                                         activeActionAngleDown?.classList.add(
-                                          "ad-rotate-anticlock"
+                                          "animate-rotate-up"
                                         );
                                       }
 
@@ -6216,9 +6220,15 @@ export default function Body({
                                             1,
                                             base64String as string
                                           );
+                                          prevImgs.imagesFrontFile.splice(
+                                            i,
+                                            1,
+                                            e.target.files![0]
+                                          );
                                           return {
                                             ...prevImgs,
                                             imagesFront: prevImgs.imagesFront,
+                                            imagesFrontFile: prevImgs.imagesFrontFile
                                           };
                                         });
                                       }}
@@ -6270,10 +6280,16 @@ export default function Body({
                                             1,
                                             base64String as string
                                           );
+                                          prevImgs.imagesBackFile.splice(
+                                            i,
+                                            1,
+                                            e.target.files![0]
+                                          );
 
                                           return {
                                             ...prevImgs,
                                             imagesBack: prevImgs.imagesBack,
+                                            imagesBackFile: prevImgs.imagesBackFile,
                                           };
                                         });
                                       }}
@@ -6318,7 +6334,7 @@ export default function Body({
                             setIsLoading(true);
                             if (selectedProduct.current.is_hidden) {
                               await api.patch(
-                                `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/productsupdate/${selectedProduct.current.id}?hide=false`,
+                                `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/products/update/${selectedProduct.current.id}?hide=false`,
                                 {
                                   withCredentials: true,
                                   headers: {
@@ -6328,7 +6344,7 @@ export default function Body({
                               );
                             } else {
                               await api.patch(
-                                `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/productsupdate/${selectedProduct.current.id}?hide=true`,
+                                `${process.env.NEXT_PUBLIC_ADMIN_DOMAIN}/api/products/update/${selectedProduct.current.id}?hide=true`,
                                 {
                                   withCredentials: true,
                                   headers: {
@@ -6404,14 +6420,14 @@ export default function Body({
                             let downAngle = document.querySelector(
                               "i.feature-angle-down"
                             );
-                            if (!downAngle?.classList.contains("ad-rotate")) {
-                              downAngle?.classList.add("ad-rotate");
+                            if (!downAngle?.classList.contains("animate-rotate-down")) {
+                              downAngle?.classList.add("animate-rotate-down");
                               downAngle?.classList.remove(
-                                "ad-rotate-anticlock"
+                                "animate-rotate-up"
                               );
                             } else {
-                              downAngle?.classList.remove("ad-rotate");
-                              downAngle?.classList.add("ad-rotate-anticlock");
+                              downAngle?.classList.remove("animate-rotate-down");
+                              downAngle?.classList.add("animate-rotate-up");
                             }
                           }}
                           className="relative border border-gray-400 rounded-sm p-1 focus:border-gray-600 md:w-[26%] w-[60%]"

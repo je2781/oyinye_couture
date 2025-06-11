@@ -16,14 +16,13 @@ import { AuthDto } from "./dto/auth.dto";
 import { MessagePattern } from "@nestjs/microservices";
 import { JwtAuthGaurd } from "./guard";
 import { User } from "./entities/user.entity";
-import { Csrf, NestCsrfRequest } from "ncsrf";
 
 @Controller("api/auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post("login")
-  @Csrf()
+  
   @UseGuards(LocalAuthGuard)
   async createSession(
     @GetUser() user: User,
@@ -34,13 +33,11 @@ export class AuthController {
   }
 
   @Post("logout")
-  @Csrf()
   async endSession(@Res() res: Response, @Req() req: Request) {
     return this.authService.endSession(req, res);
   }
 
   @Post("signup")
-  @Csrf()
   async register(
     @Res() res: Response,
     @Body() body: AuthDto,
@@ -50,13 +47,11 @@ export class AuthController {
   }
 
   @Post("new-password")
-  @Csrf()
   async forgotPassword(@Res() res: Response, @Req() req: Request) {
     return this.authService.forgotPassword(req, res);
   }
 
   @Post("reset")
-  @Csrf()
   async resetPassword(@Res() res: Response, @Req() req: Request) {
     return this.authService.resetPassword(req, res);
   }
@@ -77,7 +72,6 @@ export class AuthController {
   }
 
   @Post("refresh")
-  @Csrf()
   async refresh(@Req() req: Request, @Res() res: Response) {
     return this.authService.refreshToken(req, res);
   }

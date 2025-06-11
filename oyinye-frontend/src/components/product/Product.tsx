@@ -56,7 +56,7 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
               if(!isModalOpen){
                 const item = e.currentTarget;
                 const imgElement = item.querySelector('#admin-img-container > img') as HTMLImageElement;
-                imgElement.src = product.colors[0].image_front_base64[0];
+                imgElement.src = product.colors[0].image_front_base64[0].replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN);
 
                 if(product.is_hidden){
                   const hiddenHint = document.querySelector('#is-hidden') as HTMLDivElement;
@@ -80,13 +80,13 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
               }
 
             }}
-            data-hover={product.colors[0].image_back_base64}
+            data-hover={product.colors[0].image_back_base64.replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN)}
 
             className={`items-center flex flex-col gap-y-4 cursor-pointer pb-6 relative`}
           > 
           <div id='admin-img-container' className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && width > 375 && isGridView && isSearchProduct ? 'w-[181px] h-[200px]' :  width <= 375 && isGridView && isSearchProduct ? 'w-[173px] h-[200px]' : width < 768 && !isGridView && isSearchProduct ? 'w-full h-[380px]' : width >= 768 && width < 1024 ? 'w-[270px]' : ``} group relative overflow-hidden`}>
             <Image
-                src={product.colors[0].image_front_base64[0]}
+                src={`${product.colors[0].image_front_base64[0].replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN)}`}
                 alt="dress-Image"
                 width={imageW ?? 300}
                 height={imageH ?? 450}
@@ -136,13 +136,13 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
       
           <article
             className={`${isSearchProduct ? 'items-start': 'items-center'} flex flex-col gap-y-4 cursor-pointer pb-6 relative`}
-            data-hover={product.colors[0].image_back_base64}
+            data-hover={product.colors[0].image_back_base64.replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN)}
             onMouseLeave={(e) => {
               if(!isModalOpen){
                 const item = e.currentTarget;
                 const imgElement = item.querySelector('#img-container > img') as HTMLImageElement;
                 const zoomHint = item.parentNode!.querySelector('#zoom-hint') as HTMLDivElement;
-                imgElement.src = product.colors[0].image_front_base64[0];
+                imgElement.src = product.colors[0].image_front_base64[0].replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN);
 
                 zoomHint.classList.remove('expand');
               }
@@ -151,12 +151,12 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
             onClick={() => {
               if(isOnDetailPage){
                 const pathParts = path.split("/");
-                const newPath = `/${pathParts[1]}/api/products${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name.replace(' ', '-')}/${product.colors[0].sizes[0].variant_id}`;
+                const newPath = `/${pathParts[1]}/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name.replace(' ', '-')}/${product.colors[0].sizes[0].variant_id}`;
 
                 const url = new URL(`${window.location.origin}${newPath}`);
                 window.location.href = url.toString();
               }else{
-                router.push(`/api/products${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name.replace(' ', '-')}/${product.colors[0].sizes[0].variant_id}`);
+                router.push(`/products/${product.title.replace(' ', '-').toLowerCase()}/${product.colors[0].name.replace(' ', '-')}/${product.colors[0].sizes[0].variant_id}`);
               }
               
               
@@ -176,7 +176,7 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
           > 
             <div id='img-container' className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && width > 375 && isGridView && isSearchProduct ? 'w-[181px] h-[200px]' :  width <= 375 && isGridView && isSearchProduct ? 'w-[173px] h-[200px]' : width < 768 && !isGridView && isSearchProduct ? 'w-full h-[380px]' : width >= 768 && width < 1024 ? 'w-[270px]' : ``} group relative overflow-hidden`}>
               <Image
-                  src={product.colors[0].image_front_base64[0]}
+                  src={`${product.colors[0].image_front_base64[0].replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN)}`}
                   alt="dress-Image"
                   width={imageW ?? 300}
                   height={imageH ?? 450}

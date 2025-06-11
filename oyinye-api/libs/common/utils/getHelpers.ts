@@ -57,15 +57,13 @@ export function getBrowser(userAgent: string) {
   }
 }
 
-// utils/getSessionIdentifier.ts
-import crypto from 'crypto';
-import { Request } from 'express';
 
-export function getSessionIdentifierFromIpUa(req: Request): string {
-  const ip = req.ip || req.headers['x-forwarded-for'] || '';
-  const userAgent = req.headers['user-agent'] || '';
-  const raw = `${ip}-${userAgent}`;
+
+// export function getSessionIdentifierFromIpUa(req: Request): string {
+//   const ip = req.ip || req.headers['x-forwarded-for'] || '';
+//   const userAgent = req.headers['user-agent'] || '';
+//   const raw = `${ip}-${userAgent}`;
   
-  // Create a SHA256 hash of the combination
-  return crypto.createHash('sha256').update(raw).digest('hex');
-}
+//   // Create a SHA256 hash of the combination
+//   return crypto.createHash('sha256').update(raw).digest('hex');
+// }

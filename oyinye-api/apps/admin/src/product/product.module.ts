@@ -4,14 +4,16 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ProductController } from "./product.controller";
 import { Product } from "./product.entity";
 import { RMQModule } from "@app/common";
-import { AUTH_SERVICE } from "../constants/service";
+import { AUTH_SERVICE, WEB_SERVICE } from "../constants/service";
+import { ProductEventController } from "./product.event.controller";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Product]),
     RMQModule.register(AUTH_SERVICE),
+    RMQModule.register(WEB_SERVICE),
   ],
   providers: [ProductService],
-  controllers: [ProductController],
+  controllers: [ProductController, ProductEventController],
 })
 export class ProductModule {}

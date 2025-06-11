@@ -11,7 +11,7 @@ const BodyComponent = dynamic(() => import("@/components/admin/Body"), {
       className="flex justify-center items-center flex-col gap-y-2 bg-primary-950 h-screen md:pl-64 pl-7 lg:pr-3 pr-7 w-full pb-12"
       id="admin-content"
     >
-      <h1 className="font-sans text-secondary-400">api.geting data...</h1>
+      <h1 className="font-sans text-secondary-400">getting data...</h1>
       <span className="border-4 border-transparent rounded-full border-t-secondary-400 border-r-secondary-400 w-[36px] h-[36px] spin"></span>
     </div>
   ),

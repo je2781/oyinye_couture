@@ -45,6 +45,8 @@ import { UserModule } from "./user/user.module";
         RABBITMQ_AUTH_QUEUE: joi.string().required(),
         RABBITMQ_WEB_QUEUE: joi.string().required(),
         NODE_ENV: joi.string().required(),
+        CSRF_SECRET: joi.string().required(),
+        CSRF_SECRET_2: joi.string().required(),
       }),
       envFilePath: ".env.web",
     }),

@@ -380,9 +380,7 @@ const ProductQuickView = ({
         navigation
         className="lg:w-[40%] w-full h-[40%] lg:h-full"
       >
-        {(frontBase64ImagesObj[selectedColor]
-          ? frontBase64ImagesObj[selectedColor]
-          : product.colors[0].image_front_base64
+        {(product.colors[0].image_front_base64
         ).map((image: string, i: number) => (
           <SwiperSlide key={i}>
             <div
@@ -392,7 +390,7 @@ const ProductQuickView = ({
               } relative h-full`}
               style={
                 {
-                  "--url": `url(${image})`,
+                  "--url": `url(${image.replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN!)})`,
                   "--zoom-x": "0%",
                   "--zoom-y": "0%",
                   "--display": "none",
@@ -445,7 +443,7 @@ const ProductQuickView = ({
             >
               <div className="relative w-full h-full">
                 <Image
-                  src={image}
+                  src={image.replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN!)}
                   role="presentation"
                   alt="featured-Image"
                   fill

@@ -7,6 +7,7 @@ import Pagination from "../layout/pagination/Pagination";
 import Setting from "./filter/Setting";
 import useWindowWidth from "../helpers/getWindowWidth";
 import { usePathname} from "next/navigation";
+import api from "@/helpers/axios";
 
 
 export default function Collections({
@@ -149,10 +150,10 @@ export default function Collections({
       async function reloadPage(){
         if (isLoading) {
           if(filter.noOfFilters > 0){
-            await api.get(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/filter?type=collections`,{
-              method: 'POST',
-              body: JSON.stringify(filter),
-              credentials: 'include'
+            await api.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/filter?type=collections`, filter, {
+              headers: {
+                'x-csrf-token': csrf
+              }
             });
           }
   

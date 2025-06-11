@@ -8,7 +8,7 @@ import joi from "joi";
 import { RMQModule } from "@app/common/rmq/rmq.module";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { APP_GUARD } from "@nestjs/core";
-import {DatabaseModule } from "@app/common";
+import { DatabaseModule } from "@app/common";
 import { UserModule } from "./user/user.module";
 
 @Module({
@@ -42,6 +42,10 @@ import { UserModule } from "./user/user.module";
         PROD_RABBITMQ_URL: joi.string().required(),
         RABBITMQ_ADMIN_QUEUE: joi.string().required(),
         RABBITMQ_EMAIL_QUEUE: joi.string().required(),
+        RABBITMQ_WEB_QUEUE: joi.string().required(),
+        RABBITMQ_AUTH_QUEUE: joi.string().required(),
+        CSRF_SECRET: joi.string().required(),
+        CSRF_SECRET_2: joi.string().required(),
       }),
       envFilePath: ".env.admin",
     }),

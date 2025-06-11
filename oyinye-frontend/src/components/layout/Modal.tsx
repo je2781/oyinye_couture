@@ -1,4 +1,5 @@
 import ReactDOM from "react-dom";
+import Image from "next/image";
 
 const BackDrop = (props: any) => {
   return <div className='backdrop' onClick={props.onClick}></div>;
@@ -7,7 +8,7 @@ const BackDrop = (props: any) => {
 const QuickViewModalOverlay = (props: any) => {
   return (
     <main 
-    className="modal slide-down shadow-2xl flex lg:flex-row flex-col items-center lg:h-[480px] h-[80vh] overflow-y-auto bg-white">
+    className="modal animate-slide-down shadow-2xl flex lg:flex-row flex-col items-center lg:h-[480px] h-[80vh] overflow-y-auto bg-white">
       {props.children}
     </main>
   );
@@ -28,6 +29,7 @@ const ReviewsModalOverlay = (props: any) => {
     <main aria-orientation="vertical" id='reviews-form' style={{'--modal-pos-left': `${props.left}`, '--modal-width': `${props.width}`} as React.CSSProperties} aria-labelledby='toggle-button' className={`${props.classes} w-4/5 left-[10%] z-[50] fixed bottom-[1vh] top-[0.5vh]`}>
       {props.children}
       <i className="fa-solid fa-xmark text-xl absolute right-6 top-5 cursor-pointer text-gray-500" onClick={props.onClose}></i>
+      <Image src='/oyinye.png' width={128} height={128} alt='logo' className="cursor-pointer rounded-md inline-block absolute left-5 top-2 -ml-10"/>
     </main>
   );
 };
@@ -37,15 +39,20 @@ const AdminSettingsModalOverlay = (props: any) => {
     <main id='admin-settings-modal' aria-orientation="vertical" style={{'--modal-pos-left': `${props.left}`, '--modal-width': `${props.width}`} as React.CSSProperties} aria-labelledby='toggle-button' className={`${props.classes ? props.classes : 'bg-white px-4 h-fit'} z-[50] w-4/5 fixed top-[10vh] left-[10%]`}>
       {props.children}
       <i className="fa-solid fa-xmark text-xl absolute right-4 top-5 cursor-pointer text-gray-500" onClick={props.onClose}></i>
+      <Image src='/oyinye.png' width={128} height={128} alt='logo' className="cursor-pointer rounded-md inline-block absolute left-5 top-2 -ml-10"/>
+
     </main>
+    
   );
 };
 
 const MobileModalOverlay = (props: any) => {
   return (
-    <main id='mobile-nav' aria-orientation="vertical" aria-labelledby='toggle-button' className={`${props.classes ? props.classes : 'bg-white px-4 pt-[70px]'} z-[45] w-4/5 flex-col pb-12 gap-y-6 h-full flex fixed top-0 left-0`}>
+    <main id='mobile-nav' aria-orientation="vertical" aria-labelledby='toggle-button' className={`${props.classes ? props.classes : 'bg-white px-4 pt-24'} z-[45] w-3/5 flex-col pb-12 gap-y-6 h-full flex fixed top-0 left-0`}>
       {props.children}
       <i className="fa-solid fa-xmark text-xl absolute right-4 top-5 cursor-pointer text-gray-500" onClick={props.onClick}></i>
+      <Image src='/oyinye.png' width={128} height={128} alt='logo' className="cursor-pointer rounded-md inline-block absolute left-5 top-2 -ml-10"/>
+
     </main>
   );
 };
@@ -53,7 +60,7 @@ const MobileModalOverlay = (props: any) => {
 const SearchModalOverlay = (props: any) => {
   return (
     <main 
-    className="search-modal slide-down flex flex-row justify-center h-28 bg-white w-full py-7 fixed top-0 left-0 z-[45]">
+    className="animate-slide-down flex flex-row justify-center h-28 bg-white w-full py-7 fixed top-0 left-0 z-[45]">
       {props.children}
     </main>
   );

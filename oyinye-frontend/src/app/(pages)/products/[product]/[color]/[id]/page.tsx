@@ -11,7 +11,7 @@ const ProductDetailComponent = dynamic(
   {
     loading: () => (
       <main className="flex justify-center items-center flex-col gap-y-2 bg-white h-screen w-full">
-        <h1 className="font-sans text-gray-600">api.geting Product...</h1>
+        <h1 className="font-sans text-gray-600">getting Product...</h1>
         <span className="border-4 border-transparent rounded-full border-t-gray-600 border-r-gray-600 w-[36px] h-[36px] spin"></span>
       </main>
     ),

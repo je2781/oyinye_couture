@@ -2,7 +2,6 @@ import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { sanitizeInput } from "libs/common/utils/sanitize";
-import { getVisitData } from "libs/common/utils/getVisitData";
 import { randomReference } from "libs/common/utils/getHelpers";
 import * as argon2 from "argon2";
 import { Request, Response } from "express";
@@ -54,7 +53,6 @@ export class EnquiryService {
       let password: string;
 
       if (!user) {
-        const visitId = getVisitData(req);
         password = randomReference();
         const hash = await argon2.hash(password);
 

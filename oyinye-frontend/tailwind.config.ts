@@ -32,6 +32,60 @@ const config: Config = {
         },
         action: "#0dcaf0",
       },
+      keyframes: {
+        forward: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
+        backward: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
+        'slide-up': {
+          from: { opacity: '1', transform: 'translateY(0)' },
+          to: { opacity: '0', transform: 'translateY(-5rem)' },
+        },
+        'slide-down': {
+          from: { opacity: '0', transform: 'translateY(-5rem)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'angle-down-rotate': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(180deg)' },
+        },
+        'angle-down-rotate-anticlock': {
+          '0%': { transform: 'rotate(180deg)' },
+          '100%': { transform: 'rotate(0deg)' },
+        },
+        'angle-left-rotate': {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(-180deg)' },
+        },
+        'angle-left-rotate-clock': {
+          from: { transform: 'rotate(-180deg)' },
+          to: { transform: 'rotate(0deg)' },
+        },
+        'angle-up-rotate': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(-180deg)' },
+        },
+        'angle-up-rotate-clock': {
+          '0%': { transform: 'rotate(-180deg)' },
+          '100%': { transform: 'rotate(0deg)' },
+        },
+      },
+      animation: {
+        forward: 'forward 0.3s linear forwards',
+        backward: 'backward 0.3s linear forwards',
+        'slide-up': 'slide-up 0.3s ease-out forwards',
+        'slide-down': 'slide-down 0.3s ease-out forwards',
+        'rotate-down': 'angle-down-rotate 0.3s ease-in-out forwards',
+        'rotate-up': 'angle-down-rotate-anticlock 0.3s ease-in-out forwards',
+        'rotate-left-up': 'angle-left-rotate 0.3s ease-in-out forwards',
+        'rotate-left-down': 'angle-left-rotate-clock 0.3s ease-in-out forwards',
+        'rotate-up-up': 'angle-up-rotate 0.3s ease-in-out forwards',
+        'rotate-up-down': 'angle-up-rotate-clock 0.3s ease-in-out forwards',
+      },
     },
   },
   plugins: [],

@@ -118,14 +118,14 @@ export default function FilterSettings({
               let content = section.parentNode?.querySelector("#price-content");
 
               if (upAngle && section) {
-                if (!upAngle.classList.contains("au-rotate")) {
-                  upAngle.classList.add("au-rotate");
-                  upAngle.classList.remove("au-rotate-clock");
+                if (!upAngle.classList.contains("animate-rotate-up-up")) {
+                  upAngle.classList.add("animate-rotate-up-up");
+                  upAngle.classList.remove("animate-rotate-up-down");
                   content?.classList.remove("show");
                   content?.classList.add("hide");
                 } else {
-                  upAngle.classList.remove("au-rotate");
-                  upAngle.classList.add("au-rotate-clock");
+                  upAngle.classList.remove("animate-rotate-up-up");
+                  upAngle.classList.add("animate-rotate-up-down");
                   content?.classList.add("show");
                   content?.classList.remove("hide");
                 }
@@ -299,14 +299,14 @@ export default function FilterSettings({
                     let content = header.parentNode?.querySelector("#productType-content");
 
                     if (upAngle && header) {
-                    if (!upAngle.classList.contains("au-rotate")) {
-                        upAngle.classList.add("au-rotate");
-                        upAngle.classList.remove("au-rotate-clock");
+                    if (!upAngle.classList.contains("animate-rotate-up-up")) {
+                        upAngle.classList.add("animate-rotate-up-up");
+                        upAngle.classList.remove("animate-rotate-up-down");
                         content?.classList.remove("show");
                         content?.classList.add("hide");
                     } else {
-                        upAngle.classList.remove("au-rotate");
-                        upAngle.classList.add("au-rotate-clock");
+                        upAngle.classList.remove("animate-rotate-up-up");
+                        upAngle.classList.add("animate-rotate-up-down");
                         content?.classList.add("show");
                         content?.classList.remove("hide");
                     }

@@ -41,16 +41,16 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
   useEffect(() => {
     let adminModal = document.querySelector('#admin-settings-modal') as HTMLElement;
     if (isAdminSettingsOpen && adminModal) {
-      adminModal.classList.add('slide-down');
-      adminModal.classList.remove('slide-up');
+      adminModal.classList.add('animate-slide-down');
+      adminModal.classList.remove('animate-slide-up');
     }
   }, [isAdminSettingsOpen]);
 
   useEffect(() => {
     let mobileNav = document.querySelector('#mobile-nav') as HTMLElement;
     if (isMobileModalOpen && mobileNav) {
-      mobileNav.classList.add('forward');
-      mobileNav.classList.remove('backward');
+      mobileNav.classList.add('animate-forward');
+      mobileNav.classList.remove('animate-backward');
     }
     
   }, [isMobileModalOpen]);
@@ -66,8 +66,8 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
   const hideModalHandler = () => {
     let mobileNav = document.querySelector('#mobile-nav') as HTMLElement;
     if (mobileNav) {
-      mobileNav.classList.remove('forward');
-      mobileNav.classList.add('backward');
+      mobileNav.classList.remove('animate-forward');
+      mobileNav.classList.add('animate-backward');
       timerId.current = setTimeout(() => {
         setIsMobileModalOpen(false);
       }, 300); 
@@ -92,8 +92,8 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
   const hideAdminSettingsModalHandler = (item: string) => {
     let adminModal = document.querySelector('#admin-settings-modal') as HTMLElement;
     if (adminModal) {
-      adminModal.classList.remove('slide-down');
-      adminModal.classList.add('slide-up');
+      adminModal.classList.remove('animate-slide-down');
+      adminModal.classList.add('animate-slide-up');
       timerId.current = setTimeout(() => {
       setIsAdminSettingsOpen({
         settings: false,
@@ -285,12 +285,12 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                                 <div 
                                                   onClick={() => {
                                                       let downAngle = document.querySelector('i.lang-angle-down');
-                                                      if(!downAngle?.classList.contains("ad-rotate")){
-                                                          downAngle?.classList.add("ad-rotate");
-                                                          downAngle?.classList.remove("ad-rotate-anticlock");
+                                                      if(!downAngle?.classList.contains("animate-rotate-down")){
+                                                          downAngle?.classList.add("animate-rotate-down");
+                                                          downAngle?.classList.remove("animate-rotate-up");
                                                       }else{
-                                                          downAngle?.classList.remove("ad-rotate");
-                                                          downAngle?.classList.add("ad-rotate-anticlock");
+                                                          downAngle?.classList.remove("animate-rotate-down");
+                                                          downAngle?.classList.add("animate-rotate-up");
                                                       }
                                                   }}
                                                   className="relative border border-gray-400 rounded-sm p-1 focus:border-gray-600 md:w-[30%] w-full">

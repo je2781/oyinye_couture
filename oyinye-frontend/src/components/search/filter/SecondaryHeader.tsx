@@ -49,8 +49,8 @@ export default function SecondaryHeader({
     React.useEffect(() => {
         let filterSettings = document.querySelector('#filter-settings') as HTMLElement;
         if (isFilterModalOpen && filterSettings) {
-            filterSettings.classList.add('forward');
-            filterSettings.classList.remove('backward');
+            filterSettings.classList.add('animate-forward');
+            filterSettings.classList.remove('animate-backward');
         }
 
         
@@ -64,8 +64,8 @@ export default function SecondaryHeader({
     const hideFilterModalHandler = () => {
         let filterSettings = document.querySelector('#filter-settings') as HTMLElement;
         if (filterSettings) {
-        filterSettings.classList.remove('forward');
-        filterSettings.classList.add('backward');
+        filterSettings.classList.remove('animate-forward');
+        filterSettings.classList.add('animate-backward');
         timerId = setTimeout(() => {
             setIsFilterModalOpen(false);
         }, 300); 
@@ -118,12 +118,12 @@ export default function SecondaryHeader({
                     onClick={(e) => {
                         let leftAngle = e.currentTarget.querySelector("i.search-filter-angle-left");
                         if (leftAngle) {
-                            if (!leftAngle.classList.contains("al-rotate")) {
-                                leftAngle.classList.add("al-rotate");
-                                leftAngle.classList.remove("al-rotate-clock");
+                            if (!leftAngle.classList.contains("animate-rotate-left-up")) {
+                                leftAngle.classList.add("animate-rotate-left-up");
+                                leftAngle.classList.remove("animate-rotate-left-down");
                             } else {
-                                leftAngle.classList.remove("al-rotate");
-                                leftAngle.classList.add("al-rotate-clock");
+                                leftAngle.classList.remove("animate-rotate-left-up");
+                                leftAngle.classList.add("animate-rotate-left-down");
                             }
                         }
 
@@ -176,24 +176,24 @@ export default function SecondaryHeader({
                             let ul = section.querySelector("ul");
 
                             if (downAngle && ul && section && text) {
-                                if (!downAngle.classList.contains("ad-rotate")) {
+                                if (!downAngle.classList.contains("animate-rotate-down")) {
                                     if (sort === "Relevance") {
                                         text.classList.add("slide-left");
                                         text.classList.remove("reverse-slide-left");
                                     }
-                                    downAngle.classList.add("ad-rotate");
-                                    downAngle.classList.remove("ad-rotate-anticlock");
+                                    downAngle.classList.add("animate-rotate-down");
+                                    downAngle.classList.remove("animate-rotate-up");
                                     section.classList.remove("top-0");
                                     section.classList.add("-top-[18px]", "shadow-xl", 'bg-white');
                                     ul.classList.remove("hidden");
                                     ul.classList.add("flex");
                                 } else {
-                                    downAngle.classList.remove("ad-rotate");
+                                    downAngle.classList.remove("animate-rotate-down");
                                     if (sort === "Relevance") {
                                         text.classList.add("reverse-slide-left");
                                         text.classList.remove("slide-left");
                                     }
-                                    downAngle.classList.add("ad-rotate-anticlock");
+                                    downAngle.classList.add("animate-rotate-up");
                                     section.classList.add("top-0");
                                     section.classList.remove("-top-[18px]", "shadow-xl", 'bg-white');
                                     ul.classList.add("hidden");
@@ -292,14 +292,14 @@ export default function SecondaryHeader({
                                 let content = header.parentNode?.querySelector("#price-content");
 
                                 if (upAngle && header) {
-                                if (!upAngle.classList.contains("au-rotate")) {
-                                    upAngle.classList.add("au-rotate");
-                                    upAngle.classList.remove("au-rotate-clock");
+                                if (!upAngle.classList.contains("animate-rotate-up-up")) {
+                                    upAngle.classList.add("animate-rotate-up-up");
+                                    upAngle.classList.remove("animate-rotate-up-down");
                                     content?.classList.remove("show");
                                     content?.classList.add("hide");
                                 } else {
-                                    upAngle.classList.remove("au-rotate");
-                                    upAngle.classList.add("au-rotate-clock");
+                                    upAngle.classList.remove("animate-rotate-up-up");
+                                    upAngle.classList.add("animate-rotate-up-down");
                                     content?.classList.add("show");
                                     content?.classList.remove("hide");
                                 }
@@ -473,14 +473,14 @@ export default function SecondaryHeader({
                                 let content = header.parentNode?.querySelector("#sortby-content");
 
                                 if (upAngle && header) {
-                                if (!upAngle.classList.contains("au-rotate")) {
-                                    upAngle.classList.add("au-rotate");
-                                    upAngle.classList.remove("au-rotate-clock");
+                                if (!upAngle.classList.contains("animate-rotate-up-up")) {
+                                    upAngle.classList.add("animate-rotate-up-up");
+                                    upAngle.classList.remove("animate-rotate-up-down");
                                     content?.classList.remove("show");
                                     content?.classList.add("hide");
                                 } else {
-                                    upAngle.classList.remove("au-rotate");
-                                    upAngle.classList.add("au-rotate-clock");
+                                    upAngle.classList.remove("animate-rotate-up-up");
+                                    upAngle.classList.add("animate-rotate-up-down");
                                     content?.classList.add("show");
                                     content?.classList.remove("hide");
                                 }
@@ -528,14 +528,14 @@ export default function SecondaryHeader({
                                 let content = header.parentNode?.querySelector("#productType-content");
 
                                 if (upAngle && header) {
-                                if (!upAngle.classList.contains("au-rotate")) {
-                                    upAngle.classList.add("au-rotate");
-                                    upAngle.classList.remove("au-rotate-clock");
+                                if (!upAngle.classList.contains("animate-rotate-up-up")) {
+                                    upAngle.classList.add("animate-rotate-up-up");
+                                    upAngle.classList.remove("animate-rotate-up-down");
                                     content?.classList.remove("show");
                                     content?.classList.add("hide");
                                 } else {
-                                    upAngle.classList.remove("au-rotate");
-                                    upAngle.classList.add("au-rotate-clock");
+                                    upAngle.classList.remove("animate-rotate-up-up");
+                                    upAngle.classList.add("animate-rotate-up-down");
                                     content?.classList.add("show");
                                     content?.classList.remove("hide");
                                 }
