@@ -60,8 +60,8 @@ export class UserService {
   async updateUser(
     req: Request,
     id: string,
-    files: Express.Multer.File[],
-    body: UpdateUserDto
+    body: UpdateUserDto,
+    file?: Express.Multer.File,
   ) {
     try {
       const {
@@ -70,7 +70,6 @@ export class UserService {
         password,
         enableEmailMarketing = false,
         checkingOut,
-        avatar,
         email,
       } = body;
 
@@ -92,9 +91,8 @@ export class UserService {
       user.enable_email_marketing = enableEmailMarketing;
       user.first_name = cleanFirstName!;
       user.last_name = cleanLastName!;
-      if (avatar) {
-        const avatarFile = files.find((f) => f.fieldname === "avatar");
-        user.avatar = avatarFile?.path;
+      if (file && file.fieldname === 'avater') {
+        user.avatar = file?.path;
       }
       if (cleanEmail) {
         user.email = cleanEmail;

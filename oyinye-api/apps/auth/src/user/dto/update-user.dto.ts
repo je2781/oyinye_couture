@@ -14,9 +14,6 @@ export class UpdateUserDto {
   @IsOptional()
   email?: string;
 
-  @IsOptional()
-  avatar?: Express.Multer.File;
-
   @IsBoolean()
   @IsOptional()
   enableEmailMarketing: boolean = false;

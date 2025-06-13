@@ -7,7 +7,7 @@ import {
   Post,
   Req,
   Res,
-  UploadedFiles,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
@@ -50,9 +50,9 @@ export class UserController {
   async updateUser(
     @Param("id") id: string,
     @Req() req: Request,
-    @UploadedFiles() files: Express.Multer.File[],
-    @Body() user: UpdateUserDto
+    @Body() user: UpdateUserDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.userService.updateUser(req, id, files, user);
+    return this.userService.updateUser(req, id, user, file);
   }
 }
