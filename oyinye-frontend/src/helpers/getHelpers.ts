@@ -474,8 +474,8 @@ export const extractProductDetail = (
           hex_code: color.hex_code
         };
       }
-      frontBase64ImagesObj[`${color.hex_code}`] = color.image_front_base64;
-      backBase64ImagesObj[`${color.hex_code}`] = [color.image_back_base64];
+      frontBase64ImagesObj[color.hex_code] = color.image_front_base64;
+      backBase64ImagesObj[color.hex_code] = [color.image_back_base64];
     
   }
   
@@ -726,7 +726,7 @@ export async function handleSubmit(
 
     sizes.forEach((size, sizeIndex) => {
       Object.entries(size).forEach(([key, value]) => {
-        formData.append(`colors_${index}_sizes_${sizeIndex}_${key}`, String(value));
+        formData.append(`colors_${index}_sizes_${sizeIndex}_${key}`, JSON.stringify(value));
       });
     });
   });
@@ -832,6 +832,7 @@ export async function handleProductEdit(
     product.colors.forEach((color: any, colorIndex: number) => {
       formData.append(`colors_${colorIndex}_name`, color.name);
       formData.append(`colors_${colorIndex}_hex_code`, color.hex_code);
+      formData.append(`colors_${colorIndex}_is_available`, JSON.stringify(color.is_available));
 
       // front images (array of base64)
       const frontImages = frontFileImagesObj[color.hex_code] || [];
@@ -853,7 +854,7 @@ export async function handleProductEdit(
 
       sizes.forEach((sizeObj, sizeIndex) => {
         Object.entries(sizeObj).forEach(([key, value]) => {
-          formData.append(`colors_${colorIndex}_sizes_${sizeIndex}_${key}`, String(value));
+          formData.append(`colors_${colorIndex}_sizes_${sizeIndex}_${key}`, JSON.stringify(value));
         });
       });
     });
@@ -2045,22 +2046,6 @@ export async function getCsrfToken(): Promise<string> {
   return tokenRes.data.token;
 }
 
-function base64ToFile(base64: string, filename: string): File {
-  if (!base64.includes(',')) throw new Error('Invalid base64 string');
-
-  const [prefix, data] = base64.split(',');
-  const mime = prefix.match(/:(.*?);/)?.[1] || 'image/webp';
-
-  const binary = atob(data);
-  const len = binary.length;
-  const u8arr = new Uint8Array(len);
-
-  for (let i = 0; i < len; i++) {
-    u8arr[i] = binary.charCodeAt(i);
-  }
-
-  return new File([u8arr], filename, { type: mime });
-}
 
 
 

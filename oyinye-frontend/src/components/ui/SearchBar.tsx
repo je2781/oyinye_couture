@@ -161,7 +161,7 @@ const SearchBar = ({ onHideModal, isAdmin}: any) => {
                         className="flex flex-row items-start gap-x-5 px-4 py-3 hover:bg-gray-100 cursor-pointer">
                           <Image
                             alt={`Product ${i + 1}`}
-                            src={product.colors[0].image_front_base64[0]}
+                            src={product.colors[0].image_front_base64[0].replace('/app/public', isAdmin ? process.env.NEXT_PUBLIC_ADMIN_DOMAIN : process.env.NEXT_PUBLIC_WEB_DOMAIN)}
                             width={50}
                             height={65}
                           />

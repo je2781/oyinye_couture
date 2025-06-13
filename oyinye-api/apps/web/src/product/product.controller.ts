@@ -25,19 +25,17 @@ export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Get(":product/:color/:variantId")
-  get(
+  async get(
     @Param() params: ProductParamsDto,
-    @Query("viewed_p") viewedP: string,
-    @Req() req: Request,
-    @Res() res: Response
+    @Query("viewed_p") viewedP: string
   ) {
-    return this.productService.get(params, viewedP, req, res);
+    return this.productService.get(params, viewedP);
   }
 
   @UseGuards(JwtGuard)
   @Csrf()
   @Patch("reviews/likes-dislikes/update")
-  updateReview(
+  async updateReview(
     @Res() res: Response,
     @Req() req: Request,
     @Body() body: UpdateReviewFeedbackDto
@@ -48,7 +46,7 @@ export class ProductController {
   @UseGuards(JwtGuard)
   @Csrf()
   @Post(":title/update")
-  createReview(
+  async createReview(
     @Param("title") title: string,
     @Req() req: Request,
     @Res() res: Response
@@ -57,7 +55,7 @@ export class ProductController {
   }
 
   @Get("search")
-  getSearchResults(
+  async getSearchResults(
     @Query()
     queryParams: SearchQueryDto,
     @Req() req: Request,
@@ -67,7 +65,7 @@ export class ProductController {
   }
 
   @Get("collections")
-  getCollectionsResults(
+  async getCollectionsResults(
     @Query()
     queryParams: CollectionsQueryDto,
     @Req() req: Request,
@@ -77,7 +75,7 @@ export class ProductController {
   }
 
   @Get()
-  getProducts(
+  async getProducts(
     @Query("hidden", ParseBoolPipe) hidden: boolean,
     @Req() req: Request,
     @Res() res: Response

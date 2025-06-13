@@ -148,9 +148,7 @@ export default function Body({
     imagesBackFile: [],
     imagesBack: [],
   });
-  const [extractedProducts, setExtractedProducts] = React.useState<any[]>(
-    searchData.products
-  );
+
   const [isFeature, setIsFeature] = React.useState({
     listing: false,
     edit: false,
@@ -417,7 +415,7 @@ export default function Body({
     }
   }
 
-  function handleSelectedColor(e: React.MouseEvent, index: number) {
+  function handleSelectedColor(e: React.MouseEvent, index: number, ) {
     let item = e.currentTarget;
 
     let selectedColor = Array.from(item.classList).find((className) =>
@@ -496,7 +494,7 @@ export default function Body({
       dispatchAction({
         type: "REMOVE",
         color: {
-          type: selectedColor,
+          name: selectedColor,
         },
       });
     } else {
@@ -545,7 +543,7 @@ export default function Body({
       dispatchAction({
         type: "ADD",
         color: {
-          type: selectedColor,
+          name: selectedColor,
         },
       });
     }
@@ -6095,12 +6093,12 @@ export default function Body({
       )}
       {pathName === "products" && (
         <section className="w-full text-secondary-400 font-sans h-full">
-          {extractedProducts.length > 0 ? (
+          {searchData.products.length > 0 ? (
             <>
               <div
                 className={`w-full flex md:flex-row flex-col items-center py-4 h-full overflow-y-auto hide-scrollbar justify-evenly flex-wrap gap-x-1 gap-y-4`}
               >
-                {extractedProducts.map((product: any, i: number) => (
+                {searchData.products.map((product: any, i: number) => (
                   <ProductComponent
                     key={i}
                     imageW={250}
@@ -6170,8 +6168,8 @@ export default function Body({
                         renderBullet: (index, className) => {
                           return `<span class="${className}" style="background-image: url(${
                             visibleImages.position === "front"
-                              ? visibleImages.imagesFront[index]
-                              : visibleImages.imagesBack[index]
+                              ? visibleImages.imagesFront[index].replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN!)
+                              : visibleImages.imagesBack[index].replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN!)
                           });"></span>`;
                         },
                       }}
@@ -6187,7 +6185,7 @@ export default function Body({
                                       <label
                                         htmlFor={`avatar-${i}`}
                                         style={{
-                                          backgroundImage: `url(${image})`,
+                                          backgroundImage: `url(${image.replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN!)})`,
                                         }}
                                         id={`avatar-container-${i}`}
                                         className="rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover"
@@ -6247,7 +6245,7 @@ export default function Body({
                                       <label
                                         htmlFor={`avatar-${i}`}
                                         style={{
-                                          backgroundImage: `url(${image})`,
+                                          backgroundImage: `url(${image.replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN!)})`,
                                         }}
                                         id={`avatar-container-${i}`}
                                         className="rounded-[50%] w-36 h-36 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover"

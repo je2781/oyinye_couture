@@ -22,7 +22,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
   const router = useRouter();
   const [isSearchModalOpen, setIsSearchModalOpen] = React.useState(false);
   const {isMobileModalOpen, setIsMobileModalOpen} = useGlobal();
-  const [imageBase64, setImageBase64] = React.useState('');
+  const [imageFile, setImageFile] = React.useState<File | null>(null);
   const [email, setEmail] = React.useState(userEmail);
   const [password, setPassword] = React.useState('*********');
   const [name, setName] = React.useState(userName);
@@ -165,7 +165,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
               id="user-menu-button" aria-expanded="false" aria-haspopup="true" type="button" className="rounded-full bg-transparent p-1  focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-950">
                   <span className="absolute -inset-1.5"></span>
                   <span className="sr-only">Open admin menu</span>
-                  <Image width={40} height={40} className="rounded-full" src={`${avatar ?? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'}`} alt="profile-pic"/>
+                  <Image width={40} height={40} className="rounded-full" src={`${avatar ? avatar.replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN) : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'}`} alt="profile-pic"/>
               </button>
   
               <div id='admin-menu' className="hidden absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md text-secondary-400 bg-primary-800 shadow-md ring-1 ring-black ring-opacity-5 py-3 px-2 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" >
@@ -210,16 +210,17 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                       e.preventDefault();
                                       try {
                                         setLoader(true);
-                                        await api.patch(`${process.env.NEXT_PUBLIC_AUTH_DOMAIN}/api/auth/users/${id}`, {
-                                          firstName: name.split(' ')[0],
-                                          lastName: name.split(' ')[1],
-                                          password,
-                                          email,
-                                          avatar: imageBase64
-                                        },{
-                                          withCredentials: true,
+                                        const formData = new FormData();
+                                        formData.append('first_name', name.split(' ')[0]);
+                                        formData.append('last_name', name.split(' ')[1]);
+                                        formData.append('password', password);
+                                        formData.append('email', email);
+                                        formData.append('avatar', imageFile!);
+                 
+                                        await api.patch(`${process.env.NEXT_PUBLIC_AUTH_DOMAIN}/api/auth/users/${id}`, formData,{
                                           headers: {
-                                            'x-csrf-token': csrf
+                                            'x-csrf-token': csrf,
+                                            "Content-Type": "multipart/form-data"
                                           }
                                         });
                                       } catch (error) {
@@ -234,9 +235,18 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                     }}  className='flex flex-col gap-y-9 max-h-[75vh]' encType="multipart/form-data">
                                         <div className="flex md:flex-row flex-col w-full items-start px-5 gap-y-4">
                                           <div className='flex flex-row justify-center md:w-[30%] w-full'>
-                                              <label htmlFor='avatar' id='avatar-container' className='rounded-[50%] md:w-40 md:h-40 h-28 w-28 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
-                                                  <i className="fa-solid fa-camera text-2xl text-white"></i>
-                                              </label>
+                                              {
+                                                avatar
+                                                ? <label htmlFor='avatar' id='avatar-container'className='rounded-[50%] md:w-40 md:h-40 h-28 w-28 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'
+                                                  style={{
+                                                    backgroundImage: `url(${avatar.replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN!)})`,
+                                                  }}
+                                                >
+                                                  </label>
+                                                : <label htmlFor='avatar' id='avatar-container' className='rounded-[50%] md:w-40 md:h-40 h-28 w-28 cursor-pointer bg-gray-300 flex items-center justify-center flex-row bg-cover'>
+                                                      <i className="fa-solid fa-camera text-2xl text-white"></i>
+                                                  </label>
+                                              }
                                               <input type='file' className='hidden' id='avatar' onChange={async(e) => {
                                                   const base64String = await generateBase64FromMedia(e.target.files![0]!);
                                                   const picContainer = document.getElementById('avatar-container') as HTMLLabelElement;
@@ -244,7 +254,7 @@ export default function AdminHeader({sectionName, pathName, userName, userEmail,
                                                   picContainer.innerHTML = '';
 
                                                   if(picContainer){
-                                                      setImageBase64(base64String as string);
+                                                      setImageFile(e.target.files![0]);
                                                       picContainer.style.backgroundImage = `url(${base64String})`;
                                                   }
 

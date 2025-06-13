@@ -17,13 +17,19 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom } from "rxjs";
 import { User } from "../entities/user.entity";
-import { EMAIL_SERVICE } from "../constants/service";
+import {
+  ADMIN_SERVICE,
+  EMAIL_SERVICE,
+  WEB_SERVICE,
+} from "../constants/service";
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
+    @Inject(ADMIN_SERVICE) private adminClient: ClientProxy,
     @Inject(EMAIL_SERVICE) private emailClient: ClientProxy,
+    @Inject(WEB_SERVICE) private webClient: ClientProxy
   ) {}
 
   async getUser(id: string, res: Response) {
@@ -54,7 +60,7 @@ export class UserService {
   async updateUser(
     req: Request,
     id: string,
-    res: Response,
+    files: Express.Multer.File[],
     body: UpdateUserDto
   ) {
     try {
@@ -87,7 +93,8 @@ export class UserService {
       user.first_name = cleanFirstName!;
       user.last_name = cleanLastName!;
       if (avatar) {
-        user.avatar = avatar;
+        const avatarFile = files.find((f) => f.fieldname === "avatar");
+        user.avatar = avatarFile?.path;
       }
       if (cleanEmail) {
         user.email = cleanEmail;
@@ -104,18 +111,35 @@ export class UserService {
             access_token: req.cookies["access_token"],
           })
         );
+        //dispatching user_updated job
+        await lastValueFrom(
+          this.webClient.emit("user_updated", {
+            id: user.id,
+            data: user,
+            access_token: req.cookies["access_token"],
+          })
+        );
+      } else {
+        //dispatching user_updated job
+        await lastValueFrom(
+          this.adminClient.emit("user_updated", {
+            id: user.id,
+            data: user,
+            access_token: req.cookies["access_token"],
+          })
+        );
       }
 
-      return res.status(201).json({
+      return {
         message: "User data updated successfully",
         success: true,
         savedUser,
-      });
+      };
     } catch (error) {
       const e = error as Error;
-      return res.status(500).json({
-        error: e.message || "An unexpected error occurred",
-      });
+      throw new InternalServerErrorException(
+        e.message || "An unexpected error occurred"
+      );
     }
   }
 

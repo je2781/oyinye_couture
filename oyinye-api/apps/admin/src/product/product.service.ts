@@ -38,7 +38,8 @@ export class ProductService {
     let i = 0;
     while (req.body[`colors_${i}_name`]) {
       const name = req.body[`colors_${i}_name`];
-      const hex_code = req.body[`colors_${i}_hex_code`];
+      const hexCode = req.body[`colors_${i}_hex_code`];
+      let isAvailable = false;
 
       // Gather all front image files
       const frontFiles = files.filter((f) =>
@@ -64,7 +65,10 @@ export class ProductService {
           const prefix = `colors_${i}_sizes_${j}_`;
           if (key.startsWith(prefix)) {
             const prop = key.substring(prefix.length, key.length);
-            size[prop] = req.body[key];
+            size[prop] = JSON.parse(req.body[key]);
+            if(prop === 'stock'){
+              isAvailable = Number(JSON.parse(req.body[key])) > 0;
+            }
           }
         }
         sizes.push(size);
@@ -73,7 +77,8 @@ export class ProductService {
 
       colors.push({
         name,
-        hex_code,
+        hex_code: hexCode,
+        is_available: isAvailable,
         image_front_base64,
         image_back_base64,
         sizes,
@@ -120,7 +125,8 @@ export class ProductService {
     let i = 0;
     while (req.body[`colors_${i}_name`]) {
       const name = req.body[`colors_${i}_name`];
-      const hex_code = req.body[`colors_${i}_hex_code`];
+      const hexCode = req.body[`colors_${i}_hex_code`];
+      const isAvailable = JSON.parse(req.body[`colors_${i}_is_available`]);
 
       // Gather all front image files
       const frontFiles = files.filter((f) =>
@@ -146,7 +152,7 @@ export class ProductService {
           const prefix = `colors_${i}_sizes_${j}_`;
           if (key.startsWith(prefix)) {
             const prop = key.substring(prefix.length, key.length);
-            size[prop] = req.body[key];
+            size[prop] = JSON.parse(req.body[key]);
           }
         }
         sizes.push(size);
@@ -155,7 +161,8 @@ export class ProductService {
 
       colors.push({
         name,
-        hex_code,
+        hex_code: hexCode,
+        is_available: isAvailable,
         image_front_base64,
         image_back_base64,
         sizes,

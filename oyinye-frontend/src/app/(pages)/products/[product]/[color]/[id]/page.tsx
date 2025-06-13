@@ -27,29 +27,16 @@ async function getData(product: string, color: string, variantId: string) {
     const [productDataRes, cartDataRes] = await Promise.all([
       api.get(
         `${process.env.WEB_DOMAIN}/api/products/${product}/${color}/${variantId}?viewed_p=${viewedProducts}`,
-        {
-          headers: {
-            "Cache-Control": "no-store",
-          },
-        }
+
       ),
-      api.get(`${process.env.WEB_DOMAIN}/api/products/cart/${cartId}`, {
-        headers: {
-          "Cache-Control": "no-store",
-        },
-      }),
+      api.get(`${process.env.WEB_DOMAIN}/api/products/cart/${cartId}`),
     ]);
 
 
     return [productDataRes.data, cartDataRes.data.cartItems];
   } else {
     const productDataRes = await api.get(
-      `${process.env.WEB_DOMAIN}/api/products/${product}/${color}/${variantId}?viewed_p=${viewedProducts}`,
-      {
-        headers: {
-          "Cache-Control": "no-store",
-        },
-      }
+      `${process.env.WEB_DOMAIN}/api/products/${product}/${color}/${variantId}?viewed_p=${viewedProducts}`
     );
     return [productDataRes.data, []];
   }

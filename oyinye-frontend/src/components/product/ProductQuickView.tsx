@@ -39,7 +39,6 @@ const ProductQuickView = ({
   let colorsObj: {
     [key: string]: number[];
   } = {};
-  let frontBase64ImagesObj: Base64ImagesObj = {};
 
   let timerId = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -361,7 +360,6 @@ const ProductQuickView = ({
       )
     );
 
-    frontBase64ImagesObj[color.name] = color.image_front_base64;
     color.sizes.forEach((size: any) => {
       sizesObj[`${color.name}-${size.number}`] = {
         price: size.price,
@@ -471,7 +469,7 @@ const ProductQuickView = ({
                 const pathParts = path.split("/");
                 const newPath = `/${
                   pathParts[1]
-                }/api/products${product.title
+                }/products/${product.title
                   .replace(" ", "-")
                   .toLowerCase()}/${sizesObj[
                   `${selectedColor}-${selectedSize}`
@@ -482,7 +480,7 @@ const ProductQuickView = ({
                 const url = new URL(`${window.location.origin}${newPath}`);
                 window.location.href = url.toString();
               } else {
-                router.push(`/api/products${product.title
+                router.push(`/products/${product.title
                     .replace(" ", "-")
                     .toLowerCase()}/${sizesObj[
                     `${selectedColor}-${selectedSize}`

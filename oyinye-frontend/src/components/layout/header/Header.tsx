@@ -46,6 +46,11 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
     },
   ];
 
+    //getting active page
+    const currentNavItem = menuItems.findIndex(
+      (item) => item.href === path
+    );
+
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollPos = window.scrollY;
@@ -158,13 +163,13 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
         </Link>
         {!isCheckout && (
           <ul className="grow hidden lg:inline-flex flex-row items-center gap-x-8">
-            {menuItems.map((item) => (
+            {menuItems.map((item, i) => (
               <li key={item.name} className={`cursor-pointer relative`}>
                 {item.name !== "Collections" ? (
                   <Link
                     href={item.href}
                     style={{ textDecorationThickness: "2px" }}
-                    aria-current={`${path === item.href ? 'page' : 'false'}`}
+                    aria-current={currentNavItem === i ? 'page' : undefined}
                     className={`${
                       path === item.href ? "underline underline-offset-4" : ''
                     } hover:underline hover:underline-offset-4 text-[1rem] font-medium text-gray-600 font-sans`}
@@ -314,12 +319,13 @@ export default function Header({ cartItems, isCheckout, isAuth }: any) {
             </li>
           </ul>
           <ul className="inline-flex flex-col gap-y-6 text-gray-500 font-sans text-lg">
-            {menuItems.map((item) => (
+            {menuItems.map((item, i) => (
               <li key={item.name}>
                 {item.name !== "Collections" ? (
                   <Link
                     href={item.href}
-                    className="font-medium "
+                    className="font-medium"
+                    aria-current={currentNavItem === i ? 'page' : undefined}
                   >
                     {item.name}
                   </Link>

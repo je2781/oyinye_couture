@@ -5,15 +5,22 @@ import { RMQModule } from "@app/common/rmq/rmq.module";
 import { UserController } from "./user.controller";
 import { UserEventController } from "./user.event.controller";
 import { User } from "../entities/user.entity";
-import { AUTH_SERVICE, EMAIL_SERVICE } from "../constants/service";
+import {
+  ADMIN_SERVICE,
+  AUTH_SERVICE,
+  EMAIL_SERVICE,
+  WEB_SERVICE,
+} from "../constants/service";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     RMQModule.register(EMAIL_SERVICE),
     RMQModule.register(AUTH_SERVICE),
+    RMQModule.register(ADMIN_SERVICE),
+    RMQModule.register(WEB_SERVICE),
   ],
   providers: [UserService],
-  controllers: [UserController, UserEventController]
+  controllers: [UserController, UserEventController],
 })
 export class UserModule {}

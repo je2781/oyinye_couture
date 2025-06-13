@@ -1,6 +1,6 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { Inject, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { ILike, Raw, Repository } from "typeorm";
+import { ILike, In, Raw, Repository } from "typeorm";
 import { Product } from "./product.entity";
 import { Request, Response } from "express";
 import { Cart } from "../cart/cart.entity";
@@ -42,42 +42,33 @@ export class ProductService {
   async get(
     params: ProductParamsDto,
     viewedP: string,
-    req: Request,
-    res: Response
   ) {
     try {
-      let extractedProductsArray: Product[] = [];
-      let authors: User[] = [];
-      let updatedProducts: Product[] = [];
-      let reviews: Review[] = [];
-      let updatedReviews: any[] = [];
-
-      const viewedProducts = viewedP;
-
-      // ===== Load the product first =====
       const title =
         params.product.charAt(0).toUpperCase() +
         params.product.replace("-", " ").slice(1);
-
-      const product = await this.productRepo.findOne({
-        where: { title },
-        
-      });
-
-      if (!product) throw new NotFoundException("product doesn't exit");
-
+  
+      const product = await this.productRepo.findOne({ where: { title } });
+  
+      if (!product) throw new NotFoundException("Product doesn't exist");
+  
       const extractedColorObj = product.colors.find(
         (color: any) => color.name === params.color.replace("-", " ")
       );
-
+  
       if (!extractedColorObj)
-        throw new NotFoundException("product colors doesn't exit");
-
-      if (viewedProducts != "undefined") {
-        const viewedProductsArray = JSON.parse(viewedProducts);
-
+        throw new NotFoundException("Product color doesn't exist");
+  
+      const extractedProductsArray: Product[] = [];
+      const updatedProducts: Product[] = [];
+      let updatedReviews: any[] = [];
+  
+      // ===== Viewed Products
+      if (viewedP !== "undefined") {
+        const viewedProductsArray = JSON.parse(viewedP);
+  
         for (const viewedProduct of viewedProductsArray) {
-          let extractedProduct = await this.productRepo
+          const extractedProduct = await this.productRepo
             .createQueryBuilder("product")
             .where(`product.colors @> :colorCondition`, {
               colorCondition: JSON.stringify([
@@ -85,13 +76,14 @@ export class ProductService {
               ]),
             })
             .getOne();
-
+  
           if (extractedProduct) {
             extractedProductsArray.push(extractedProduct);
           }
         }
       }
-
+  
+      // ===== Similar Color Products
       const extractedProductsOfSimilarColor = await this.productRepo
         .createQueryBuilder("product")
         .where(
@@ -104,53 +96,47 @@ export class ProductService {
           }
         )
         .getMany();
-
+  
+      // ===== Carts with this Product
       const carts = await this.cartRepo
         .createQueryBuilder("cart")
         .where(`cart.items @> :productMatch`, {
           productMatch: JSON.stringify([{ product: { id: product.id } }]),
         })
         .getMany();
-
-      if (carts.length > 0) {
+  
+      if(carts.length > 0){
         for (const cart of carts) {
-          let products = cart.items.map((item: any) => item.product);
+          const products = cart.items.map((item: any) => item.product);
           updatedProducts.push(...products);
         }
       }
-
-      for(const reviewId of product.collated_reviews){
-
-        reviews = await this.reviewRepo.find({
-          where: {
-            id: reviewId,
-          },
+  
+      // ===== Reviews
+      if (product.collated_reviews?.length > 0) {
+        const reviewIds = product.collated_reviews;
+        const reviews = await this.reviewRepo.find({
+          where: { id: In(reviewIds) },
+          relations: {user: true},
         });
+  
         reviews.sort((a, b) => b.likes - a.likes);
   
-        for (const review of reviews) {
-          const user = await this.userRepo.findOneBy({ id: review.user.id });
-          authors.push(user!);
-        }
-  
-        updatedReviews = reviews.map((review) => {
-          const extractedAuthor = authors.find(
-            (author) => author.id === review.user.id
-          );
-          return { ...review, author: extractedAuthor };
-        });
+        updatedReviews = reviews.map((review) => ({
+          ...review,
+          author: review.user,
+        }));
       }
-
-      updatedProducts = [
+  
+      // ===== Related Products
+      const relatedProducts = [
         ...updatedProducts,
         ...extractedProductsArray,
         ...extractedProductsOfSimilarColor,
-      ];
-      const relatedProducts = updatedProducts.filter(
-        (prod) => prod.id !== product.id
-      );
-
-      return res.status(200).json({
+      ].filter((prod) => prod.id !== product.id);
+  
+      // ===== Final Response
+      return {
         productSizes: extractedColorObj.sizes,
         productFrontBase64Images: extractedColorObj.image_front_base64,
         productId: product.id,
@@ -160,14 +146,12 @@ export class ProductService {
         productReviews: updatedReviews,
         relatedProducts,
         success: true,
-      });
+      };
     } catch (error) {
-      const e = error as Error;
-      return res.status(500).json({
-        erro: e.message,
-      });
+      throw new InternalServerErrorException(error.message);
     }
   }
+  
 
   async updateReview(
     req: Request,

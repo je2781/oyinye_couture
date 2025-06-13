@@ -14,9 +14,8 @@ export class UpdateUserDto {
   @IsOptional()
   email?: string;
 
-  @IsString()
   @IsOptional()
-  avatar?: string;
+  avatar?: Express.Multer.File;
 
   @IsBoolean()
   @IsOptional()

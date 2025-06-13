@@ -9,6 +9,7 @@ import useWindowWidth from "../helpers/getWindowWidth";
 
 const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView, isOnDetailPage, isAdmin, handleEdit, handleDelete, csrf}: any) => {
     const[isModalOpen, setIsModalOpen] = React.useState(false);
+    const [hovered, setHovered] = React.useState(false);
     let width = useWindowWidth();
     const path = usePathname();
     const router = useRouter();
@@ -18,6 +19,7 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
       product.colors[0].sizes = product.colors[0].sizes.filter((size: any) => size.stock > 0);
     }
     product.colors[0].sizes.sort((a: any, b: any) => a.number - b.number);
+
 
     const showModalHandler = (e: React.MouseEvent) => {
       const item = e.currentTarget;
@@ -54,9 +56,7 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
           <article
             onMouseLeave={(e) => {
               if(!isModalOpen){
-                const item = e.currentTarget;
-                const imgElement = item.querySelector('#admin-img-container > img') as HTMLImageElement;
-                imgElement.src = product.colors[0].image_front_base64[0].replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN);
+                setHovered(false);
 
                 if(product.is_hidden){
                   const hiddenHint = document.querySelector('#is-hidden') as HTMLDivElement;
@@ -68,10 +68,7 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
             }}
             onMouseOver={(event) => {
               if (!isModalOpen) {
-                const item = event.currentTarget;
-                const hoverImage = item.getAttribute('data-hover');
-                const imgElement = item.querySelector('#admin-img-container > img') as HTMLImageElement;
-                imgElement.src = hoverImage!;
+                setHovered(true);
 
                 if(product.is_hidden){
                   const hiddenHint = document.querySelector('#is-hidden') as HTMLDivElement;
@@ -80,13 +77,14 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
               }
 
             }}
-            data-hover={product.colors[0].image_back_base64.replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN)}
 
             className={`items-center flex flex-col gap-y-4 cursor-pointer pb-6 relative`}
           > 
           <div id='admin-img-container' className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && width > 375 && isGridView && isSearchProduct ? 'w-[181px] h-[200px]' :  width <= 375 && isGridView && isSearchProduct ? 'w-[173px] h-[200px]' : width < 768 && !isGridView && isSearchProduct ? 'w-full h-[380px]' : width >= 768 && width < 1024 ? 'w-[270px]' : ``} group relative overflow-hidden`}>
             <Image
-                src={`${product.colors[0].image_front_base64[0].replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN)}`}
+                src={hovered 
+                  ? product.colors[0].image_back_base64.replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN)
+                  : product.colors[0].image_front_base64[0].replace('/app/public', process.env.NEXT_PUBLIC_ADMIN_DOMAIN)}
                 alt="dress-Image"
                 width={imageW ?? 300}
                 height={imageH ?? 450}
@@ -136,15 +134,14 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
       
           <article
             className={`${isSearchProduct ? 'items-start': 'items-center'} flex flex-col gap-y-4 cursor-pointer pb-6 relative`}
-            data-hover={product.colors[0].image_back_base64.replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN)}
             onMouseLeave={(e) => {
               if(!isModalOpen){
                 const item = e.currentTarget;
-                const imgElement = item.querySelector('#img-container > img') as HTMLImageElement;
                 const zoomHint = item.parentNode!.querySelector('#zoom-hint') as HTMLDivElement;
-                imgElement.src = product.colors[0].image_front_base64[0].replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN);
-
+                
                 zoomHint.classList.remove('expand');
+                
+                setHovered(false);
               }
 
             }}
@@ -164,19 +161,20 @@ const ProductComponent = ({ product, isSearchProduct, imageH, imageW, isGridView
             onMouseOver={(event) => {
               if (!isModalOpen) {
                 const item = event.currentTarget;
-                const hoverImage = item.getAttribute('data-hover');
-                const imgElement = item.querySelector('#img-container > img') as HTMLImageElement;
                 const zoomHint = item.parentNode!.querySelector('#zoom-hint') as HTMLDivElement;
-                imgElement.src = hoverImage!;
-
+                
                 zoomHint.classList.add('expand');
+
+                setHovered(true);
               }
 
             }}
           > 
             <div id='img-container' className={`${width < 768 && !isSearchProduct ? 'w-[160px] h-[200px]' : width < 768 && width > 375 && isGridView && isSearchProduct ? 'w-[181px] h-[200px]' :  width <= 375 && isGridView && isSearchProduct ? 'w-[173px] h-[200px]' : width < 768 && !isGridView && isSearchProduct ? 'w-full h-[380px]' : width >= 768 && width < 1024 ? 'w-[270px]' : ``} group relative overflow-hidden`}>
               <Image
-                  src={`${product.colors[0].image_front_base64[0].replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN)}`}
+                  src={hovered 
+                    ? product.colors[0].image_back_base64.replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN)
+                    : product.colors[0].image_front_base64[0].replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN)}
                   alt="dress-Image"
                   width={imageW ?? 300}
                   height={imageH ?? 450}

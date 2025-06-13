@@ -76,7 +76,7 @@ export class ProductController {
   }
 
   @Get()
-  getProducts(
+ async getProducts(
     @Query("hidden", ParseBoolPipe) hidden: boolean,
     @Req() req: Request,
     @Res() res: Response
@@ -85,7 +85,7 @@ export class ProductController {
   }
 
   @Get("search")
-  getSearchResults(
+  async getSearchResults(
     @Query()
     queryParams: { q: string; page: string },
     @Req() req: Request,
