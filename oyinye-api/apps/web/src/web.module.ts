@@ -10,7 +10,6 @@ import { FilterModule } from "./filter/filter.module";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { APP_GUARD } from "@nestjs/core";
 import { DatabaseModule, RMQModule } from "@app/common";
-import { ADMIN_SERVICE, EMAIL_SERVICE } from "./constants/service";
 import { UserModule } from "./user/user.module";
 
 @Module({

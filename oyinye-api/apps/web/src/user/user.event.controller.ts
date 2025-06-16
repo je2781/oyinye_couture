@@ -11,13 +11,13 @@ export class UserEventController{
     }
 
     @EventPattern('user_created')
-    async handleUserCreate(@Payload() data, @Ctx() context: RmqContext){
+    async handleUserCreated(@Payload() data, @Ctx() context: RmqContext){
         await this.userService.createUser(data);
         this.rmqService.ack(context);
     }
 
     @EventPattern('user_updated')
-    async handleUserUpdate(@Payload() update, @Ctx() context: RmqContext){
+    async handleUserUpdated(@Payload() update, @Ctx() context: RmqContext){
         await this.userService.updateUser(update.id, update.data);
         this.rmqService.ack(context);
         

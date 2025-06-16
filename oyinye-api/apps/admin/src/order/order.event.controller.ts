@@ -9,13 +9,13 @@ export class OrderEventController {
   constructor(private readonly orderService: OrderService, private readonly rmqService: RMQService) {}
 
   @EventPattern("order_updated")
-  async handleOrderUpdate(@Payload() update, @Ctx() context: RmqContext) {
+  async handleOrderUpdated(@Payload() update, @Ctx() context: RmqContext) {
     await  this.orderService.updateOrder(update.id, update.data);
     this.rmqService.ack(context);
   }
 
   @EventPattern("order_created")
-  async handleOrderCreate(@Payload() data, @Ctx() context: RmqContext) {
+  async handleOrderCreated(@Payload() data, @Ctx() context: RmqContext) {
     await this.orderService.createOrder(data.order);
     this.rmqService.ack(context);
   }

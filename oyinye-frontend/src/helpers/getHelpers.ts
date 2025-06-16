@@ -410,12 +410,12 @@ export let setBrowserUsageData = (data: any) => {
 };
 
 
-export function decodedBase64(base64String: string) {
-  // Decode the Base64 string
-  const decodedString = atob(base64String);
+// export function decodedBase64(base64String: string) {
+//   // Decode the Base64 string
+//   const decodedString = atob(base64String);
 
-  return decodedString;
-}
+//   return decodedString;
+// }
 
 export function randomReference() {
   let length = 8;

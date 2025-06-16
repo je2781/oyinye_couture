@@ -11,19 +11,19 @@ export class CartEventController{
     }
 
     @EventPattern("cart_destroyed")
-    async handleCartDestroy(@Payload() data: any, @Ctx() context: RmqContext) {
+    async handleCartDestroyed(@Payload() data: any, @Ctx() context: RmqContext) {
       await this.cartService.deleteCart(data.id);
       this.rmqService.ack(context);
     }
 
     @EventPattern("cart_updated")
-    async handleCartUpdate(@Payload() update, @Ctx() context: RmqContext) {
+    async handleCartUpdated(@Payload() update, @Ctx() context: RmqContext) {
       await this.cartService.updateCart(update.id, update.data);
       this.rmqService.ack(context);
     }
 
     @EventPattern("cart_created")
-    async handleCartCreate(@Payload() data, @Ctx() context: RmqContext) {
+    async handleCartCreated(@Payload() data, @Ctx() context: RmqContext) {
       await this.cartService.createCart(data.cart);
       this.rmqService.ack(context);
     }

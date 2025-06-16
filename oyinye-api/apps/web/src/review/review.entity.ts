@@ -24,6 +24,9 @@ export class Review extends AbstractEntity<Review> {
   @Column("text")
   content: string;
 
+  @Column("text")
+  content_type: string;
+
   @Column({ type: "int", default: 0 })
   likes: number;
 

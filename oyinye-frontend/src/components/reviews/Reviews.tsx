@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { ReviewsModal } from '../layout/Modal';
 import React from 'react';
-import {decodedBase64, generateBase64FromMedia, reloadPage } from '@/helpers/getHelpers';
+import {generateBase64FromMedia, reloadPage } from '@/helpers/getHelpers';
 import toast from 'react-hot-toast';
 import api from '@/helpers/axios';
 import { useSearchParams, usePathname} from 'next/navigation';
@@ -11,9 +11,12 @@ import { useSearchParams, usePathname} from 'next/navigation';
 const Reviews = ({productReviews, product, csrf}: any) => {
     let averageRating = 0;
     const [isModalOpen, setIsModalOpen] = React.useState(false);
-    const [mediaBase64, setMediaBase64] = React.useState({
-        media: '',
-        image: ''
+    const [media, setMedia] = React.useState<{
+        media: File | undefined,
+        image: File | undefined
+    }>({
+        media: undefined,
+        image: undefined
     });
     const path = usePathname();
     const searchParams = useSearchParams();
@@ -143,7 +146,7 @@ const Reviews = ({productReviews, product, csrf}: any) => {
                 break;
         }
 
-        return message;
+        return rating;
     }
 
     function handleMouseLeave(){
@@ -179,13 +182,10 @@ const Reviews = ({productReviews, product, csrf}: any) => {
 
             textarea.classList.add('hidden');
 
-            if (file) {
-               
-               let base64String = await generateBase64FromMedia(file);
-    
-               setMediaBase64(prevMedia => ({
+            if (file) {    
+               setMedia(prevMedia => ({
                 ...prevMedia,
-                media: base64String as string
+                media: file
                }));
     
                const fileType = file.type;
@@ -266,18 +266,19 @@ const Reviews = ({productReviews, product, csrf}: any) => {
 
         try {
             setLoader(true);
-            const res =  await api.post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/products${product}/update`, {
-                rating: starRatingStatement ? getRating(starRatingStatement.innerText) : 0,
-                email,
-                name,
-                review: review.length > 0 ? review : mediaBase64.media,
-                avatar: mediaBase64.image,
-                headline,
-                isMedia: review.length === 0
-            },{
+            const formData = new FormData();
+            formData.append('rating', JSON.stringify(starRatingStatement ? getRating(starRatingStatement.innerText) : 0));
+            formData.append('email', email);
+            formData.append('name', name);
+            formData.append('review', review.length > 0 ? review : media.media!);
+            formData.append('headline', headline);
+            formData.append('isMedia', JSON.stringify(review.length === 0));
+            formData.append('avatar', media.image!);
+            const res =  await api.post(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/${product}/update`, formData,{
                 headers: {
                     "x-csrf-token": csrf,
-                  }
+                    "Content-Type": "multipart/form-data"
+                }
             });
 
             if(res.status != 201){
@@ -335,7 +336,7 @@ const Reviews = ({productReviews, product, csrf}: any) => {
 
         try {
             setLoader(true);
-            await api.patch(`/api/products/reviews/likes-dislikes/update`, {
+            await api.patch(`${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/products/reviews/likes-dislikes/update`, {
                 likes: likes[index],
                 dislikes: dislikes[index],
                 reviewId: review.id
@@ -474,29 +475,23 @@ const Reviews = ({productReviews, product, csrf}: any) => {
                     {reviews.map((review: any, i: number) => {
                         if(review.isMedia){
                             const mediaContainer = document.getElementById('media') as HTMLDivElement;
-                            if (review.content.startsWith('data:text/plain;')) {
-                                // For .txt files, display as plain text
-                                const textContent = decodedBase64(review.content);
-                                const pre = document.createElement('pre');
-                                pre.textContent = textContent;
-                                mediaContainer.appendChild(pre);
-                            }  else if (review.content.startsWith('data:application/pdf;base64,')) {
+                             if (review.content_type.startsWith('application/pdf') || review.content_type.startsWith('text')) {
                                 const pdfIframe = document.createElement('iframe');
-                                pdfIframe.src = review.content;
+                                pdfIframe.src = review.content.replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN);
                                 pdfIframe.style.width = '100%';
                                 pdfIframe.style.height = '400px'; 
                                 mediaContainer.appendChild(pdfIframe);
-                            } else if (review.content.startsWith('data:audio/')) {
+                            } else if (review.content_type.startsWith('audio/')) {
                                 const audio = document.createElement('audio');
                                 audio.controls = true;
                                 audio.style.width = '100%';
-                                audio.src = review.content;
+                                audio.src = review.content.replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN);
                                 mediaContainer.appendChild(audio);
-                            } else if (review.content.startsWith('data:video/')) { 
+                            } else if (review.content_type.startsWith('video/')) { 
                                 const video = document.createElement('video');
                                 video.controls = true;
                                 video.style.width = '100%';
-                                video.src = review.content;
+                                video.src = review.content.replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN);
                                 mediaContainer.appendChild(video);
                             }
 
@@ -557,7 +552,7 @@ const Reviews = ({productReviews, product, csrf}: any) => {
                                      </header>
                                      <p className='text-detail-500/80 font-light'>{review.content}</p>
                                      <div className='inline-flex flex-row gap-x-2 items-center'>
-                                        <div style={{backgroundImage: `url(${review.author.avatar ?? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'})`}} className='rounded-[50%]! w-16 h-16 cursor-pointer bg-cover'>
+                                        <div style={{backgroundImage: `url(${review.author.avatar ?  review.author.avatar.replace('/app/public', process.env.NEXT_PUBLIC_WEB_DOMAIN)  : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'})`}} className='rounded-[50%]! w-16 h-16 cursor-pointer bg-cover'>
                                         </div>
                                         <div className='inline-flex flex-col items-start'>
                                             <p className='text-detail-500/80 font-light'>{review.author.firstName ?? review.author.email}</p>
@@ -621,9 +616,9 @@ const Reviews = ({productReviews, product, csrf}: any) => {
                             picContainer.innerHTML = '';
 
                             if(picContainer){
-                                setMediaBase64(prevMedia => ({
+                                setMedia(prevMedia => ({
                                     ...prevMedia,
-                                    image: base64String as string
+                                    image: e.target.files![0]
                                 }));
                                 picContainer.style.backgroundImage = `url(${base64String})`;
                             }

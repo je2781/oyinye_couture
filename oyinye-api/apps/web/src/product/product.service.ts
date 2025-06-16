@@ -6,7 +6,7 @@ import { Request, Response } from "express";
 import { Cart } from "../cart/cart.entity";
 import { Review } from "../review/review.entity";
 import { lastValueFrom } from "rxjs";
-import { ADMIN_SERVICE, EMAIL_SERVICE } from "../constants/service";
+import { ADMIN_SERVICE, AUTH_SERVICE, EMAIL_SERVICE } from "../constants/service";
 import { ClientProxy } from "@nestjs/microservices";
 import {
   randomReference,
@@ -20,6 +20,7 @@ import { Filter } from "../filter/filter.entity";
 import { Order } from "../order/order.entity";
 import { ConfigService } from "@nestjs/config";
 import { User } from "../user/user.entity";
+import { SearchQueryDto } from "./dto/search-query.dto";
 
 @Injectable()
 export class ProductService {
@@ -35,6 +36,7 @@ export class ProductService {
     private readonly orderRepo: Repository<Order>,
     @Inject(ADMIN_SERVICE) private readonly adminClient: ClientProxy,
     @Inject(EMAIL_SERVICE) private readonly emailClient: ClientProxy,
+    @Inject(AUTH_SERVICE) private readonly authClient: ClientProxy,
     private configService: ConfigService
   ) {}
 
@@ -155,7 +157,6 @@ export class ProductService {
 
   async updateReview(
     req: Request,
-    res: Response,
     body: UpdateReviewFeedbackDto
   ) {
     try {
@@ -176,19 +177,17 @@ export class ProductService {
         })
       );
 
-      return res.status(201).json({
+      return {
         message: "Product reviews updated successfully",
         success: true,
-      });
+      };
     } catch (error) {
       const e = error as Error;
-      return res.status(500).json({
-        erro: e.message,
-      });
+      throw new InternalServerErrorException(e.message);
     }
   }
 
-  async createReview(title: string, req: Request, res: Response) {
+  async createReview(title: string, req: Request, files: Express.Multer.File[]) {
     try {
       const {
         rating,
@@ -197,10 +196,18 @@ export class ProductService {
         review,
         headline,
         isMedia,
-        avatar,
       } = req.body;
 
       let newReview: Review;
+
+      //retrieving media 
+      const avatar =  files.find(file => file.fieldname === 'avatar')?.path;
+      const reviewMedia =  files.find(file => file.fieldname === 'review')?.path;
+      const reviewMediaType =  files.find(file => file.fieldname === 'review')?.mimetype;
+
+      //checking if review is media
+      const reviewIsMedia =  JSON.parse(isMedia);
+      const reviewContent = reviewIsMedia ? reviewMedia : review;
 
       title = title.charAt(0).toUpperCase() + title.replace("-", " ").slice(1);
 
@@ -253,10 +260,10 @@ export class ProductService {
         const verifyAccountToken = (await crypto.randomBytes(32)).toString(
           "hex"
         );
-        await this.userRepo.update(user.id, {
-          verify_token: verifyAccountToken,
-          verify_token_expiry_date: new Date(Date.now() + 3600000),
-        });
+        user.verify_token = verifyAccountToken,
+        user.verify_token_expiry_date = new Date(Date.now() + 3600000),
+        await user.save();
+
         await lastValueFrom(
           this.emailClient.emit("account_verify", {
             token: verifyAccountToken,
@@ -268,9 +275,10 @@ export class ProductService {
         //updating new review with product and user
         newReview = this.reviewRepo.create({
           headline,
-          rating: +rating,
-          content: review,
-          is_media: isMedia,
+          rating: JSON.parse(rating),
+          content: reviewContent,
+          is_media: reviewIsMedia,
+          content_type: reviewMediaType
         });
 
         await this.reviewRepo.save(newReview);
@@ -282,9 +290,10 @@ export class ProductService {
 
         newReview = this.reviewRepo.create({
           headline,
-          rating: +rating,
-          content: review,
-          is_media: isMedia,
+          rating: JSON.parse(rating),
+          content: reviewContent,
+          is_media: reviewIsMedia,
+          content_type: reviewMediaType
         });
 
         await this.reviewRepo.save(newReview);
@@ -303,14 +312,14 @@ export class ProductService {
         })
       );
 
-      //dispatching reviewer_verify job
+      //dispatching reviewer_verify and user_updated job
       const verifyReviewerToken = (await crypto.randomBytes(32)).toString(
         "hex"
       );
-      await this.userRepo.update(user.id, {
-        verify_token: verifyReviewerToken,
-        verify_token_expiry_date: new Date(Date.now() + 3600000),
-      });
+      user.verify_token = verifyReviewerToken;
+      user.verify_token_expiry_date = new Date(Date.now() + 3600000);
+      await user.save();
+
       await lastValueFrom(
         this.emailClient.emit("reviewer_verify", {
           token: verifyReviewerToken,
@@ -319,20 +328,26 @@ export class ProductService {
         })
       );
 
-      return res.status(201).json({
+      await lastValueFrom(
+        this.authClient.emit("user_updated", {
+          id: user.id,
+          data: user,
+          access_token: req.cookies["access_token"],
+        })
+      );
+
+      return {
         message: "product updated successfully",
         success: true,
-      });
+      };
     } catch (error) {
       const e = error as Error;
-      return res.status(500).json({
-        erro: e.message,
-      });
+      throw new InternalServerErrorException(e.message);
     }
   }
 
   async getResults(
-    queryParams: any,
+    queryParams: SearchQueryDto,
     req: Request,
     res: Response,
     action: string
@@ -796,6 +811,7 @@ export class ProductService {
 
     return res.status(200).json({
       message: "cookie set",
+      succes: true
     });
   }
 }

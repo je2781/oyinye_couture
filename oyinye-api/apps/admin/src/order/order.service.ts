@@ -133,7 +133,7 @@ export class OrderService {
 
       if (!order) throw new NotFoundException("order with id doesn't exist");
 
-      //getting cartid for reminder when payment status is 'paid'
+      //getting cartid for reminder and deletion when payment status is 'paid'
       const cartId = getDataFromCart(req);
 
       if (!cartId) throw new BadRequestException("Invalid cart id");
