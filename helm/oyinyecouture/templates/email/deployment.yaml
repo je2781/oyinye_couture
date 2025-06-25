@@ -1,0 +1,46 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: email-config
+data:
+  DEV_RABBITMQ_URL: "{{.Values.config.DEV_RABBITMQ_URL}}"
+  PROD_RABBITMQ_URL: "{{.Values.config.PROD_RABBITMQ_URL}}"
+  RABBITMQ_AUTH_QUEUE: "{{.Values.config.RABBITMQ_AUTH_QUEUE}}"
+  RABBITMQ_EMAIL_QUEUE: "{{.Values.config.RABBITMQ_EMAIL_QUEUE}}"
+  APP_NAME: "{{.Values.config.EMAIL_APP_NAME}}"
+  NODE_ENV: "development"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: email
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: email
+  template:
+    metadata:
+      labels:
+        app: email
+    spec:
+      containers:
+        - name: email
+          image: je278/email-service:1.0
+          command: [ "sh", "-c" ]
+          args:
+            - |
+              npm run start:dev email
+          # resources:
+          #   limits:
+          #     memory: "128Mi"
+          #     cpu: "250m"
+          imagePullPolicy: {{ .Values.image.pullPolicy}}
+          envFrom:
+            - configMapRef:
+                name: email-config
+
+

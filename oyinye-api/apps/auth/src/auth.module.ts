@@ -8,14 +8,15 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { LocalStrategy } from "./strategy/local.strategy";
 import joi from "joi";
 import { UserModule } from "apps/auth/src/user/user.module";
-import { DatabaseModule, RMQModule } from "@app/common";
+import { DatabaseModule, LoggingInterceptor, RMQModule } from "@app/common";
 import { EMAIL_SERVICE } from "apps/admin/src/constants/service";
 import { ADMIN_SERVICE, WEB_SERVICE } from "./constants/service";
 import { User } from "./entities/user.entity";
 import { Session } from "./entities/session.entity";
 import { RefreshToken } from "./entities/refresh-token.entity";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
-import { APP_GUARD } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import { PrometheusModule } from "@willsoto/nestjs-prometheus";
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { APP_GUARD } from "@nestjs/core";
     RMQModule.register(EMAIL_SERVICE),
     RMQModule.register(ADMIN_SERVICE),
     RMQModule.register(WEB_SERVICE),
+    PrometheusModule.register(),
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -75,6 +77,10 @@ import { APP_GUARD } from "@nestjs/core";
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
     },
   ],
 })

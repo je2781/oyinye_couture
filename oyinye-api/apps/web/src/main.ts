@@ -10,7 +10,7 @@ import { json } from "express";
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(WebModule);
   const configService = app.get(ConfigService);
-  const port = configService.get<number>("PORT") ?? 4000;
+  const port = configService.get<number | string>("PORT") ?? 4000;
 
   app.use(json());
 

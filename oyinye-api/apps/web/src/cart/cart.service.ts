@@ -12,7 +12,6 @@ import { Cart } from "./cart.entity";
 import { Order } from "../order/order.entity";
 import { Request, Response } from "express";
 import { getDataFromCart } from "libs/common/utils/getDataFromCart";
-import { getUserData } from "libs/common/utils/getUserData";
 import { ADMIN_SERVICE, AUTH_SERVICE } from "../constants/service";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom } from "rxjs";
@@ -23,6 +22,7 @@ import { getDataFromOrder } from "libs/common/utils/getDataFromOrder";
 import { ConfigService } from "@nestjs/config";
 import { Product } from "../product/product.entity";
 import { User } from "../user/user.entity";
+import { getUserData } from "libs/common/utils/getUserData";
 
 @Injectable()
 export class CartService {

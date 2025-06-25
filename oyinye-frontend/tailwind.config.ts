@@ -73,6 +73,54 @@ const config: Config = {
           '0%': { transform: 'rotate(-180deg)' },
           '100%': { transform: 'rotate(0deg)' },
         },
+        'show': {
+          '0%': {
+            maxHeight: '0',
+            opacity: '0',
+            transform: 'translateY(-25px)',
+          },
+          '100%': {
+            maxHeight: '1050px',
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
+        },
+        'hide': {
+          '0%': {
+            maxHeight: '1050px',
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
+          '100%': {
+            maxHeight: '0',
+            opacity: '0',
+            transform: 'translateY(-25px)',
+          },
+        },
+        'show-label': {
+          '0%': {
+            maxHeight: '0',
+            opacity: '0',
+            transform: 'translateY(2px)',
+          },
+          '100%': {
+            maxHeight: '10px',
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
+        },
+        'hide-label': {
+          '0%': {
+            maxHeight: '10px',
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
+          '100%': {
+            maxHeight: '0',
+            opacity: '0',
+            transform: 'translateY(2px)',
+          },
+        }
       },
       animation: {
         forward: 'forward 0.3s linear forwards',
@@ -85,6 +133,10 @@ const config: Config = {
         'rotate-left-down': 'angle-left-rotate-clock 0.3s ease-in-out forwards',
         'rotate-up-up': 'angle-up-rotate 0.3s ease-in-out forwards',
         'rotate-up-down': 'angle-up-rotate-clock 0.3s ease-in-out forwards',
+        'show': 'show 0.4s ease-out forwards',
+        'hide': 'hide 0.4s ease-in forwards',
+        'show-label': 'show-label 0.2s ease-out forwards',
+        'hide-label': 'hide-label 0.2s ease-in forwards',
       },
     },
   },

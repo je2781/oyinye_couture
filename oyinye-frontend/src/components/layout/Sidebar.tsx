@@ -148,7 +148,7 @@ export default function Sidebar({pathName}: any){
                                     insight: false
                                 }));
                             }}
-                            id='tooltip' className={`${animate ? 'fade-in-out' : ''} absolute left-full ml-9 top-[9.1rem] bg-primary-800 rounded-2xl px-5 py-7 w-44 opacity-0`}>
+                            id='tooltip' className={`${animate ? 'fade-in-out' : ''} absolute left-full ml-9 top-[5.8rem] bg-primary-800 rounded-2xl px-5 py-7 w-44 opacity-0`}>
                             <ul className="flex-col text-secondary-400 flex gap-y-3">
                             {insightList.map((item: any, i: number) => (
                                 <li 
@@ -348,7 +348,7 @@ export default function Sidebar({pathName}: any){
                                     className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-2"
                                     key={i}
                                     onClick={() => {
-                                        router.push(`admin/orders`);
+                                        router.push(`/admin/orders`);
                                       }}
                                 >
                                     <div 
@@ -368,12 +368,12 @@ export default function Sidebar({pathName}: any){
                             <ul className="flex-col text-secondary-400 flex gap-y-3">
                             {viewsList.map((item: any, i: number) => (
                                 <li
-                                onClick={() => router.push(`admin/orders`)} 
+                                onClick={() => router.push(`/admin/orders`)} 
                                 className="cursor-pointer inline-flex flex-row gap-x-3 items-center transition-all duration-300 ease-out p-0 hover:pl-[3px]" key={i}>
                                     <div 
                                         className={`${pathName === 'orders' ? 'text-white' : 'text-secondary-400'} inline-flex flex-row gap-x-4 items-center`}
                                     >
-                                        <i className="fa-regular fa-circle  text-[0.6rem]"></i>
+                                        <i className="fa-regular fa-circle text-[0.6rem]"></i>
                                         <span
                                         className="text-sm font-medium font-sans"
                                         >

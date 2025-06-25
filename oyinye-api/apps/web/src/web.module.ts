@@ -8,15 +8,17 @@ import joi from "joi";
 import { ReviewModule } from "./review/review.module";
 import { FilterModule } from "./filter/filter.module";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
-import { APP_GUARD } from "@nestjs/core";
-import { DatabaseModule, RMQModule } from "@app/common";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import { DatabaseModule, LoggingInterceptor, RMQModule } from "@app/common";
 import { UserModule } from "./user/user.module";
+import { PrometheusModule } from "@willsoto/nestjs-prometheus";
 
 @Module({
   imports: [
     CartModule,
     ProductModule,
     EnquiryModule,
+    PrometheusModule.register(),
     OrderModule,
     DatabaseModule,
     RMQModule,
@@ -24,7 +26,7 @@ import { UserModule } from "./user/user.module";
       throttlers: [
         {
           ttl: 10000,
-          limit: 15,
+          limit: 10,
         },
       ],
     }),
@@ -57,6 +59,10 @@ import { UserModule } from "./user/user.module";
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
     },
   ],
   exports: [RMQModule],

@@ -1,0 +1,76 @@
+
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: auth-secret
+type: Opaque
+data:
+  JWT_SECRET: "{{ .Values.secret.JWT_SECRET }}"
+
+---
+
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-config
+data:
+  DB_PASS: "{{ .Values.config.AUTH_DB_PASS }}"
+  DB_NAME: "{{ .Values.config.AUTH_DB_NAME }}"
+  PORT: "{{ .Values.config.AUTH_PORT }}"
+  DB_HOST: "{{ .Values.config.AUTH_DB_HOST }}"
+  DB_USER: "{{ .Values.config.AUTH_DB_USER }}"
+  DB_PORT: "{{ .Values.config.AUTH_DB_PORT }}"
+  DEV_RABBITMQ_URL: "{{ .Values.config.DEV_RABBITMQ_URL }}"
+  PROD_RABBITMQ_URL: "{{ .Values.config.PROD_RABBITMQ_URL }}"
+  RABBITMQ_AUTH_QUEUE: "{{ .Values.config.RABBITMQ_AUTH_QUEUE }}"
+  RABBITMQ_WEB_QUEUE: "{{ .Values.config.RABBITMQ_WEB_QUEUE }}"
+  RABBITMQ_ADMIN_QUEUE: "{{ .Values.config.RABBITMQ_ADMIN_QUEUE }}"
+  RABBITMQ_EMAIL_QUEUE: "{{ .Values.config.RABBITMQ_EMAIL_QUEUE }}"
+  APP_NAME: "{{ .Values.config.AUTH_APP_NAME }}"
+  SERVICE_NAME: "{{ .Values.config.AUTH_SERVICE_NAME }}"
+  JWT_EXPIRES_IN: "{{ .Values.config.JWT_EXPIRES_IN  }}"
+  NODE_ENV: "development"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "{{ .Values.config.AUTH_PORT }}"
+    spec:
+      containers:
+        - name: auth
+          image: je278/auth-service:1.1
+          # resources:
+          #   limits:
+          #     memory: "128Mi"
+          #     cpu: "250m"
+          command: [ "sh", "-c" ]
+          args:
+            - |
+              npm run typeorm -- migration:run -d ./typeorm.config.ts && \
+              npm run start:dev auth
+          imagePullPolicy: {{ .Values.image.pullPolicy}}
+          envFrom:
+            - configMapRef:
+                name: auth-config
+            - secretRef:
+                name: auth-secret
+
+
+

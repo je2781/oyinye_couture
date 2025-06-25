@@ -7,9 +7,10 @@ import { ConfigModule } from "@nestjs/config";
 import joi from "joi";
 import { RMQModule } from "@app/common/rmq/rmq.module";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
-import { APP_GUARD } from "@nestjs/core";
-import { DatabaseModule } from "@app/common";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
+import { DatabaseModule, LoggingInterceptor } from "@app/common";
 import { UserModule } from "./user/user.module";
+import { PrometheusModule } from "@willsoto/nestjs-prometheus";
 
 @Module({
   imports: [
@@ -19,12 +20,13 @@ import { UserModule } from "./user/user.module";
     EnquiryModule,
     OrderModule,
     DatabaseModule,
+    PrometheusModule.register(),
     RMQModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {
           ttl: 10000,
-          limit: 15,
+          limit: 10,
         },
       ],
     }),
@@ -46,6 +48,7 @@ import { UserModule } from "./user/user.module";
         RABBITMQ_AUTH_QUEUE: joi.string().required(),
         CSRF_SECRET: joi.string().required(),
         CSRF_SECRET_2: joi.string().required(),
+        FRONTEND_WEB_DOMAIN: joi.string().required(),
       }),
       envFilePath: ".env.admin",
     }),
@@ -55,6 +58,10 @@ import { UserModule } from "./user/user.module";
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor
+    }
   ],
 })
 export class AdminModule {}

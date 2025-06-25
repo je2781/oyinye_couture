@@ -11,7 +11,7 @@ import { json } from "express";
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AdminModule);
   const configService = app.get(ConfigService);
-  const port = configService.get<number>("PORT") ?? 8080;
+  const port = configService.get<number | string>("PORT") ?? 8080;
 
   app.use(json());
 

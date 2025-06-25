@@ -15,6 +15,7 @@ import { lastValueFrom } from "rxjs";
 import { EmailType } from "libs/common/interfaces";
 import { Order } from "./order.entity";
 import { Cart } from "../cart/cart.entity";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class OrderService {
@@ -23,7 +24,8 @@ export class OrderService {
     private orderRepository: Repository<Order>,
     @InjectRepository(Cart)
     private cartRepository: Repository<Cart>,
-    @Inject(EMAIL_SERVICE) private readonly emailClient: ClientProxy
+    @Inject(EMAIL_SERVICE) private readonly emailClient: ClientProxy,
+    private readonly configService: ConfigService
   ) {}
 
   async getOrders(page: number, perPage: number, res: Response) {
@@ -180,7 +182,7 @@ export class OrderService {
               email: order.user.email,
               emailType: EmailType.request,
               emailBody: {
-                link: `${process.env.WEB_DOMAIN}/cart`,
+                link: `${this.configService.get<string>('FRONTEND_WEB_DOMAIN')!}/cart`,
                 id: cartId,
                 total: cart!.total_amount,
                 items,

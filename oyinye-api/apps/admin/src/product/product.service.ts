@@ -6,7 +6,7 @@ import { Product } from "./product.entity";
 import { WEB_SERVICE } from "../constants/service";
 import { ClientProxy } from "@nestjs/microservices";
 import { lastValueFrom } from "rxjs";
-import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class ProductService {
@@ -88,7 +88,7 @@ export class ProductService {
     }
 
     const product = await this.productRepo.save({
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       no_of_orders: Number(noOfOrders),
       title,
       reviews,

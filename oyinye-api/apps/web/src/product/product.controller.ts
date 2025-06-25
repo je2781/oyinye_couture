@@ -66,7 +66,7 @@ export class ProductController {
       limits: { fileSize: 10 * 1024 * 1024 },
     })
   )
-  async createReview(@Param("title") title: string, @Req() req: Request, @UploadedFiles() files: Express.Multer.File[]) {
+  async createReview(@Param("title") title: string, @Req() req: Request, @UploadedFiles() files?: Express.Multer.File[]) {
     return this.productService.createReview(title, req, files);
   }
 

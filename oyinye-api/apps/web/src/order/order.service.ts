@@ -12,7 +12,6 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, ILike } from "typeorm";
 import { Cart } from "../cart/cart.entity";
 import { getDataFromOrder } from "libs/common/utils/getDataFromOrder";
-import { getUserData } from "libs/common/utils/getUserData";
 import { getDataFromCart } from "libs/common/utils/getDataFromCart";
 import { ClientProxy } from "@nestjs/microservices";
 import { ADMIN_SERVICE, AUTH_SERVICE } from "../constants/service";
@@ -21,6 +20,7 @@ import { sanitizeInput } from "libs/common/utils/sanitize";
 import { HttpService } from "@nestjs/axios";
 import { Order } from "./order.entity";
 import { User } from "../user/user.entity";
+import { getUserData } from "libs/common/utils/getUserData";
 
 @Injectable()
 export class OrderService {

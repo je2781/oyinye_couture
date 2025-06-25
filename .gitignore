@@ -64,6 +64,9 @@ oyinye-api/apps/*/Dockerfile
 oyinye-api/docker-compose.yaml
 oyinye-api/.dockerignore
 oyinye-api/public/
+helm/oyinyecouture/values.yaml
+helm/oyinyecouture/charts/
+helm/oyinyecouture/scripts/
 oyinye-frontend/.dockerignore
 *.sh
 oyinye-frontend/.dockerignore

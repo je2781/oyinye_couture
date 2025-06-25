@@ -151,13 +151,13 @@
       width: 23%;
     }
     to {
-      width: 7%;
+      width: 10%;
     }
   }
   
   @keyframes expand-bar {
     from {
-      width: 7%;
+      width: 10%;
     }
     to {
       width: 23%;
@@ -168,13 +168,13 @@
       width: 23%;
     }
     to {
-      width: 7%;
+      width: 10%;
     }
   }
   
   @-webkit-keyframes expand-bar {
     from {
-      width: 7%;
+      width: 10%;
     }
     to {
       width: 23%;

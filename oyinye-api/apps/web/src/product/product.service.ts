@@ -187,7 +187,7 @@ export class ProductService {
     }
   }
 
-  async createReview(title: string, req: Request, files: Express.Multer.File[]) {
+  async createReview(title: string, req: Request, files?: Express.Multer.File[]) {
     try {
       const {
         rating,
@@ -201,9 +201,9 @@ export class ProductService {
       let newReview: Review;
 
       //retrieving media 
-      const avatar =  files.find(file => file.fieldname === 'avatar')?.path;
-      const reviewMedia =  files.find(file => file.fieldname === 'review')?.path;
-      const reviewMediaType =  files.find(file => file.fieldname === 'review')?.mimetype;
+      const avatar =  files?.find(file => file.fieldname === 'avatar')?.path;
+      const reviewMedia =  files?.find(file => file.fieldname === 'review')?.path;
+      const reviewMediaType =  files?.find(file => file.fieldname === 'review')?.mimetype;
 
       //checking if review is media
       const reviewIsMedia =  JSON.parse(isMedia);
