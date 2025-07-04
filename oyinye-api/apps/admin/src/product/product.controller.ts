@@ -35,7 +35,6 @@ export class ProductController {
     return this.productService.hide(id, hide);
   }
 
-  @UseInterceptors(AnyFilesInterceptor())
   @Post("new")
   @Csrf()
   @UseGuards(JwtGuard)

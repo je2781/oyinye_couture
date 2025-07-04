@@ -30,6 +30,10 @@ spec:
   selector:
     matchLabels:
       app: web
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 3
   template:
     metadata:
       labels:
@@ -42,16 +46,25 @@ spec:
       containers:
         - name: web
           image: je278/web-service:1.1
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
           # resources:
           #   limits:
           #     memory: "128Mi"
           #     cpu: "250m"
           command: [ "sh", "-c" ]
           args:
-            - |
-              npm run typeorm -- migration:run -d ./typeorm.config.ts && \
+            - >
+              npm run typeorm:dev -- migration:run -d ./typeorm.config.ts &&
               npm run start:dev web
           imagePullPolicy: {{ .Values.image.pullPolicy}}
+          ports:
+            - containerPort: 4000
           ports:
           envFrom:
             - configMapRef:

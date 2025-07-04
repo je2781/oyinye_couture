@@ -1,3 +1,6 @@
+import * as path from 'path';
+import * as fs from 'fs/promises';
+
 export const months = [
   'Jan',
   'Feb' ,
@@ -57,13 +60,24 @@ export function getBrowser(userAgent: string) {
   }
 }
 
+export async function saveFile(part: any): Promise<{ filename: string; filepath: string; mimetype: string }> {
+  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+  const ext = path.extname(part.filename);
+  const filename = `${part.fieldname}-${uniqueSuffix}${ext}`;
+  const uploadDir = path.join(process.cwd(), 'public', 'uploads');
 
+  await fs.mkdir(uploadDir, { recursive: true });
 
-// export function getSessionIdentifierFromIpUa(req: Request): string {
-//   const ip = req.ip || req.headers['x-forwarded-for'] || '';
-//   const userAgent = req.headers['user-agent'] || '';
-//   const raw = `${ip}-${userAgent}`;
-  
-//   // Create a SHA256 hash of the combination
-//   return crypto.createHash('sha256').update(raw).digest('hex');
-// }
+  const filepath = path.join(uploadDir, filename);
+
+  const writeStream = await fs.open(filepath, 'w');
+  await new Promise<void>((resolve, reject) => {
+    part.file.pipe(writeStream.createWriteStream());
+    part.file.on('end', () => resolve());
+    part.file.on('error', (err) => reject(err));
+  });
+  await writeStream.close();
+
+  return { filename, filepath, mimetype: part.mimetype };
+}
+

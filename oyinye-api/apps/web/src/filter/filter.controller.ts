@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { FilterService } from './filter.service';
 import { Request, Response } from 'express';
 import { JwtGuard } from '@app/common';
+import { FilterProductsDto } from './dto/filter-product.dto';
 import { Csrf } from 'ncsrf';
 
 
@@ -15,7 +16,7 @@ export class FilterController {
     @UseGuards(JwtGuard)
     @Csrf()
     @Post()
-    async getFilters(@Req() req: Request, @Res() res: Response, @Query('type') type: string){
-        return this.filterService.getFilters(type, req, res);
+    async updateFilter(@Res() res: Response, @Query('type') type: string, @Body() body: FilterProductsDto){
+        return this.filterService.updateFilter(type, body, res);
     }
 }

@@ -6,6 +6,8 @@ import {
 import { Request, Response } from 'express';
 import { JwtGuard } from '@app/common';
 import { Csrf } from 'ncsrf';
+import { MessageFilterDto } from './dto/filter-message.dto';
+import { ReminderMessageDto } from './dto/reminder-message.dto';
 
   
   @Controller('api/enquiries')
@@ -27,11 +29,10 @@ import { Csrf } from 'ncsrf';
   @Csrf()
   @UseGuards(JwtGuard)
   async updateEnquiry(
-    @Req() req: Request,
+    @Body() body: MessageFilterDto,
     @Param("id") id: string,
-    @Res() res: Response
   ) {
-    return this.enquiryService.updateEnquiry(req, res, id);
+    return this.enquiryService.updateEnquiry(id, body);
   }
 
   @Delete("delete/:id")
@@ -47,8 +48,8 @@ import { Csrf } from 'ncsrf';
   @Post("send-reminder")
   @Csrf()
   @UseGuards(JwtGuard)
-  async sendAppointmentReminder(@Req() req: Request) {
-    return this.enquiryService.sendAppointmentReminder(req);
+  async sendAppointmentReminder(@Body() body: ReminderMessageDto, @Req() req: Request) {
+    return this.enquiryService.sendAppointmentReminder(req, body);
   }
 
   }

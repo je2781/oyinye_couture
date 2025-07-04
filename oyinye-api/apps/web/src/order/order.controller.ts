@@ -21,7 +21,7 @@ export class OrderController {
   @Post("update/transaction-status")
   async updateTransactionStatus(
     @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
+    @Res() res: Response,
     @Body() body: any
   ) {
     return this.orderService.handlePostRequest(

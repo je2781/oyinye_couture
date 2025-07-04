@@ -32,6 +32,10 @@ spec:
   selector:
     matchLabels:
       app: admin
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 3
   template:
     metadata:
       labels:
@@ -44,10 +48,17 @@ spec:
       containers:
         - name: admin
           image: je278/admin-service:1.1
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
           command: [ "sh", "-c" ]
           args:
-            - |
-              npm run typeorm -- migration:run -d ./typeorm.config.ts && \
+            - >
+              npm run typeorm:dev -- migration:run -d ./typeorm.config.ts &&
               npm run start:dev admin
           # resources:
           #   limits:
@@ -55,7 +66,7 @@ spec:
           #     cpu: "250m"
           imagePullPolicy: {{ .Values.image.pullPolicy}}
           ports:
-            - containerPort: {{ .Values.config.ADMIN_PORT }}
+            - containerPort: 8080
           envFrom:
             - configMapRef:
                 name: admin-config

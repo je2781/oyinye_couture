@@ -4,8 +4,8 @@ import { ValidationPipe } from "@nestjs/common";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import { ConfigService } from "@nestjs/config";
 import { AuthModule } from "./auth.module";
-import { setupCsrfProtection } from "@app/common";
 import { json } from "express";
+import { setupCsrfProtection } from "@app/common";
 
 async function bootstrap() {
   const app = await NestFactory.create(AuthModule);

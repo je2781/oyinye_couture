@@ -1,41 +1,49 @@
+# kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.1/deploy/static/provider/cloud/deploy.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: oyinyecouture-ingress
+  # annotations:
+  #   alb.ingress.kubernetes.io/scheme: internet-facing
+  #   alb.ingress.kubernetes.io/target-type: ip
   annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  ingressClassName: alb
+  # ingressClassName: alb
+  ingressClassName: nginx
   rules:
-    # - host: oyinye.com
-     - http:
+    - host: oyinye.com
+      http:
         paths:
-            - path: /api/auth
-              pathType: Prefix
-              backend:
-                service:
-                  name: auth-service
-                  port:
-                    number: 8000
-            - path: /api
-              pathType: Prefix
-              backend:
-                service:
-                  name: web-service
-                  port:
-                    number: 4000
-            - path: /api
-              pathType: Prefix
-              backend:
-                service:
-                  name: admin-service
-                  port:
-                    number: 8080
-            - path: /
-              pathType: Prefix
-              backend:
-                service:
-                  name: frontend-service
-                  port:
-                    number: 3000
+          - path: /api/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: auth
+                port:
+                  number: 8000
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 4000
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: admin
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3000

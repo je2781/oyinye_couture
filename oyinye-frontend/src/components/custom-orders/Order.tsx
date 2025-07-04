@@ -12,7 +12,7 @@ export default function Order({ country, csrf }: any) {
   );
   const [buttonDisabled, setButtonDisabled] = React.useState(true);
   const [uploadedFiles, setUploadedFiles] = React.useState<string[]>([]);
-  const [base64Images, setBase64Images] = React.useState<string[]>([]);
+  const [fileImages, setFileImages] = React.useState<File[]>([]);
   const [phonePlaceholder, setPhonePlaceholder] = React.useState(
     `Phone: +${Country.getCountryByCode(country)!.phonecode}...`
   );
@@ -42,8 +42,8 @@ export default function Order({ country, csrf }: any) {
     const file = e.target.files![0];
     //retrieving uploaded file data
     setUploadedFiles((prevFiles) => [...prevFiles, file!.name]);
-    const base64Image = await generateBase64FromMedia(file!);
-    setBase64Images((prevImages) => [...prevImages, base64Image as string]);
+    // const base64Image = await generateBase64FromMedia(file!);
+    setFileImages((prevImages) => [...prevImages, file]);
   }
 
   async function handleFormSubmit(e: React.FormEvent) {
@@ -65,24 +65,32 @@ export default function Order({ country, csrf }: any) {
 
     try {
       setLoader(true);
+
+      const formData = new FormData();
+
+      formData.append("email", email);
+      formData.append("name", `${firstName} ${lastName}`);
+      formData.append("content", content);
+      formData.append("country", countryName);
+      formData.append("size", size);
+      formData.append("phone", phone);
+      formData.append("event_date", eventDate);
+
+      uploadedFiles.forEach((file, i) => {
+        // Assuming `fileImages[i]` is the actual File or Blob
+        formData.append(`styles_${i}_image`, fileImages[i]);
+
+        // Append actual file if sending
+        formData.append(`styles_${i}_filename`, file); // backend should accept "files" array
+      });
+
       const res = await api.post(
         `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/enquiries/custom-order`,
-        {
-          email,
-          name: `${firstName} ${lastName}`,
-          content,
-          country: countryName,
-          size: parseInt(size),
-          phone,
-          eventDate,
-          styles: uploadedFiles.map((file) => ({
-            image: base64Images,
-            fileName: file,
-          })),
-        },
+        formData,
         {
           headers: {
             "x-csrf-token": csrf,
+            "Content-Type": 'multipart/form-data'
           },
         }
       );
@@ -413,7 +421,7 @@ export default function Order({ country, csrf }: any) {
                     uploads?.classList.remove("inline-flex");
 
                     setUploadedFiles([]);
-                    setBase64Images([]);
+                    setFileImages([]);
                   }}
                   className="text-white bg-white appearance-none w-[16px] h-[16px] border border-checkout-200 rounded-sm relative
                                 cursor-pointer outline-none checked:bg-checkout-200 checked:after:absolute checked:after:content-[''] checked:after:top-[2px] checked:after:left-[5px] checked:after:w-[5px] checked:after:h-[8px]

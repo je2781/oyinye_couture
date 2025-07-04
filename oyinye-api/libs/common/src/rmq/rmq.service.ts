@@ -16,7 +16,7 @@ export class RMQService {
 
         ],
         queue: this.configService.get<string>(`RABBITMQ_${queue}_QUEUE`)!,
-        persistent: true
+        persistent: true,
       },
     };
   }

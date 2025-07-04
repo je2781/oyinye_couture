@@ -11,6 +11,8 @@ import { lastValueFrom } from "rxjs";
 import { ClientProxy } from "@nestjs/microservices";
 import { EMAIL_SERVICE } from "../constants/service";
 import { Enquiry } from "./enquiry.entity";
+import { MessageFilterDto } from "./dto/filter-message.dto";
+import { ReminderMessageDto } from "./dto/reminder-message.dto";
 
 @Injectable()
 export class EnquiryService {
@@ -82,7 +84,7 @@ export class EnquiryService {
     }
   }
 
-  async updateEnquiry(req: Request, res: Response, id: string) {
+  async updateEnquiry(id: string, body: MessageFilterDto) {
     const enquiry = await this.enquiryRepo.findOne({
       where: {
         id,
@@ -90,7 +92,7 @@ export class EnquiryService {
     });
     if (!enquiry) throw new NotFoundException("Enquiry doesn't exist");
 
-    const { isRead, isUnRead, isBooking, isContact, saved } = req.body;
+    const { isRead, isUnRead, isBooking, isContact, saved } = body;
 
     if (isBooking) {
       enquiry.order.read = isRead ?? false;
@@ -117,8 +119,8 @@ export class EnquiryService {
     await this.enquiryRepo.save(data);
   }
 
-  async sendAppointmentReminder(req: Request) {
-    const { message, email, contact, date } = req.body;
+  async sendAppointmentReminder(req: Request, body: ReminderMessageDto) {
+    const { message, email, contact, date } = body;
 
     const cleanMsg = sanitizeInput(message);
     const cleanEmail = sanitizeInput(email);

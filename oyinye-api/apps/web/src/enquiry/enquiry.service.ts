@@ -6,13 +6,17 @@ import { randomReference } from "libs/common/utils/getHelpers";
 import * as argon2 from "argon2";
 import { Request, Response } from "express";
 import { ClientProxy } from "@nestjs/microservices";
-import { ADMIN_SERVICE, AUTH_SERVICE, EMAIL_SERVICE } from "../constants/service";
+import {
+  ADMIN_SERVICE,
+  AUTH_SERVICE,
+  EMAIL_SERVICE,
+} from "../constants/service";
 import { lastValueFrom } from "rxjs";
 import { EmailType } from "libs/common/interfaces";
 import * as crypto from "crypto";
 import { Enquiry } from "./enquiry.entity";
 import { User } from "../user/user.entity";
-
+import { CreateEnquiryDto } from "./dto/create-enq.dto";
 
 @Injectable()
 export class EnquiryService {
@@ -21,10 +25,16 @@ export class EnquiryService {
     @InjectRepository(User) private userRepo: Repository<User>,
     @Inject(ADMIN_SERVICE) private adminClient: ClientProxy,
     @Inject(EMAIL_SERVICE) private emailClient: ClientProxy,
-    @Inject(AUTH_SERVICE) private authClient: ClientProxy,
+    @Inject(AUTH_SERVICE) private authClient: ClientProxy
   ) {}
 
-  async createEnquiry(req: Request, action: string, res: Response) {
+  async createEnquiry(
+    req: Request,
+    action: string,
+    res: Response,
+    body: CreateEnquiryDto,
+    files?: Express.Multer.File[],
+  ) {
     try {
       const {
         email,
@@ -34,10 +44,34 @@ export class EnquiryService {
         size,
         phone,
         eventDate,
-        styles,
         subject,
         message,
-      } = req.body;
+      } = body;
+
+      let styleList: any[] = [];
+
+      if(files){
+        let i = 0;
+        while(req.body[`styles_${i}_filename`]){
+          const fileName = req.body[`styles_${i}_filename`];
+
+          const styleFiles = files.filter((f) =>
+            f.fieldname.startsWith(`styles_${i}_image`)
+          );
+    
+          const stylePaths = await Promise.all(
+            styleFiles.map((file) => file.path)
+          );
+
+          styleList.push({
+            file_name: fileName,
+            image: stylePaths
+          });
+
+          i++
+
+        }
+      }
 
       const cleanEmail = sanitizeInput(email);
       const cleanName = sanitizeInput(name);
@@ -56,7 +90,6 @@ export class EnquiryService {
         password = randomReference();
         const hash = await argon2.hash(password);
 
-
         user = this.userRepo.create({
           email: cleanEmail!,
           password: hash,
@@ -67,14 +100,18 @@ export class EnquiryService {
         await this.userRepo.save(user);
 
         //dispatching user_created job
-        await lastValueFrom(this.adminClient.emit("user_created", {
-          user,
-          access_token: req.cookies['access_token']
-        }));
-        await lastValueFrom(this.authClient.emit("user_created", {
-          user,
-          access_token: req.cookies['access_token']
-        }));
+        await lastValueFrom(
+          this.adminClient.emit("user_created", {
+            user,
+            access_token: req.cookies["access_token"],
+          })
+        );
+        await lastValueFrom(
+          this.authClient.emit("user_created", {
+            user,
+            access_token: req.cookies["access_token"],
+          })
+        );
 
         //dispatching password creation and verification job
         await lastValueFrom(
@@ -82,8 +119,7 @@ export class EnquiryService {
             email: user.email,
             emailType: EmailType.reminder,
             password,
-            access_token: req.cookies['access_token']
-
+            access_token: req.cookies["access_token"],
           })
         );
 
@@ -98,7 +134,7 @@ export class EnquiryService {
           this.emailClient.emit("account_verify", {
             emailType: EmailType.verify_account,
             token: verifyAccountToken,
-            access_token: req.cookies['access_token']
+            access_token: req.cookies["access_token"],
           })
         );
       } else {
@@ -111,7 +147,7 @@ export class EnquiryService {
         //creating new appointment
         enquiry = this.enquiryRepo.create({
           order: {
-            styles,
+            styles: styleList,
             size,
             residence: cleanCountry,
             phone: cleanPhone,
@@ -131,10 +167,12 @@ export class EnquiryService {
       await this.enquiryRepo.save(enquiry);
 
       //dispatching enquiry_created job
-      await lastValueFrom(this.adminClient.emit("enquiry_created", {
-        enquiry,
-        access_token: req.cookies['access_token']
-      }));
+      await lastValueFrom(
+        this.adminClient.emit("enquiry_created", {
+          enquiry,
+          access_token: req.cookies["access_token"],
+        })
+      );
 
       return {
         message: "enquiry created",
@@ -142,11 +180,9 @@ export class EnquiryService {
       };
     } catch (error) {
       const e = error as Error;
-      return res.status(500).json({
+      return res.status(500).send({
         error: e.message,
       });
     }
   }
-
-  
 }

@@ -22,6 +22,10 @@ spec:
   selector:
     matchLabels:
       app: email
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 3
   template:
     metadata:
       labels:
@@ -30,9 +34,16 @@ spec:
       containers:
         - name: email
           image: je278/email-service:1.0
+          resources:
+            requests:
+              cpu: "150m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
           command: [ "sh", "-c" ]
           args:
-            - |
+            - >
               npm run start:dev email
           # resources:
           #   limits:

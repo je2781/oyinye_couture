@@ -2040,6 +2040,7 @@ export const getDataset = (orders: any[]) => {
 }
 
 export async function getCsrfToken(): Promise<string> {
+
   const tokenRes = await api.get(
     `${process.env.AUTH_DOMAIN}/api/auth/token`
   );

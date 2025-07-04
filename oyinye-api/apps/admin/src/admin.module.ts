@@ -11,7 +11,6 @@ import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { DatabaseModule, LoggingInterceptor } from "@app/common";
 import { UserModule } from "./user/user.module";
 import { PrometheusModule } from "@willsoto/nestjs-prometheus";
-
 @Module({
   imports: [
     CartModule,
@@ -38,7 +37,7 @@ import { PrometheusModule } from "@willsoto/nestjs-prometheus";
         DB_NAME: joi.string().required(),
         DB_USER: joi.string().required(),
         DB_HOST: joi.string().required(),
-        PORT: joi.number().required(),
+        PORT: joi.string().required(),
         NODE_ENV: joi.string().required(),
         DEV_RABBITMQ_URL: joi.string().required(),
         PROD_RABBITMQ_URL: joi.string().required(),
@@ -46,8 +45,6 @@ import { PrometheusModule } from "@willsoto/nestjs-prometheus";
         RABBITMQ_EMAIL_QUEUE: joi.string().required(),
         RABBITMQ_WEB_QUEUE: joi.string().required(),
         RABBITMQ_AUTH_QUEUE: joi.string().required(),
-        CSRF_SECRET: joi.string().required(),
-        CSRF_SECRET_2: joi.string().required(),
         FRONTEND_WEB_DOMAIN: joi.string().required(),
       }),
       envFilePath: ".env.admin",

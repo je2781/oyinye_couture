@@ -25,6 +25,10 @@ spec:
   selector:
     matchLabels:
       app: frontend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 3
   template:
     metadata:
       labels:
@@ -32,12 +36,19 @@ spec:
     spec:
       containers:
         - name: frontend
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
           image: je278/frontend:1.7  # ⬅️ Replace with your actual image
           ports:
             - containerPort: 3000
           command: [ "sh", "-c" ]
           args:
-            - |
+            - >
               npm run dev
           envFrom:
             - configMapRef:

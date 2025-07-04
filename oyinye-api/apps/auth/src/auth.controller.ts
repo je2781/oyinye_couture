@@ -7,6 +7,7 @@ import {
   Req,
   Res,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { GetUser } from "./decorator";
@@ -22,7 +23,6 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post("login")
-  
   @UseGuards(LocalAuthGuard)
   async createSession(
     @GetUser() user: User,
@@ -77,17 +77,14 @@ export class AuthController {
   }
 
   @Get("guest-token")
-  getGuestToken(
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  getGuestToken(@Req() req: Request, @Res() res: Response) {
     return this.authService.getGuestToken(req, res);
   }
 
   @Get("token")
   getCsrfToken(@Req() req): any {
     return {
-      token: req.csrfToken(),
+      token: req.csrfToken()
     };
   }
 }
