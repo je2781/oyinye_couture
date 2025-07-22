@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: admin-config
+  namespace: oyinyecouture
 data:
   DB_PASS: "{{ .Values.config.ADMIN_DB_PASS }}"
   DB_NAME: "{{ .Values.config.ADMIN_DB_NAME }}"
@@ -20,6 +21,7 @@ data:
   APP_NAME: "{{ .Values.config.ADMIN_APP_NAME }}"
   SERVICE_NAME: "{{ .Values.config.ADMIN_SERVICE_NAME }}"
   NODE_ENV: "development"
+  NODE_TLS_REJECT_UNAUTHORIZED: '0'
 
 ---
 
@@ -27,6 +29,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: admin
+  namespace: oyinyecouture
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -45,17 +48,14 @@ spec:
         prometheus.io/path: /metrics
         prometheus.io/port: "{{ .Values.config.ADMIN_PORT }}"
     spec:
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z oyinyecouture-admin-db.oyinyecouture.svc.cluster.local 5433; do echo "Waiting for DB..."; sleep 2; done']
       containers:
         - name: admin
           image: je278/admin-service:1.1
-          resources:
-            requests:
-              cpu: "250m"
-              memory: "128Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-          command: [ "sh", "-c" ]
+          command: [ "sh", "-c" ] # for production run -- npm run start:prod --service=admin
           args:
             - >
               npm run typeorm:dev -- migration:run -d ./typeorm.config.ts &&

@@ -45,7 +45,9 @@ import { PrometheusModule } from "@willsoto/nestjs-prometheus";
         RABBITMQ_EMAIL_QUEUE: joi.string().required(),
         RABBITMQ_AUTH_QUEUE: joi.string().required(),
         RABBITMQ_WEB_QUEUE: joi.string().required(),
-        NODE_ENV: joi.string().required()
+        NODE_ENV: joi.string().required(),
+        SERVICE_NAME: joi.string().required(),
+        APP_NAME: joi.string().required(),
       }),
       envFilePath: ".env.web",
     }),

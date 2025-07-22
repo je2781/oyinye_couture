@@ -38,6 +38,8 @@ import { PrometheusModule } from "@willsoto/nestjs-prometheus";
         DB_USER: joi.string().required(),
         DB_HOST: joi.string().required(),
         PORT: joi.string().required(),
+        SERVICE_NAME: joi.string().required(),
+        APP_NAME: joi.string().required(),
         NODE_ENV: joi.string().required(),
         DEV_RABBITMQ_URL: joi.string().required(),
         PROD_RABBITMQ_URL: joi.string().required(),

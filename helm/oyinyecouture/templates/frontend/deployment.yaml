@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: frontend-config
+  namespace: oyinyecouture
 data:
   PORT: "3000"
   WEB_DOMAIN: "{{ .Values.config.WEB_DOMAIN}}"
@@ -20,6 +21,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
+  namespace: oyinyecouture
 spec:
   replicas: {{ .Values.replicaCount}}
   selector:
@@ -36,14 +38,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          resources:
-            requests:
-              cpu: "250m"
-              memory: "128Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-          image: je278/frontend:1.7  # ⬅️ Replace with your actual image
+          image: je278/frontend:1.7  
           ports:
             - containerPort: 3000
           command: [ "sh", "-c" ]

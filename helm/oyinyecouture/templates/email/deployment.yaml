@@ -3,13 +3,16 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: email-config
+  namespace: oyinyecouture
 data:
   DEV_RABBITMQ_URL: "{{.Values.config.DEV_RABBITMQ_URL}}"
   PROD_RABBITMQ_URL: "{{.Values.config.PROD_RABBITMQ_URL}}"
   RABBITMQ_AUTH_QUEUE: "{{.Values.config.RABBITMQ_AUTH_QUEUE}}"
   RABBITMQ_EMAIL_QUEUE: "{{.Values.config.RABBITMQ_EMAIL_QUEUE}}"
   APP_NAME: "{{.Values.config.EMAIL_APP_NAME}}"
+  SENDGRID_API_KEY: "{{.Values.config.SENDGRID_API_KEY}}"
   NODE_ENV: "development"
+  NODE_TLS_REJECT_UNAUTHORIZED: '0'
 
 ---
 
@@ -17,6 +20,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: email
+  namespace: oyinyecouture
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -31,16 +35,13 @@ spec:
       labels:
         app: email
     spec:
+      initContainers:
+        - name: wait-for-rabbitmq
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z oyinyecouture-rabbitmq-headless.oyinyecouture.svc.cluster.local 5671; do echo "Waiting for RabbitMQ..."; sleep 2; done']
       containers:
         - name: email
           image: je278/email-service:1.0
-          resources:
-            requests:
-              cpu: "150m"
-              memory: "128Mi"
-            limits:
-              cpu: "250m"
-              memory: "256Mi"
           command: [ "sh", "-c" ]
           args:
             - >

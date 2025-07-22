@@ -18,7 +18,6 @@ import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { PrometheusModule } from "@willsoto/nestjs-prometheus";
 
-
 @Module({
   imports: [
     DatabaseModule,
@@ -51,7 +50,9 @@ import { PrometheusModule } from "@willsoto/nestjs-prometheus";
         RABBITMQ_ADMIN_QUEUE: joi.string().required(),
         RABBITMQ_EMAIL_QUEUE: joi.string().required(),
         RABBITMQ_AUTH_QUEUE: joi.string().required(),
-        RABBITMQ_WEB_QUEUE: joi.string().required()
+        RABBITMQ_WEB_QUEUE: joi.string().required(),
+        SERVICE_NAME: joi.string().required(),
+        APP_NAME: joi.string().required(),
       }),
       envFilePath: ".env.auth",
     }),

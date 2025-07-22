@@ -4,6 +4,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: auth-secret
+  namespace: oyinyecouture
 type: Opaque
 data:
   JWT_SECRET: "{{ .Values.secret.JWT_SECRET }}"
@@ -15,6 +16,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: auth-config
+  namespace: oyinyecouture
 data:
   DB_PASS: "{{ .Values.config.AUTH_DB_PASS }}"
   DB_NAME: "{{ .Values.config.AUTH_DB_NAME }}"
@@ -32,6 +34,7 @@ data:
   SERVICE_NAME: "{{ .Values.config.AUTH_SERVICE_NAME }}"
   JWT_EXPIRES_IN: "{{ .Values.config.JWT_EXPIRES_IN  }}"
   NODE_ENV: "development"
+  NODE_TLS_REJECT_UNAUTHORIZED: '0'
 
 ---
 
@@ -57,17 +60,14 @@ spec:
         prometheus.io/path: /metrics
         prometheus.io/port: "{{ .Values.config.AUTH_PORT }}"
     spec:
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z oyinyecouture-auth-db.oyinyecouture.svc.cluster.local 5435; do echo "Waiting for DB..."; sleep 2; done']
       containers:
         - name: auth
           image: je278/auth-service:1.1
-          resources:
-            requests:
-              cpu: "250m"
-              memory: "128Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-          command: [ "sh", "-c" ]
+          command: [ "sh", "-c" ] # for production run -- npm run start:prod --service=auth
           args:
             - >
               npm run typeorm:dev -- migration:run -d ./typeorm.config.ts &&

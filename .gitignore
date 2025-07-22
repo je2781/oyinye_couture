@@ -64,6 +64,9 @@ oyinye-api/apps/*/Dockerfile
 oyinye-api/docker-compose.yaml
 oyinye-api/.dockerignore
 oyinye-api/public/
+oyinye-api/libs/common/src/rmq/certs/
+oyinye-api/certs/
+oyinye-api/rabbitmqCerts/
 helm/oyinyecouture/values.yaml
 helm/oyinyecouture/charts/
 helm/oyinyecouture/scripts/
@@ -75,6 +78,7 @@ oyinye-frontend/docker-compose.yml
 oyinye-frontend/ngrok.yml
 oyinye-frontend/.next/
 oyinye-frontend/locales/
+win-acme.v2.2.9.1701.x64.pluggable/
 
 #files for csrf
 oyinye-api/libs/common/src/csrf/
